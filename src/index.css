@@ -53,6 +53,12 @@ All colors MUST be HSL.
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Brand additions */
+    --brand-1: 258 100% 66%; /* violet */
+    --brand-2: 196 100% 50%; /* cyan */
+    --shadow-elegant: 0 10px 30px -10px hsl(var(--brand-2) / 0.35);
+    --shadow-glow: 0 0 40px hsl(var(--brand-1) / 0.45);
   }
 
   .dark {
