@@ -34,6 +34,26 @@ function extractDetails(text: string): SongDetails | null {
   return null;
 }
 
+function mergeNonEmpty(...items: (SongDetails | undefined)[]): SongDetails {
+  const out: SongDetails = {};
+  for (const item of items) {
+    if (!item) continue;
+    const t = typeof item.title === "string" ? item.title.trim() : "";
+    const s = typeof item.style === "string" ? item.style.trim() : "";
+    const l = typeof item.lyrics === "string" ? item.lyrics.trim() : "";
+    if (t) out.title = t;
+    if (s) out.style = s;
+    if (l) out.lyrics = l;
+  }
+  return out;
+}
+function sanitizeStyleSafe(input?: string): string | undefined {
+  if (!input) return undefined;
+  const cleaned = sanitizeStyle(input);
+  const finalVal = (cleaned || "").trim();
+  return finalVal || input.trim();
+}
+
 const Index = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "assistant", content: "Hey! I can help write and generate a song. What vibe are you going for?" },
@@ -100,9 +120,10 @@ setMessages((m) => [...m, { role: "assistant", content: assistantMsg }]);
 const extracted = extractDetails(assistantMsg);
 if (extracted) {
   const now = Date.now();
-  if (now - lastDiceAt.current >= 2000) {
-    const cleaned = extracted.style ? { ...extracted, style: sanitizeStyle(extracted.style) } : extracted;
-    setDetails((d) => ({ ...d, ...cleaned }));
+  if (now - lastDiceAt.current >= 4000) {
+    const finalStyle = sanitizeStyleSafe(extracted.style);
+    const cleaned: SongDetails = { ...extracted, ...(finalStyle ? { style: finalStyle } : {}) };
+    setDetails((d) => mergeNonEmpty(d, cleaned));
   }
 }
 
@@ -119,16 +140,25 @@ if (extracted) {
     try {
       // Use a minimal, stateless prompt so we don't get follow-ups that could override fields
       const minimal: ChatMessage[] = [{ role: "user", content }];
-      const res = await api.chat(minimal, systemPrompt);
-      const assistantMsg = res.content;
-      const extracted = extractDetails(assistantMsg);
-      if (extracted) {
-        lastDiceAt.current = Date.now();
-        const cleaned = extracted.style ? { ...extracted, style: sanitizeStyle(extracted.style) } : extracted;
-        setDetails((d) => ({ ...d, ...cleaned }));
-        toast.success("Randomized song details ready");
-      } else {
+      const [r1, r2] = await Promise.allSettled([
+        api.chat(minimal, systemPrompt),
+        api.chat(minimal, systemPrompt),
+      ]);
+      const msgs: string[] = [];
+      if (r1.status === "fulfilled") msgs.push(r1.value.content);
+      if (r2.status === "fulfilled") msgs.push(r2.value.content);
+      const extractions = msgs.map(extractDetails).filter(Boolean) as SongDetails[];
+      if (extractions.length === 0) {
         toast.message("Couldn’t parse random song", { description: "Try again in a moment." });
+      } else {
+        const cleanedList = extractions.map((ex) => {
+          const finalStyle = sanitizeStyleSafe(ex.style);
+          return { ...ex, ...(finalStyle ? { style: finalStyle } : {}) } as SongDetails;
+        });
+        const merged = mergeNonEmpty(...cleanedList);
+        lastDiceAt.current = Date.now();
+        setDetails((d) => mergeNonEmpty(d, merged));
+        toast.success("Randomized song details ready");
       }
       // Do not alter chat history for the dice action
     } catch (e: any) {
