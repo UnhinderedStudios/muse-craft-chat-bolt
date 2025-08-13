@@ -91,18 +91,21 @@ if (extracted) {
   async function randomizeAll() {
     if (busy) return;
     const content = "Please generate a completely randomized song_request and output ONLY the JSON in a fenced code block as specified. No extra text.";
-    const next = [...messages, { role: "user", content } as ChatMessage];
     setBusy(true);
     try {
-      const res = await api.chat(next, systemPrompt);
+      // Use a minimal, stateless prompt so we don't get follow-ups that could override fields
+      const minimal: ChatMessage[] = [{ role: "user", content }];
+      const res = await api.chat(minimal, systemPrompt);
       const assistantMsg = res.content;
       const extracted = extractDetails(assistantMsg);
       if (extracted) {
         const cleaned = extracted.style ? { ...extracted, style: sanitizeStyle(extracted.style) } : extracted;
         setDetails((d) => ({ ...d, ...cleaned }));
+        toast.success("Randomized song details ready");
+      } else {
+        toast.message("Couldn’t parse random song", { description: "Try again in a moment." });
       }
-      // Append both user instruction and assistant output atomically
-      setMessages((m) => [...m, { role: "user", content }, { role: "assistant", content: assistantMsg }]);
+      // Do not alter chat history for the dice action
     } catch (e: any) {
       toast.error(e.message || "Randomize failed");
     } finally {
