@@ -1,6 +1,6 @@
 // Supabase Edge Function: suno
 // Suno via API Box - start generation and poll status
-import { serve } from "std/server";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

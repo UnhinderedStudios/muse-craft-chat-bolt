@@ -1,6 +1,6 @@
 // Supabase Edge Function: chat
 // Uses OpenAI to continue a chat and return the assistant message
-import { serve } from "std/server";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 function cors(res: Response) {
   const headers = new Headers(res.headers);
