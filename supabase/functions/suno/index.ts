@@ -1,75 +1,159 @@
 // Supabase Edge Function: suno
-// Starts a Suno generation job and polls for status
+// Suno via API Box - start generation and poll status
 import { serve } from "std/server";
 
-function cors(res: Response) {
-  const headers = new Headers(res.headers);
-  headers.set("Access-Control-Allow-Origin", "*");
-  headers.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  headers.set("Access-Control-Allow-Headers", "authorization, x-client-info, apikey, content-type");
-  return new Response(res.body, { status: res.status, headers });
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const API_BASE = "https://api.api.box/api/v1";
+const SUPABASE_URL = "https://afsyxzxwxszujnsmukff.supabase.co"; // Project URL for callback
+
+function json(data: unknown, init: ResponseInit = {}) {
+  return new Response(JSON.stringify(data), {
+    ...init,
+    headers: { "Content-Type": "application/json", ...(init.headers || {}), ...corsHeaders },
+  });
 }
 
-const SUNO_BASE = "https://api.suno.ai"; // NOTE: adjust to official Suno API base if different
-
 serve(async (req) => {
-  if (req.method === "OPTIONS") return cors(new Response(null, { status: 204 }));
+  // CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
 
   const apiKey = Deno.env.get("SUNO_API_KEY");
-  if (!apiKey) return cors(new Response(JSON.stringify({ error: "Missing SUNO_API_KEY" }), { status: 500 }));
+  if (!apiKey) return json({ error: "Missing SUNO_API_KEY" }, { status: 500 });
 
   try {
     const url = new URL(req.url);
+    const pathname = url.pathname;
+
+    // Handle webhook callbacks (optional)
+    if (req.method === "POST" && pathname.endsWith("/callback")) {
+      try {
+        const body = await req.json();
+        console.log("[suno] Callback received:", body?.status || body);
+      } catch (_) {
+        console.log("[suno] Callback received (non-JSON body)");
+      }
+      return json({ ok: true });
+    }
+
     if (req.method === "POST") {
-      const details = await req.json();
-      // Compose a prompt according to details
-      const prompt = `Title: ${details.title || "Untitled"}\nGenre: ${details.genre || ""}\nMood: ${details.mood || ""}\nTempo: ${details.tempo || ""}\nLanguage: ${details.language || ""}\nVocals: ${details.vocals || ""}\nLyrics: ${details.lyrics || ""}`.trim();
+      const details = await req.json().catch(() => ({} as any));
 
-      // Placeholder endpoint - replace with official Suno create endpoint
-      const start = await fetch(`${SUNO_BASE}/v1/generate`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt }),
-      });
+      // Map incoming details to API Box parameters
+      const title: string = details.title?.toString()?.slice(0, 80) || "Untitled";
+      const genre: string = details.genre?.toString() || "";
+      const mood: string = details.mood?.toString() || "";
+      const tempo: string = details.tempo?.toString() || "";
+      const language: string = details.language?.toString() || "";
+      const vocals: string = details.vocals?.toString() || "";
+      const lyrics: string = details.lyrics?.toString() || "";
 
-      if (!start.ok) {
-        const txt = await start.text();
-        return cors(new Response(JSON.stringify({ error: txt }), { status: 500 }));
+      const instrumental = vocals.toLowerCase() === "none";
+      const hasLyrics = !!lyrics.trim();
+
+      // In customMode=true: if instrumental=false, prompt must be lyrics
+      // In customMode=false: only prompt is required (<= 400 chars)
+      let customMode = false;
+      let prompt = "";
+      let style: string | undefined = undefined;
+      let apiTitle: string | undefined = undefined;
+
+      if (hasLyrics) {
+        customMode = true;
+        prompt = lyrics; // Use lyrics directly per API requirement
+        style = genre || "Pop";
+        apiTitle = title;
+      } else {
+        customMode = false;
+        const parts = [
+          genre && `Genre: ${genre}`,
+          mood && `Mood: ${mood}`,
+          tempo && `Tempo: ${tempo}`,
+          language && `Language: ${language}`,
+          vocals && `Vocals: ${vocals}`,
+        ].filter(Boolean);
+        prompt = parts.join(", ") || "A catchy modern pop track";
+        if (prompt.length > 380) prompt = prompt.slice(0, 380); // stay below 400 chars
       }
 
-      const data = await start.json();
-      const jobId = data.jobId || data.id || data.task_id || crypto.randomUUID();
-      return cors(new Response(JSON.stringify({ jobId }), { headers: { "Content-Type": "application/json" } }));
+      const body: Record<string, unknown> = {
+        prompt,
+        customMode,
+        instrumental,
+        model: "V3_5",
+        callBackUrl: `${SUPABASE_URL}/functions/v1/suno/callback`,
+      };
+      if (customMode) {
+        body.style = style;
+        body.title = apiTitle;
+      }
+
+      console.log("[suno] Starting generation", { customMode, instrumental, hasLyrics });
+
+      const start = await fetch(`${API_BASE}/generate`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      const startJson = await start.json().catch(() => ({}));
+      if (!start.ok || startJson?.code !== 200) {
+        const msg = startJson?.msg || (await start.text().catch(() => "")) || start.statusText;
+        console.error("[suno] Generate error:", msg);
+        return json({ error: msg }, { status: 500 });
+      }
+
+      const taskId = startJson?.data?.taskId;
+      if (!taskId) return json({ error: "No taskId returned" }, { status: 500 });
+
+      return json({ jobId: taskId });
     }
 
     if (req.method === "GET") {
       const jobId = url.searchParams.get("jobId");
-      if (!jobId) return cors(new Response(JSON.stringify({ error: "Missing jobId" }), { status: 400 }));
+      if (!jobId) return json({ error: "Missing jobId" }, { status: 400 });
 
-      // Placeholder status endpoint - replace with official Suno status endpoint
-      const status = await fetch(`${SUNO_BASE}/v1/status?jobId=${encodeURIComponent(jobId)}`, {
-        headers: { "Authorization": `Bearer ${apiKey}` },
+      const statusResp = await fetch(`${API_BASE}/generate/record-info?taskId=${encodeURIComponent(jobId)}`, {
+        headers: { Authorization: `Bearer ${apiKey}` },
       });
-      if (!status.ok) {
-        const txt = await status.text();
-        return cors(new Response(JSON.stringify({ status: "error", error: txt }), { status: 500 }));
+      const statusJson = await statusResp.json().catch(() => ({}));
+
+      if (!statusResp.ok || typeof statusJson?.data === "undefined") {
+        const msg = statusJson?.msg || (await statusResp.text().catch(() => "")) || statusResp.statusText;
+        console.error("[suno] Status error:", msg);
+        return json({ status: "error", error: msg });
       }
-      const data = await status.json();
-      if (data.status === "ready" && (data.audioUrl || data.url || data.result?.audio)) {
-        const audioUrl = data.audioUrl || data.url || data.result?.audio;
-        return cors(new Response(JSON.stringify({ status: "ready", audioUrl }), { headers: { "Content-Type": "application/json" } }));
+
+      const data = statusJson.data as any;
+      const st: string = data.status || "PENDING";
+
+      if (st === "SUCCESS") {
+        const tracks = data.response?.data || [];
+        const audioUrl = tracks?.[0]?.audio_url || tracks?.[0]?.audioUrl || null;
+        if (!audioUrl) return json({ status: "error", error: "No audio URL in response" });
+        return json({ status: "ready", audioUrl });
       }
-      if (data.status === "error") {
-        return cors(new Response(JSON.stringify({ status: "error", error: data.error || "Unknown" }), { status: 200 }));
+
+      if (st.includes("FAILED") || st === "SENSITIVE_WORD_ERROR" || st === "CREATE_TASK_FAILED") {
+        const err = data.errorMessage || data.status || "Generation failed";
+        return json({ status: "error", error: err });
       }
-      return cors(new Response(JSON.stringify({ status: data.status || "pending" }), { headers: { "Content-Type": "application/json" } }));
+
+      return json({ status: "pending" });
     }
 
-    return cors(new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405 }));
+    return json({ error: "Method not allowed" }, { status: 405 });
   } catch (e) {
-    return cors(new Response(JSON.stringify({ status: "error", error: String(e) }), { status: 500 }));
+    console.error("[suno] Unhandled error:", e);
+    return json({ status: "error", error: String(e) }, { status: 500 });
   }
 });
