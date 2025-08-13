@@ -56,6 +56,25 @@ const Index = () => {
     audioRefs.current = [];
   }, [audioUrls, audioUrl]);
 
+  // Ensure only one audio element plays at a time across the page
+  useEffect(() => {
+    const onAnyPlay = (e: Event) => {
+      const target = e.target as HTMLMediaElement | null;
+      if (!target || target.tagName !== "AUDIO") return;
+      const audios = document.querySelectorAll<HTMLAudioElement>("audio");
+      audios.forEach((audio) => {
+        if (audio !== target && !audio.paused) {
+          try { audio.pause(); } catch {}
+        }
+      });
+    };
+    document.addEventListener("play", onAnyPlay, true);
+    return () => {
+      document.removeEventListener("play", onAnyPlay, true);
+    };
+  }, []);
+
+
   const canGenerate = useMemo(() => !!details.lyrics, [details]);
 
   function handleAudioPlay(index: number) {
