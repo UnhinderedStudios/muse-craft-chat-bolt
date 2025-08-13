@@ -10,7 +10,7 @@ export type SongDetails = {
   lyrics?: string;
 };
 
-const FUNCTIONS_BASE = "/functions/v1";
+const FUNCTIONS_BASE = "https://afsyxzxwxszujnsmukff.supabase.co/functions/v1";
 
 async function handle(resp: Response) {
   if (!resp.ok) {

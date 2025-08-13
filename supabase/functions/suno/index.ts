@@ -86,7 +86,7 @@ serve(async (req) => {
         prompt,
         customMode,
         instrumental,
-        model: "V3_5",
+        model: "V4_5PLUS",
         callBackUrl: `${SUPABASE_URL}/functions/v1/suno/callback`,
       };
       if (customMode) {
