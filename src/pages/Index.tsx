@@ -46,6 +46,7 @@ const Index = () => {
   const [audioUrls, setAudioUrls] = useState<string[] | null>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const audioRefs = useRef<HTMLAudioElement[]>([]);
+  const lastDiceAt = useRef<number>(0);
 
   useEffect(() => {
     scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
@@ -98,9 +99,13 @@ const Index = () => {
 setMessages((m) => [...m, { role: "assistant", content: assistantMsg }]);
 const extracted = extractDetails(assistantMsg);
 if (extracted) {
-  const cleaned = extracted.style ? { ...extracted, style: sanitizeStyle(extracted.style) } : extracted;
-  setDetails((d) => ({ ...d, ...cleaned }));
+  const now = Date.now();
+  if (now - lastDiceAt.current >= 2000) {
+    const cleaned = extracted.style ? { ...extracted, style: sanitizeStyle(extracted.style) } : extracted;
+    setDetails((d) => ({ ...d, ...cleaned }));
+  }
 }
+
     } catch (e: any) {
       toast.error(e.message || "Something went wrong");
     } finally {
@@ -118,6 +123,7 @@ if (extracted) {
       const assistantMsg = res.content;
       const extracted = extractDetails(assistantMsg);
       if (extracted) {
+        lastDiceAt.current = Date.now();
         const cleaned = extracted.style ? { ...extracted, style: sanitizeStyle(extracted.style) } : extracted;
         setDetails((d) => ({ ...d, ...cleaned }));
         toast.success("Randomized song details ready");
