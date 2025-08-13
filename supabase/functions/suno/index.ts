@@ -9,7 +9,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const API_BASE = "https://api.api.box/api/v1";
+const API_BASE = "https://api.api.box/api/v1"; // API Box Suno endpoint
 const SUPABASE_URL = "https://afsyxzxwxszujnsmukff.supabase.co"; // Project URL for callback
 
 const supaUrl = Deno.env.get("SUPABASE_URL") || SUPABASE_URL;
@@ -69,7 +69,7 @@ serve(async (req) => {
         if (taskId && items.length > 0) {
           const first = items[0];
           const audioUrl: string | null =
-            first.audio_url || first.audioUrl || first.source_audio_url || first.stream_audio_url || null;
+            first.audio_url || first.audioUrl || first.source_audio_url || first.sourceAudioUrl || first.stream_audio_url || first.streamAudioUrl || first.source_stream_audio_url || first.sourceStreamAudioUrl || null;
 
           if (audioUrl) {
             const path = `${taskId}.mp3`;
@@ -158,8 +158,10 @@ serve(async (req) => {
             .from("songs")
             .createSignedUrl(path, 3600);
           if (!signErr && signed?.signedUrl) {
-            console.log("[suno] Found stored audio for", jobId);
-            return json({ status: "ready", audioUrl: signed.signedUrl });
+            const pub = supabase.storage.from("songs").getPublicUrl(path);
+            const publicUrl = pub.data.publicUrl || signed.signedUrl;
+            console.log("[suno] Found stored audio for", jobId, publicUrl);
+            return json({ status: "ready", audioUrl: publicUrl });
           }
         } catch (e) {
           console.log("[suno] Storage check error:", e);
@@ -204,21 +206,27 @@ serve(async (req) => {
           const track = tracks[0];
           // Try multiple audio URL fields with fallbacks
           const audioUrl =
-            track.audio_url || track.audioUrl || track.source_audio_url || track.stream_audio_url || null;
+            track.audio_url || track.audioUrl || track.source_audio_url || track.sourceAudioUrl || track.stream_audio_url || track.streamAudioUrl || track.source_stream_audio_url || track.sourceStreamAudioUrl || null;
           console.log("[suno] Extracted audio URL:", audioUrl);
 
           if (!audioUrl) {
-            console.error("[suno] No audio URL found in track:", JSON.stringify(track, null, 2));
-            return json({ status: "error", error: "No audio URL in response" });
+            console.warn("[suno] Success state but no audio URL yet. Will keep polling.");
+            return json({ status: "pending" });
           }
 
-          return json({ status: "ready", audioUrl });
+          // Save to storage so frontend streams from Supabase
+          try {
+            const publicUrl = await saveToStorageFromUrl(`${jobId}.mp3`, audioUrl, "audio/mpeg");
+            return json({ status: "ready", audioUrl: publicUrl });
+          } catch (e) {
+            console.error("[suno] Failed to save audio to storage, will retry on next poll:", e);
+            return json({ status: "pending" });
+          }
         } else {
-          console.error("[suno] No tracks found in response");
-          return json({ status: "error", error: "No tracks in response" });
+          console.warn("[suno] Success state but no tracks yet. Will keep polling.");
+          return json({ status: "pending" });
         }
       }
-
       if (st.includes("FAIL") || st.includes("ERROR") || st === "SENSITIVE_WORD_ERROR" || st === "CREATE_TASK_FAILED") {
         const err = data.errorMessage || data.status || "Generation failed";
         return json({ status: "error", error: err });
