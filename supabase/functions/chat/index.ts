@@ -38,7 +38,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "gpt-4.1-2025-04-14",
         messages: openAiMessages,
         temperature: 0.7,
       }),
@@ -46,6 +46,7 @@ serve(async (req) => {
 
     if (!resp.ok) {
       const errText = await resp.text();
+      console.error("[chat] OpenAI error:", errText);
       return cors(new Response(JSON.stringify({ error: errText }), { status: 500 }));
     }
 
