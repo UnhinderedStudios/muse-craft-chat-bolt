@@ -197,13 +197,14 @@ const { jobId } = await api.startSong(payload);
                   variant="secondary"
                   size="icon"
                   onClick={randomizeAll}
+                  type="button"
                   disabled={busy}
                   aria-label="Randomize song"
                   title="Randomize song"
                 >
                   <Dice5 />
                 </Button>
-                <Button onClick={onSend} disabled={busy} className="shrink-0">Send</Button>
+                <Button onClick={onSend} type="button" disabled={busy} className="shrink-0">Send</Button>
               </div>
             </div>
           </Card>
