@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { api, type ChatMessage, type SongDetails } from "@/lib/api";
 import { ChatBubble } from "@/components/chat/ChatBubble";
 import { sanitizeStyle } from "@/lib/styleSanitizer";
+import { Dice5 } from "lucide-react";
 
 const systemPrompt = `You are Melody Muse, a friendly creative assistant for songwriting.
 Your goal is to chat naturally and quickly gather two things only: (1) a unified Style description and (2) Lyrics.
@@ -69,6 +70,27 @@ if (extracted) {
 }
     } catch (e: any) {
       toast.error(e.message || "Something went wrong");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function randomizeAll() {
+    if (busy) return;
+    const content = "Please generate a completely randomized song_request and output only the JSON in a fenced code block as specified.";
+    const next = [...messages, { role: "user", content } as ChatMessage];
+    setMessages(next);
+    setBusy(true);
+    try {
+      const res = await api.chat(next, systemPrompt);
+      const assistantMsg = res.content;
+      setMessages((m) => [...m, { role: "assistant", content: assistantMsg }]);
+      const extracted = extractDetails(assistantMsg);
+      if (extracted) {
+        const cleaned = extracted.style ? { ...extracted, style: sanitizeStyle(extracted.style) } : extracted;
+        setDetails((d) => ({ ...d, ...cleaned }));
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Randomize failed");
     } finally {
       setBusy(false);
     }
@@ -154,6 +176,16 @@ const { jobId } = await api.startSong(payload);
                   }}
                   disabled={busy}
                 />
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  onClick={randomizeAll}
+                  disabled={busy}
+                  aria-label="Randomize song"
+                  title="Randomize song"
+                >
+                  <Dice5 />
+                </Button>
                 <Button onClick={onSend} disabled={busy} className="shrink-0">Send</Button>
               </div>
             </div>
