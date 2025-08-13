@@ -7,6 +7,7 @@ export type SongDetails = {
   tempo?: string;
   language?: string;
   vocals?: "male" | "female" | "duet" | "none" | string;
+  style?: string;
   lyrics?: string;
 };
 

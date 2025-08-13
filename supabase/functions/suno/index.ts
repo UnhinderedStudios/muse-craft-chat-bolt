@@ -93,56 +93,37 @@ serve(async (req) => {
     if (req.method === "POST") {
       const details = await req.json().catch(() => ({} as any));
 
-      // Map incoming details to API Box parameters
-      const title: string = details.title?.toString()?.slice(0, 80) || "Untitled";
-      const genre: string = details.genre?.toString() || "";
-      const mood: string = details.mood?.toString() || "";
-      const tempo: string = details.tempo?.toString() || "";
-      const language: string = details.language?.toString() || "";
-      const vocals: string = details.vocals?.toString() || "";
-      const lyrics: string = details.lyrics?.toString() || "";
+      // Expect unified fields: style (string) and lyrics (string). Title optional.
+      const rawTitle: string | undefined = details.title?.toString();
+      const title = rawTitle ? rawTitle.slice(0, 80) : undefined;
 
-      const instrumental = vocals.toLowerCase() === "none";
-      const hasLyrics = !!lyrics.trim();
+      const unifiedStyle: string = (details.style?.toString() || "").trim();
+      const fallbackStyleParts = [
+        details.genre?.toString(),
+        details.mood?.toString(),
+        details.tempo?.toString(),
+        details.language?.toString(),
+        details.vocals?.toString(),
+      ].filter(Boolean) as string[];
+      const style = (unifiedStyle || fallbackStyleParts.join(", ")).slice(0, 200);
 
-      // In customMode=true: if instrumental=false, prompt must be lyrics
-      // In customMode=false: only prompt is required (<= 400 chars)
-      let customMode = false;
-      let prompt = "";
-      let style: string | undefined = undefined;
-      let apiTitle: string | undefined = undefined;
+      const lyrics: string = (details.lyrics?.toString() || "").trim();
 
-      if (hasLyrics) {
-        customMode = true;
-        prompt = lyrics; // Use lyrics directly per API requirement
-        style = genre || "Pop";
-        apiTitle = title;
-      } else {
-        customMode = false;
-        const parts = [
-          genre && `Genre: ${genre}`,
-          mood && `Mood: ${mood}`,
-          tempo && `Tempo: ${tempo}`,
-          language && `Language: ${language}`,
-          vocals && `Vocals: ${vocals}`,
-        ].filter(Boolean);
-        prompt = parts.join(", ") || "A catchy modern pop track";
-        if (prompt.length > 380) prompt = prompt.slice(0, 380); // stay below 400 chars
+      if (!lyrics) {
+        return json({ error: "Missing lyrics. Please provide lyrics for custom generation." }, { status: 400 });
       }
 
       const body: Record<string, unknown> = {
-        prompt,
-        customMode,
-        instrumental,
+        prompt: lyrics,            // API expects lyrics in 'prompt' when customMode=true
+        style,                     // Unified style string per docs
+        title,                     // Optional
+        customMode: true,
+        instrumental: false,       // Since lyrics provided
         model: "V4_5PLUS",
         callBackUrl: `${SUPABASE_URL}/functions/v1/suno/callback`,
       };
-      if (customMode) {
-        body.style = style;
-        body.title = apiTitle;
-      }
 
-      console.log("[suno] Starting generation", { customMode, instrumental, hasLyrics });
+      console.log("[suno] Starting generation (unified)", { hasLyrics: !!lyrics, styleLength: style.length });
 
       const start = await fetch(`${API_BASE}/generate`, {
         method: "POST",

@@ -9,11 +9,9 @@ import { api, type ChatMessage, type SongDetails } from "@/lib/api";
 import { ChatBubble } from "@/components/chat/ChatBubble";
 
 const systemPrompt = `You are Melody Muse, a friendly creative assistant for songwriting.
-Your goal is to chat naturally and quickly gather what the user wants for a song:
-- genre / style, mood, tempo, language
-- vocal type (male/female/duet/none), reference artists
-- theme/storyline and any lyrics snippets
-Ask concise questions one at a time. When you believe you have enough info, output a compact JSON between triple backticks with the key song_request containing fields: title, genre, mood, tempo, language, vocals, lyrics. Example:\n\n\`\`\`\n{"song_request": {"title": "Neon Skies", "genre": "synthpop", "mood": "uplifting", "tempo": "120 BPM", "language": "English", "vocals": "female", "lyrics": "short verse/chorus here"}}\n\`\`\`\nContinue the conversation after the JSON if needed.`;
+Your goal is to chat naturally and quickly gather two things only: (1) a unified Style description and (2) Lyrics.
+- Style must combine: genre/subgenre, mood/energy, tempo or BPM, language, vocal type (male/female/duet/none), reference artists, and any production notes.
+Ask concise questions one at a time. When you have enough info, output a compact JSON between triple backticks with the key song_request containing fields: title, style, lyrics. Example:\n\n\`\`\`\n{"song_request": {"title": "Neon Skies", "style": "synthpop, uplifting, 120 BPM, English, female vocals, like CHVRCHES, bright analog synths, sidechain bass", "lyrics": "short verse/chorus here"}}\n\`\`\`\nContinue the conversation after the JSON if needed.`;
 
 function extractDetails(text: string): SongDetails | null {
   // Look for a JSON fenced block and parse it
@@ -43,7 +41,7 @@ const Index = () => {
     scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  const canGenerate = useMemo(() => !!(details.genre || details.lyrics || details.title), [details]);
+  const canGenerate = useMemo(() => !!details.lyrics, [details]);
 
   async function onSend() {
     const content = input.trim();
@@ -150,8 +148,8 @@ const Index = () => {
         <aside className="space-y-4">
           <Card className="p-4 space-y-3">
             <h2 className="text-lg font-medium">Song details</h2>
-            <p className="text-sm text-muted-foreground">These auto-fill from the chat. You can tweak them.</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <p className="text-sm text-muted-foreground">These auto-fill from the chat. Provide Style + Lyrics.</p>
+            <div className="grid grid-cols-1 gap-3">
               <input className="hidden" />
               <div className="space-y-1">
                 <label className="text-sm text-muted-foreground">Title</label>
@@ -162,51 +160,14 @@ const Index = () => {
                   placeholder="e.g. Neon Skies"
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-sm text-muted-foreground">Genre</label>
-                <input
-                  className="w-full h-10 rounded-md border bg-background px-3"
-                  value={details.genre || ""}
-                  onChange={(e) => setDetails({ ...details, genre: e.target.value })}
-                  placeholder="e.g. Synthpop"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm text-muted-foreground">Mood</label>
-                <input
-                  className="w-full h-10 rounded-md border bg-background px-3"
-                  value={details.mood || ""}
-                  onChange={(e) => setDetails({ ...details, mood: e.target.value })}
-                  placeholder="e.g. Uplifting"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm text-muted-foreground">Tempo</label>
-                <input
-                  className="w-full h-10 rounded-md border bg-background px-3"
-                  value={details.tempo || ""}
-                  onChange={(e) => setDetails({ ...details, tempo: e.target.value })}
-                  placeholder="e.g. 120 BPM"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm text-muted-foreground">Language</label>
-                <input
-                  className="w-full h-10 rounded-md border bg-background px-3"
-                  value={details.language || ""}
-                  onChange={(e) => setDetails({ ...details, language: e.target.value })}
-                  placeholder="e.g. English"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm text-muted-foreground">Vocals</label>
-                <input
-                  className="w-full h-10 rounded-md border bg-background px-3"
-                  value={details.vocals || ""}
-                  onChange={(e) => setDetails({ ...details, vocals: e.target.value })}
-                  placeholder="e.g. female"
-                />
-              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm text-muted-foreground">Style</label>
+              <Textarea
+                value={details.style || ""}
+                onChange={(e) => setDetails({ ...details, style: e.target.value })}
+                placeholder="Combine genre, mood, tempo/BPM, language, vocal type, ref artists, production notes"
+              />
             </div>
             <div className="space-y-1">
               <label className="text-sm text-muted-foreground">Lyrics (optional)</label>
