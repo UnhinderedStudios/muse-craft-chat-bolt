@@ -1,6 +1,7 @@
 // Supabase Edge Function: suno
 // Suno via API Box - start generation and poll status
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,6 +11,26 @@ const corsHeaders = {
 
 const API_BASE = "https://api.api.box/api/v1";
 const SUPABASE_URL = "https://afsyxzxwxszujnsmukff.supabase.co"; // Project URL for callback
+
+const supaUrl = Deno.env.get("SUPABASE_URL") || SUPABASE_URL;
+const supaKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+const supabase = createClient(supaUrl, supaKey, { auth: { persistSession: false } });
+
+async function saveToStorageFromUrl(path: string, fileUrl: string, contentType = "audio/mpeg") {
+  console.log("[suno] Downloading file to store:", fileUrl);
+  const resp = await fetch(fileUrl);
+  if (!resp.ok) throw new Error(`Failed to download file: ${resp.status} ${resp.statusText}`);
+  const buf = await resp.arrayBuffer();
+  const { error } = await supabase.storage.from("songs").upload(path, buf, {
+    contentType,
+    upsert: true,
+  });
+  if (error) throw error;
+  const pub = supabase.storage.from("songs").getPublicUrl(path);
+  console.log("[suno] Stored at:", pub.data.publicUrl);
+  return pub.data.publicUrl;
+}
+
 
 function json(data: unknown, init: ResponseInit = {}) {
   return new Response(JSON.stringify(data), {
@@ -35,9 +56,36 @@ serve(async (req) => {
     if (req.method === "POST" && pathname.endsWith("/callback")) {
       try {
         const body = await req.json();
-        console.log("[suno] Callback received:", body?.status || body);
-      } catch (_) {
-        console.log("[suno] Callback received (non-JSON body)");
+        console.log("[suno] Callback received:", JSON.stringify(body, null, 2));
+
+        const taskId: string | undefined = body?.data?.task_id || body?.task_id || body?.data?.taskId || body?.taskId;
+        const callbackType: string | undefined = body?.data?.callbackType || body?.callbackType;
+        const items: any[] = Array.isArray(body?.data?.data)
+          ? body.data.data
+          : Array.isArray(body?.data)
+          ? body.data
+          : [];
+
+        if (taskId && items.length > 0) {
+          const first = items[0];
+          const audioUrl: string | null =
+            first.audio_url || first.audioUrl || first.source_audio_url || first.stream_audio_url || null;
+
+          if (audioUrl) {
+            const path = `${taskId}.mp3`;
+            try {
+              const publicUrl = await saveToStorageFromUrl(path, audioUrl, "audio/mpeg");
+              console.log("[suno] Saved audio from callback:", { taskId, publicUrl, callbackType });
+              return json({ ok: true, taskId, publicUrl });
+            } catch (e) {
+              console.error("[suno] Failed to store audio:", e);
+              // Still return ok so the provider doesn't retry endlessly
+              return json({ ok: true, taskId, error: String(e) });
+            }
+          }
+        }
+      } catch (e) {
+        console.log("[suno] Callback received (non-JSON body)", e);
       }
       return json({ ok: true });
     }
@@ -118,13 +166,28 @@ serve(async (req) => {
       return json({ jobId: taskId });
     }
 
-    if (req.method === "GET") {
-      const jobId = url.searchParams.get("jobId");
-      if (!jobId) return json({ error: "Missing jobId" }, { status: 400 });
+      if (req.method === "GET") {
+        const jobId = url.searchParams.get("jobId");
+        if (!jobId) return json({ error: "Missing jobId" }, { status: 400 });
 
-      const statusResp = await fetch(`${API_BASE}/generate/record-info?taskId=${encodeURIComponent(jobId)}`, {
-        headers: { Authorization: `Bearer ${apiKey}` },
-      });
+        // 1) Check if already stored in Supabase Storage (set by webhook)
+        try {
+          const path = `${jobId}.mp3`;
+          const { data: signed, error: signErr } = await supabase.storage
+            .from("songs")
+            .createSignedUrl(path, 3600);
+          if (!signErr && signed?.signedUrl) {
+            console.log("[suno] Found stored audio for", jobId);
+            return json({ status: "ready", audioUrl: signed.signedUrl });
+          }
+        } catch (e) {
+          console.log("[suno] Storage check error:", e);
+        }
+
+        // 2) Fallback to provider polling
+        const statusResp = await fetch(`${API_BASE}/generate/record-info?taskId=${encodeURIComponent(jobId)}`, {
+          headers: { Authorization: `Bearer ${apiKey}` },
+        });
       const statusJson = await statusResp.json().catch(() => ({}));
 
       if (!statusResp.ok || typeof statusJson?.data === "undefined") {
