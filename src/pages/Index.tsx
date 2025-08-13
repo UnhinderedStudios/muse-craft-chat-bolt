@@ -42,6 +42,7 @@ const Index = () => {
   const [details, setDetails] = useState<SongDetails>({});
   const [jobId, setJobId] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioUrls, setAudioUrls] = useState<string[] | null>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -79,6 +80,7 @@ if (extracted) {
       return;
     }
     setAudioUrl(null);
+    setAudioUrls(null);
     setJobId(null);
     setBusy(true);
     try {
@@ -92,8 +94,10 @@ const { jobId } = await api.startSong(payload);
       while (attempts++ < maxAttempts) {
         await new Promise((r) => setTimeout(r, Math.min(1500 + attempts * 200, 5000)));
         const status = await api.pollSong(jobId);
-        if (status.status === "ready" && status.audioUrl) {
-          setAudioUrl(status.audioUrl);
+        if (status.status === "ready") {
+          if (status.audioUrls?.length) setAudioUrls(status.audioUrls);
+          if (status.audioUrl) setAudioUrl(status.audioUrl);
+          else if (status.audioUrls?.[0]) setAudioUrl(status.audioUrls[0]);
           toast.success("Your song is ready!");
           break;
         }
@@ -195,7 +199,23 @@ const { jobId } = await api.startSong(payload);
 
           <Card className="p-4 space-y-3">
             <h2 className="text-lg font-medium">Output</h2>
-            {audioUrl ? (
+            {audioUrls && audioUrls.length > 0 ? (
+              <div className="space-y-4">
+                {audioUrls.map((url, idx) => (
+                  <div key={url} className="space-y-2">
+                    <p className="text-sm text-muted-foreground">Version {idx + 1}</p>
+                    <audio src={url} controls className="w-full" preload="none" />
+                    <a
+                      href={url}
+                      download
+                      className="inline-flex h-10 items-center rounded-md bg-secondary px-4 text-sm"
+                    >
+                      Download version {idx + 1}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            ) : audioUrl ? (
               <div className="space-y-3">
                 <audio src={audioUrl} controls className="w-full" preload="none" />
                 <a

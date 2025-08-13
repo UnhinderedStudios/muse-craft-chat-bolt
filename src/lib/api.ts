@@ -40,7 +40,7 @@ export const api = {
     return handle(resp);
   },
 
-  async pollSong(jobId: string): Promise<{ status: string; audioUrl?: string; error?: string }> {
+  async pollSong(jobId: string): Promise<{ status: string; audioUrl?: string; audioUrls?: string[]; error?: string }> {
     const resp = await fetch(`${FUNCTIONS_BASE}/suno?jobId=${encodeURIComponent(jobId)}`);
     return handle(resp);
   },

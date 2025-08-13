@@ -90,21 +90,28 @@ serve(async (req) => {
           : [];
 
         if (taskId && items.length > 0) {
-          const first = items[0];
-          const audioUrl: string | null =
-            first.audio_url || first.audioUrl || first.source_audio_url || first.sourceAudioUrl || first.stream_audio_url || first.streamAudioUrl || first.source_stream_audio_url || first.sourceStreamAudioUrl || null;
+          const savedUrls: string[] = [];
+          for (let i = 0; i < items.length; i++) {
+            const it = items[i];
+            const audioUrl: string | null =
+              it.audio_url || it.audioUrl || it.source_audio_url || it.sourceAudioUrl || it.stream_audio_url || it.streamAudioUrl || it.source_stream_audio_url || it.sourceStreamAudioUrl || null;
 
-          if (audioUrl) {
-            const path = `${taskId}.mp3`;
-            try {
-              const publicUrl = await saveToStorageFromUrl(path, audioUrl, "audio/mpeg");
-              console.log("[suno] Saved audio from callback:", { taskId, publicUrl, callbackType });
-              return json({ ok: true, taskId, publicUrl });
-            } catch (e) {
-              console.error("[suno] Failed to store audio:", e);
-              // Still return ok so the provider doesn't retry endlessly
-              return json({ ok: true, taskId, error: String(e) });
+            if (audioUrl) {
+              // Keep first version backward-compatible at {taskId}.mp3, subsequent as {taskId}_2.mp3, etc.
+              const indexSuffix = i === 0 ? "" : `_${i + 1}`;
+              const path = `${taskId}${indexSuffix}.mp3`;
+              try {
+                const publicUrl = await saveToStorageFromUrl(path, audioUrl, "audio/mpeg");
+                savedUrls.push(publicUrl);
+              } catch (e) {
+                console.error("[suno] Failed to store audio (callback item):", e);
+              }
             }
+          }
+
+          if (savedUrls.length > 0) {
+            console.log("[suno] Saved audio from callback:", { taskId, publicUrls: savedUrls, callbackType });
+            return json({ ok: true, taskId, callbackType, publicUrls: savedUrls });
           }
         }
       } catch (e) {
@@ -177,15 +184,21 @@ serve(async (req) => {
 
         // 1) Check if already stored in Supabase Storage (set by webhook)
         try {
-          const path = `${jobId}.mp3`;
-          const { data: signed, error: signErr } = await supabase.storage
-            .from("songs")
-            .createSignedUrl(path, 3600);
-          if (!signErr && signed?.signedUrl) {
-            const pub = supabase.storage.from("songs").getPublicUrl(path);
-            const publicUrl = pub.data.publicUrl || signed.signedUrl;
-            console.log("[suno] Found stored audio for", jobId, publicUrl);
-            return json({ status: "ready", audioUrl: publicUrl });
+          const candidates = [`${jobId}.mp3`, `${jobId}_2.mp3`];
+          const found: string[] = [];
+          for (const path of candidates) {
+            const { data: signed, error: signErr } = await supabase.storage
+              .from("songs")
+              .createSignedUrl(path, 3600);
+            if (!signErr && signed?.signedUrl) {
+              const pub = supabase.storage.from("songs").getPublicUrl(path);
+              const publicUrl = pub.data.publicUrl || signed.signedUrl;
+              found.push(publicUrl);
+            }
+          }
+          if (found.length > 0) {
+            console.log("[suno] Found stored audio for", jobId, found);
+            return json({ status: "ready", audioUrl: found[0], audioUrls: found });
           }
         } catch (e) {
           console.log("[suno] Storage check error:", e);
@@ -227,25 +240,35 @@ serve(async (req) => {
         console.log("[suno] Found tracks:", tracks.length);
 
         if (tracks.length > 0) {
-          const track = tracks[0];
-          // Try multiple audio URL fields with fallbacks
-          const audioUrl =
-            track.audio_url || track.audioUrl || track.source_audio_url || track.sourceAudioUrl || track.stream_audio_url || track.streamAudioUrl || track.source_stream_audio_url || track.sourceStreamAudioUrl || null;
-          console.log("[suno] Extracted audio URL:", audioUrl);
+          const saved: string[] = [];
+          for (let i = 0; i < tracks.length; i++) {
+            const track = tracks[i];
+            // Try multiple audio URL fields with fallbacks
+            const audioUrl =
+              track.audio_url || track.audioUrl || track.source_audio_url || track.sourceAudioUrl || track.stream_audio_url || track.streamAudioUrl || track.source_stream_audio_url || track.sourceStreamAudioUrl || null;
+            console.log("[suno] Extracted audio URL:", audioUrl);
 
-          if (!audioUrl) {
-            console.warn("[suno] Success state but no audio URL yet. Will keep polling.");
-            return json({ status: "pending" });
+            if (!audioUrl) {
+              console.warn("[suno] Success state but missing audio URL for a track; skipping save.");
+              continue;
+            }
+
+            // Save to storage so frontend streams from Supabase
+            try {
+              const path = i === 0 ? `${jobId}.mp3` : `${jobId}_${i + 1}.mp3`;
+              const publicUrl = await saveToStorageFromUrl(path, audioUrl, "audio/mpeg");
+              saved.push(publicUrl);
+            } catch (e) {
+              console.error("[suno] Failed to save audio to storage, will retry on next poll:", e);
+            }
           }
 
-          // Save to storage so frontend streams from Supabase
-          try {
-            const publicUrl = await saveToStorageFromUrl(`${jobId}.mp3`, audioUrl, "audio/mpeg");
-            return json({ status: "ready", audioUrl: publicUrl });
-          } catch (e) {
-            console.error("[suno] Failed to save audio to storage, will retry on next poll:", e);
-            return json({ status: "pending" });
+          if (saved.length > 0) {
+            return json({ status: "ready", audioUrl: saved[0], audioUrls: saved });
           }
+
+          // If no URLs could be saved yet, keep polling
+          return json({ status: "pending" });
         } else {
           console.warn("[suno] Success state but no tracks yet. Will keep polling.");
           return json({ status: "pending" });
