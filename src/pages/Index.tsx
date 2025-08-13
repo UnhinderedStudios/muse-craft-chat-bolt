@@ -45,12 +45,26 @@ const Index = () => {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioUrls, setAudioUrls] = useState<string[] | null>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const audioRefs = useRef<HTMLAudioElement[]>([]);
 
   useEffect(() => {
     scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
+  useEffect(() => {
+    // reset audio refs when result list changes
+    audioRefs.current = [];
+  }, [audioUrls, audioUrl]);
+
   const canGenerate = useMemo(() => !!details.lyrics, [details]);
+
+  function handleAudioPlay(index: number) {
+    audioRefs.current.forEach((a, i) => {
+      if (i !== index && a && !a.paused) {
+        try { a.pause(); } catch {}
+      }
+    });
+  }
 
   async function onSend() {
     const content = input.trim();
@@ -76,19 +90,19 @@ if (extracted) {
   }
   async function randomizeAll() {
     if (busy) return;
-    const content = "Please generate a completely randomized song_request and output only the JSON in a fenced code block as specified.";
+    const content = "Please generate a completely randomized song_request and output ONLY the JSON in a fenced code block as specified. No extra text.";
     const next = [...messages, { role: "user", content } as ChatMessage];
-    setMessages(next);
     setBusy(true);
     try {
       const res = await api.chat(next, systemPrompt);
       const assistantMsg = res.content;
-      setMessages((m) => [...m, { role: "assistant", content: assistantMsg }]);
       const extracted = extractDetails(assistantMsg);
       if (extracted) {
         const cleaned = extracted.style ? { ...extracted, style: sanitizeStyle(extracted.style) } : extracted;
         setDetails((d) => ({ ...d, ...cleaned }));
       }
+      // Append both user instruction and assistant output atomically
+      setMessages((m) => [...m, { role: "user", content }, { role: "assistant", content: assistantMsg }]);
     } catch (e: any) {
       toast.error(e.message || "Randomize failed");
     } finally {
@@ -236,7 +250,14 @@ const { jobId } = await api.startSong(payload);
                 {audioUrls.map((url, idx) => (
                   <div key={url} className="space-y-2">
                     <p className="text-sm text-muted-foreground">Version {idx + 1}</p>
-                    <audio src={url} controls className="w-full" preload="none" />
+                    <audio
+                      src={url}
+                      controls
+                      className="w-full"
+                      preload="none"
+                      onPlay={() => handleAudioPlay(idx)}
+                      ref={(el) => { if (el) audioRefs.current[idx] = el; }}
+                    />
                     <a
                       href={url}
                       download
@@ -249,7 +270,14 @@ const { jobId } = await api.startSong(payload);
               </div>
             ) : audioUrl ? (
               <div className="space-y-3">
-                <audio src={audioUrl} controls className="w-full" preload="none" />
+                <audio
+                  src={audioUrl}
+                  controls
+                  className="w-full"
+                  preload="none"
+                  onPlay={() => handleAudioPlay(0)}
+                  ref={(el) => { if (el) audioRefs.current[0] = el; }}
+                />
                 <a
                   href={audioUrl}
                   download
