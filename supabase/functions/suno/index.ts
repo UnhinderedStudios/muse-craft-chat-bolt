@@ -32,6 +32,29 @@ async function saveToStorageFromUrl(path: string, fileUrl: string, contentType =
 }
 
 
+function sanitizeStyleServer(style: string): string {
+  try {
+    let s = String(style || "");
+    const MAP: Record<string, string> = {
+      "ed sheeran": "acoustic pop, warm intimate male vocals, fingerpicked acoustic guitar, minimal production, 70-90 BPM",
+    };
+    for (const [name, desc] of Object.entries(MAP)) {
+      const re = new RegExp(`\\b${name.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}\\b`, "gi");
+      s = s.replace(re, desc);
+    }
+    s = s.replace(/\b(in the style of|like|sounds like|similar to|inspired by)\b[^,;.]+/gi, "");
+    s = s.replace(/\bby\s+[A-Za-z0-9 .,'-]+\b/gi, "");
+    s = s.replace(/\s{2,}/g, " ")
+         .replace(/\s*,\s*/g, ", ")
+         .replace(/,\s*,/g, ", ")
+         .replace(/^,|,$/g, "")
+         .trim();
+    return s;
+  } catch {
+    return String(style || "");
+  }
+}
+
 function json(data: unknown, init: ResponseInit = {}) {
   return new Response(JSON.stringify(data), {
     ...init,
@@ -105,7 +128,8 @@ serve(async (req) => {
         details.language?.toString(),
         details.vocals?.toString(),
       ].filter(Boolean) as string[];
-      const style = (unifiedStyle || fallbackStyleParts.join(", ")).slice(0, 200);
+      const styleRaw = (unifiedStyle || fallbackStyleParts.join(", "));
+      const style = sanitizeStyleServer(styleRaw).slice(0, 200);
 
       const lyrics: string = (details.lyrics?.toString() || "").trim();
 

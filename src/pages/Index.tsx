@@ -7,11 +7,18 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { api, type ChatMessage, type SongDetails } from "@/lib/api";
 import { ChatBubble } from "@/components/chat/ChatBubble";
+import { sanitizeStyle } from "@/lib/styleSanitizer";
 
 const systemPrompt = `You are Melody Muse, a friendly creative assistant for songwriting.
 Your goal is to chat naturally and quickly gather two things only: (1) a unified Style description and (2) Lyrics.
-- Style must combine: genre/subgenre, mood/energy, tempo or BPM, language, vocal type (male/female/duet/none), reference artists, and any production notes.
-Ask concise questions one at a time. When you have enough info, output a compact JSON between triple backticks with the key song_request containing fields: title, style, lyrics. Example:\n\n\`\`\`\n{"song_request": {"title": "Neon Skies", "style": "synthpop, uplifting, 120 BPM, English, female vocals, like CHVRCHES, bright analog synths, sidechain bass", "lyrics": "short verse/chorus here"}}\n\`\`\`\nContinue the conversation after the JSON if needed.`;
+IMPORTANT: Never include artist names in Style. If the user mentions an artist (e.g., "like Ed Sheeran"), translate that into neutral descriptors (timbre, instrumentation, tempo/BPM, mood, era) and DO NOT name the artist. Style must combine: genre/subgenre, mood/energy, tempo or BPM, language, vocal type (male/female/duet/none), and production notes.
+Ask concise questions one at a time. When you have enough info, output a compact JSON between triple backticks with the key song_request containing fields: title, style, lyrics. The style must not contain artist names. Example:
+
+\`\`\`
+{"song_request": {"title": "Neon Skies", "style": "synthpop, uplifting, 120 BPM, English, female vocals, bright analog synths, sidechain bass, shimmering pads", "lyrics": "short verse/chorus here"}}
+\`\`\`
+
+Continue the conversation after the JSON if needed.`;
 
 function extractDetails(text: string): SongDetails | null {
   // Look for a JSON fenced block and parse it
@@ -53,9 +60,12 @@ const Index = () => {
     try {
       const res = await api.chat(next, systemPrompt);
       const assistantMsg = res.content;
-      setMessages((m) => [...m, { role: "assistant", content: assistantMsg }]);
-      const extracted = extractDetails(assistantMsg);
-      if (extracted) setDetails((d) => ({ ...d, ...extracted }));
+setMessages((m) => [...m, { role: "assistant", content: assistantMsg }]);
+const extracted = extractDetails(assistantMsg);
+if (extracted) {
+  const cleaned = extracted.style ? { ...extracted, style: sanitizeStyle(extracted.style) } : extracted;
+  setDetails((d) => ({ ...d, ...cleaned }));
+}
     } catch (e: any) {
       toast.error(e.message || "Something went wrong");
     } finally {
@@ -72,7 +82,8 @@ const Index = () => {
     setJobId(null);
     setBusy(true);
     try {
-      const { jobId } = await api.startSong(details);
+const payload = { ...details, style: sanitizeStyle(details.style || "") };
+const { jobId } = await api.startSong(payload);
       setJobId(jobId);
       toast.success("Song requested. Composing...");
       // poll
