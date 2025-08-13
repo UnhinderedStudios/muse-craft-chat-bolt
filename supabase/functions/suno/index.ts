@@ -134,13 +134,41 @@ serve(async (req) => {
       }
 
       const data = statusJson.data as any;
+      console.log("[suno] Poll response data:", JSON.stringify(data, null, 2));
+      
       const st: string = data.status || "PENDING";
 
       if (st === "SUCCESS") {
-        const tracks = data.response?.data || [];
-        const audioUrl = tracks?.[0]?.audio_url || tracks?.[0]?.audioUrl || null;
-        if (!audioUrl) return json({ status: "error", error: "No audio URL in response" });
-        return json({ status: "ready", audioUrl });
+        // Try multiple possible response structures
+        let tracks = [];
+        
+        // Check if data itself contains the tracks array
+        if (Array.isArray(data.response?.data)) {
+          tracks = data.response.data;
+        } else if (Array.isArray(data.data)) {
+          tracks = data.data;
+        } else if (Array.isArray(data)) {
+          tracks = data;
+        }
+        
+        console.log("[suno] Found tracks:", tracks.length);
+        
+        if (tracks.length > 0) {
+          const track = tracks[0];
+          // Try multiple audio URL fields with fallbacks
+          const audioUrl = track.audio_url || track.audioUrl || track.source_audio_url || track.stream_audio_url || null;
+          console.log("[suno] Extracted audio URL:", audioUrl);
+          
+          if (!audioUrl) {
+            console.error("[suno] No audio URL found in track:", JSON.stringify(track, null, 2));
+            return json({ status: "error", error: "No audio URL in response" });
+          }
+          
+          return json({ status: "ready", audioUrl });
+        } else {
+          console.error("[suno] No tracks found in response");
+          return json({ status: "error", error: "No tracks in response" });
+        }
       }
 
       if (st.includes("FAILED") || st === "SENSITIVE_WORD_ERROR" || st === "CREATE_TASK_FAILED") {
