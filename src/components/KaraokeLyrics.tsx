@@ -37,7 +37,18 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
       // Also check if we're between this word and the next
       const nextWord = words[index + 1];
       const isBeforeNext = !nextWord || currentTime < nextWord.start;
-      return isInRange || (currentTime >= word.start && isBeforeNext);
+      
+      // Handle zero-duration words by checking if we're within a small buffer
+      const bufferTime = 0.1; // 100ms buffer
+      const isNearWord = Math.abs(currentTime - word.start) <= bufferTime;
+      
+      const shouldHighlight = isInRange || (currentTime >= word.start && isBeforeNext) || (word.start === word.end && isNearWord);
+      
+      if (shouldHighlight) {
+        console.log(`[Karaoke] Word ${index}: "${word.word}" (${word.start}-${word.end}) highlighted at time ${currentTime}`);
+      }
+      
+      return shouldHighlight;
     });
 
     setHighlightedIndex(currentWordIndex);

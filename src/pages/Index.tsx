@@ -322,14 +322,16 @@ async function startGeneration() {
                     return {
                       ...version,
                       words: result.alignedWords.map((word: any) => {
-                        const start = typeof word.start_s === 'number' ? word.start_s : (typeof word.start === 'number' ? word.start : 0);
-                        const end = typeof word.end_s === 'number' ? word.end_s : (typeof word.end === 'number' ? word.end : 0);
+                        // Handle different API response formats
+                        const start = word.startS || word.start_s || word.start || 0;
+                        const end = word.endS || word.end_s || word.end || 0;
+                        console.log(`[Word mapping] "${word.word}" -> start: ${start}, end: ${end}`);
                         return {
                           word: word.word,
                           start,
                           end,
                           success: !!word.success,
-                          p_align: word.p_align
+                          p_align: word.p_align || word.palign || 0
                         };
                       }),
                       hasTimestamps: true
