@@ -62,11 +62,22 @@ serve(async (req) => {
       return json(out);
     }
 
-    // If API call failed or no valid data, fallback to mock timestamps
-    console.log('[timestamped-lyrics] API failed, using fallback timestamps');
+    // If API call failed or no valid data, fallback to mock timestamps using actual lyrics
+    console.log('[timestamped-lyrics] API failed, using fallback timestamps with actual lyrics');
     
-    // Simple fallback timestamp generation  
-    const words = ['verse', '1', 'spinning', 'lights', 'shadows', 'dance', 'old', 'songs', 'playing', 'mind', 'riding', 'circles', 'through', 'night', 'chorus', 'round', 'round', 'never', 'slow', 'midnight', 'carousel', 'lost', 'moments', 'let', 'go', 'stories', 'only', 'time', 'will', 'tell'];
+    // Extract lyrics from request body for fallback
+    const { lyrics } = requestBody;
+    let words = ['verse', '1', 'spinning', 'lights', 'shadows', 'dance', 'old', 'songs', 'playing', 'mind', 'riding', 'circles', 'through', 'night', 'chorus', 'round', 'round', 'never', 'slow', 'midnight', 'carousel', 'lost', 'moments', 'let', 'go', 'stories', 'only', 'time', 'will', 'tell'];
+    
+    // If lyrics provided, use them instead of placeholder
+    if (lyrics && typeof lyrics === 'string') {
+      words = lyrics
+        .toLowerCase()
+        .replace(/[^\w\s]/g, ' ') // Remove punctuation
+        .split(/\s+/)
+        .filter(word => word.length > 0);
+    }
+    
     const alignedWords = [];
     let currentTime = 15.0 + (musicIndex * 2.5); // Different start times per version
     

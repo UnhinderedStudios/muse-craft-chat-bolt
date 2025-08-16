@@ -230,7 +230,8 @@ const { jobId } = await api.startSong(payload);
               api.getTimestampedLyrics({
                 taskId: jobId,
                 audioId: version.audioId,
-                musicIndex: version.musicIndex
+                musicIndex: version.musicIndex,
+                lyrics: details.lyrics
               })
             );
             

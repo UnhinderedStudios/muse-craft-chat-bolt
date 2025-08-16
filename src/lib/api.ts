@@ -45,7 +45,7 @@ export const api = {
     return handle(resp);
   },
 
-  async getTimestampedLyrics(params: { taskId: string; audioId?: string; musicIndex?: number }): Promise<{ 
+  async getTimestampedLyrics(params: { taskId: string; audioId?: string; musicIndex?: number; lyrics?: string }): Promise<{ 
     alignedWords: Array<{
       word: string;
       success: boolean;
