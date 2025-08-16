@@ -80,6 +80,10 @@ serve(async (req) => {
 
     if (upstream.ok && payload?.code === 200 && payload?.data) {
       const data = payload.data;
+      
+      // Debug: Log the actual structure of alignedWords
+      console.log('[timestamped-lyrics] Raw alignedWords sample:', JSON.stringify(data.alignedWords?.slice(0, 3), null, 2));
+      
       const out = {
         alignedWords: Array.isArray(data.alignedWords) ? data.alignedWords : [],
         waveformData: Array.isArray(data.waveformData) ? data.waveformData : undefined,
