@@ -66,8 +66,10 @@ const Index = () => {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioUrls, setAudioUrls] = useState<string[] | null>(null);
   const [timestampedWords, setTimestampedWords] = useState<TimestampedWord[]>([]);
+  const [timestampedWordsV2, setTimestampedWordsV2] = useState<TimestampedWord[]>([]);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [currentAudioIndex, setCurrentAudioIndex] = useState<number>(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const audioRefs = useRef<HTMLAudioElement[]>([]);
   const lastDiceAt = useRef<number>(0);
@@ -109,6 +111,7 @@ const Index = () => {
       }
     });
     setIsPlaying(true);
+    setCurrentAudioIndex(index);
   }
 
   const handleAudioPause = () => {
@@ -206,11 +209,18 @@ const { jobId } = await api.startSong(payload);
           if (status.audioUrl) setAudioUrl(status.audioUrl);
           else if (status.audioUrls?.[0]) setAudioUrl(status.audioUrls[0]);
           
-          // Fetch timestamped lyrics
+          // Fetch timestamped lyrics for both versions
           try {
-            const lyricsResult = await api.getTimestampedLyrics(jobId, jobId, details.lyrics);
-            if (lyricsResult.alignedWords) {
-              setTimestampedWords(lyricsResult.alignedWords);
+            const [lyricsResult1, lyricsResult2] = await Promise.all([
+              api.getTimestampedLyrics(jobId, jobId, details.lyrics, 0),
+              api.getTimestampedLyrics(jobId, jobId, details.lyrics, 1)
+            ]);
+            
+            if (lyricsResult1.alignedWords) {
+              setTimestampedWords(lyricsResult1.alignedWords);
+            }
+            if (lyricsResult2.alignedWords) {
+              setTimestampedWordsV2(lyricsResult2.alignedWords);
             }
           } catch (e) {
             console.warn("Could not fetch timestamped lyrics:", e);
@@ -381,11 +391,11 @@ const { jobId } = await api.startSong(payload);
             )}
           </Card>
           
-          {timestampedWords.length > 0 && (
+          {(timestampedWords.length > 0 || timestampedWordsV2.length > 0) && (
             <Card className="p-4 space-y-3">
               <h2 className="text-lg font-medium">Karaoke Lyrics</h2>
               <KaraokeLyrics 
-                words={timestampedWords}
+                words={currentAudioIndex === 0 ? timestampedWords : timestampedWordsV2}
                 currentTime={currentTime}
                 isPlaying={isPlaying}
               />
