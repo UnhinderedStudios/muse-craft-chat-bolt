@@ -216,66 +216,52 @@ const { jobId } = await api.startSong(payload);
           if (status.audioUrls?.length) setAudioUrls(status.audioUrls);
           if (status.audioUrl) setAudioUrl(status.audioUrl);
           else if (status.audioUrls?.[0]) setAudioUrl(status.audioUrls[0]);
-          // Fetch real audioIds from generation details
+          // Create versions from available audioUrls
+          const newVersions = (status.audioUrls || []).map((url, index) => ({
+            url,
+            audioId: `audio_${index}`,
+            musicIndex: index,
+            words: [] as TimestampedWord[]
+          }));
+          
+          console.log("Created versions from audioUrls:", newVersions);
+          setVersions(newVersions);
+          
+          // Try to fetch timestamped lyrics in background
           try {
-            console.log("Fetching generation details for jobId:", jobId);
-            const info = await api.getMusicGenerationDetails(jobId);
-            console.log("Generation details response:", info);
-            const sunoData = info.response?.sunoData ?? [];
-            console.log("Suno data:", sunoData);
-            
-            // Create versions with real audioIds from provider
-            const newVersions = sunoData.map((item: any, index: number) => ({
-              url: item.audioUrl,
-              audioId: item.id,  // Real audioId from provider
-              musicIndex: index,
-              words: [] as TimestampedWord[]
-            }));
-            console.log("Created newVersions:", newVersions);
-
-            // Fetch timestamped lyrics using real audioIds
-            const timestampPromises = newVersions.map(version => {
-              console.log("Fetching timestamps for audioId:", version.audioId);
-              return api.getTimestampedLyrics({
+            const timestampPromises = newVersions.map(version => 
+              api.getTimestampedLyrics({
                 taskId: jobId,
-                audioId: version.audioId,
                 musicIndex: version.musicIndex
-              });
-            });
+              })
+            );
             
             const timestampResults = await Promise.all(timestampPromises);
             console.log("Timestamp results:", timestampResults);
             
-            // Normalize API response fields and assign to versions
-            newVersions.forEach((version, index) => {
+            // Update versions with words
+            const updatedVersions = newVersions.map((version, index) => {
               const result = timestampResults[index];
-              console.log(`Processing result ${index}:`, result);
               if (result.alignedWords) {
-                version.words = result.alignedWords.map(word => ({
-                  word: word.word,
-                  start: word.start_s,  // Normalize field names
-                  end: word.end_s,      // Normalize field names
-                  success: word.success,
-                  p_align: word.p_align
-                }));
-                console.log(`Version ${index} words:`, version.words);
-              } else {
-                console.log(`No alignedWords for version ${index}`);
+                return {
+                  ...version,
+                  words: result.alignedWords.map(word => ({
+                    word: word.word,
+                    start: word.start_s,
+                    end: word.end_s,
+                    success: word.success,
+                    p_align: word.p_align
+                  }))
+                };
               }
+              return version;
             });
             
-            console.log("Final versions with words:", newVersions);
-            setVersions(newVersions);
+            console.log("Updated versions with words:", updatedVersions);
+            setVersions(updatedVersions);
           } catch (e) {
             console.warn("Could not fetch timestamped lyrics:", e);
-            // Fallback to basic versions without timestamps
-            const fallbackVersions = status.audioUrls.map((url: string, index: number) => ({
-              url,
-              audioId: `fallback_${index}`,
-              musicIndex: index,
-              words: [] as TimestampedWord[]
-            }));
-            setVersions(fallbackVersions);
+            // Keep versions without words so karaoke still shows
           }
           
           toast.success("Your song is ready!");
@@ -443,24 +429,21 @@ const { jobId } = await api.startSong(payload);
             )}
           </Card>
           
-          {(() => {
-            console.log("Karaoke render check:");
-            console.log("versions.length:", versions.length);
-            console.log("currentAudioIndex:", currentAudioIndex);
-            console.log("versions[currentAudioIndex]:", versions[currentAudioIndex]);
-            console.log("versions[currentAudioIndex]?.words.length:", versions[currentAudioIndex]?.words.length);
-            console.log("Should show karaoke:", versions.length > 0 && versions[currentAudioIndex]?.words.length > 0);
-            return null;
-          })()}
-          
-          {versions.length > 0 && versions[currentAudioIndex]?.words.length > 0 && (
+          {versions.length > 0 && (
             <Card className="p-4 space-y-3">
               <h2 className="text-lg font-medium">Karaoke Lyrics</h2>
-              <KaraokeLyrics 
-                words={versions[currentAudioIndex]?.words ?? []}
-                currentTime={currentTime}
-                isPlaying={isPlaying}
-              />
+              {versions[currentAudioIndex]?.words.length > 0 ? (
+                <KaraokeLyrics 
+                  words={versions[currentAudioIndex]?.words ?? []}
+                  currentTime={currentTime}
+                  isPlaying={isPlaying}
+                  className="text-center p-4 min-h-[200px] bg-muted/20 rounded-lg"
+                />
+              ) : (
+                <div className="text-center p-8 text-muted-foreground bg-muted/20 rounded-lg">
+                  Loading karaoke lyrics...
+                </div>
+              )}
             </Card>
           )}
         </aside>
