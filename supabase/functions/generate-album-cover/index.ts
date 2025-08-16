@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,7 +13,12 @@ serve(async (req) => {
 
   try {
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
     console.log("GEMINI_API_KEY available:", !!geminiApiKey);
+    console.log("SUPABASE_URL available:", !!supabaseUrl);
+    console.log("SUPABASE_SERVICE_ROLE_KEY available:", !!supabaseServiceKey);
     
     if (!geminiApiKey) {
       console.error("Missing GEMINI_API_KEY in environment");
@@ -21,6 +27,17 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("Missing Supabase credentials in environment");
+      return new Response(JSON.stringify({ error: "Missing Supabase credentials" }), { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // Initialize Supabase client with service role key for storage access
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const { prompt } = await req.json();
     if (!prompt) {
@@ -77,9 +94,49 @@ serve(async (req) => {
       });
     }
 
+    console.log("Successfully received image data from Imagen API");
+
+    // Convert base64 to bytes
+    const imageBytes = Uint8Array.from(atob(imageData), c => c.charCodeAt(0));
+    console.log("Converted image data to bytes, size:", imageBytes.length);
+
+    // Generate unique filename with current date
+    const now = new Date();
+    const dateFolder = now.toISOString().split('T')[0]; // YYYY-MM-DD
+    const uuid = crypto.randomUUID();
+    const filename = `album-covers/${dateFolder}/${uuid}.png`;
+
+    console.log("Uploading to Supabase Storage, path:", filename);
+
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('songs')
+      .upload(filename, imageBytes, {
+        contentType: 'image/png',
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error("Supabase Storage upload error:", uploadError);
+      return new Response(JSON.stringify({ error: `Storage upload failed: ${uploadError.message}` }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    console.log("Successfully uploaded to storage:", uploadData.path);
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('songs')
+      .getPublicUrl(filename);
+
+    const imageUrl = urlData.publicUrl;
+    console.log("Generated public URL:", imageUrl);
+
     return new Response(JSON.stringify({
       success: true,
-      imageData // Base64 encoded image
+      imageUrl // Public URL to the stored image
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

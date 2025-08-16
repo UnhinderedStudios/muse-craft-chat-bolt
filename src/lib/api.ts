@@ -111,8 +111,8 @@ export const api = {
     ]);
 
     return {
-      cover1: `data:image/png;base64,${cover1Data.imageData}`,
-      cover2: `data:image/png;base64,${cover2Data.imageData}`
+      cover1: cover1Data.imageUrl || `data:image/png;base64,${cover1Data.imageData}`,
+      cover2: cover2Data.imageUrl || `data:image/png;base64,${cover2Data.imageData}`
     };
   },
 };
