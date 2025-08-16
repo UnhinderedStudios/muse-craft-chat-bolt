@@ -60,7 +60,7 @@ serve(async (req) => {
         body: JSON.stringify({
           instances: [{ prompt }],
           parameters: {
-            sampleCount: 1,
+            sampleCount: 2, // Generate 2 images for album covers
             aspectRatio: "1:1", // Square aspect ratio for album covers
             personGeneration: "dont_allow", // Ensure no humans as requested
           },
@@ -71,6 +71,7 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Gemini API error (Imagen 4 Fast):", response.status, errorText);
+      console.error("Request details:", { prompt, method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': '***' } });
       return new Response(JSON.stringify({ error: `Gemini API error (${response.status}): ${errorText}` }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -78,15 +79,12 @@ serve(async (req) => {
     }
 
     const data = await response.json();
+    console.log("Raw Imagen response structure:", JSON.stringify(data, null, 2));
 
-    // Support multiple possible response shapes
-    const imageData =
-      data?.generatedImages?.[0]?.generatedImage?.imageBytes ||
-      data?.generatedImages?.[0]?.image?.imageBytes ||
-      data?.predictions?.[0]?.bytesBase64Encoded ||
-      data?.predictions?.[0]?.image?.imageBytes;
-
-    if (!imageData) {
+    // Extract both images from response
+    const generatedImages = data?.generatedImages || data?.predictions || [];
+    
+    if (!generatedImages || generatedImages.length === 0) {
       console.error("No images generated or unexpected response shape:", data);
       return new Response(JSON.stringify({ error: "No images generated" }), {
         status: 500,
@@ -94,49 +92,78 @@ serve(async (req) => {
       });
     }
 
-    console.log("Successfully received image data from Imagen API");
+    console.log(`Successfully received ${generatedImages.length} images from Imagen API`);
 
-    // Convert base64 to bytes
-    const imageBytes = Uint8Array.from(atob(imageData), c => c.charCodeAt(0));
-    console.log("Converted image data to bytes, size:", imageBytes.length);
+    const coverUrls = [];
+    
+    // Process each generated image
+    for (let i = 0; i < generatedImages.length; i++) {
+      const imageItem = generatedImages[i];
+      const imageData = 
+        imageItem?.generatedImage?.imageBytes ||
+        imageItem?.image?.imageBytes ||
+        imageItem?.bytesBase64Encoded ||
+        imageItem?.imageBytes;
 
-    // Generate unique filename with current date
-    const now = new Date();
-    const dateFolder = now.toISOString().split('T')[0]; // YYYY-MM-DD
-    const uuid = crypto.randomUUID();
-    const filename = `album-covers/${dateFolder}/${uuid}.png`;
+      if (!imageData) {
+        console.warn(`No image data found for image ${i + 1}`);
+        continue;
+      }
 
-    console.log("Uploading to Supabase Storage, path:", filename);
+      try {
+        // Convert base64 to bytes
+        const imageBytes = Uint8Array.from(atob(imageData), c => c.charCodeAt(0));
+        console.log(`Image ${i + 1}: Converted to bytes, size:`, imageBytes.length);
 
-    // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('songs')
-      .upload(filename, imageBytes, {
-        contentType: 'image/png',
-        upsert: false
-      });
+        // Generate unique filename with current date
+        const now = new Date();
+        const dateFolder = now.toISOString().split('T')[0]; // YYYY-MM-DD
+        const uuid = crypto.randomUUID();
+        const filename = `album-covers/${dateFolder}/${uuid}-${i + 1}.png`;
 
-    if (uploadError) {
-      console.error("Supabase Storage upload error:", uploadError);
-      return new Response(JSON.stringify({ error: `Storage upload failed: ${uploadError.message}` }), {
+        console.log(`Image ${i + 1}: Uploading to Supabase Storage, path:`, filename);
+
+        // Upload to Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('songs')
+          .upload(filename, imageBytes, {
+            contentType: 'image/png',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error(`Image ${i + 1}: Supabase Storage upload error:`, uploadError);
+          continue;
+        }
+
+        console.log(`Image ${i + 1}: Successfully uploaded to storage:`, uploadData.path);
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('songs')
+          .getPublicUrl(filename);
+
+        const imageUrl = urlData.publicUrl;
+        console.log(`Image ${i + 1}: Generated public URL:`, imageUrl);
+        
+        coverUrls.push(imageUrl);
+      } catch (error) {
+        console.error(`Error processing image ${i + 1}:`, error);
+      }
+    }
+
+    if (coverUrls.length === 0) {
+      return new Response(JSON.stringify({ error: "Failed to upload any images" }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    console.log("Successfully uploaded to storage:", uploadData.path);
-
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from('songs')
-      .getPublicUrl(filename);
-
-    const imageUrl = urlData.publicUrl;
-    console.log("Generated public URL:", imageUrl);
+    console.log(`Successfully generated ${coverUrls.length} album covers:`, coverUrls);
 
     return new Response(JSON.stringify({
       success: true,
-      imageUrl // Public URL to the stored image
+      coverUrls // Array of public URLs to the stored images
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });

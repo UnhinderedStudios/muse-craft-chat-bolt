@@ -91,28 +91,51 @@ export const api = {
 
     const albumPrompt = promptResponse.content;
 
-    // Generate two unique album covers using the same prompt
-    const [cover1Response, cover2Response] = await Promise.all([
-      fetch(`${FUNCTIONS_BASE}/generate-album-cover`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: albumPrompt }),
-      }),
-      fetch(`${FUNCTIONS_BASE}/generate-album-cover`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: albumPrompt }),
-      })
-    ]);
+    // Generate album covers with new response format
+    const response = await fetch(`${FUNCTIONS_BASE}/generate-album-cover`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: albumPrompt }),
+    });
 
-    const [cover1Data, cover2Data] = await Promise.all([
-      handle(cover1Response),
-      handle(cover2Response)
-    ]);
+    const data = await handle(response);
+
+    // Handle new response format with coverUrls array
+    if (data.coverUrls && Array.isArray(data.coverUrls)) {
+      return {
+        cover1: data.coverUrls[0] || '',
+        cover2: data.coverUrls[1] || data.coverUrls[0] || '' // Fallback to first image if only one generated
+      };
+    }
+
+    // Fallback to old response format if needed
+    return {
+      cover1: data.imageUrl || '',
+      cover2: data.imageUrl || ''
+    };
+  },
+
+  async testAlbumCover(): Promise<{ cover1: string; cover2: string }> {
+    const testPrompt = "A vibrant abstract digital art album cover with swirling colors, musical notes floating in space, cosmic background, no humans, artistic and modern style";
+    
+    const response = await fetch(`${FUNCTIONS_BASE}/generate-album-cover`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: testPrompt }),
+    });
+
+    const data = await handle(response);
+
+    if (data.coverUrls && Array.isArray(data.coverUrls)) {
+      return {
+        cover1: data.coverUrls[0] || '',
+        cover2: data.coverUrls[1] || data.coverUrls[0] || ''
+      };
+    }
 
     return {
-      cover1: cover1Data.imageUrl || `data:image/png;base64,${cover1Data.imageData}`,
-      cover2: cover2Data.imageUrl || `data:image/png;base64,${cover2Data.imageData}`
+      cover1: data.imageUrl || '',
+      cover2: data.imageUrl || ''
     };
   },
 };

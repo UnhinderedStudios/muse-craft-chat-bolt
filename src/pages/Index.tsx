@@ -453,16 +453,19 @@ async function startGeneration() {
           // Generate album covers in background if we have lyrics
           if (details.lyrics && !isGeneratingCovers && !albumCovers) {
             console.log("Starting album cover generation");
+            toast.info("Generating album art...");
             setIsGeneratingCovers(true);
             api.generateAlbumCovers(details.lyrics)
               .then((covers) => {
-                console.log("Album covers generated successfully");
+                console.log("Album covers generated successfully", covers);
                 setAlbumCovers(covers);
                 setIsGeneratingCovers(false);
+                toast.success("Album art ready!");
               })
               .catch((error) => {
                 console.error("Failed to generate album covers:", error);
                 setIsGeneratingCovers(false);
+                toast.error("Failed to generate album art");
               });
           }
           
@@ -597,9 +600,31 @@ async function startGeneration() {
                 </div>
               </div>
             )}
-            <Button onClick={startGeneration} disabled={busy || !canGenerate} variant="hero">
-              {busy ? "Working..." : jobId ? "Generating..." : "Generate with Suno"}
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={startGeneration} disabled={busy || !canGenerate} variant="hero" className="flex-1">
+                {busy ? "Working..." : jobId ? "Generating..." : "Generate with Suno"}
+              </Button>
+              <Button 
+                onClick={async () => {
+                  try {
+                    toast.info("Testing album cover generation...");
+                    const covers = await api.testAlbumCover();
+                    setAlbumCovers(covers);
+                    toast.success("Test album covers generated!");
+                  } catch (error: any) {
+                    console.error("Test album cover failed:", error);
+                    toast.error(`Test failed: ${error.message}`);
+                  }
+                }}
+                disabled={busy}
+                variant="outline"
+                size="sm"
+                className="px-3"
+                title="Test Album Cover Generation"
+              >
+                Test Art
+              </Button>
+            </div>
           </Card>
 
           <Card className="p-4 space-y-3">
