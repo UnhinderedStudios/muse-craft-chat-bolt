@@ -9,7 +9,7 @@ import { api, type ChatMessage, type SongDetails } from "@/lib/api";
 import { ChatBubble } from "@/components/chat/ChatBubble";
 import { KaraokeLyrics, type TimestampedWord } from "@/components/KaraokeLyrics";
 import { sanitizeStyle } from "@/lib/styleSanitizer";
-import { Dice5 } from "lucide-react";
+import { Dice5, Mic } from "lucide-react";
 
 const systemPrompt = `You are Melody Muse, a friendly creative assistant for songwriting.
 Your goal is to chat naturally and quickly gather two things only: (1) a unified Style description and (2) Lyrics.
@@ -76,6 +76,7 @@ const Index = () => {
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentAudioIndex, setCurrentAudioIndex] = useState<number>(0);
+  const [showFullscreenKaraoke, setShowFullscreenKaraoke] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const audioRefs = useRef<HTMLAudioElement[]>([]);
   const lastDiceAt = useRef<number>(0);
@@ -537,7 +538,20 @@ async function startGeneration() {
           
           {versions.length > 0 && (
             <Card className="p-4 space-y-3">
-              <h2 className="text-lg font-medium">Karaoke Lyrics</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-medium">Karaoke Lyrics</h2>
+                {versions[currentAudioIndex]?.words?.length > 0 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowFullscreenKaraoke(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Mic className="w-4 h-4" />
+                    Fullscreen
+                  </Button>
+                )}
+              </div>
               {versions[currentAudioIndex]?.words?.length > 0 ? (
                 <KaraokeLyrics 
                   words={versions[currentAudioIndex].words}
@@ -560,6 +574,23 @@ async function startGeneration() {
           )}
         </aside>
       </main>
+
+      {/* Full-screen Karaoke Overlay */}
+      {showFullscreenKaraoke && versions[currentAudioIndex]?.words?.length > 0 && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-8 cursor-pointer"
+          onClick={() => setShowFullscreenKaraoke(false)}
+        >
+          <div className="w-full max-w-4xl">
+            <KaraokeLyrics 
+              words={versions[currentAudioIndex].words}
+              currentTime={currentTime}
+              isPlaying={isPlaying}
+              className="min-h-[300px] max-h-[70vh] bg-transparent border-0 text-white text-2xl leading-relaxed"
+            />
+          </div>
+        </div>
+      )}
 
       <script
         type="application/ld+json"
