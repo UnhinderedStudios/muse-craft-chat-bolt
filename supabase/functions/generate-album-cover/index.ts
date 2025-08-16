@@ -12,17 +12,36 @@ serve(async (req) => {
   }
 
   try {
-    const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
+    // Try both GEMINI_API_KEY and GOOGLE_API_KEY
+    const geminiApiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GOOGLE_API_KEY");
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
-    console.log("GEMINI_API_KEY available:", !!geminiApiKey);
+    console.log("GEMINI_API_KEY available:", !!Deno.env.get("GEMINI_API_KEY"));
+    console.log("GOOGLE_API_KEY available:", !!Deno.env.get("GOOGLE_API_KEY"));
+    console.log("Using API key:", !!geminiApiKey);
     console.log("SUPABASE_URL available:", !!supabaseUrl);
     console.log("SUPABASE_SERVICE_ROLE_KEY available:", !!supabaseServiceKey);
+
+    const reqBody = await req.json().catch(() => ({}));
+    
+    // Health check endpoint
+    if (reqBody.health) {
+      return new Response(JSON.stringify({
+        health: "ok",
+        apiKey: !!geminiApiKey,
+        geminiKey: !!Deno.env.get("GEMINI_API_KEY"),
+        googleKey: !!Deno.env.get("GOOGLE_API_KEY"),
+        supabaseUrl: !!supabaseUrl,
+        serviceKey: !!supabaseServiceKey
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
     
     if (!geminiApiKey) {
-      console.error("Missing GEMINI_API_KEY in environment");
-      return new Response(JSON.stringify({ error: "Missing GEMINI_API_KEY" }), { 
+      console.error("Missing GEMINI_API_KEY and GOOGLE_API_KEY in environment");
+      return new Response(JSON.stringify({ error: "Missing API key (tried GEMINI_API_KEY and GOOGLE_API_KEY)" }), { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -39,7 +58,7 @@ serve(async (req) => {
     // Initialize Supabase client with service role key for storage access
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { prompt } = await req.json();
+    const { prompt } = reqBody;
     if (!prompt) {
       return new Response(JSON.stringify({ error: "prompt is required" }), { 
         status: 400, 

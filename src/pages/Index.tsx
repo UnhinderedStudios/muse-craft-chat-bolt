@@ -607,7 +607,15 @@ async function startGeneration() {
               <Button 
                 onClick={async () => {
                   try {
-                    toast.info("Testing album cover generation...");
+                    toast.info("Checking API key availability...");
+                    const health = await api.testAlbumCoverHealth();
+                    
+                    if (!health.apiKey) {
+                      toast.error(`Missing API Keys - Gemini: ${health.geminiKey ? '✓' : '✗'}, Google: ${health.googleKey ? '✓' : '✗'}`);
+                      return;
+                    }
+                    
+                    toast.info("API key found, generating test album covers...");
                     const covers = await api.testAlbumCover();
                     setAlbumCovers(covers);
                     toast.success("Test album covers generated!");
@@ -620,7 +628,7 @@ async function startGeneration() {
                 variant="outline"
                 size="sm"
                 className="px-3"
-                title="Test Album Cover Generation"
+                title="Test Album Cover Generation with Health Check"
               >
                 Test Art
               </Button>

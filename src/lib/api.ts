@@ -115,6 +115,22 @@ export const api = {
     };
   },
 
+  async testAlbumCoverHealth(): Promise<{
+    health: string;
+    apiKey: boolean;
+    geminiKey: boolean;
+    googleKey: boolean;
+    supabaseUrl: boolean;
+    serviceKey: boolean;
+  }> {
+    const response = await fetch(`${FUNCTIONS_BASE}/generate-album-cover`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ health: true }),
+    });
+    return handle(response);
+  },
+
   async testAlbumCover(): Promise<{ cover1: string; cover2: string }> {
     const testPrompt = "A vibrant abstract digital art album cover with swirling colors, musical notes floating in space, cosmic background, no humans, artistic and modern style";
     
