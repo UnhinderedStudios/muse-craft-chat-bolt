@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { api, type ChatMessage, type SongDetails } from "@/lib/api";
 import { ChatBubble } from "@/components/chat/ChatBubble";
+import { KaraokeLyrics, type TimestampedWord } from "@/components/KaraokeLyrics";
 import { sanitizeStyle } from "@/lib/styleSanitizer";
 import { Dice5 } from "lucide-react";
 
@@ -64,6 +65,9 @@ const Index = () => {
   const [jobId, setJobId] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioUrls, setAudioUrls] = useState<string[] | null>(null);
+  const [timestampedWords, setTimestampedWords] = useState<TimestampedWord[]>([]);
+  const [currentTime, setCurrentTime] = useState<number>(0);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const audioRefs = useRef<HTMLAudioElement[]>([]);
   const lastDiceAt = useRef<number>(0);
@@ -101,10 +105,19 @@ const Index = () => {
   function handleAudioPlay(index: number) {
     audioRefs.current.forEach((a, i) => {
       if (i !== index && a && !a.paused) {
-        try { a.pause(); } catch {}
+        try { a.pause(); a.currentTime = 0; } catch {}
       }
     });
+    setIsPlaying(true);
   }
+
+  const handleAudioPause = () => {
+    setIsPlaying(false);
+  };
+
+  const handleTimeUpdate = (audio: HTMLAudioElement) => {
+    setCurrentTime(audio.currentTime);
+  };
 
   async function onSend() {
     const content = input.trim();
@@ -192,6 +205,17 @@ const { jobId } = await api.startSong(payload);
           if (status.audioUrls?.length) setAudioUrls(status.audioUrls);
           if (status.audioUrl) setAudioUrl(status.audioUrl);
           else if (status.audioUrls?.[0]) setAudioUrl(status.audioUrls[0]);
+          
+          // Fetch timestamped lyrics
+          try {
+            const lyricsResult = await api.getTimestampedLyrics(jobId, jobId, 0);
+            if (lyricsResult.alignedWords) {
+              setTimestampedWords(lyricsResult.alignedWords);
+            }
+          } catch (e) {
+            console.warn("Could not fetch timestamped lyrics:", e);
+          }
+          
           toast.success("Your song is ready!");
           break;
         }
@@ -295,6 +319,7 @@ const { jobId } = await api.startSong(payload);
                 value={details.lyrics || ""}
                 onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
                 placeholder="Paste a short verse/chorus or let AI help in chat"
+                className="min-h-[120px]"
               />
             </div>
             <Button onClick={startGeneration} disabled={busy || !canGenerate} variant="hero">
@@ -309,14 +334,17 @@ const { jobId } = await api.startSong(payload);
                 {audioUrls.map((url, idx) => (
                   <div key={url} className="space-y-2">
                     <p className="text-sm text-muted-foreground">Version {idx + 1}</p>
-                    <audio
-                      src={url}
-                      controls
-                      className="w-full"
-                      preload="none"
-                      onPlay={() => handleAudioPlay(idx)}
-                      ref={(el) => { if (el) audioRefs.current[idx] = el; }}
-                    />
+                     <audio
+                       src={url}
+                       controls
+                       className="w-full"
+                       preload="none"
+                       onPlay={() => handleAudioPlay(idx)}
+                       onPause={handleAudioPause}
+                       onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
+                       onEnded={handleAudioPause}
+                       ref={(el) => { if (el) audioRefs.current[idx] = el; }}
+                     />
                     <a
                       href={url}
                       download
@@ -329,14 +357,17 @@ const { jobId } = await api.startSong(payload);
               </div>
             ) : audioUrl ? (
               <div className="space-y-3">
-                <audio
-                  src={audioUrl}
-                  controls
-                  className="w-full"
-                  preload="none"
-                  onPlay={() => handleAudioPlay(0)}
-                  ref={(el) => { if (el) audioRefs.current[0] = el; }}
-                />
+                 <audio
+                   src={audioUrl}
+                   controls
+                   className="w-full"
+                   preload="none"
+                   onPlay={() => handleAudioPlay(0)}
+                   onPause={handleAudioPause}
+                   onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
+                   onEnded={handleAudioPause}
+                   ref={(el) => { if (el) audioRefs.current[0] = el; }}
+                 />
                 <a
                   href={audioUrl}
                   download
@@ -349,6 +380,17 @@ const { jobId } = await api.startSong(payload);
               <p className="text-sm text-muted-foreground">Your song will appear here once it’s ready.</p>
             )}
           </Card>
+          
+          {timestampedWords.length > 0 && (
+            <Card className="p-4 space-y-3">
+              <h2 className="text-lg font-medium">Karaoke Lyrics</h2>
+              <KaraokeLyrics 
+                words={timestampedWords}
+                currentTime={currentTime}
+                isPlaying={isPlaying}
+              />
+            </Card>
+          )}
         </aside>
       </main>
 
