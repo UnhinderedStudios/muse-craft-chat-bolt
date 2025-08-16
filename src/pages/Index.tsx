@@ -229,8 +229,8 @@ async function startGeneration() {
           
           console.log(`[Generation] Attempt ${completionAttempts}: Status=${statusRaw}, Tracks=${sunoData.length}`);
           
-          // Check for completion - only accept final states
-          if (statusRaw === "ALL_SUCCESS" || statusRaw === "COMPLETE") {
+          // Check for completion - accept SUCCESS but not intermediate states
+          if (statusRaw === "SUCCESS" || statusRaw === "COMPLETE" || statusRaw === "ALL_SUCCESS") {
             console.log("[Generation] Phase A: Generation completed!");
             break;
           }
