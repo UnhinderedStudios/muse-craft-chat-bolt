@@ -80,10 +80,12 @@ const Index = () => {
   const [showFullscreenKaraoke, setShowFullscreenKaraoke] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<number>(0);
   const [targetProgress, setTargetProgress] = useState<number>(0);
+  const [lastRealProgress, setLastRealProgress] = useState<number>(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const audioRefs = useRef<HTMLAudioElement[]>([]);
   const lastDiceAt = useRef<number>(0);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const organicProgressRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
@@ -94,13 +96,18 @@ const Index = () => {
     audioRefs.current = [];
   }, [audioUrls, audioUrl]);
 
-  // Smooth progress animation
+  // Organic progress system that creates smooth illusion of progress
   useEffect(() => {
+    // Clear existing intervals
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
     }
+    if (organicProgressRef.current) {
+      clearInterval(organicProgressRef.current);
+    }
 
     if (busy && targetProgress > 0) {
+      // Main progress animation toward target
       progressIntervalRef.current = setInterval(() => {
         setGenerationProgress(current => {
           const diff = targetProgress - current;
@@ -109,15 +116,30 @@ const Index = () => {
           }
           
           // Smooth acceleration towards target
-          const increment = Math.max(0.1, diff * 0.05);
+          const increment = Math.max(0.2, diff * 0.08);
           return Math.min(current + increment, targetProgress);
         });
-      }, 50);
+      }, 100);
+
+      // Organic progress that slowly creeps up when stuck
+      organicProgressRef.current = setInterval(() => {
+        setTargetProgress(current => {
+          // If we haven't reached 90% yet, add tiny increments to prevent stagnation
+          if (current < 90) {
+            const stagnationIncrement = Math.random() * 0.3 + 0.1; // 0.1-0.4%
+            return Math.min(current + stagnationIncrement, 90);
+          }
+          return current;
+        });
+      }, 1500 + Math.random() * 2000); // Random interval 1.5-3.5s
     }
 
     return () => {
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
+      }
+      if (organicProgressRef.current) {
+        clearInterval(organicProgressRef.current);
       }
     };
   }, [targetProgress, busy]);
@@ -254,15 +276,20 @@ async function startGeneration() {
       let sunoData: any[] = [];
 
       while (completionAttempts++ < maxCompletionAttempts) {
-        // Update progress based on attempts and status
-        const baseProgress = Math.min((completionAttempts / maxCompletionAttempts) * 60, 50);
-        let statusProgress = 0;
-        if (statusRaw === "PENDING") statusProgress = 10;
-        else if (statusRaw === "FIRST_SUCCESS") statusProgress = 30;
-        else if (statusRaw === "TEXT_SUCCESS") statusProgress = 50;
+        // More conservative real progress updates
+        const baseProgress = Math.min((completionAttempts / maxCompletionAttempts) * 40, 40);
+        let statusProgress = 5;
+        if (statusRaw === "PENDING") statusProgress = 15;
+        else if (statusRaw === "FIRST_SUCCESS") statusProgress = 35;
+        else if (statusRaw === "TEXT_SUCCESS") statusProgress = 55;
         else if (statusRaw === "SUCCESS") statusProgress = 70;
         
-        setTargetProgress(Math.max(baseProgress, statusProgress));
+        const newTarget = Math.max(baseProgress, statusProgress);
+        // Only update target if it's significantly higher to prevent regression
+        if (newTarget > targetProgress + 2) {
+          setTargetProgress(newTarget);
+          setLastRealProgress(newTarget);
+        }
         
         const backoffDelay = Math.min(1500 + completionAttempts * 300, 4000);
         await new Promise((r) => setTimeout(r, backoffDelay));
