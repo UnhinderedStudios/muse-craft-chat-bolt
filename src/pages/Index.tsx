@@ -218,8 +218,11 @@ const { jobId } = await api.startSong(payload);
           else if (status.audioUrls?.[0]) setAudioUrl(status.audioUrls[0]);
           // Fetch real audioIds from generation details
           try {
+            console.log("Fetching generation details for jobId:", jobId);
             const info = await api.getMusicGenerationDetails(jobId);
+            console.log("Generation details response:", info);
             const sunoData = info.response?.sunoData ?? [];
+            console.log("Suno data:", sunoData);
             
             // Create versions with real audioIds from provider
             const newVersions = sunoData.map((item: any, index: number) => ({
@@ -228,21 +231,25 @@ const { jobId } = await api.startSong(payload);
               musicIndex: index,
               words: [] as TimestampedWord[]
             }));
+            console.log("Created newVersions:", newVersions);
 
             // Fetch timestamped lyrics using real audioIds
-            const timestampPromises = newVersions.map(version => 
-              api.getTimestampedLyrics({
+            const timestampPromises = newVersions.map(version => {
+              console.log("Fetching timestamps for audioId:", version.audioId);
+              return api.getTimestampedLyrics({
                 taskId: jobId,
                 audioId: version.audioId,
                 musicIndex: version.musicIndex
-              })
-            );
+              });
+            });
             
             const timestampResults = await Promise.all(timestampPromises);
+            console.log("Timestamp results:", timestampResults);
             
             // Normalize API response fields and assign to versions
             newVersions.forEach((version, index) => {
               const result = timestampResults[index];
+              console.log(`Processing result ${index}:`, result);
               if (result.alignedWords) {
                 version.words = result.alignedWords.map(word => ({
                   word: word.word,
@@ -251,9 +258,13 @@ const { jobId } = await api.startSong(payload);
                   success: word.success,
                   p_align: word.p_align
                 }));
+                console.log(`Version ${index} words:`, version.words);
+              } else {
+                console.log(`No alignedWords for version ${index}`);
               }
             });
             
+            console.log("Final versions with words:", newVersions);
             setVersions(newVersions);
           } catch (e) {
             console.warn("Could not fetch timestamped lyrics:", e);
@@ -431,6 +442,16 @@ const { jobId } = await api.startSong(payload);
               <p className="text-sm text-muted-foreground">Your song will appear here once it’s ready.</p>
             )}
           </Card>
+          
+          {(() => {
+            console.log("Karaoke render check:");
+            console.log("versions.length:", versions.length);
+            console.log("currentAudioIndex:", currentAudioIndex);
+            console.log("versions[currentAudioIndex]:", versions[currentAudioIndex]);
+            console.log("versions[currentAudioIndex]?.words.length:", versions[currentAudioIndex]?.words.length);
+            console.log("Should show karaoke:", versions.length > 0 && versions[currentAudioIndex]?.words.length > 0);
+            return null;
+          })()}
           
           {versions.length > 0 && versions[currentAudioIndex]?.words.length > 0 && (
             <Card className="p-4 space-y-3">
