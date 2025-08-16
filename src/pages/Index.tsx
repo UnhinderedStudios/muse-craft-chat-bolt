@@ -273,6 +273,7 @@ async function startGeneration() {
       const maxCompletionAttempts = 40; // ~60-90s max
       let statusRaw = "PENDING";
       let sunoData: any[] = [];
+      let generationComplete = false;
 
       while (completionAttempts++ < maxCompletionAttempts) {
         // More conservative real progress updates
@@ -310,6 +311,7 @@ async function startGeneration() {
               setLastProgressUpdate(Date.now());
               return Math.max(current, 75);
             });
+            generationComplete = true;
             break;
           }
           
@@ -322,7 +324,7 @@ async function startGeneration() {
         }
       }
 
-      if (completionAttempts >= maxCompletionAttempts) {
+      if (!generationComplete) {
         throw new Error("Generation timed out waiting for completion");
       }
 
