@@ -48,7 +48,7 @@ serve(async (req) => {
       
       const alignedWords = [];
       // Use different start times for each version since they're separate calls
-      let currentTime = musicIndex === 0 ? 18.0 : 17.5;
+      let currentTime = musicIndex === 0 ? 18.0 : 15.5;
       
       for (let i = 0; i < words.length; i++) {
         const word = words[i];
