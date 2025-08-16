@@ -13,6 +13,8 @@ function json(data: unknown, init?: ResponseInit): Response {
   });
 }
 
+const API_BASE = "https://api.api.box/api/v1";
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -23,67 +25,45 @@ serve(async (req) => {
       return json({ error: 'Method not allowed' }, { status: 405 });
     }
 
-    const { taskId, audioId, musicIndex = 0, lyrics } = await req.json();
+    const apiKey = Deno.env.get('SUNO_API_KEY');
+    if (!apiKey) {
+      return json({ error: 'Missing SUNO_API_KEY' }, { status: 500 });
+    }
+
+    const { taskId, audioId, musicIndex = 0 } = await req.json();
 
     if (!taskId || !audioId) {
       return json({ error: 'taskId and audioId are required' }, { status: 400 });
     }
 
-    // If no lyrics provided, return empty
-    if (!lyrics) {
-      return json({ 
-        alignedWords: [],
-        waveformData: [],
-        hootCer: 0,
-        isStreamed: false 
-      });
+    // Proxy to API Box - Get Timestamped Lyrics for a specific version (musicIndex)
+    const upstream = await fetch(`${API_BASE}/generate/get-timestamped-lyrics`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ taskId, audioId, musicIndex }),
+    });
+
+    const payload = await upstream.json().catch(() => ({}));
+
+    if (!upstream.ok || payload?.code !== 200) {
+      const msg = payload?.msg || upstream.statusText || 'Bad upstream response';
+      console.error('[timestamped-lyrics] Upstream error:', msg, payload);
+      return json({ error: msg }, { status: 502 });
     }
 
-    // Parse lyrics and create timestamped words
-    function createTimestampedLyrics(lyricsText: string, musicIndex: number) {
-      const words = lyricsText
-        .replace(/\n/g, ' ')
-        .split(/\s+/)
-        .filter(word => word.trim().length > 0);
-      
-      const alignedWords = [];
-      // Generate proper timestamps starting from song beginning for each version
-      let currentTime = 0.0;
-      
-      for (let i = 0; i < words.length; i++) {
-        const word = words[i];
-        const wordDuration = Math.max(0.2, word.length * 0.1 + Math.random() * 0.3); // Variable duration based on word length
-        
-        alignedWords.push({
-          word: word,
-          success: true,
-          start_s: currentTime,
-          end_s: currentTime + wordDuration,
-          p_align: 0
-        });
-        
-        currentTime += wordDuration + (Math.random() * 0.2 + 0.1); // Small gap between words
-        
-        // Add longer pauses after punctuation
-        if (word.match(/[.,!?;:]$/)) {
-          currentTime += Math.random() * 0.5 + 0.3;
-        }
-      }
-      
-      return alignedWords;
-    }
-
-    const alignedWords = createTimestampedLyrics(lyrics, musicIndex);
-
-    const timestampedLyrics = {
-      alignedWords,
-      waveformData: [0, 0.2, 0.5, 0.8, 1.0, 0.7, 0.4, 0.1],
-      hootCer: 0.85,
-      isStreamed: false
+    const data = payload.data || {};
+    // Normalize the response to our frontend shape
+    const out = {
+      alignedWords: Array.isArray(data.alignedWords) ? data.alignedWords : [],
+      waveformData: Array.isArray(data.waveformData) ? data.waveformData : [],
+      hootCer: typeof data.hootCer === 'number' ? data.hootCer : undefined,
+      isStreamed: Boolean(data.isStreamed),
     };
 
-    return json(timestampedLyrics);
-    
+    return json(out);
   } catch (error) {
     console.error('Error in timestamped-lyrics function:', error);
     return json({ error: 'Internal server error' }, { status: 500 });
