@@ -141,17 +141,22 @@ export const api = {
     });
 
     const data = await handle(response);
+    console.log("Test album cover response:", data);
 
     if (data.coverUrls && Array.isArray(data.coverUrls)) {
-      return {
+      const covers = {
         cover1: data.coverUrls[0] || '',
         cover2: data.coverUrls[1] || data.coverUrls[0] || ''
       };
+      console.log("Parsed covers:", covers);
+      return covers;
     }
 
-    return {
+    const fallbackCovers = {
       cover1: data.imageUrl || '',
       cover2: data.imageUrl || ''
     };
+    console.log("Fallback covers:", fallbackCovers);
+    return fallbackCovers;
   },
 };

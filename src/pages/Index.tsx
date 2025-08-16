@@ -617,6 +617,7 @@ async function startGeneration() {
                     
                     toast.info("API key found, generating test album covers...");
                     const covers = await api.testAlbumCover();
+                    console.log("Setting album covers:", covers);
                     setAlbumCovers(covers);
                     toast.success("Test album covers generated!");
                   } catch (error: any) {
@@ -638,8 +639,8 @@ async function startGeneration() {
           <Card className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-medium">Output</h2>
-              {/* Album covers moved outside loop */}
-              {audioUrls && audioUrls.length > 0 && (
+              {/* Album covers - show when available */}
+              {(albumCovers || isGeneratingCovers) && (
                 <div className="flex-shrink-0">
                   {albumCovers ? (
                     <div className="flex gap-2">
@@ -647,11 +648,15 @@ async function startGeneration() {
                         src={albumCovers.cover1}
                         alt="Album Cover 1"
                         className="w-16 h-16 rounded-md object-cover border border-border"
+                        onLoad={() => console.log("Cover 1 loaded:", albumCovers.cover1)}
+                        onError={() => console.log("Cover 1 failed to load:", albumCovers.cover1)}
                       />
                       <img
                         src={albumCovers.cover2}
                         alt="Album Cover 2"
                         className="w-16 h-16 rounded-md object-cover border border-border"
+                        onLoad={() => console.log("Cover 2 loaded:", albumCovers.cover2)}
+                        onError={() => console.log("Cover 2 failed to load:", albumCovers.cover2)}
                       />
                     </div>
                   ) : isGeneratingCovers ? (
