@@ -601,63 +601,63 @@ async function startGeneration() {
           </Card>
 
           <Card className="p-4 space-y-3">
-            <h2 className="text-lg font-medium">Output</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-medium">Output</h2>
+              {/* Album covers moved outside loop */}
+              {audioUrls && audioUrls.length > 0 && (
+                <div className="flex-shrink-0">
+                  {albumCovers ? (
+                    <div className="flex gap-2">
+                      <img
+                        src={albumCovers.cover1}
+                        alt="Album Cover 1"
+                        className="w-16 h-16 rounded-md object-cover border border-border"
+                      />
+                      <img
+                        src={albumCovers.cover2}
+                        alt="Album Cover 2"
+                        className="w-16 h-16 rounded-md object-cover border border-border"
+                      />
+                    </div>
+                  ) : isGeneratingCovers ? (
+                    <div className="flex gap-2">
+                      <div className="w-16 h-16 rounded-md bg-muted animate-pulse border border-border" />
+                      <div className="w-16 h-16 rounded-md bg-muted animate-pulse border border-border" />
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <div className="w-16 h-16 rounded-md bg-muted/50 border border-border" />
+                      <div className="w-16 h-16 rounded-md bg-muted/50 border border-border" />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
             {audioUrls && audioUrls.length > 0 ? (
               <div className="space-y-4">
                 {audioUrls.map((url, idx) => (
                   <div key={`${url}-${idx}`} className="relative overflow-hidden rounded-lg border border-border bg-background/50 hover:bg-background/80 transition-all duration-300">
                     <div className="p-4">
-                      <div className="flex items-start gap-4">
-                        {/* Album covers on the left */}
-                        <div className="flex-shrink-0">
-                          {albumCovers ? (
-                            <div className="flex gap-2">
-                              <img
-                                src={albumCovers.cover1}
-                                alt="Album Cover 1"
-                                className="w-16 h-16 rounded-md object-cover border border-border"
-                              />
-                              <img
-                                src={albumCovers.cover2}
-                                alt="Album Cover 2"
-                                className="w-16 h-16 rounded-md object-cover border border-border"
-                              />
-                            </div>
-                          ) : isGeneratingCovers ? (
-                            <div className="flex gap-2">
-                              <div className="w-16 h-16 rounded-md bg-muted animate-pulse border border-border" />
-                              <div className="w-16 h-16 rounded-md bg-muted animate-pulse border border-border" />
-                            </div>
-                          ) : (
-                            <div className="flex gap-2">
-                              <div className="w-16 h-16 rounded-md bg-muted/50 border border-border" />
-                              <div className="w-16 h-16 rounded-md bg-muted/50 border border-border" />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Song content */}
-                        <div className="flex-1 space-y-2">
-                          <p className="text-sm text-muted-foreground">Version {idx + 1}</p>
-                          <audio
-                            src={url}
-                            controls
-                            className="w-full"
-                            preload="auto"
-                            onPlay={() => handleAudioPlay(idx)}
-                            onPause={handleAudioPause}
-                            onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
-                            onEnded={handleAudioPause}
-                            ref={(el) => { if (el) audioRefs.current[idx] = el; }}
-                          />
-                          <a
-                            href={url}
-                            download
-                            className="inline-flex h-10 items-center rounded-md bg-secondary px-4 text-sm"
-                          >
-                            Download version {idx + 1}
-                          </a>
-                        </div>
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Version {idx + 1}</p>
+                        <audio
+                          src={url}
+                          controls
+                          className="w-full"
+                          preload="auto"
+                          onPlay={() => handleAudioPlay(idx)}
+                          onPause={handleAudioPause}
+                          onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
+                          onEnded={handleAudioPause}
+                          ref={(el) => { if (el) audioRefs.current[idx] = el; }}
+                        />
+                        <a
+                          href={url}
+                          download
+                          className="inline-flex h-10 items-center rounded-md bg-secondary px-4 text-sm"
+                        >
+                          Download version {idx + 1}
+                        </a>
                       </div>
                     </div>
                   </div>
@@ -711,16 +711,13 @@ async function startGeneration() {
                   currentTime={currentTime}
                   isPlaying={isPlaying}
                 />
-              ) : versions[currentAudioIndex]?.hasTimestamps === false ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>Timestamped lyrics not available</p>
-                  {versions[currentAudioIndex]?.timestampError && (
-                    <p className="text-sm mt-2">Error: {versions[currentAudioIndex].timestampError}</p>
-                  )}
+              ) : details.lyrics ? (
+                <div className="min-h-[200px] max-h-[400px] overflow-y-auto p-4 rounded-md border bg-muted/20 whitespace-pre-wrap">
+                  {details.lyrics}
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  <p>Loading timestamped lyrics...</p>
+                  <p>No lyrics available</p>
                 </div>
               )}
             </Card>
