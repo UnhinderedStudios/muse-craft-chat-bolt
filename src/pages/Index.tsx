@@ -79,9 +79,11 @@ const Index = () => {
   const [currentAudioIndex, setCurrentAudioIndex] = useState<number>(0);
   const [showFullscreenKaraoke, setShowFullscreenKaraoke] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<number>(0);
+  const [targetProgress, setTargetProgress] = useState<number>(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const audioRefs = useRef<HTMLAudioElement[]>([]);
   const lastDiceAt = useRef<number>(0);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
@@ -91,6 +93,34 @@ const Index = () => {
     // reset audio refs when result list changes
     audioRefs.current = [];
   }, [audioUrls, audioUrl]);
+
+  // Smooth progress animation
+  useEffect(() => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+    }
+
+    if (busy && targetProgress > 0) {
+      progressIntervalRef.current = setInterval(() => {
+        setGenerationProgress(current => {
+          const diff = targetProgress - current;
+          if (Math.abs(diff) < 0.1) {
+            return targetProgress;
+          }
+          
+          // Smooth acceleration towards target
+          const increment = Math.max(0.1, diff * 0.05);
+          return Math.min(current + increment, targetProgress);
+        });
+      }, 50);
+    }
+
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
+  }, [targetProgress, busy]);
 
   // Ensure only one audio element plays at a time across the page
   useEffect(() => {
@@ -207,6 +237,7 @@ async function startGeneration() {
     setJobId(null);
     setVersions([]);
     setGenerationProgress(0);
+    setTargetProgress(0);
     setBusy(true);
     
     try {
@@ -231,14 +262,10 @@ async function startGeneration() {
         else if (statusRaw === "TEXT_SUCCESS") statusProgress = 50;
         else if (statusRaw === "SUCCESS") statusProgress = 70;
         
-        setGenerationProgress(Math.max(baseProgress, statusProgress));
+        setTargetProgress(Math.max(baseProgress, statusProgress));
         
         const backoffDelay = Math.min(1500 + completionAttempts * 300, 4000);
         await new Promise((r) => setTimeout(r, backoffDelay));
-        
-        // Smooth progress animation during wait
-        const progressIncrement = Math.min(2, 60 / maxCompletionAttempts);
-        setGenerationProgress(prev => Math.min(prev + progressIncrement, 75));
         
         try {
           const details = await api.getMusicGenerationDetails(jobId);
@@ -250,7 +277,7 @@ async function startGeneration() {
           // Check for completion - accept SUCCESS but not intermediate states
           if (statusRaw === "SUCCESS" || statusRaw === "COMPLETE" || statusRaw === "ALL_SUCCESS") {
             console.log("[Generation] Phase A: Generation completed!");
-            setGenerationProgress(75);
+            setTargetProgress(75);
             break;
           }
           
@@ -309,7 +336,7 @@ async function startGeneration() {
       console.log("[Generation] Phase B: Fetching timestamped lyrics...");
       console.log("[Generation] Using newVersions for timestamp fetching:", newVersions);
       console.log("[Generation] newVersions.length:", newVersions.length);
-      setGenerationProgress(85);
+      setTargetProgress(85);
           
           if (newVersions.length === 0) {
             console.warn("[Generation] No versions available for timestamp fetching");
@@ -378,7 +405,7 @@ async function startGeneration() {
           setVersions(updatedVersions);
           
           const successCount = updatedVersions.filter(v => v.hasTimestamps).length;
-          setGenerationProgress(100);
+          setTargetProgress(100);
           if (successCount > 0) {
             toast.success(`Song ready with karaoke lyrics! (${successCount}/${updatedVersions.length} versions)`);
           } else {
