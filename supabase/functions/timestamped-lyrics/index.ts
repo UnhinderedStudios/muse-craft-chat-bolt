@@ -47,7 +47,7 @@ serve(async (req) => {
         .filter(word => word.trim().length > 0);
       
       const alignedWords = [];
-      // Different versions might have slightly different intro lengths
+      // Use different start times for each version since they're separate calls
       let currentTime = musicIndex === 0 ? 18.0 : 17.5;
       
       for (let i = 0; i < words.length; i++) {
