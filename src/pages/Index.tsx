@@ -70,6 +70,8 @@ const Index = () => {
     audioId: string;
     musicIndex: number;
     words: TimestampedWord[];
+    hasTimestamps?: boolean;
+    timestampError?: string;
   }>>([]);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
@@ -251,17 +253,28 @@ const { jobId } = await api.startSong(payload);
                     end: word.end_s,
                     success: word.success,
                     p_align: word.p_align
-                  }))
+                  })),
+                  hasTimestamps: true
                 };
               }
-              return version;
+              return {
+                ...version,
+                hasTimestamps: false,
+                timestampError: "No aligned words available"
+              };
             });
             
             console.log("Updated versions with words:", updatedVersions);
             setVersions(updatedVersions);
           } catch (e) {
             console.warn("Could not fetch timestamped lyrics:", e);
-            // Keep versions without words so karaoke still shows
+            // Mark versions as failed but keep them so karaoke still shows
+            const failedVersions = newVersions.map(version => ({
+              ...version,
+              hasTimestamps: false,
+              timestampError: e instanceof Error ? e.message : "Failed to load timestamps"
+            }));
+            setVersions(failedVersions);
           }
           
           toast.success("Your song is ready!");
@@ -432,16 +445,22 @@ const { jobId } = await api.startSong(payload);
           {versions.length > 0 && (
             <Card className="p-4 space-y-3">
               <h2 className="text-lg font-medium">Karaoke Lyrics</h2>
-              {versions[currentAudioIndex]?.words.length > 0 ? (
+              {versions[currentAudioIndex]?.words?.length > 0 ? (
                 <KaraokeLyrics 
-                  words={versions[currentAudioIndex]?.words ?? []}
+                  words={versions[currentAudioIndex].words}
                   currentTime={currentTime}
                   isPlaying={isPlaying}
-                  className="text-center p-4 min-h-[200px] bg-muted/20 rounded-lg"
                 />
+              ) : versions[currentAudioIndex]?.hasTimestamps === false ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Timestamped lyrics not available</p>
+                  {versions[currentAudioIndex]?.timestampError && (
+                    <p className="text-sm mt-2">Error: {versions[currentAudioIndex].timestampError}</p>
+                  )}
+                </div>
               ) : (
-                <div className="text-center p-8 text-muted-foreground bg-muted/20 rounded-lg">
-                  Loading karaoke lyrics...
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Loading timestamped lyrics...</p>
                 </div>
               )}
             </Card>
