@@ -213,11 +213,11 @@ const { jobId } = await api.startSong(payload);
           if (status.audioUrl) setAudioUrl(status.audioUrl);
           else if (status.audioUrls?.[0]) setAudioUrl(status.audioUrls[0]);
           
-          // Fetch timestamped lyrics for both versions
+          // Fetch timestamped lyrics for both versions with unique IDs
           try {
             const [lyricsResult1, lyricsResult2] = await Promise.all([
-              api.getTimestampedLyrics(jobId, jobId, details.lyrics, 0),
-              api.getTimestampedLyrics(jobId, jobId, details.lyrics, 1)
+              api.getTimestampedLyrics(`${jobId}-v1`, status.audioUrls![0], details.lyrics, 0),
+              api.getTimestampedLyrics(`${jobId}-v2`, status.audioUrls![1], details.lyrics, 1)
             ]);
             
             if (lyricsResult1.alignedWords) {
