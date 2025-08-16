@@ -79,4 +79,40 @@ export const api = {
     });
     return handle(resp);
   },
+
+  async generateAlbumCovers(lyrics: string): Promise<{ cover1: string; cover2: string }> {
+    // First, get the album cover prompt from ChatGPT
+    const promptResponse = await this.chat([
+      {
+        role: "user",
+        content: `Summarise the song lyrics as if you were making a cool vibrant album cover that shouldn't have any humans being shown in it, this is meant to be a prompt for Google Imagen 4, do not use any parameter instructions such as AR16:9, I only want the prompt text.\n\nLyrics:\n${lyrics}`
+      }
+    ]);
+
+    const albumPrompt = promptResponse.content;
+
+    // Generate two unique album covers using the same prompt
+    const [cover1Response, cover2Response] = await Promise.all([
+      fetch(`${FUNCTIONS_BASE}/generate-album-cover`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: albumPrompt }),
+      }),
+      fetch(`${FUNCTIONS_BASE}/generate-album-cover`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: albumPrompt }),
+      })
+    ]);
+
+    const [cover1Data, cover2Data] = await Promise.all([
+      handle(cover1Response),
+      handle(cover2Response)
+    ]);
+
+    return {
+      cover1: `data:image/png;base64,${cover1Data.imageData}`,
+      cover2: `data:image/png;base64,${cover2Data.imageData}`
+    };
+  },
 };

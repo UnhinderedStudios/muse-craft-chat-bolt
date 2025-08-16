@@ -80,6 +80,8 @@ const Index = () => {
   const [showFullscreenKaraoke, setShowFullscreenKaraoke] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<number>(0);
   const [lastProgressUpdate, setLastProgressUpdate] = useState<number>(Date.now());
+  const [albumCovers, setAlbumCovers] = useState<{ cover1: string; cover2: string } | null>(null);
+  const [isGeneratingCovers, setIsGeneratingCovers] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const audioRefs = useRef<HTMLAudioElement[]>([]);
   const lastDiceAt = useRef<number>(0);
@@ -255,6 +257,8 @@ async function startGeneration() {
     setVersions([]);
     setGenerationProgress(0);
     setLastProgressUpdate(Date.now());
+    setAlbumCovers(null);
+    setIsGeneratingCovers(false);
     setBusy(true);
     
     try {
@@ -443,6 +447,22 @@ async function startGeneration() {
           } else {
             toast.success("Song ready! (Karaoke lyrics unavailable)");
           }
+
+          // Generate album covers in background if we have lyrics
+          if (details.lyrics && !isGeneratingCovers && !albumCovers) {
+            console.log("Starting album cover generation");
+            setIsGeneratingCovers(true);
+            api.generateAlbumCovers(details.lyrics)
+              .then((covers) => {
+                console.log("Album covers generated successfully");
+                setAlbumCovers(covers);
+                setIsGeneratingCovers(false);
+              })
+              .catch((error) => {
+                console.error("Failed to generate album covers:", error);
+                setIsGeneratingCovers(false);
+              });
+          }
           
           break;
         }
@@ -585,26 +605,61 @@ async function startGeneration() {
             {audioUrls && audioUrls.length > 0 ? (
               <div className="space-y-4">
                 {audioUrls.map((url, idx) => (
-                  <div key={`${url}-${idx}`} className="space-y-2">
-                    <p className="text-sm text-muted-foreground">Version {idx + 1}</p>
-                    <audio
-                      src={url}
-                      controls
-                      className="w-full"
-                      preload="auto"
-                      onPlay={() => handleAudioPlay(idx)}
-                      onPause={handleAudioPause}
-                      onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
-                      onEnded={handleAudioPause}
-                      ref={(el) => { if (el) audioRefs.current[idx] = el; }}
-                    />
-                    <a
-                      href={url}
-                      download
-                      className="inline-flex h-10 items-center rounded-md bg-secondary px-4 text-sm"
-                    >
-                      Download version {idx + 1}
-                    </a>
+                  <div key={`${url}-${idx}`} className="relative overflow-hidden rounded-lg border border-border bg-background/50 hover:bg-background/80 transition-all duration-300">
+                    <div className="p-4">
+                      <div className="flex items-start gap-4">
+                        {/* Album covers on the left */}
+                        <div className="flex-shrink-0">
+                          {albumCovers ? (
+                            <div className="flex gap-2">
+                              <img
+                                src={albumCovers.cover1}
+                                alt="Album Cover 1"
+                                className="w-16 h-16 rounded-md object-cover border border-border"
+                              />
+                              <img
+                                src={albumCovers.cover2}
+                                alt="Album Cover 2"
+                                className="w-16 h-16 rounded-md object-cover border border-border"
+                              />
+                            </div>
+                          ) : isGeneratingCovers ? (
+                            <div className="flex gap-2">
+                              <div className="w-16 h-16 rounded-md bg-muted animate-pulse border border-border" />
+                              <div className="w-16 h-16 rounded-md bg-muted animate-pulse border border-border" />
+                            </div>
+                          ) : (
+                            <div className="flex gap-2">
+                              <div className="w-16 h-16 rounded-md bg-muted/50 border border-border" />
+                              <div className="w-16 h-16 rounded-md bg-muted/50 border border-border" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Song content */}
+                        <div className="flex-1 space-y-2">
+                          <p className="text-sm text-muted-foreground">Version {idx + 1}</p>
+                          <audio
+                            src={url}
+                            controls
+                            className="w-full"
+                            preload="auto"
+                            onPlay={() => handleAudioPlay(idx)}
+                            onPause={handleAudioPause}
+                            onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
+                            onEnded={handleAudioPause}
+                            ref={(el) => { if (el) audioRefs.current[idx] = el; }}
+                          />
+                          <a
+                            href={url}
+                            download
+                            className="inline-flex h-10 items-center rounded-md bg-secondary px-4 text-sm"
+                          >
+                            Download version {idx + 1}
+                          </a>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
