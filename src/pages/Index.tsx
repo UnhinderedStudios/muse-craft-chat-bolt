@@ -321,13 +321,17 @@ async function startGeneration() {
                     console.log(`[Timestamps] Version ${index + 1}: Success with ${result.alignedWords.length} words`);
                     return {
                       ...version,
-                      words: result.alignedWords.map(word => ({
-                        word: word.word,
-                        start: word.start_s || 0,
-                        end: word.end_s || 0,
-                        success: word.success,
-                        p_align: word.p_align
-                      })),
+                      words: result.alignedWords.map((word: any) => {
+                        const start = typeof word.start_s === 'number' ? word.start_s : (typeof word.start === 'number' ? word.start : 0);
+                        const end = typeof word.end_s === 'number' ? word.end_s : (typeof word.end === 'number' ? word.end : 0);
+                        return {
+                          word: word.word,
+                          start,
+                          end,
+                          success: !!word.success,
+                          p_align: word.p_align
+                        };
+                      }),
                       hasTimestamps: true
                     };
                   } else {
