@@ -238,12 +238,17 @@ serve(async (req) => {
           tracks = data;
         }
 
-        // Extract sunoData with audioId and musicIndex for timestamps
-        const sunoData = tracks.map((track, index) => ({
-          id: track.id || `track_${index}`,
-          audioUrl: track.audio_url || track.audioUrl || track.source_audio_url || track.sourceAudioUrl || track.stream_audio_url || track.streamAudioUrl || track.source_stream_audio_url || track.sourceStreamAudioUrl || "",
-          musicIndex: index,
-        }));
+        // Extract sunoData with real audioId and musicIndex for timestamps
+        const sunoData = tracks.map((track, index) => {
+          const realId = track.id || track.audio_id || track.audioId;
+          console.log(`[suno] Track ${index}: Original ID = ${realId}, Full track data:`, JSON.stringify(track, null, 2));
+          
+          return {
+            id: realId || `missing_${index}`,
+            audioUrl: track.audio_url || track.audioUrl || track.source_audio_url || track.sourceAudioUrl || track.stream_audio_url || track.streamAudioUrl || track.source_stream_audio_url || track.sourceStreamAudioUrl || "",
+            musicIndex: index,
+          };
+        });
 
         return json({
           response: {

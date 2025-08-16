@@ -229,8 +229,8 @@ async function startGeneration() {
           
           console.log(`[Generation] Attempt ${completionAttempts}: Status=${statusRaw}, Tracks=${sunoData.length}`);
           
-          // Check for completion
-          if (statusRaw === "ALL_SUCCESS" || statusRaw === "COMPLETE" || statusRaw.includes("SUCCESS")) {
+          // Check for completion - only accept final states
+          if (statusRaw === "ALL_SUCCESS" || statusRaw === "COMPLETE") {
             console.log("[Generation] Phase A: Generation completed!");
             break;
           }
@@ -262,12 +262,20 @@ async function startGeneration() {
           setAudioUrls(status.audioUrls);
           setAudioUrl(status.audioUrls[0]);
           
-          // Create initial versions from audioUrls and sunoData
+          // Create initial versions from audioUrls and sunoData with real IDs
           const newVersions = status.audioUrls.map((url, index) => {
             const trackData = sunoData[index];
+            const realAudioId = trackData?.id;
+            
+            if (!realAudioId || realAudioId.startsWith('track_')) {
+              console.warn(`[Generation] Version ${index}: Missing or invalid audioId, got: ${realAudioId}`);
+            } else {
+              console.log(`[Generation] Version ${index}: Using audioId: ${realAudioId}`);
+            }
+            
             return {
               url,
-              audioId: trackData?.id || `track_${index}`,
+              audioId: realAudioId || `missing_id_${index}`,
               musicIndex: index,
               words: [] as TimestampedWord[],
               hasTimestamps: false
@@ -311,6 +319,8 @@ async function startGeneration() {
                 await new Promise(r => setTimeout(r, exponentialBackoff));
               }
 
+              console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}: Using audioId=${version.audioId}, musicIndex=${version.musicIndex}`);
+              
               const result = await api.getTimestampedLyrics({
                 taskId: jobId,
                 audioId: version.audioId,
