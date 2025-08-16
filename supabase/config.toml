@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.suno]
 verify_jwt = false
+
+[functions.generate-album-cover]
+verify_jwt = false
