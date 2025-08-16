@@ -40,14 +40,15 @@ serve(async (req) => {
     }
 
     // Parse lyrics and create timestamped words
-    function createTimestampedLyrics(lyricsText: string) {
+    function createTimestampedLyrics(lyricsText: string, musicIndex: number) {
       const words = lyricsText
         .replace(/\n/g, ' ')
         .split(/\s+/)
         .filter(word => word.trim().length > 0);
       
       const alignedWords = [];
-      let currentTime = 18.0; // Start much later to account for typical song intro
+      // Different versions might have slightly different intro lengths
+      let currentTime = musicIndex === 0 ? 18.0 : 17.5;
       
       for (let i = 0; i < words.length; i++) {
         const word = words[i];
@@ -72,7 +73,7 @@ serve(async (req) => {
       return alignedWords;
     }
 
-    const alignedWords = createTimestampedLyrics(lyrics);
+    const alignedWords = createTimestampedLyrics(lyrics, musicIndex);
 
     const timestampedLyrics = {
       alignedWords,
