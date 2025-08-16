@@ -323,8 +323,8 @@ async function startGeneration() {
                       ...version,
                       words: result.alignedWords.map(word => ({
                         word: word.word,
-                        start: word.start_s,
-                        end: word.end_s,
+                        start: word.start_s || 0,
+                        end: word.end_s || 0,
                         success: word.success,
                         p_align: word.p_align
                       })),
