@@ -79,13 +79,11 @@ const Index = () => {
   const [currentAudioIndex, setCurrentAudioIndex] = useState<number>(0);
   const [showFullscreenKaraoke, setShowFullscreenKaraoke] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<number>(0);
-  const [targetProgress, setTargetProgress] = useState<number>(0);
-  const [lastRealProgress, setLastRealProgress] = useState<number>(0);
+  const [lastProgressUpdate, setLastProgressUpdate] = useState<number>(Date.now());
   const scrollerRef = useRef<HTMLDivElement>(null);
   const audioRefs = useRef<HTMLAudioElement[]>([]);
   const lastDiceAt = useRef<number>(0);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const organicProgressRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
@@ -96,53 +94,50 @@ const Index = () => {
     audioRefs.current = [];
   }, [audioUrls, audioUrl]);
 
-  // Organic progress system that creates smooth illusion of progress
+  // Smooth progress system that never goes backward and handles stagnation
   useEffect(() => {
-    // Clear existing intervals
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
     }
-    if (organicProgressRef.current) {
-      clearInterval(organicProgressRef.current);
-    }
 
-    if (busy && targetProgress > 0) {
-      // Main progress animation toward target
+    if (busy) {
       progressIntervalRef.current = setInterval(() => {
         setGenerationProgress(current => {
-          const diff = targetProgress - current;
-          if (Math.abs(diff) < 0.1) {
-            return targetProgress;
+          const now = Date.now();
+          const timeSinceUpdate = now - lastProgressUpdate;
+          
+          // If stuck for more than 3 seconds, start organic creeping
+          if (timeSinceUpdate > 3000 && current < 98) {
+            let creepRate = 0.5; // Base creep rate
+            
+            // Accelerate creeping if stuck longer
+            if (timeSinceUpdate > 15000) {
+              creepRate = 1.5; // Faster creep after 15s
+            } else if (timeSinceUpdate > 5000) {
+              creepRate = 1; // Medium creep after 5s
+            }
+            
+            // Slow down creeping as we approach 98%
+            if (current > 85) {
+              creepRate *= (98 - current) / 13; // Gradual slowdown
+            }
+            
+            // Apply organic creep with slight randomness
+            const organicIncrement = creepRate + (Math.random() * 0.3 - 0.15);
+            return Math.min(current + organicIncrement, 98);
           }
           
-          // Smooth acceleration towards target
-          const increment = Math.max(0.2, diff * 0.08);
-          return Math.min(current + increment, targetProgress);
-        });
-      }, 100);
-
-      // Organic progress that slowly creeps up when stuck
-      organicProgressRef.current = setInterval(() => {
-        setTargetProgress(current => {
-          // If we haven't reached 90% yet, add tiny increments to prevent stagnation
-          if (current < 90) {
-            const stagnationIncrement = Math.random() * 0.3 + 0.1; // 0.1-0.4%
-            return Math.min(current + stagnationIncrement, 90);
-          }
           return current;
         });
-      }, 1500 + Math.random() * 2000); // Random interval 1.5-3.5s
+      }, 3000 + Math.random() * 2000); // Check every 3-5 seconds
     }
 
     return () => {
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
       }
-      if (organicProgressRef.current) {
-        clearInterval(organicProgressRef.current);
-      }
     };
-  }, [targetProgress, busy]);
+  }, [busy, lastProgressUpdate]);
 
   // Ensure only one audio element plays at a time across the page
   useEffect(() => {
@@ -259,7 +254,7 @@ async function startGeneration() {
     setJobId(null);
     setVersions([]);
     setGenerationProgress(0);
-    setTargetProgress(0);
+    setLastProgressUpdate(Date.now());
     setBusy(true);
     
     try {
@@ -284,12 +279,15 @@ async function startGeneration() {
         else if (statusRaw === "TEXT_SUCCESS") statusProgress = 55;
         else if (statusRaw === "SUCCESS") statusProgress = 70;
         
-        const newTarget = Math.max(baseProgress, statusProgress);
-        // Only update target if it's significantly higher to prevent regression
-        if (newTarget > targetProgress + 2) {
-          setTargetProgress(newTarget);
-          setLastRealProgress(newTarget);
-        }
+        const newProgress = Math.max(baseProgress, statusProgress);
+        // Update progress only if it's higher (never go backward)
+        setGenerationProgress(current => {
+          if (newProgress > current) {
+            setLastProgressUpdate(Date.now());
+            return newProgress;
+          }
+          return current;
+        });
         
         const backoffDelay = Math.min(1500 + completionAttempts * 300, 4000);
         await new Promise((r) => setTimeout(r, backoffDelay));
@@ -304,7 +302,10 @@ async function startGeneration() {
           // Check for completion - accept SUCCESS but not intermediate states
           if (statusRaw === "SUCCESS" || statusRaw === "COMPLETE" || statusRaw === "ALL_SUCCESS") {
             console.log("[Generation] Phase A: Generation completed!");
-            setTargetProgress(75);
+            setGenerationProgress(current => {
+              setLastProgressUpdate(Date.now());
+              return Math.max(current, 75);
+            });
             break;
           }
           
@@ -363,7 +364,10 @@ async function startGeneration() {
       console.log("[Generation] Phase B: Fetching timestamped lyrics...");
       console.log("[Generation] Using newVersions for timestamp fetching:", newVersions);
       console.log("[Generation] newVersions.length:", newVersions.length);
-      setTargetProgress(85);
+          setGenerationProgress(current => {
+            setLastProgressUpdate(Date.now());
+            return Math.max(current, 85);
+          });
           
           if (newVersions.length === 0) {
             console.warn("[Generation] No versions available for timestamp fetching");
@@ -432,7 +436,8 @@ async function startGeneration() {
           setVersions(updatedVersions);
           
           const successCount = updatedVersions.filter(v => v.hasTimestamps).length;
-          setTargetProgress(100);
+          setGenerationProgress(100);
+          setLastProgressUpdate(Date.now());
           if (successCount > 0) {
             toast.success(`Song ready with karaoke lyrics! (${successCount}/${updatedVersions.length} versions)`);
           } else {
