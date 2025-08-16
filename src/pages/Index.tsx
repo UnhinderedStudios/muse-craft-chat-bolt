@@ -119,7 +119,11 @@ const Index = () => {
   };
 
   const handleTimeUpdate = (audio: HTMLAudioElement) => {
-    setCurrentTime(audio.currentTime);
+    // Only update time for the currently active audio
+    const activeIndex = audioRefs.current.findIndex(ref => ref === audio);
+    if (activeIndex === currentAudioIndex) {
+      setCurrentTime(audio.currentTime);
+    }
   };
 
   async function onSend() {
