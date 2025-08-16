@@ -1,5 +1,8 @@
 project_id = "afsyxzxwxszujnsmukff"
 
+[functions.timestamped-lyrics]
+verify_jwt = false
+
 [functions.chat]
 verify_jwt = false
 

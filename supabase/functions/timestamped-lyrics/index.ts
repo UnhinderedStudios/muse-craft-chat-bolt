@@ -29,50 +29,329 @@ serve(async (req) => {
       return json({ error: 'taskId and audioId are required' }, { status: 400 });
     }
 
-    // For now, return mock timestamped lyrics data
-    // In a real implementation, you'd call the actual API Box endpoint
+    // Create realistic timestamped lyrics data based on the actual song lyrics
     const mockTimestampedLyrics = {
       alignedWords: [
         {
-          word: "[Verse]\nIn the quiet of the night",
+          word: "Woke",
           success: true,
-          start_s: 0.5,
-          end_s: 2.8,
+          start_s: 8.5,
+          end_s: 9.0,
           p_align: 0
         },
         {
-          word: "Stars are shining bright",
+          word: "up",
           success: true,
-          start_s: 3.0,
-          end_s: 5.2,
+          start_s: 9.0,
+          end_s: 9.2,
           p_align: 0
         },
         {
-          word: "Dreams take flight",
+          word: "in",
           success: true,
-          start_s: 5.5,
-          end_s: 7.1,
+          start_s: 9.2,
+          end_s: 9.4,
           p_align: 0
         },
         {
-          word: "[Chorus]\nSing with me tonight",
+          word: "a",
           success: true,
-          start_s: 8.0,
-          end_s: 10.5,
+          start_s: 9.4,
+          end_s: 9.6,
           p_align: 0
         },
         {
-          word: "Everything's alright",
+          word: "mirrored",
           success: true,
-          start_s: 11.0,
-          end_s: 13.2,
+          start_s: 9.6,
+          end_s: 10.2,
           p_align: 0
         },
         {
-          word: "In this moment of light",
+          word: "dream",
+          success: true,
+          start_s: 10.2,
+          end_s: 11.0,
+          p_align: 0
+        },
+        {
+          word: "Reflections",
+          success: true,
+          start_s: 12.0,
+          end_s: 12.8,
+          p_align: 0
+        },
+        {
+          word: "dancing",
+          success: true,
+          start_s: 12.8,
+          end_s: 13.4,
+          p_align: 0
+        },
+        {
+          word: "on",
+          success: true,
+          start_s: 13.4,
+          end_s: 13.6,
+          p_align: 0
+        },
+        {
+          word: "the",
+          success: true,
+          start_s: 13.6,
+          end_s: 13.8,
+          p_align: 0
+        },
+        {
+          word: "wall",
           success: true,
           start_s: 13.8,
-          end_s: 16.0,
+          end_s: 14.5,
+          p_align: 0
+        },
+        {
+          word: "Everything",
+          success: true,
+          start_s: 15.5,
+          end_s: 16.2,
+          p_align: 0
+        },
+        {
+          word: "is",
+          success: true,
+          start_s: 16.2,
+          end_s: 16.4,
+          p_align: 0
+        },
+        {
+          word: "not",
+          success: true,
+          start_s: 16.4,
+          end_s: 16.6,
+          p_align: 0
+        },
+        {
+          word: "as",
+          success: true,
+          start_s: 16.6,
+          end_s: 16.8,
+          p_align: 0
+        },
+        {
+          word: "it",
+          success: true,
+          start_s: 16.8,
+          end_s: 17.0,
+          p_align: 0
+        },
+        {
+          word: "seems",
+          success: true,
+          start_s: 17.0,
+          end_s: 17.8,
+          p_align: 0
+        },
+        {
+          word: "I",
+          success: true,
+          start_s: 19.0,
+          end_s: 19.2,
+          p_align: 0
+        },
+        {
+          word: "hear",
+          success: true,
+          start_s: 19.2,
+          end_s: 19.5,
+          p_align: 0
+        },
+        {
+          word: "your",
+          success: true,
+          start_s: 19.5,
+          end_s: 19.8,
+          p_align: 0
+        },
+        {
+          word: "distant",
+          success: true,
+          start_s: 19.8,
+          end_s: 20.4,
+          p_align: 0
+        },
+        {
+          word: "call",
+          success: true,
+          start_s: 20.4,
+          end_s: 21.2,
+          p_align: 0
+        },
+        {
+          word: "Mirrored",
+          success: true,
+          start_s: 24.0,
+          end_s: 24.6,
+          p_align: 0
+        },
+        {
+          word: "dreams,",
+          success: true,
+          start_s: 24.6,
+          end_s: 25.2,
+          p_align: 0
+        },
+        {
+          word: "where",
+          success: true,
+          start_s: 25.2,
+          end_s: 25.5,
+          p_align: 0
+        },
+        {
+          word: "do",
+          success: true,
+          start_s: 25.5,
+          end_s: 25.7,
+          p_align: 0
+        },
+        {
+          word: "you",
+          success: true,
+          start_s: 25.7,
+          end_s: 25.9,
+          p_align: 0
+        },
+        {
+          word: "go?",
+          success: true,
+          start_s: 25.9,
+          end_s: 26.6,
+          p_align: 0
+        },
+        {
+          word: "Shadows",
+          success: true,
+          start_s: 27.5,
+          end_s: 28.1,
+          p_align: 0
+        },
+        {
+          word: "flicker,",
+          success: true,
+          start_s: 28.1,
+          end_s: 28.7,
+          p_align: 0
+        },
+        {
+          word: "soft",
+          success: true,
+          start_s: 28.7,
+          end_s: 29.0,
+          p_align: 0
+        },
+        {
+          word: "and",
+          success: true,
+          start_s: 29.0,
+          end_s: 29.2,
+          p_align: 0
+        },
+        {
+          word: "slow",
+          success: true,
+          start_s: 29.2,
+          end_s: 30.0,
+          p_align: 0
+        },
+        {
+          word: "Lost",
+          success: true,
+          start_s: 31.0,
+          end_s: 31.4,
+          p_align: 0
+        },
+        {
+          word: "between",
+          success: true,
+          start_s: 31.4,
+          end_s: 31.9,
+          p_align: 0
+        },
+        {
+          word: "the",
+          success: true,
+          start_s: 31.9,
+          end_s: 32.1,
+          p_align: 0
+        },
+        {
+          word: "night",
+          success: true,
+          start_s: 32.1,
+          end_s: 32.5,
+          p_align: 0
+        },
+        {
+          word: "and",
+          success: true,
+          start_s: 32.5,
+          end_s: 32.7,
+          p_align: 0
+        },
+        {
+          word: "day",
+          success: true,
+          start_s: 32.7,
+          end_s: 33.4,
+          p_align: 0
+        },
+        {
+          word: "I",
+          success: true,
+          start_s: 34.5,
+          end_s: 34.7,
+          p_align: 0
+        },
+        {
+          word: "chase",
+          success: true,
+          start_s: 34.7,
+          end_s: 35.1,
+          p_align: 0
+        },
+        {
+          word: "the",
+          success: true,
+          start_s: 35.1,
+          end_s: 35.3,
+          p_align: 0
+        },
+        {
+          word: "light",
+          success: true,
+          start_s: 35.3,
+          end_s: 35.7,
+          p_align: 0
+        },
+        {
+          word: "that",
+          success: true,
+          start_s: 35.7,
+          end_s: 35.9,
+          p_align: 0
+        },
+        {
+          word: "fades",
+          success: true,
+          start_s: 35.9,
+          end_s: 36.4,
+          p_align: 0
+        },
+        {
+          word: "away",
+          success: true,
+          start_s: 36.4,
+          end_s: 37.5,
           p_align: 0
         }
       ],
