@@ -9,6 +9,7 @@ import { api, type ChatMessage, type SongDetails } from "@/lib/api";
 import { ChatBubble } from "@/components/chat/ChatBubble";
 import { KaraokeLyrics, type TimestampedWord } from "@/components/KaraokeLyrics";
 import { sanitizeStyle } from "@/lib/styleSanitizer";
+import { Progress } from "@/components/ui/progress";
 import { Dice5, Mic } from "lucide-react";
 
 const systemPrompt = `You are Melody Muse, a friendly creative assistant for songwriting.
@@ -77,6 +78,7 @@ const Index = () => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentAudioIndex, setCurrentAudioIndex] = useState<number>(0);
   const [showFullscreenKaraoke, setShowFullscreenKaraoke] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState<number>(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const audioRefs = useRef<HTMLAudioElement[]>([]);
   const lastDiceAt = useRef<number>(0);
@@ -204,6 +206,7 @@ async function startGeneration() {
     setAudioUrls(null);
     setJobId(null);
     setVersions([]);
+    setGenerationProgress(0);
     setBusy(true);
     
     try {
@@ -220,8 +223,22 @@ async function startGeneration() {
       let sunoData: any[] = [];
 
       while (completionAttempts++ < maxCompletionAttempts) {
+        // Update progress based on attempts and status
+        const baseProgress = Math.min((completionAttempts / maxCompletionAttempts) * 60, 50);
+        let statusProgress = 0;
+        if (statusRaw === "PENDING") statusProgress = 10;
+        else if (statusRaw === "FIRST_SUCCESS") statusProgress = 30;
+        else if (statusRaw === "TEXT_SUCCESS") statusProgress = 50;
+        else if (statusRaw === "SUCCESS") statusProgress = 70;
+        
+        setGenerationProgress(Math.max(baseProgress, statusProgress));
+        
         const backoffDelay = Math.min(1500 + completionAttempts * 300, 4000);
         await new Promise((r) => setTimeout(r, backoffDelay));
+        
+        // Smooth progress animation during wait
+        const progressIncrement = Math.min(2, 60 / maxCompletionAttempts);
+        setGenerationProgress(prev => Math.min(prev + progressIncrement, 75));
         
         try {
           const details = await api.getMusicGenerationDetails(jobId);
@@ -233,6 +250,7 @@ async function startGeneration() {
           // Check for completion - accept SUCCESS but not intermediate states
           if (statusRaw === "SUCCESS" || statusRaw === "COMPLETE" || statusRaw === "ALL_SUCCESS") {
             console.log("[Generation] Phase A: Generation completed!");
+            setGenerationProgress(75);
             break;
           }
           
@@ -287,10 +305,11 @@ async function startGeneration() {
           setVersions(newVersions);
           toast.success("Audio ready! Fetching karaoke lyrics...");
           
-          // Phase B: Fetch timestamped lyrics for each version with retry logic
-          console.log("[Generation] Phase B: Fetching timestamped lyrics...");
-          console.log("[Generation] Using newVersions for timestamp fetching:", newVersions);
-          console.log("[Generation] newVersions.length:", newVersions.length);
+      // Phase B: Fetch timestamped lyrics for each version with retry logic
+      console.log("[Generation] Phase B: Fetching timestamped lyrics...");
+      console.log("[Generation] Using newVersions for timestamp fetching:", newVersions);
+      console.log("[Generation] newVersions.length:", newVersions.length);
+      setGenerationProgress(85);
           
           if (newVersions.length === 0) {
             console.warn("[Generation] No versions available for timestamp fetching");
@@ -359,6 +378,7 @@ async function startGeneration() {
           setVersions(updatedVersions);
           
           const successCount = updatedVersions.filter(v => v.hasTimestamps).length;
+          setGenerationProgress(100);
           if (successCount > 0) {
             toast.success(`Song ready with karaoke lyrics! (${successCount}/${updatedVersions.length} versions)`);
           } else {
@@ -477,6 +497,25 @@ async function startGeneration() {
                 className="min-h-[120px]"
               />
             </div>
+            {busy && generationProgress > 0 && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Generating...</span>
+                  <span className="font-medium text-primary">{Math.round(generationProgress)}%</span>
+                </div>
+                <Progress 
+                  value={generationProgress} 
+                  className="h-2 bg-gradient-to-r from-primary/20 to-accent/20"
+                />
+                <div className="text-xs text-center text-muted-foreground">
+                  {generationProgress < 25 ? "Starting generation..." :
+                   generationProgress < 50 ? "Composing music..." :
+                   generationProgress < 75 ? "Finalizing tracks..." :
+                   generationProgress < 90 ? "Processing audio..." :
+                   "Adding karaoke lyrics..."}
+                </div>
+              </div>
+            )}
             <Button onClick={startGeneration} disabled={busy || !canGenerate} variant="hero">
               {busy ? "Working..." : jobId ? "Generating..." : "Generate with Suno"}
             </Button>
