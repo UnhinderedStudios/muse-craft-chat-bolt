@@ -380,24 +380,24 @@ const { jobId } = await api.startSong(payload);
 
           <Card className="p-4 space-y-3">
             <h2 className="text-lg font-medium">Output</h2>
-            {versions && versions.length > 0 ? (
+            {audioUrls && audioUrls.length > 0 ? (
               <div className="space-y-4">
-                {versions.map((version, idx) => (
-                  <div key={version.audioId} className="space-y-2">
+                {audioUrls.map((url, idx) => (
+                  <div key={`${url}-${idx}`} className="space-y-2">
                     <p className="text-sm text-muted-foreground">Version {idx + 1}</p>
-                     <audio
-                        src={version.url}
-                        controls
-                        className="w-full"
-                        preload="auto"
-                        onPlay={() => handleAudioPlay(idx)}
-                        onPause={handleAudioPause}
-                        onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
-                        onEnded={handleAudioPause}
-                        ref={(el) => { if (el) audioRefs.current[idx] = el; }}
-                      />
+                    <audio
+                      src={url}
+                      controls
+                      className="w-full"
+                      preload="auto"
+                      onPlay={() => handleAudioPlay(idx)}
+                      onPause={handleAudioPause}
+                      onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
+                      onEnded={handleAudioPause}
+                      ref={(el) => { if (el) audioRefs.current[idx] = el; }}
+                    />
                     <a
-                      href={version.url}
+                      href={url}
                       download
                       className="inline-flex h-10 items-center rounded-md bg-secondary px-4 text-sm"
                     >
