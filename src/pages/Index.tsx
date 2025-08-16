@@ -216,22 +216,25 @@ const { jobId } = await api.startSong(payload);
           if (status.audioUrls?.length) setAudioUrls(status.audioUrls);
           if (status.audioUrl) setAudioUrl(status.audioUrl);
           else if (status.audioUrls?.[0]) setAudioUrl(status.audioUrls[0]);
-          // Create versions array with proper audioId mapping
-          const newVersions = status.audioUrls.map((url: string, index: number) => ({
-            url,
-            audioId: `${jobId}_${index}`, // Use consistent audioId format
-            musicIndex: index,
-            words: [] as TimestampedWord[]
-          }));
-
-          // Fetch timestamped lyrics for each version with correct parameters
+          // Fetch real audioIds from generation details
           try {
+            const info = await api.getMusicGenerationDetails(jobId);
+            const sunoData = info.response?.sunoData ?? [];
+            
+            // Create versions with real audioIds from provider
+            const newVersions = sunoData.map((item: any, index: number) => ({
+              url: item.audioUrl,
+              audioId: item.id,  // Real audioId from provider
+              musicIndex: index,
+              words: [] as TimestampedWord[]
+            }));
+
+            // Fetch timestamped lyrics using real audioIds
             const timestampPromises = newVersions.map(version => 
               api.getTimestampedLyrics({
                 taskId: jobId,
                 audioId: version.audioId,
-                musicIndex: version.musicIndex,
-                lyrics: details.lyrics
+                musicIndex: version.musicIndex
               })
             );
             
@@ -254,6 +257,14 @@ const { jobId } = await api.startSong(payload);
             setVersions(newVersions);
           } catch (e) {
             console.warn("Could not fetch timestamped lyrics:", e);
+            // Fallback to basic versions without timestamps
+            const fallbackVersions = status.audioUrls.map((url: string, index: number) => ({
+              url,
+              audioId: `fallback_${index}`,
+              musicIndex: index,
+              words: [] as TimestampedWord[]
+            }));
+            setVersions(fallbackVersions);
           }
           
           toast.success("Your song is ready!");
@@ -369,16 +380,16 @@ const { jobId } = await api.startSong(payload);
 
           <Card className="p-4 space-y-3">
             <h2 className="text-lg font-medium">Output</h2>
-            {audioUrls && audioUrls.length > 0 ? (
+            {versions && versions.length > 0 ? (
               <div className="space-y-4">
-                {audioUrls.map((url, idx) => (
-                  <div key={url} className="space-y-2">
+                {versions.map((version, idx) => (
+                  <div key={version.audioId} className="space-y-2">
                     <p className="text-sm text-muted-foreground">Version {idx + 1}</p>
                      <audio
-                        src={url}
+                        src={version.url}
                         controls
                         className="w-full"
-                        preload="none"
+                        preload="auto"
                         onPlay={() => handleAudioPlay(idx)}
                         onPause={handleAudioPause}
                         onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
@@ -386,7 +397,7 @@ const { jobId } = await api.startSong(payload);
                         ref={(el) => { if (el) audioRefs.current[idx] = el; }}
                       />
                     <a
-                      href={url}
+                      href={version.url}
                       download
                       className="inline-flex h-10 items-center rounded-md bg-secondary px-4 text-sm"
                     >

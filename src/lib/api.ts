@@ -45,7 +45,20 @@ export const api = {
     return handle(resp);
   },
 
-  async getTimestampedLyrics(params: { taskId: string; audioId?: string; musicIndex?: number; lyrics?: string }): Promise<{ 
+  async getMusicGenerationDetails(jobId: string): Promise<{
+    response: {
+      sunoData: Array<{
+        id: string;
+        audioUrl: string;
+        musicIndex: number;
+      }>;
+    };
+  }> {
+    const resp = await fetch(`${FUNCTIONS_BASE}/suno?jobId=${encodeURIComponent(jobId)}&details=true`);
+    return handle(resp);
+  },
+
+  async getTimestampedLyrics(params: { taskId: string; audioId?: string; musicIndex?: number }): Promise<{ 
     alignedWords: Array<{
       word: string;
       success: boolean;
