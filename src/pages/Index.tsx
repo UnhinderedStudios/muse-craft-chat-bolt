@@ -607,15 +607,15 @@ async function startGeneration() {
               <Button 
                 onClick={async () => {
                   try {
-                    toast.info("Checking API key availability...");
-                    const health = await api.testAlbumCoverHealth();
-                    
-                    if (!health.apiKey) {
-                      toast.error(`Missing API Keys - Gemini: ${health.geminiKey ? '✓' : '✗'}, Google: ${health.googleKey ? '✓' : '✗'}`);
-                      return;
-                    }
-                    
-                    toast.info("API key found, generating test album covers...");
+                     toast.info("Checking API key availability...");
+                     const health = await api.testAlbumCoverHealth();
+                     
+                     if (!health.geminiKey) {
+                       toast.error(`GEMINI_API_KEY not set (length: ${health.keyLength}). Please configure it in Supabase secrets.`);
+                       return;
+                     }
+                     
+                     toast.info(`Using ${health.model}, generating test album covers...`);
                     const covers = await api.testAlbumCover();
                     console.log("Setting album covers:", covers);
                     setAlbumCovers(covers);

@@ -12,14 +12,13 @@ serve(async (req) => {
   }
 
   try {
-    // Try both GEMINI_API_KEY and GOOGLE_API_KEY
-    const geminiApiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GOOGLE_API_KEY");
+    // Only use GEMINI_API_KEY for Imagen 4.0 Fast
+    const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
-    console.log("GEMINI_API_KEY available:", !!Deno.env.get("GEMINI_API_KEY"));
-    console.log("GOOGLE_API_KEY available:", !!Deno.env.get("GOOGLE_API_KEY"));
-    console.log("Using API key:", !!geminiApiKey);
+    console.log("GEMINI_API_KEY available:", !!geminiApiKey);
+    console.log("GEMINI_API_KEY length:", geminiApiKey?.length || 0);
     console.log("SUPABASE_URL available:", !!supabaseUrl);
     console.log("SUPABASE_SERVICE_ROLE_KEY available:", !!supabaseServiceKey);
 
@@ -29,19 +28,17 @@ serve(async (req) => {
     if (reqBody.health) {
       return new Response(JSON.stringify({
         health: "ok",
-        apiKey: !!geminiApiKey,
-        geminiKey: !!Deno.env.get("GEMINI_API_KEY"),
-        googleKey: !!Deno.env.get("GOOGLE_API_KEY"),
-        supabaseUrl: !!supabaseUrl,
-        serviceKey: !!supabaseServiceKey
+        geminiKey: !!geminiApiKey,
+        keyLength: geminiApiKey?.length || 0,
+        model: "imagen-4.0-fast-generate-001"
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
     
     if (!geminiApiKey) {
-      console.error("Missing GEMINI_API_KEY and GOOGLE_API_KEY in environment");
-      return new Response(JSON.stringify({ error: "Missing API key (tried GEMINI_API_KEY and GOOGLE_API_KEY)" }), { 
+      console.error("Missing GEMINI_API_KEY in environment");
+      return new Response(JSON.stringify({ error: "Missing GEMINI_API_KEY" }), { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -90,7 +87,7 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Gemini API error (Imagen 4 Fast):", response.status, errorText);
-      console.error("Request details:", { prompt, method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': '***' } });
+      console.error("Request details:", { prompt, model: 'imagen-4.0-fast-generate-001' });
       return new Response(JSON.stringify({ error: `Gemini API error (${response.status}): ${errorText}` }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -100,36 +97,43 @@ serve(async (req) => {
     const data = await response.json();
     console.log("Raw Imagen response structure:", JSON.stringify(data, null, 2));
 
-    // Extract both images from response
-    const generatedImages = data?.generatedImages || data?.predictions || [];
+    // Extract images from predictions array (Gemini API format)
+    const predictions = data?.predictions || [];
     
-    if (!generatedImages || generatedImages.length === 0) {
-      console.error("No images generated or unexpected response shape:", data);
-      return new Response(JSON.stringify({ error: "No images generated" }), {
+    if (!predictions || predictions.length === 0) {
+      console.error("No predictions in response:", data);
+      return new Response(JSON.stringify({ error: "No images generated in predictions" }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    console.log(`Successfully received ${generatedImages.length} images from Imagen API`);
+    console.log(`Successfully received ${predictions.length} images from Gemini Imagen API`);
 
     const coverUrls = [];
     
-    // Process each generated image
-    for (let i = 0; i < generatedImages.length; i++) {
-      const imageItem = generatedImages[i];
-      const imageData = 
-        imageItem?.generatedImage?.imageBytes ||
-        imageItem?.image?.imageBytes ||
-        imageItem?.bytesBase64Encoded ||
-        imageItem?.imageBytes;
+    // Process each prediction
+    for (let i = 0; i < predictions.length; i++) {
+      const prediction = predictions[i];
+      
+      // Try multiple possible field names for base64 data
+      let imageData = 
+        prediction?.bytesBase64Encoded ||
+        prediction?.imageBytes ||
+        prediction?.generatedImage?.imageBytes ||
+        prediction?.image?.imageBytes;
 
       if (!imageData) {
-        console.warn(`No image data found for image ${i + 1}`);
+        console.warn(`No image data found for prediction ${i + 1}:`, Object.keys(prediction || {}));
         continue;
       }
 
       try {
+        // Remove data URL prefix if present (e.g., "data:image/png;base64,")
+        if (imageData.startsWith('data:')) {
+          imageData = imageData.split(',')[1];
+        }
+        
         // Convert base64 to bytes
         const imageBytes = Uint8Array.from(atob(imageData), c => c.charCodeAt(0));
         console.log(`Image ${i + 1}: Converted to bytes, size:`, imageBytes.length);

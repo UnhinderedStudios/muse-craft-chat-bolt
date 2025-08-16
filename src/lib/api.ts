@@ -117,11 +117,9 @@ export const api = {
 
   async testAlbumCoverHealth(): Promise<{
     health: string;
-    apiKey: boolean;
     geminiKey: boolean;
-    googleKey: boolean;
-    supabaseUrl: boolean;
-    serviceKey: boolean;
+    keyLength: number;
+    model: string;
   }> {
     const response = await fetch(`${FUNCTIONS_BASE}/generate-album-cover`, {
       method: "POST",
