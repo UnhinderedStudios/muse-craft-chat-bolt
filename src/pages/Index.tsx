@@ -289,6 +289,7 @@ async function startGeneration() {
           // Phase B: Fetch timestamped lyrics for each version with retry logic
           console.log("[Generation] Phase B: Fetching timestamped lyrics...");
           console.log("[Generation] Using newVersions for timestamp fetching:", newVersions);
+          console.log("[Generation] newVersions.length:", newVersions.length);
           
           if (newVersions.length === 0) {
             console.warn("[Generation] No versions available for timestamp fetching");
