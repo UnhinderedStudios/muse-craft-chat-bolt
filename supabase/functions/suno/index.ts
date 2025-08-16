@@ -180,6 +180,7 @@ serve(async (req) => {
 
       if (req.method === "GET") {
         const jobId = url.searchParams.get("jobId");
+        const detailsParam = url.searchParams.get("details");
         if (!jobId) return json({ error: "Missing jobId" }, { status: 400 });
 
         // 1) Check if already stored in Supabase Storage (set by webhook)
@@ -196,7 +197,7 @@ serve(async (req) => {
               found.push(publicUrl);
             }
           }
-          if (found.length > 0) {
+          if (found.length > 0 && !detailsParam) {
             console.log("[suno] Found stored audio for", jobId, found);
             return json({ status: "ready", audioUrl: found[0], audioUrls: found });
           }
@@ -204,7 +205,7 @@ serve(async (req) => {
           console.log("[suno] Storage check error:", e);
         }
 
-        // 2) Fallback to provider polling
+        // 2) Poll provider for status
         const statusResp = await fetch(`${API_BASE}/generate/record-info?taskId=${encodeURIComponent(jobId)}`, {
           headers: { Authorization: `Bearer ${apiKey}` },
         });
@@ -217,9 +218,43 @@ serve(async (req) => {
       }
 
       const data = statusJson.data as any;
-      console.log("[suno] Poll response data:", JSON.stringify(data, null, 2));
-      
       const st: string = String(data.status || data.taskStatus || "PENDING").toUpperCase();
+      
+      // If details=true, return detailed response with statusRaw and tracks
+      if (detailsParam) {
+        console.log("[suno] Details requested, returning raw data");
+        
+        // Normalize possible track arrays
+        let tracks: any[] = [];
+        if (Array.isArray(data.response?.data)) {
+          tracks = data.response.data;
+        } else if (Array.isArray(data.response?.sunoData)) {
+          tracks = data.response.sunoData;
+        } else if (Array.isArray(data.sunoData)) {
+          tracks = data.sunoData;
+        } else if (Array.isArray(data.data)) {
+          tracks = data.data;
+        } else if (Array.isArray(data)) {
+          tracks = data;
+        }
+
+        // Extract sunoData with audioId and musicIndex for timestamps
+        const sunoData = tracks.map((track, index) => ({
+          id: track.id || `track_${index}`,
+          audioUrl: track.audio_url || track.audioUrl || track.source_audio_url || track.sourceAudioUrl || track.stream_audio_url || track.streamAudioUrl || track.source_stream_audio_url || track.sourceStreamAudioUrl || "",
+          musicIndex: index,
+        }));
+
+        return json({
+          response: {
+            sunoData
+          },
+          statusRaw: st,
+          taskId: jobId
+        });
+      }
+      
+      console.log("[suno] Poll response data:", JSON.stringify(data, null, 2));
 
       // Treat various provider success markers as success
       if (st.includes("SUCCESS") || st.includes("COMPLETE")) {

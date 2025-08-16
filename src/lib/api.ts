@@ -53,6 +53,8 @@ export const api = {
         musicIndex: number;
       }>;
     };
+    statusRaw: string;
+    taskId: string;
   }> {
     const resp = await fetch(`${FUNCTIONS_BASE}/suno?jobId=${encodeURIComponent(jobId)}&details=true`);
     return handle(resp);

@@ -194,7 +194,7 @@ if (extracted) {
     }
   }
 
-  async function startGeneration() {
+async function startGeneration() {
     if (!canGenerate) {
       toast.message("Add a few details first", { description: "Chat a bit more until I extract a song request." });
       return;
@@ -202,49 +202,123 @@ if (extracted) {
     setAudioUrl(null);
     setAudioUrls(null);
     setJobId(null);
+    setVersions([]);
     setBusy(true);
+    
     try {
-const payload = { ...details, style: sanitizeStyle(details.style || "") };
-const { jobId } = await api.startSong(payload);
+      const payload = { ...details, style: sanitizeStyle(details.style || "") };
+      const { jobId } = await api.startSong(payload);
       setJobId(jobId);
       toast.success("Song requested. Composing...");
-      // poll
-      let attempts = 0;
-      const maxAttempts = 50;
-      while (attempts++ < maxAttempts) {
-        await new Promise((r) => setTimeout(r, Math.min(1500 + attempts * 200, 5000)));
+
+      // Phase A: Wait for generation completion with status confirmation
+      console.log("[Generation] Phase A: Waiting for completion...");
+      let completionAttempts = 0;
+      const maxCompletionAttempts = 40; // ~60-90s max
+      let statusRaw = "PENDING";
+      let sunoData: any[] = [];
+
+      while (completionAttempts++ < maxCompletionAttempts) {
+        const backoffDelay = Math.min(1500 + completionAttempts * 300, 4000);
+        await new Promise((r) => setTimeout(r, backoffDelay));
+        
+        try {
+          const details = await api.getMusicGenerationDetails(jobId);
+          statusRaw = details.statusRaw;
+          sunoData = details.response?.sunoData || [];
+          
+          console.log(`[Generation] Attempt ${completionAttempts}: Status=${statusRaw}, Tracks=${sunoData.length}`);
+          
+          // Check for completion
+          if (statusRaw === "ALL_SUCCESS" || statusRaw === "COMPLETE" || statusRaw.includes("SUCCESS")) {
+            console.log("[Generation] Phase A: Generation completed!");
+            break;
+          }
+          
+          if (statusRaw.includes("FAIL") || statusRaw.includes("ERROR")) {
+            throw new Error(`Generation failed with status: ${statusRaw}`);
+          }
+        } catch (e) {
+          console.warn(`[Generation] Details polling error (attempt ${completionAttempts}):`, e);
+          // Continue polling even if details call fails
+        }
+      }
+
+      if (completionAttempts >= maxCompletionAttempts) {
+        throw new Error("Generation timed out waiting for completion");
+      }
+
+      // Get audio URLs via regular polling
+      console.log("[Generation] Fetching audio URLs...");
+      let audioAttempts = 0;
+      const maxAudioAttempts = 15;
+      
+      while (audioAttempts++ < maxAudioAttempts) {
+        await new Promise((r) => setTimeout(r, 2000));
         const status = await api.pollSong(jobId);
-        if (status.status === "ready") {
-          if (status.audioUrls?.length) setAudioUrls(status.audioUrls);
-          if (status.audioUrl) setAudioUrl(status.audioUrl);
-          else if (status.audioUrls?.[0]) setAudioUrl(status.audioUrls[0]);
-          // Create versions from available audioUrls
-          const newVersions = (status.audioUrls || []).map((url, index) => ({
-            url,
-            audioId: `audio_${index}`,
-            musicIndex: index,
-            words: [] as TimestampedWord[]
-          }));
+        
+        if (status.status === "ready" && status.audioUrls?.length) {
+          console.log("[Generation] Audio URLs ready:", status.audioUrls);
+          setAudioUrls(status.audioUrls);
+          setAudioUrl(status.audioUrls[0]);
           
-          console.log("Created versions from audioUrls:", newVersions);
+          // Create initial versions from audioUrls and sunoData
+          const newVersions = status.audioUrls.map((url, index) => {
+            const trackData = sunoData[index];
+            return {
+              url,
+              audioId: trackData?.id || `track_${index}`,
+              musicIndex: index,
+              words: [] as TimestampedWord[],
+              hasTimestamps: false
+            };
+          });
+          
+          console.log("[Generation] Created initial versions:", newVersions);
           setVersions(newVersions);
+          toast.success("Audio ready! Fetching karaoke lyrics...");
+          break;
+        }
+        
+        if (status.status === "error") {
+          throw new Error(status.error || "Audio generation failed");
+        }
+      }
+
+      if (audioAttempts >= maxAudioAttempts) {
+        throw new Error("Timed out waiting for audio URLs");
+      }
+
+      // Phase B: Fetch timestamped lyrics for each version with retry logic
+      console.log("[Generation] Phase B: Fetching timestamped lyrics...");
+      const currentVersions = versions.length > 0 ? versions : [];
+      
+      if (currentVersions.length === 0) {
+        console.warn("[Generation] No versions available for timestamp fetching");
+        return;
+      }
+
+      const updatedVersions = await Promise.all(
+        currentVersions.map(async (version, index) => {
+          let retryAttempts = 0;
+          const maxRetryAttempts = 8;
           
-          // Try to fetch timestamped lyrics in background
-          try {
-            const timestampPromises = newVersions.map(version => 
-              api.getTimestampedLyrics({
+          while (retryAttempts++ < maxRetryAttempts) {
+            try {
+              const exponentialBackoff = Math.min(1000 * Math.pow(1.5, retryAttempts - 1), 8000);
+              if (retryAttempts > 1) {
+                console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}, waiting ${exponentialBackoff}ms`);
+                await new Promise(r => setTimeout(r, exponentialBackoff));
+              }
+
+              const result = await api.getTimestampedLyrics({
                 taskId: jobId,
+                audioId: version.audioId,
                 musicIndex: version.musicIndex
-              })
-            );
-            
-            const timestampResults = await Promise.all(timestampPromises);
-            console.log("Timestamp results:", timestampResults);
-            
-            // Update versions with words
-            const updatedVersions = newVersions.map((version, index) => {
-              const result = timestampResults[index];
-              if (result.alignedWords) {
+              });
+
+              if (result.alignedWords && result.alignedWords.length > 0) {
+                console.log(`[Timestamps] Version ${index + 1}: Success with ${result.alignedWords.length} words`);
                 return {
                   ...version,
                   words: result.alignedWords.map(word => ({
@@ -256,36 +330,37 @@ const { jobId } = await api.startSong(payload);
                   })),
                   hasTimestamps: true
                 };
+              } else {
+                console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}: No aligned words yet`);
               }
-              return {
-                ...version,
-                hasTimestamps: false,
-                timestampError: "No aligned words available"
-              };
-            });
-            
-            console.log("Updated versions with words:", updatedVersions);
-            setVersions(updatedVersions);
-          } catch (e) {
-            console.warn("Could not fetch timestamped lyrics:", e);
-            // Mark versions as failed but keep them so karaoke still shows
-            const failedVersions = newVersions.map(version => ({
-              ...version,
-              hasTimestamps: false,
-              timestampError: e instanceof Error ? e.message : "Failed to load timestamps"
-            }));
-            setVersions(failedVersions);
+            } catch (e) {
+              console.warn(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts} failed:`, e);
+            }
           }
-          
-          toast.success("Your song is ready!");
-          break;
-        }
-        if (status.status === "error") {
-          throw new Error(status.error || "Generation failed");
-        }
+
+          // All retries exhausted
+          console.warn(`[Timestamps] Version ${index + 1}: Failed after ${maxRetryAttempts} attempts`);
+          return {
+            ...version,
+            hasTimestamps: false,
+            timestampError: "Timestamped lyrics not available after retries"
+          };
+        })
+      );
+
+      console.log("[Generation] Final versions with timestamps:", updatedVersions);
+      setVersions(updatedVersions);
+      
+      const successCount = updatedVersions.filter(v => v.hasTimestamps).length;
+      if (successCount > 0) {
+        toast.success(`Song ready with karaoke lyrics! (${successCount}/${updatedVersions.length} versions)`);
+      } else {
+        toast.success("Song ready! (Karaoke lyrics unavailable)");
       }
+
     } catch (e: any) {
-      toast.error(e.message || "Suno generation error");
+      console.error("[Generation] Error:", e);
+      toast.error(e.message || "Generation failed");
     } finally {
       setBusy(false);
     }
