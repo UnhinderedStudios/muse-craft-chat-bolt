@@ -12,7 +12,10 @@ serve(async (req) => {
 
   try {
     const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
+    console.log("GEMINI_API_KEY available:", !!geminiApiKey);
+    
     if (!geminiApiKey) {
+      console.error("Missing GEMINI_API_KEY in environment");
       return new Response(JSON.stringify({ error: "Missing GEMINI_API_KEY" }), { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -50,8 +53,8 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Gemini API error (Imagen 4 Fast):", errorText);
-      return new Response(JSON.stringify({ error: `Gemini API error: ${errorText}` }), {
+      console.error("Gemini API error (Imagen 4 Fast):", response.status, errorText);
+      return new Response(JSON.stringify({ error: `Gemini API error (${response.status}): ${errorText}` }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
