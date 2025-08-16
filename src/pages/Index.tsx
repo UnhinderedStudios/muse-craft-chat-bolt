@@ -65,8 +65,12 @@ const Index = () => {
   const [jobId, setJobId] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioUrls, setAudioUrls] = useState<string[] | null>(null);
-  const [timestampedWords, setTimestampedWords] = useState<TimestampedWord[]>([]);
-  const [timestampedWordsV2, setTimestampedWordsV2] = useState<TimestampedWord[]>([]);
+  const [versions, setVersions] = useState<Array<{
+    url: string;
+    audioId: string;
+    musicIndex: number;
+    words: TimestampedWord[];
+  }>>([]);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentAudioIndex, setCurrentAudioIndex] = useState<number>(0);
@@ -212,20 +216,41 @@ const { jobId } = await api.startSong(payload);
           if (status.audioUrls?.length) setAudioUrls(status.audioUrls);
           if (status.audioUrl) setAudioUrl(status.audioUrl);
           else if (status.audioUrls?.[0]) setAudioUrl(status.audioUrls[0]);
-          
-          // Fetch timestamped lyrics for both versions using provider taskId and index
+          // Create versions array with proper audioId mapping
+          const newVersions = status.audioUrls.map((url: string, index: number) => ({
+            url,
+            audioId: `${jobId}_${index}`, // Use consistent audioId format
+            musicIndex: index,
+            words: [] as TimestampedWord[]
+          }));
+
+          // Fetch timestamped lyrics for each version with correct parameters
           try {
-            const [lyricsResult1, lyricsResult2] = await Promise.all([
-              api.getTimestampedLyrics(jobId, jobId, details.lyrics, 0),
-              api.getTimestampedLyrics(jobId, jobId, details.lyrics, 1)
-            ]);
+            const timestampPromises = newVersions.map(version => 
+              api.getTimestampedLyrics({
+                taskId: jobId,
+                audioId: version.audioId,
+                musicIndex: version.musicIndex
+              })
+            );
             
-            if (lyricsResult1.alignedWords) {
-              setTimestampedWords(lyricsResult1.alignedWords);
-            }
-            if (lyricsResult2.alignedWords) {
-              setTimestampedWordsV2(lyricsResult2.alignedWords);
-            }
+            const timestampResults = await Promise.all(timestampPromises);
+            
+            // Normalize API response fields and assign to versions
+            newVersions.forEach((version, index) => {
+              const result = timestampResults[index];
+              if (result.alignedWords) {
+                version.words = result.alignedWords.map(word => ({
+                  word: word.word,
+                  start: word.start_s,  // Normalize field names
+                  end: word.end_s,      // Normalize field names
+                  success: word.success,
+                  p_align: word.p_align
+                }));
+              }
+            });
+            
+            setVersions(newVersions);
           } catch (e) {
             console.warn("Could not fetch timestamped lyrics:", e);
           }
@@ -349,16 +374,16 @@ const { jobId } = await api.startSong(payload);
                   <div key={url} className="space-y-2">
                     <p className="text-sm text-muted-foreground">Version {idx + 1}</p>
                      <audio
-                       src={url}
-                       controls
-                       className="w-full"
-                       preload="none"
-                       onPlay={() => handleAudioPlay(idx)}
-                       onPause={handleAudioPause}
-                       onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
-                       onEnded={handleAudioPause}
-                       ref={(el) => { if (el) audioRefs.current[idx] = el; }}
-                     />
+                        src={url}
+                        controls
+                        className="w-full"
+                        preload="none"
+                        onPlay={() => handleAudioPlay(idx)}
+                        onPause={handleAudioPause}
+                        onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
+                        onEnded={handleAudioPause}
+                        ref={(el) => { if (el) audioRefs.current[idx] = el; }}
+                      />
                     <a
                       href={url}
                       download
@@ -395,11 +420,11 @@ const { jobId } = await api.startSong(payload);
             )}
           </Card>
           
-          {(timestampedWords.length > 0 || timestampedWordsV2.length > 0) && (
+          {versions.length > 0 && versions[currentAudioIndex]?.words.length > 0 && (
             <Card className="p-4 space-y-3">
               <h2 className="text-lg font-medium">Karaoke Lyrics</h2>
               <KaraokeLyrics 
-                words={currentAudioIndex === 0 ? timestampedWords : timestampedWordsV2}
+                words={versions[currentAudioIndex]?.words ?? []}
                 currentTime={currentTime}
                 isPlaying={isPlaying}
               />

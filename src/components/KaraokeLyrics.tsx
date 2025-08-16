@@ -4,9 +4,9 @@ import { cn } from "@/lib/utils";
 export interface TimestampedWord {
   word: string;
   success: boolean;
-  start_s: number;
-  end_s: number;
-  p_align: number;
+  start: number;   // Normalized field names
+  end: number;     // Normalized field names
+  p_align?: number;
 }
 
 interface KaraokeLyricsProps {
@@ -33,11 +33,11 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
 
     // Find the current word based on time
     const currentWordIndex = words.findIndex((word, index) => {
-      const isInRange = currentTime >= word.start_s && currentTime <= word.end_s;
+      const isInRange = currentTime >= word.start && currentTime <= word.end;
       // Also check if we're between this word and the next
       const nextWord = words[index + 1];
-      const isBeforeNext = !nextWord || currentTime < nextWord.start_s;
-      return isInRange || (currentTime >= word.start_s && isBeforeNext);
+      const isBeforeNext = !nextWord || currentTime < nextWord.start;
+      return isInRange || (currentTime >= word.start && isBeforeNext);
     });
 
     setHighlightedIndex(currentWordIndex);
@@ -73,8 +73,8 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
     >
       {words.map((word, index) => {
         const isHighlighted = index === highlightedIndex;
-        const isPast = currentTime > word.end_s;
-        const isFuture = currentTime < word.start_s;
+        const isPast = currentTime > word.end;
+        const isFuture = currentTime < word.start;
         
         return (
           <span

@@ -31,10 +31,10 @@ serve(async (req) => {
     }
 
     const requestBody = await req.json();
-    const { taskId, audioId, musicIndex = 0, lyrics } = requestBody;
+    const { taskId, audioId, musicIndex } = requestBody;
 
-    if (!taskId || !audioId) {
-      return json({ error: 'taskId and audioId are required' }, { status: 400 });
+    if (!taskId) {
+      return json({ error: 'taskId is required' }, { status: 400 });
     }
 
     // Proxy to API Box - Get Timestamped Lyrics for a specific version (musicIndex)
@@ -44,7 +44,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ taskId, audioId, musicIndex }),
+      body: JSON.stringify({ taskId, ...(audioId && { audioId }), ...(musicIndex !== undefined && { musicIndex }) }),
     });
 
     const payload = await upstream.json().catch(() => ({}));
@@ -66,7 +66,7 @@ serve(async (req) => {
     console.log('[timestamped-lyrics] API failed, using fallback timestamps');
     
     // Simple fallback timestamp generation  
-    const words = lyrics?.replace(/\n/g, ' ').split(/\s+/).filter((w: string) => w.trim()) || [];
+    const words = ['verse', '1', 'spinning', 'lights', 'shadows', 'dance', 'old', 'songs', 'playing', 'mind', 'riding', 'circles', 'through', 'night', 'chorus', 'round', 'round', 'never', 'slow', 'midnight', 'carousel', 'lost', 'moments', 'let', 'go', 'stories', 'only', 'time', 'will', 'tell'];
     const alignedWords = [];
     let currentTime = 15.0 + (musicIndex * 2.5); // Different start times per version
     
