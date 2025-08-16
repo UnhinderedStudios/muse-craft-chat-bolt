@@ -285,6 +285,78 @@ async function startGeneration() {
           console.log("[Generation] Created initial versions:", newVersions);
           setVersions(newVersions);
           toast.success("Audio ready! Fetching karaoke lyrics...");
+          
+          // Phase B: Fetch timestamped lyrics for each version with retry logic
+          console.log("[Generation] Phase B: Fetching timestamped lyrics...");
+          console.log("[Generation] Using newVersions for timestamp fetching:", newVersions);
+          
+          if (newVersions.length === 0) {
+            console.warn("[Generation] No versions available for timestamp fetching");
+            return;
+          }
+
+          const updatedVersions = await Promise.all(
+            newVersions.map(async (version, index) => {
+              let retryAttempts = 0;
+              const maxRetryAttempts = 8;
+              
+              while (retryAttempts++ < maxRetryAttempts) {
+                try {
+                  const exponentialBackoff = Math.min(1000 * Math.pow(1.5, retryAttempts - 1), 8000);
+                  if (retryAttempts > 1) {
+                    console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}, waiting ${exponentialBackoff}ms`);
+                    await new Promise(r => setTimeout(r, exponentialBackoff));
+                  }
+
+                  console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}: Using audioId=${version.audioId}, musicIndex=${version.musicIndex}`);
+                  
+                  const result = await api.getTimestampedLyrics({
+                    taskId: jobId,
+                    audioId: version.audioId,
+                    musicIndex: version.musicIndex
+                  });
+
+                  if (result.alignedWords && result.alignedWords.length > 0) {
+                    console.log(`[Timestamps] Version ${index + 1}: Success with ${result.alignedWords.length} words`);
+                    return {
+                      ...version,
+                      words: result.alignedWords.map(word => ({
+                        word: word.word,
+                        start: word.start_s,
+                        end: word.end_s,
+                        success: word.success,
+                        p_align: word.p_align
+                      })),
+                      hasTimestamps: true
+                    };
+                  } else {
+                    console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}: No aligned words yet`);
+                  }
+                } catch (e) {
+                  console.warn(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts} failed:`, e);
+                }
+              }
+
+              // All retries exhausted
+              console.warn(`[Timestamps] Version ${index + 1}: Failed after ${maxRetryAttempts} attempts`);
+              return {
+                ...version,
+                hasTimestamps: false,
+                timestampError: "Timestamped lyrics not available after retries"
+              };
+            })
+          );
+
+          console.log("[Generation] Final versions with timestamps:", updatedVersions);
+          setVersions(updatedVersions);
+          
+          const successCount = updatedVersions.filter(v => v.hasTimestamps).length;
+          if (successCount > 0) {
+            toast.success(`Song ready with karaoke lyrics! (${successCount}/${updatedVersions.length} versions)`);
+          } else {
+            toast.success("Song ready! (Karaoke lyrics unavailable)");
+          }
+          
           break;
         }
         
@@ -295,77 +367,6 @@ async function startGeneration() {
 
       if (audioAttempts >= maxAudioAttempts) {
         throw new Error("Timed out waiting for audio URLs");
-      }
-
-      // Phase B: Fetch timestamped lyrics for each version with retry logic
-      console.log("[Generation] Phase B: Fetching timestamped lyrics...");
-      const currentVersions = versions.length > 0 ? versions : [];
-      
-      if (currentVersions.length === 0) {
-        console.warn("[Generation] No versions available for timestamp fetching");
-        return;
-      }
-
-      const updatedVersions = await Promise.all(
-        currentVersions.map(async (version, index) => {
-          let retryAttempts = 0;
-          const maxRetryAttempts = 8;
-          
-          while (retryAttempts++ < maxRetryAttempts) {
-            try {
-              const exponentialBackoff = Math.min(1000 * Math.pow(1.5, retryAttempts - 1), 8000);
-              if (retryAttempts > 1) {
-                console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}, waiting ${exponentialBackoff}ms`);
-                await new Promise(r => setTimeout(r, exponentialBackoff));
-              }
-
-              console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}: Using audioId=${version.audioId}, musicIndex=${version.musicIndex}`);
-              
-              const result = await api.getTimestampedLyrics({
-                taskId: jobId,
-                audioId: version.audioId,
-                musicIndex: version.musicIndex
-              });
-
-              if (result.alignedWords && result.alignedWords.length > 0) {
-                console.log(`[Timestamps] Version ${index + 1}: Success with ${result.alignedWords.length} words`);
-                return {
-                  ...version,
-                  words: result.alignedWords.map(word => ({
-                    word: word.word,
-                    start: word.start_s,
-                    end: word.end_s,
-                    success: word.success,
-                    p_align: word.p_align
-                  })),
-                  hasTimestamps: true
-                };
-              } else {
-                console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}: No aligned words yet`);
-              }
-            } catch (e) {
-              console.warn(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts} failed:`, e);
-            }
-          }
-
-          // All retries exhausted
-          console.warn(`[Timestamps] Version ${index + 1}: Failed after ${maxRetryAttempts} attempts`);
-          return {
-            ...version,
-            hasTimestamps: false,
-            timestampError: "Timestamped lyrics not available after retries"
-          };
-        })
-      );
-
-      console.log("[Generation] Final versions with timestamps:", updatedVersions);
-      setVersions(updatedVersions);
-      
-      const successCount = updatedVersions.filter(v => v.hasTimestamps).length;
-      if (successCount > 0) {
-        toast.success(`Song ready with karaoke lyrics! (${successCount}/${updatedVersions.length} versions)`);
-      } else {
-        toast.success("Song ready! (Karaoke lyrics unavailable)");
       }
 
     } catch (e: any) {
