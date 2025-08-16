@@ -47,7 +47,7 @@ serve(async (req) => {
         .filter(word => word.trim().length > 0);
       
       const alignedWords = [];
-      let currentTime = 8.5; // Start at 8.5 seconds like in the original
+      let currentTime = 18.0; // Start much later to account for typical song intro
       
       for (let i = 0; i < words.length; i++) {
         const word = words[i];
