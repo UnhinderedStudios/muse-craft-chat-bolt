@@ -13,6 +13,8 @@ function json(data: unknown, init?: ResponseInit): Response {
   });
 }
 
+// API Box (Suno) endpoint per docs:
+// https://docs.api.box/suno-api/get-timestamped-lyrics
 const API_BASE = "https://api.api.box/api/v1";
 
 serve(async (req) => {
@@ -30,66 +32,67 @@ serve(async (req) => {
       return json({ error: 'Missing SUNO_API_KEY' }, { status: 500 });
     }
 
-    const requestBody = await req.json();
-    const { taskId, audioId, musicIndex } = requestBody;
+    const requestBody = await req.json().catch(() => ({} as Record<string, unknown>));
+    const { taskId, audioId, musicIndex } = requestBody as {
+      taskId?: string;
+      audioId?: string;
+      musicIndex?: number;
+    };
 
     if (!taskId) {
       return json({ error: 'taskId is required' }, { status: 400 });
     }
 
-    // Proxy to API Box - Get Timestamped Lyrics for a specific version (musicIndex)
+    // Log inputs for debugging (no secrets)
+    console.log('[timestamped-lyrics] Incoming request', {
+      hasTaskId: Boolean(taskId),
+      hasAudioId: Boolean(audioId),
+      musicIndex,
+    });
+
+    const body: Record<string, unknown> = { taskId };
+    if (audioId) body.audioId = audioId;
+    if (typeof musicIndex === 'number') body.musicIndex = musicIndex;
+
     const upstream = await fetch(`${API_BASE}/generate/get-timestamped-lyrics`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ taskId, ...(audioId && { audioId }), ...(musicIndex !== undefined && { musicIndex }) }),
+      body: JSON.stringify(body),
     });
 
-    const payload = await upstream.json().catch(() => ({}));
+    let payload: any = null;
+    try {
+      payload = await upstream.json();
+    } catch (_e) {
+      // no-op; keep payload null for error branch
+    }
 
-    // Handle success statuses including FIRST_SUCCESS
-    if (upstream.ok && payload?.code === 200) {
-      const data = payload.data || {};
-      // Normalize the response to our frontend shape
+    console.log('[timestamped-lyrics] Upstream response', {
+      status: upstream.status,
+      ok: upstream.ok,
+      code: payload?.code,
+      hasData: Boolean(payload?.data),
+      alignedCount: Array.isArray(payload?.data?.alignedWords) ? payload.data.alignedWords.length : undefined,
+    });
+
+    if (upstream.ok && payload?.code === 200 && payload?.data) {
+      const data = payload.data;
       const out = {
         alignedWords: Array.isArray(data.alignedWords) ? data.alignedWords : [],
-        waveformData: Array.isArray(data.waveformData) ? data.waveformData : [],
+        waveformData: Array.isArray(data.waveformData) ? data.waveformData : undefined,
         hootCer: typeof data.hootCer === 'number' ? data.hootCer : undefined,
         isStreamed: Boolean(data.isStreamed),
       };
-      return json(out);
+      return json(out, { status: 200 });
     }
 
-    // If API call failed or no valid data, fallback to mock timestamps using actual lyrics
-    console.log('[timestamped-lyrics] API failed, using fallback timestamps with actual lyrics');
-    
-    // Simple fallback timestamp generation  
-    const words = ['verse', '1', 'spinning', 'lights', 'shadows', 'dance', 'old', 'songs', 'playing', 'mind', 'riding', 'circles', 'through', 'night', 'chorus', 'round', 'round', 'never', 'slow', 'midnight', 'carousel', 'lost', 'moments', 'let', 'go', 'stories', 'only', 'time', 'will', 'tell'];
-    
-    const alignedWords = [];
-    let currentTime = 15.0 + (musicIndex * 2.5); // Different start times per version
-    
-    for (const word of words) {
-      const duration = Math.max(0.3, word.length * 0.12);
-      alignedWords.push({
-        word,
-        success: true,
-        start_s: currentTime,
-        end_s: currentTime + duration,
-        p_align: 0
-      });
-      currentTime += duration + 0.15;
-      if (word.match(/[.,!?;:]$/)) currentTime += 0.4;
-    }
-
-    return json({
-      alignedWords,
-      waveformData: [0, 0.2, 0.5, 0.8, 1.0, 0.7, 0.4, 0.1],
-      hootCer: 0.85,
-      isStreamed: false
-    });
+    // No fallback: propagate clear error to client
+    const status = upstream.status || 502;
+    const message = payload?.msg || 'Failed to fetch timestamped lyrics';
+    return json({ error: message, details: payload ?? null }, { status });
   } catch (error) {
     console.error('Error in timestamped-lyrics function:', error);
     return json({ error: 'Internal server error' }, { status: 500 });
