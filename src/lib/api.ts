@@ -45,7 +45,7 @@ export const api = {
     return handle(resp);
   },
 
-  async getTimestampedLyrics(taskId: string, audioId: string, musicIndex: number = 0): Promise<{ 
+  async getTimestampedLyrics(taskId: string, audioId: string, lyrics?: string, musicIndex: number = 0): Promise<{ 
     alignedWords: Array<{
       word: string;
       success: boolean;
@@ -60,7 +60,7 @@ export const api = {
     const resp = await fetch(`${FUNCTIONS_BASE}/timestamped-lyrics`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ taskId, audioId, musicIndex }),
+      body: JSON.stringify({ taskId, audioId, musicIndex, lyrics }),
     });
     return handle(resp);
   },

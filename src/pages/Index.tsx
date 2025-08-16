@@ -208,7 +208,7 @@ const { jobId } = await api.startSong(payload);
           
           // Fetch timestamped lyrics
           try {
-            const lyricsResult = await api.getTimestampedLyrics(jobId, jobId, 0);
+            const lyricsResult = await api.getTimestampedLyrics(jobId, jobId, details.lyrics);
             if (lyricsResult.alignedWords) {
               setTimestampedWords(lyricsResult.alignedWords);
             }
