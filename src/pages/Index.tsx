@@ -528,14 +528,14 @@ async function startGeneration() {
   }
 
   return (
-    <div className="min-h-screen bg-canvas">
+    <div className="min-h-screen bg-[#0c0c0c]">
       {/* Cyber Header */}
       <CyberHeader />
 
       {/* Single Column Layout - Chat + Form */}
       <main className="max-w-4xl mx-auto p-6 space-y-6">
-        {/* Main Chat + Tools Area */}
-        <div className="space-y-4">
+        {/* Chat Container with #151515 background */}
+        <div className="bg-[#151515] rounded-2xl p-6 space-y-4">
           {/* Chat Conversation */}
           <div className="min-h-[400px] space-y-4">
             {/* Reference conversation from the image */}
@@ -570,42 +570,36 @@ async function startGeneration() {
           </div>
 
           {/* Tools Section */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm text-text-secondary">Tools</h3>
-              <h3 className="text-sm text-text-secondary">Tools</h3>
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Type out your question here..."
+                className="w-full bg-[#040404] border-0 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-primary/50"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    onSend();
+                  }
+                }}
+                disabled={busy}
+              />
             </div>
-            
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <Input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Type out your question here..."
-                  className="bg-card-alt border-border-main rounded-lg text-text-primary placeholder:text-text-secondary h-12 px-4"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      onSend();
-                    }
-                  }}
-                  disabled={busy}
-                />
-              </div>
-              <div className="flex gap-2">
-                <CyberButton variant="icon" disabled={busy}>
-                  <Upload className="w-5 h-5 text-text-secondary" />
-                </CyberButton>
-                <CyberButton variant="icon" disabled={busy}>
-                  <Grid3X3 className="w-5 h-5 text-text-secondary" />
-                </CyberButton>
-                <CyberButton variant="icon" onClick={randomizeAll} disabled={busy}>
-                  <Dice5 className="w-5 h-5 text-text-secondary" />
-                </CyberButton>
-                <CyberButton variant="icon" disabled={busy}>
-                  <List className="w-5 h-5 text-text-secondary" />
-                </CyberButton>
-              </div>
+            <div className="bg-[#040404] rounded-xl p-2 flex gap-2">
+              <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
+                <Upload size={20} />
+              </button>
+              <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
+                <Grid3X3 size={20} />
+              </button>
+              <button className="p-2 text-white hover:text-accent-primary transition-colors" onClick={randomizeAll} disabled={busy}>
+                <Dice5 size={20} />
+              </button>
+              <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
+                <List size={20} />
+              </button>
             </div>
           </div>
         </div>
