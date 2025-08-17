@@ -561,8 +561,9 @@ async function startGeneration() {
           </div>
 
           {/* Tools Section */}
-          <div className="flex items-end gap-3">
-            <div className="flex-1 relative bg-[#040404] rounded-xl p-3">
+          <div className="flex items-stretch gap-3">
+            {/* Chat Input - DEBUG: Should be 56px height (p-3 = 12px*2 + 32px icon height) */}
+            <div className="flex-1 relative bg-[#040404] rounded-xl p-3 min-h-[56px] flex items-center">
               <textarea
                 value={input}
                 onChange={(e) => {
@@ -572,7 +573,7 @@ async function startGeneration() {
                   e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
                 }}
                 placeholder="Type out your question here..."
-                className="w-full bg-transparent border-0 pr-8 text-white placeholder-gray-500 focus:outline-none resize-none min-h-[20px] max-h-[120px] overflow-y-auto"
+                className="w-full bg-transparent border-0 pr-8 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white resize-none min-h-[32px] max-h-[120px] overflow-y-auto"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -592,7 +593,8 @@ async function startGeneration() {
                 </svg>
               </button>
             </div>
-            <div className="bg-[#040404] rounded-xl p-3 flex gap-2">
+            {/* Icons Container - DEBUG: Should be 56px height (p-3 = 12px*2 + p-2*2 = 8px*2 + 20px icon = 56px) */}
+            <div className="bg-[#040404] rounded-xl p-3 flex gap-2 min-h-[56px] items-center">
               <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
                 <Upload size={20} />
               </button>
