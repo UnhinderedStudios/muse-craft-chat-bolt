@@ -535,7 +535,7 @@ async function startGeneration() {
       {/* Single Column Layout - Chat + Form */}
       <main className="max-w-4xl mx-auto p-6 space-y-6">
         {/* Chat Container with #151515 background */}
-        <div className="bg-[#151515] rounded-2xl p-6 space-y-4">
+        <div className="bg-[#151515] rounded-2xl pl-8 pr-6 py-6 space-y-4">
           {/* Chat Conversation */}
           <div 
             className="h-[400px] overflow-y-auto custom-scrollbar"
