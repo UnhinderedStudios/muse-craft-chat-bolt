@@ -97,7 +97,7 @@ export const api = {
     const promptResponse = await this.chat([
       {
         role: "user",
-        content: `Summarise the song lyrics as if you were making a cool vibrant album cover that shouldn't have any humans being shown in it, this is meant to be a prompt for Google Imagen 4, do not use any parameter instructions such as AR16:9, I only want the prompt text\n\nSong Lyrics: ${lyrics}`
+        content: `Summarize the song lyrics into a simple 1 sentence prompt for an image generation tool for a musical album cover. Keep it cinematic and realistic, do not show humans or text in it. Do not use any parameter instructions such as AR16:9.\n\nSong Lyrics: ${lyrics}`
       }
     ]);
 
@@ -119,7 +119,7 @@ export const api = {
 
     const debug = {
       inputLyrics: lyrics,
-      chatPrompt: `Summarise the song lyrics as if you were making a cool vibrant album cover that shouldn't have any humans being shown in it, this is meant to be a prompt for Google Imagen 4, do not use any parameter instructions such as AR16:9, I only want the prompt text\n\nSong Lyrics: ${lyrics}`,
+      chatPrompt: `Summarize the song lyrics into a simple 1 sentence prompt for an image generation tool for a musical album cover. Keep it cinematic and realistic, do not show humans or text in it. Do not use any parameter instructions such as AR16:9.\n\nSong Lyrics: ${lyrics}`,
       imagenPrompt: albumPrompt,
       imagenParams: requestParams,
       rawResponse: data
