@@ -447,7 +447,17 @@ async function startGeneration() {
                   
                   console.log(`[Timestamps] Fetching for version ${index + 1} (audioId: ${version.audioId})`);
                   const timestampData = await api.getTimestampedLyrics(version.audioId);
-                  const words = timestampData.alignedWords || [];
+                  const rawWords = timestampData.alignedWords || [];
+                  
+                  // Transform API response to match TimestampedWord interface
+                  const words: TimestampedWord[] = rawWords.map(w => ({
+                    word: w.word,
+                    success: w.success,
+                    start: w.start_s,  // Transform start_s to start
+                    end: w.end_s,      // Transform end_s to end
+                    p_align: w.p_align
+                  }));
+                  
                   console.log(`[Timestamps] Success for version ${index + 1}:`, words.length, "words");
                   
                   return {
