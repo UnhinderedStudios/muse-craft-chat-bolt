@@ -18,7 +18,7 @@ Deno.serve(async (req: Request) => {
   // Health check endpoint
   if (url.pathname.endsWith("/health")) {
     const key = Deno.env.get("GEMINI_API_KEY") ?? "";
-    const model = Deno.env.get("IMAGEN_MODEL") || "imagen-4.0-fast-generate-001";
+    const model = Deno.env.get("IMAGEN_MODEL") || "imagen-4.0-generate-001";
     const jwtRequired = Deno.env.get("SUPABASE_VERIFY_JWT") !== "false";
     return new Response(
       JSON.stringify({
@@ -56,7 +56,7 @@ Deno.serve(async (req: Request) => {
     const aspectRatio = (body?.aspectRatio || "1:1") as string;
     const n = Math.min(Number(body?.n || 2), 4);
 
-    const model = Deno.env.get("IMAGEN_MODEL") || "imagen-4.0-fast-generate-001";
+    const model = Deno.env.get("IMAGEN_MODEL") || "imagen-4.0-generate-001";
 
     // Debug logging
     console.log("🎯 Imagen Edge Function Debug:");
