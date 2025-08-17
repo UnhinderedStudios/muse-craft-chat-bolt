@@ -539,7 +539,7 @@ async function startGeneration() {
         <div className="bg-[#151515] rounded-2xl pl-8 pr-6 py-8 space-y-4 relative">
           {/* Fade gradient overlay - only shows when scrolled */}
           {scrollTop > 0 && (
-            <div className="absolute top-8 left-8 right-6 h-12 bg-gradient-to-b from-[#151515] to-transparent z-30 pointer-events-none rounded-t-xl" />
+            <div className="absolute top-8 left-8 right-6 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none rounded-t-xl" />
           )}
           {/* Chat Conversation */}
           <div 
