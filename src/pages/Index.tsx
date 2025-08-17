@@ -621,7 +621,7 @@ async function startGeneration() {
         </div>
 
         {/* Form Section - Main container matching chat interface */}
-        <div className="bg-[#151515] rounded-xl p-4 space-y-4 mt-6">
+        <div className="bg-[#151515] rounded-xl p-4 space-y-4 mt-5">
           {/* Two-column layout: Left (Title + Song Parameters stacked), Right (Lyrics tall) */}
           <div className="grid grid-cols-12 gap-4 h-auto">
             {/* Left column: Title and Song Parameters stacked */}
