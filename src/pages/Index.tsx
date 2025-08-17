@@ -612,35 +612,20 @@ async function startGeneration() {
                   <div key={`${url}-${idx}`} className="relative overflow-hidden rounded-lg border border-border bg-background/50 hover:bg-background/80 transition-all duration-300">
                     <div className="p-4">
                       <div className="flex gap-4">
-                        {/* Album covers */}
+                        {/* Album cover - show appropriate cover for each version */}
                         <div className="flex-shrink-0">
                           {albumCovers ? (
-                            <div className="flex gap-2">
-                              <img
-                                src={albumCovers.cover1}
-                                alt="Album Cover 1"
-                                className="w-16 h-16 rounded-md object-cover border border-border"
-                                onLoad={() => console.log("Cover 1 loaded:", albumCovers.cover1)}
-                                onError={() => console.log("Cover 1 failed to load:", albumCovers.cover1)}
-                              />
-                              <img
-                                src={albumCovers.cover2}
-                                alt="Album Cover 2"
-                                className="w-16 h-16 rounded-md object-cover border border-border"
-                                onLoad={() => console.log("Cover 2 loaded:", albumCovers.cover2)}
-                                onError={() => console.log("Cover 2 failed to load:", albumCovers.cover2)}
-                              />
-                            </div>
+                            <img
+                              src={idx === 0 ? albumCovers.cover1 : albumCovers.cover2}
+                              alt={`Album Cover for Version ${idx + 1}`}
+                              className="w-16 h-16 rounded-md object-cover border border-border"
+                              onLoad={() => console.log(`Cover ${idx + 1} loaded:`, idx === 0 ? albumCovers.cover1 : albumCovers.cover2)}
+                              onError={() => console.log(`Cover ${idx + 1} failed to load:`, idx === 0 ? albumCovers.cover1 : albumCovers.cover2)}
+                            />
                           ) : isGeneratingCovers ? (
-                            <div className="flex gap-2">
-                              <div className="w-16 h-16 rounded-md bg-muted animate-pulse border border-border" />
-                              <div className="w-16 h-16 rounded-md bg-muted animate-pulse border border-border" />
-                            </div>
+                            <div className="w-16 h-16 rounded-md bg-muted animate-pulse border border-border" />
                           ) : (
-                            <div className="flex gap-2">
-                              <div className="w-16 h-16 rounded-md bg-muted/50 border border-border" />
-                              <div className="w-16 h-16 rounded-md bg-muted/50 border border-border" />
-                            </div>
+                            <div className="w-16 h-16 rounded-md bg-muted/50 border border-border" />
                           )}
                         </div>
                         {/* Audio player and controls */}
@@ -672,35 +657,20 @@ async function startGeneration() {
               </div>
             ) : audioUrl ? (
               <div className="flex gap-4">
-                {/* Album covers */}
+                {/* Album cover - show first cover for single audio */}
                 <div className="flex-shrink-0">
                   {albumCovers ? (
-                    <div className="flex gap-2">
-                      <img
-                        src={albumCovers.cover1}
-                        alt="Album Cover 1"
-                        className="w-16 h-16 rounded-md object-cover border border-border"
-                        onLoad={() => console.log("Cover 1 loaded:", albumCovers.cover1)}
-                        onError={() => console.log("Cover 1 failed to load:", albumCovers.cover1)}
-                      />
-                      <img
-                        src={albumCovers.cover2}
-                        alt="Album Cover 2"
-                        className="w-16 h-16 rounded-md object-cover border border-border"
-                        onLoad={() => console.log("Cover 2 loaded:", albumCovers.cover2)}
-                        onError={() => console.log("Cover 2 failed to load:", albumCovers.cover2)}
-                      />
-                    </div>
+                    <img
+                      src={albumCovers.cover1}
+                      alt="Album Cover"
+                      className="w-16 h-16 rounded-md object-cover border border-border"
+                      onLoad={() => console.log("Cover loaded:", albumCovers.cover1)}
+                      onError={() => console.log("Cover failed to load:", albumCovers.cover1)}
+                    />
                   ) : isGeneratingCovers ? (
-                    <div className="flex gap-2">
-                      <div className="w-16 h-16 rounded-md bg-muted animate-pulse border border-border" />
-                      <div className="w-16 h-16 rounded-md bg-muted animate-pulse border border-border" />
-                    </div>
+                    <div className="w-16 h-16 rounded-md bg-muted animate-pulse border border-border" />
                   ) : (
-                    <div className="flex gap-2">
-                      <div className="w-16 h-16 rounded-md bg-muted/50 border border-border" />
-                      <div className="w-16 h-16 rounded-md bg-muted/50 border border-border" />
-                    </div>
+                    <div className="w-16 h-16 rounded-md bg-muted/50 border border-border" />
                   )}
                 </div>
                 {/* Audio player and controls */}
