@@ -545,7 +545,7 @@ async function startGeneration() {
               scrollbarColor: '#282828 transparent'
             }}
           >
-            <div className="space-y-4 pr-4 pl-1">
+            <div className="space-y-4 pr-4 pl-0">
               {/* Chat messages */}
               {messages.map((m, i) => (
                 <ChatBubble key={i} role={m.role} content={m.content} />
