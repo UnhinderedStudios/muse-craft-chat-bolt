@@ -538,7 +538,7 @@ async function startGeneration() {
         <div className="bg-[#151515] rounded-2xl p-6 space-y-4">
           {/* Chat Conversation */}
           <div 
-            className="h-[400px] overflow-y-auto space-y-4 pr-2 custom-scrollbar"
+            className="h-[400px] overflow-y-auto space-y-4 custom-scrollbar"
             ref={scrollerRef}
             style={{
               scrollbarWidth: 'thin',
