@@ -631,9 +631,9 @@ async function startGeneration() {
                 <label className="text-sm font-medium text-white/80">Title</label>
                 <div className="bg-[#2d2d2d] rounded-lg p-4">
                   <Input
-                    value={details.title || "A singing bird"}
+                    value={details.title || ""}
                     onChange={(e) => setDetails({ ...details, title: e.target.value })}
-                    placeholder="A singing bird"
+                    placeholder="Enter song title..."
                     className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
                   />
                 </div>
@@ -658,9 +658,7 @@ async function startGeneration() {
               <label className="text-sm font-medium text-white/80">Lyrics</label>
               <div className="bg-[#2d2d2d] rounded-lg p-4 flex-1">
                 <Textarea
-                  value={details.lyrics || `Can't help but notice, all of the ways in which I failed myself, I failed the world all Can't help but notice, all of the ways in which I failed myself, I failed the world all Can't help but notice, all of the ways in which I failed herself, I failed the world all
-
-Can't help but notice, all of the ways in which I failed myself, I failed the world all Can't help but notice, all of the ways in which I failed myself, I failed the world all`}
+                  value={details.lyrics || ""}
                   onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
                   placeholder="Enter your lyrics here..."
                   className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 resize-none w-full h-full"
