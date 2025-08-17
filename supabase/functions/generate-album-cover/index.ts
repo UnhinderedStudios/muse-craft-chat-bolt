@@ -1,110 +1,105 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// supabase/functions/generate-album-cover/index.ts
+// deno-lint-ignore-file no-explicit-any
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST,OPTIONS,GET",
+  "Content-Type": "application/json"
 };
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+Deno.serve(async (req: Request) => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: CORS });
+  }
+
+  const url = new URL(req.url);
+
+  // Health check endpoint
+  if (url.pathname.endsWith("/health")) {
+    const key = Deno.env.get("GEMINI_API_KEY") ?? "";
+    const model = Deno.env.get("IMAGEN_MODEL") || "imagen-4.0-fast-generate-001";
+    const jwtRequired = Deno.env.get("SUPABASE_VERIFY_JWT") !== "false";
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        geminiKey: !!key,
+        keyLength: key.length,
+        model,
+        jwtRequired
+      }),
+      { headers: CORS }
+    );
   }
 
   try {
-    const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
-    
-    if (!geminiApiKey) {
-      console.error("Missing GEMINI_API_KEY in environment");
-      return new Response(JSON.stringify({ error: "Missing GEMINI_API_KEY" }), { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    const key = Deno.env.get("GEMINI_API_KEY");
+    if (!key) {
+      return new Response(
+        JSON.stringify({ error: "Missing GEMINI_API_KEY" }),
+        { status: 500, headers: CORS }
+      );
     }
 
-    const reqBody = await req.json().catch(() => ({}));
-    
-    // Health check endpoint
-    if (reqBody.health) {
-      return new Response(JSON.stringify({
-        health: "ok",
-        geminiKey: !!geminiApiKey,
-        keyLength: geminiApiKey?.length || 0,
-        model: "imagen-4.0-fast-generate-001"
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    // If your function enforces JWT, uncomment this to check presence
+    // const auth = req.headers.get("authorization");
+    // if (!auth) return new Response(JSON.stringify({ error: "Missing Authorization header" }), { status: 401, headers: CORS });
 
-    const { prompt } = reqBody;
-    if (!prompt) {
-      return new Response(JSON.stringify({ error: "prompt is required" }), { 
-        status: 400, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    const body = await req.json().catch(() => ({}));
 
-    console.log("Generating album cover with prompt:", prompt);
+    // Accept either { prompt, ... } or { lyrics: "..." }
+    const prompt =
+      body?.prompt?.toString?.() ||
+      body?.lyrics?.toString?.() ||
+      "Album cover, abstract geometry, high contrast, clean composition";
 
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-fast-generate-001:predict",
+    const aspectRatio = (body?.aspectRatio || "1:1") as string;
+    const n = Math.min(Number(body?.n || 2), 4);
+
+    const model = Deno.env.get("IMAGEN_MODEL") || "imagen-4.0-fast-generate-001";
+
+    const googleRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict`,
       {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': geminiApiKey,
+          "Content-Type": "application/json",
+          "x-goog-api-key": key,
         },
         body: JSON.stringify({
           instances: [{ prompt }],
-          parameters: {
-            sampleCount: 2,
-            aspectRatio: "1:1"
-          },
-        }),
+          parameters: { sampleCount: n, aspectRatio }
+        })
       }
     );
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Gemini API error:", response.status, errorText);
-      return new Response(JSON.stringify({ error: `Gemini API error (${response.status}): ${errorText}` }), {
-        status: response.status,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    const json = await googleRes.json().catch(() => ({} as any));
+
+    if (!googleRes.ok) {
+      // Bubble up the real Google error
+      return new Response(
+        JSON.stringify({ error: json?.error?.message || "Imagen error", raw: json }),
+        { status: googleRes.status, headers: CORS }
+      );
     }
 
-    const data = await response.json();
-    console.log("Gemini response received, predictions count:", data?.predictions?.length || 0);
-
-    const predictions = data?.predictions || [];
-    
-    if (!predictions || predictions.length === 0) {
-      console.error("No predictions in response");
-      return new Response(JSON.stringify({ error: "No images generated" }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Extract base64 images and return them directly
-    const images = predictions
+    const images: string[] = (json?.predictions || [])
       .map((p: any) => p?.bytesBase64Encoded)
       .filter(Boolean)
       .map((b64: string) => `data:image/png;base64,${b64}`);
 
-    console.log(`Successfully generated ${images.length} album covers`);
+    if (!images.length) {
+      return new Response(
+        JSON.stringify({ error: "No images in response", raw: json }),
+        { status: 502, headers: CORS }
+      );
+    }
 
-    return new Response(JSON.stringify({
-      success: true,
-      images
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-
-  } catch (error) {
-    console.error("Error in generate-album-cover function:", error);
-    return new Response(JSON.stringify({ error: error.message }), { 
-      status: 500, 
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return new Response(JSON.stringify({ images }), { headers: CORS });
+  } catch (err: any) {
+    return new Response(
+      JSON.stringify({ error: err?.message || "Unhandled error" }),
+      { status: 500, headers: CORS }
+    );
   }
 });

@@ -116,15 +116,15 @@ export const api = {
   },
 
   async testAlbumCoverHealth(): Promise<{
-    health: string;
+    ok: boolean;
     geminiKey: boolean;
     keyLength: number;
     model: string;
+    jwtRequired: boolean;
   }> {
-    const response = await fetch(`${FUNCTIONS_BASE}/generate-album-cover`, {
-      method: "POST",
+    const response = await fetch(`${FUNCTIONS_BASE}/generate-album-cover/health`, {
+      method: "GET",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ health: true }),
     });
     return handle(response);
   },
