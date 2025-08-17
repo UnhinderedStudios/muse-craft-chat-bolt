@@ -626,33 +626,37 @@ async function startGeneration() {
           <div className="grid grid-cols-12 gap-4">
             {/* Left column: Title and Song Parameters stacked */}
             <div className="col-span-5 space-y-3">
-              {/* Title section bubble - small, top */}
-              <div className="bg-[#2d2d2d] rounded-lg p-4">
-                <label className="text-sm font-medium text-white/80 block mb-3">Title</label>
-                <Input
-                  value={details.title || "A singing bird"}
-                  onChange={(e) => setDetails({ ...details, title: e.target.value })}
-                  placeholder="A singing bird"
-                  className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
-                />
+              {/* Title section - external label */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/80">Title</label>
+                <div className="bg-[#2d2d2d] rounded-lg p-4">
+                  <Input
+                    value={details.title || "A singing bird"}
+                    onChange={(e) => setDetails({ ...details, title: e.target.value })}
+                    placeholder="A singing bird"
+                    className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
+                  />
+                </div>
               </div>
               
-              {/* Song Parameters section bubble - below title */}
-              <div className="bg-[#2d2d2d] rounded-lg p-4">
-                <label className="text-sm font-medium text-white/80 block mb-3">Song Parameters</label>
-                <Textarea
-                  value={details.style || ""}
-                  onChange={(e) => setDetails({ ...details, style: e.target.value })}
-                  placeholder="Describe the style, genre, mood, tempo..."
-                  className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[120px] resize-none"
-                />
+              {/* Song Parameters section - external label */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/80">Song Parameters</label>
+                <div className="bg-[#2d2d2d] rounded-lg p-4">
+                  <Textarea
+                    value={details.style || ""}
+                    onChange={(e) => setDetails({ ...details, style: e.target.value })}
+                    placeholder="Describe the style, genre, mood, tempo..."
+                    className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[120px] resize-none"
+                  />
+                </div>
               </div>
             </div>
             
-            {/* Right column: Lyrics section bubble - tall, matching combined height */}
-            <div className="col-span-7">
+            {/* Right column: Lyrics section - external label */}
+            <div className="col-span-7 space-y-2">
+              <label className="text-sm font-medium text-white/80">Lyrics</label>
               <div className="bg-[#2d2d2d] rounded-lg p-4 h-full">
-                <label className="text-sm font-medium text-white/80 block mb-3">Lyrics</label>
                 <Textarea
                   value={details.lyrics || `Can't help but notice, all of the ways in which I failed myself, I failed the world all Can't help but notice, all of the ways in which I failed myself, I failed the world all Can't help but notice, all of the ways in which I failed myself, I failed the world all
 
