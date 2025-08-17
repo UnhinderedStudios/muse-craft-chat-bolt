@@ -572,7 +572,7 @@ async function startGeneration() {
                   e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
                 }}
                 placeholder="Type out your question here..."
-                className="w-full bg-[#040404] border-0 rounded-xl px-4 py-3 pr-12 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-primary/50 resize-none min-h-[48px] max-h-[120px] overflow-y-auto"
+                className="w-full bg-[#040404] border-0 rounded-xl px-4 py-2 pr-12 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-primary/50 resize-none min-h-[36px] max-h-[120px] overflow-y-auto"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
