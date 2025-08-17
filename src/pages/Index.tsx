@@ -538,35 +538,17 @@ async function startGeneration() {
         <div className="bg-[#151515] rounded-2xl p-6 space-y-4">
           {/* Chat Conversation */}
           <div className="min-h-[400px] space-y-4">
-            {/* Reference conversation from the image */}
-            <div className="flex justify-start">
-              <div className="max-w-[85%] px-4 py-3 leading-relaxed rounded-[16px] chat-bubble-assistant text-text-primary">
-                <p>What sort of music would you like for me to make?</p>
-              </div>
-            </div>
-            
-            <div className="flex justify-end">
-              <div className="max-w-[85%] px-4 py-3 leading-relaxed rounded-[16px] chat-bubble-user text-text-primary">
-                <p>I want the song to be about dancing</p>
-              </div>
-            </div>
-            
-            <div className="flex justify-start">
-              <div className="max-w-[85%] px-4 py-3 leading-relaxed rounded-[16px] chat-bubble-assistant text-text-primary">
-                <p>Great! So what kind of genre are you thinking for this song, something like rock, pop..?</p>
-              </div>
-            </div>
-            
-            <div className="flex justify-end">
-              <div className="max-w-[85%] px-4 py-3 leading-relaxed rounded-[16px] chat-bubble-user text-text-primary">
-                <p>I'm thinking something similar to a Taylor Swift song in terms of genre, ok?</p>
-              </div>
-            </div>
-
-            {/* Additional messages from actual conversation */}
-            {messages.slice(1).map((m, i) => (
-              <ChatBubble key={i + 1} role={m.role} content={m.content} />
+            {/* Chat messages */}
+            {messages.map((m, i) => (
+              <ChatBubble key={i} role={m.role} content={m.content} />
             ))}
+            {busy && (
+              <div className="flex justify-start">
+                <div className="max-w-[85%] px-4 py-3 leading-relaxed rounded-[16px] bg-[#000000] border border-accent-primary text-text-primary shadow-[0_0_20px_rgba(255,45,174,0.4)]">
+                  <p>Thinking...</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Tools Section */}
@@ -589,11 +571,10 @@ async function startGeneration() {
               <button
                 onClick={onSend}
                 disabled={busy || !input.trim()}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 w-8 h-8 bg-white rounded-full flex items-center justify-center text-black hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 text-white hover:text-accent-primary transition-colors disabled:opacity-50"
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 19V5" />
-                  <path d="M5 12l7-7 7 7" />
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffffff" stroke="none">
+                  <path d="M12 19V5M5 12l7-7 7 7" stroke="#ffffff" strokeWidth="2" fill="none"/>
                 </svg>
               </button>
             </div>
