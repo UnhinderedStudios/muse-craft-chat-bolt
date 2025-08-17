@@ -16,6 +16,7 @@ import { CyberCard } from "@/components/ui/CyberCard";
 import { CyberButton } from "@/components/ui/CyberButton";
 import { CyberChip } from "@/components/ui/CyberChip";
 import { Input } from "@/components/ui/input";
+import { TagInput } from "@/components/ui/TagInput";
 import { Spinner } from "@/components/ui/spinner";
 
 const systemPrompt = `You are Melody Muse, a friendly creative assistant for songwriting.
@@ -69,6 +70,21 @@ const Index = () => {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [details, setDetails] = useState<SongDetails>({});
+  const [styleTags, setStyleTags] = useState<string[]>([]);
+
+  // Sync styleTags with details.style
+  useEffect(() => {
+    if (details.style && details.style !== styleTags.join(", ")) {
+      // Convert string to tags when details.style changes externally (like from chat or randomize)
+      const tags = details.style.split(",").map(tag => tag.trim()).filter(tag => tag.length > 0);
+      setStyleTags(tags);
+    }
+  }, [details.style]);
+
+  const handleStyleTagsChange = (tags: string[]) => {
+    setStyleTags(tags);
+    setDetails({ ...details, style: tags.join(", ") });
+  };
   const [jobId, setJobId] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioUrls, setAudioUrls] = useState<string[] | null>(null);
@@ -643,10 +659,10 @@ async function startGeneration() {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-white/80">Song Parameters</label>
                 <div className="bg-[#2d2d2d] rounded-lg p-4 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
-                  <Textarea
-                    value={details.style || ""}
-                    onChange={(e) => setDetails({ ...details, style: e.target.value })}
-                    placeholder="Describe the style, genre, mood, tempo..."
+                  <TagInput
+                    tags={styleTags}
+                    onChange={handleStyleTagsChange}
+                    placeholder="Add parameters like: indie rock, moody, 102 BPM..."
                     className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[120px] resize-none"
                   />
                 </div>
