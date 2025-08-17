@@ -20,10 +20,10 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ role, content }) => {
       <div
         className={cn(
           "max-w-[85%] px-4 py-3 leading-relaxed",
-          "rounded-[16px]",
+          "rounded-[16px] bg-[#000000]",
           isUser
-            ? "chat-bubble-user text-text-primary"
-            : "chat-bubble-assistant text-text-primary"
+            ? "border border-white text-text-primary"
+            : "border border-accent-primary text-text-primary"
         )}
       >
         <p className="whitespace-pre-wrap">{content}</p>
