@@ -10,7 +10,12 @@ import { ChatBubble } from "@/components/chat/ChatBubble";
 import { KaraokeLyrics, type TimestampedWord } from "@/components/KaraokeLyrics";
 import { sanitizeStyle } from "@/lib/styleSanitizer";
 import { Progress } from "@/components/ui/progress";
-import { Dice5, Mic } from "lucide-react";
+import { Dice5, Mic, Upload, Grid3X3, Plus, List } from "lucide-react";
+import { CyberHeader } from "@/components/ui/CyberHeader";
+import { CyberCard } from "@/components/ui/CyberCard";
+import { CyberButton } from "@/components/ui/CyberButton";
+import { CyberChip } from "@/components/ui/CyberChip";
+import { Input } from "@/components/ui/input";
 
 const systemPrompt = `You are Melody Muse, a friendly creative assistant for songwriting.
 Your goal is to chat naturally and quickly gather two things only: (1) a unified Style description and (2) Lyrics.
@@ -238,7 +243,7 @@ if (extracted) {
       if (r2.status === "fulfilled") msgs.push(r2.value.content);
       const extractions = msgs.map(extractDetails).filter(Boolean) as SongDetails[];
       if (extractions.length === 0) {
-        toast.message("Couldn’t parse random song", { description: "Try again in a moment." });
+        toast.message("Couldn't parse random song", { description: "Try again in a moment." });
       } else {
         const cleanedList = extractions.map((ex) => {
           const finalStyle = sanitizeStyleSafe(ex.style);
@@ -523,304 +528,192 @@ async function startGeneration() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/40">
-      <header className="sticky top-0 z-10 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container py-6">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">AI Song Studio</h1>
-              <p className="text-sm text-muted-foreground">Chat to craft lyrics and generate music with Suno.</p>
-            </div>
-            <Button variant="hero" size="lg" onClick={() => window.location.reload()}>New session</Button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-canvas">
+      {/* Cyber Header */}
+      <CyberHeader />
 
-      <main className="container py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <section className="lg:col-span-2">
-          <Card className="p-0">
-            <div className="h-[60vh] sm:h-[65vh] md:h-[70vh]">
-              <ScrollArea className="h-full" ref={scrollerRef as any}>
+      {/* 3-Column Layout */}
+      <main className="flex h-[calc(100vh-64px)]">
+        {/* Left Column (52%) - Chat + Tools + Form */}
+        <section className="w-[52%] p-4 space-y-4 flex flex-col">
+          {/* Chat Area */}
+          <CyberCard className="flex-1 p-0 flex flex-col">
+            <div className="flex-1 min-h-0">
+              <ScrollArea className="h-full cyber-scrollbar" ref={scrollerRef as any}>
                 <div className="p-4 space-y-4">
-                  {messages.map((m, i) => (
-                    <ChatBubble key={i} role={m.role} content={m.content} />
+                  {/* Sample messages for demo */}
+                  <ChatBubble role="assistant" content="Hey! I can help write and generate a song. What vibe are you going for?" />
+                  <ChatBubble role="user" content="I want something upbeat and electronic" />
+                  <ChatBubble role="assistant" content="Perfect! Electronic music with an upbeat vibe. Any specific style like house, synthwave, or drum & bass? And what should the song be about?" />
+                  {messages.slice(1).map((m, i) => (
+                    <ChatBubble key={i + 1} role={m.role} content={m.content} />
                   ))}
                 </div>
               </ScrollArea>
             </div>
-            <Separator />
-            <div className="p-3 sm:p-4">
-              <div className="flex items-end gap-2">
-                <Textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Describe your song idea..."
-                  className="min-h-[52px]"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      onSend();
-                    }
-                  }}
-                  disabled={busy}
-                />
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  onClick={randomizeAll}
-                  type="button"
-                  disabled={busy}
-                  aria-label="Randomize song"
-                  title="Randomize song"
-                >
-                  <Dice5 />
-                </Button>
-                <Button onClick={onSend} type="button" disabled={busy} className="shrink-0">Send</Button>
+            <Separator className="bg-border-main" />
+            {/* Tools Row */}
+            <div className="p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex-1">
+                  <Input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Type out your question here…"
+                    className="bg-card-alt border-border-main rounded-pill text-text-primary placeholder:text-text-secondary h-10"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        onSend();
+                      }
+                    }}
+                    disabled={busy}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <CyberButton variant="icon" disabled={busy}>
+                    <Upload className="w-4 h-4 text-text-secondary" />
+                  </CyberButton>
+                  <CyberButton variant="icon" disabled={busy}>
+                    <Grid3X3 className="w-4 h-4 text-text-secondary" />
+                  </CyberButton>
+                  <CyberButton variant="icon" onClick={randomizeAll} disabled={busy}>
+                    <Dice5 className="w-4 h-4 text-text-secondary" />
+                  </CyberButton>
+                  <CyberButton variant="icon" disabled={busy}>
+                    <List className="w-4 h-4 text-text-secondary" />
+                  </CyberButton>
+                </div>
               </div>
+              <Button onClick={onSend} type="button" disabled={busy} className="w-full">Send</Button>
             </div>
-          </Card>
-        </section>
+          </CyberCard>
 
-        <aside className="space-y-4">
-          <Card className="p-4 space-y-3">
-            <h2 className="text-lg font-medium">Song details</h2>
-            <p className="text-sm text-muted-foreground">These auto-fill from the chat. Provide Style + Lyrics.</p>
-            <div className="grid grid-cols-1 gap-3">
-              <input className="hidden" />
-              <div className="space-y-1">
-                <label className="text-sm text-muted-foreground">Title</label>
-                <input
-                  className="w-full h-10 rounded-md border bg-background px-3"
-                  value={details.title || ""}
-                  onChange={(e) => setDetails({ ...details, title: e.target.value })}
-                  placeholder="e.g. Neon Skies"
-                />
-              </div>
-            </div>
+          {/* Form Section */}
+          <CyberCard className="space-y-4">
             <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">Style</label>
-              <Textarea
-                value={details.style || ""}
-                onChange={(e) => setDetails({ ...details, style: e.target.value })}
-                placeholder="Combine genre, mood, tempo/BPM, language, vocal type, ref artists, production notes"
+              <label className="text-sm text-text-secondary">Title</label>
+              <Input
+                value={details.title || ""}
+                onChange={(e) => setDetails({ ...details, title: e.target.value })}
+                placeholder="e.g. Neon Skies"
+                className="bg-card-alt border-border-main rounded-input text-text-primary"
               />
             </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm text-text-secondary">Song Parameters</label>
+              <div className="flex gap-2 flex-wrap">
+                <CyberChip variant="purple">Female Voice</CyberChip>
+                <CyberChip variant="teal">125 BPM</CyberChip>
+              </div>
+            </div>
+
             <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">Lyrics (optional)</label>
+              <label className="text-sm text-text-secondary">Lyrics</label>
               <Textarea
                 value={details.lyrics || ""}
                 onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
-                placeholder="Paste a short verse/chorus or let AI help in chat"
-                className="min-h-[120px]"
+                placeholder="Paste your lyrics here or let AI help in chat..."
+                className="min-h-[120px] bg-card-alt border-border-main rounded-input text-text-primary placeholder:text-text-secondary resize-none"
+                rows={6}
               />
             </div>
+
             {busy && generationProgress > 0 && (
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Generating...</span>
-                  <span className="font-medium text-primary">{Math.round(generationProgress)}%</span>
+                  <span className="text-text-secondary">Generating...</span>
+                  <span className="font-medium text-accent-primary">{Math.round(generationProgress)}%</span>
                 </div>
                 <Progress 
                   value={generationProgress} 
-                  className="h-2 bg-gradient-to-r from-primary/20 to-accent/20"
+                  className="h-2"
                 />
-                <div className="text-xs text-center text-muted-foreground">
-                  {generationProgress < 25 ? "Starting generation..." :
-                   generationProgress < 50 ? "Composing music..." :
-                   generationProgress < 75 ? "Finalizing tracks..." :
-                   generationProgress < 90 ? "Processing audio..." :
-                   "Adding karaoke lyrics..."}
-                </div>
               </div>
             )}
-            <div className="flex gap-2">
-              <Button onClick={startGeneration} disabled={busy || !canGenerate} variant="hero" className="flex-1">
-                {busy ? "Working..." : jobId ? "Generating..." : "Generate with Suno"}
-              </Button>
-              <Button 
-                onClick={testAlbumCoverWithLyrics} 
-                disabled={busy || isGeneratingCovers} 
-                variant="outline" 
-                size="default"
-                className="shrink-0"
-              >
-                Test Art
-              </Button>
-            </div>
-            
-            {/* Test Album Covers Preview */}
-            {(albumCovers || isGeneratingCovers) && !audioUrls && (
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium text-muted-foreground">Test Album Covers</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground text-center">Cover 1</p>
-                    {isGeneratingCovers ? (
-                      <div className="w-full aspect-square rounded-lg bg-muted animate-pulse border border-border" />
-                    ) : albumCovers?.cover1 ? (
-                      <img
-                        src={albumCovers.cover1}
-                        alt="Test Album Cover 1"
-                        className="w-full aspect-square object-cover rounded-lg border border-border"
-                      />
-                    ) : (
-                      <div className="w-full aspect-square rounded-lg bg-muted/50 border border-border flex items-center justify-center">
-                        <span className="text-xs text-muted-foreground">No cover</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground text-center">Cover 2</p>
-                    {isGeneratingCovers ? (
-                      <div className="w-full aspect-square rounded-lg bg-muted animate-pulse border border-border" />
-                    ) : albumCovers?.cover2 ? (
-                      <img
-                        src={albumCovers.cover2}
-                        alt="Test Album Cover 2"
-                        className="w-full aspect-square object-cover rounded-lg border border-border"
-                      />
-                    ) : (
-                      <div className="w-full aspect-square rounded-lg bg-muted/50 border border-border flex items-center justify-center">
-                        <span className="text-xs text-muted-foreground">No cover</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Debug Info */}
-                {albumCovers?.debug && (
-                  <details className="text-xs bg-muted/20 rounded-lg p-3">
-                    <summary className="cursor-pointer font-medium text-muted-foreground hover:text-foreground">Art Debug Info</summary>
-                    <div className="mt-2 space-y-2 font-mono">
-                      <div>
-                        <strong>Source:</strong> {albumCovers.debug.inputSource}
-                      </div>
-                      <div>
-                        <strong>Input:</strong> {albumCovers.debug.inputContent.substring(0, 100)}...
-                      </div>
-                      <div>
-                        <strong>ChatGPT Prompt:</strong> {albumCovers.debug.imagenPrompt}
-                      </div>
-                      {albumCovers.debug.rawResponse?.debug?.prompt && (
-                        <div>
-                          <strong>Edge Prompt:</strong> {albumCovers.debug.rawResponse.debug.prompt}
-                        </div>
-                      )}
-                      <div>
-                        <strong>Imagen Params:</strong> {JSON.stringify(albumCovers.debug.imagenParams, null, 2)}
-                      </div>
-                      {albumCovers.debug.rawResponse?.debug && (
-                        <div>
-                          <strong>Edge Function:</strong> Model: {albumCovers.debug.rawResponse.debug.model}, Images: {albumCovers.debug.rawResponse.debug.imageCount}
-                        </div>
-                      )}
-                    </div>
-                  </details>
-                )}
-              </div>
-            )}
-          </Card>
 
-          <Card className="p-4 space-y-3">
-            <h2 className="text-lg font-medium">Output</h2>
+            <CyberButton onClick={startGeneration} disabled={busy || !canGenerate}>
+              ✦ Generate
+            </CyberButton>
+
+            <Button 
+              onClick={testAlbumCoverWithLyrics} 
+              disabled={busy || isGeneratingCovers} 
+              variant="outline" 
+              size="default"
+              className="w-full"
+            >
+              Test Art
+            </Button>
+          </CyberCard>
+        </section>
+
+        {/* Middle Column (24%) - Placeholder */}
+        <section className="w-[24%] p-4">
+          <CyberCard className="h-full flex items-center justify-center">
+            <div className="text-center text-text-secondary">
+              <div className="w-16 h-16 bg-border-main rounded-lg mx-auto mb-4"></div>
+              <p className="text-sm">Future Module</p>
+            </div>
+          </CyberCard>
+        </section>
+
+        {/* Right Column (24%) - Placeholder + Output */}
+        <section className="w-[24%] p-4 space-y-4 flex flex-col">
+          <CyberCard className="flex-1 flex items-center justify-center">
+            <div className="text-center text-text-secondary">
+              <div className="w-16 h-16 bg-border-main rounded-lg mx-auto mb-4"></div>
+              <p className="text-sm">Future Module</p>
+            </div>
+          </CyberCard>
+
+          {/* Output Section */}
+          <CyberCard className="space-y-3">
+            <h2 className="text-lg font-medium text-text-primary">Output</h2>
             {audioUrls && audioUrls.length > 0 ? (
               <div className="space-y-4">
                 {audioUrls.map((url, idx) => (
-                  <div key={`${url}-${idx}`} className="relative overflow-hidden rounded-lg border border-border bg-background/50 hover:bg-background/80 transition-all duration-300">
-                    <div className="p-4">
-                      <div className="flex gap-4">
-                        {/* Album cover - show appropriate cover for each version */}
-                        <div className="flex-shrink-0">
-                          {albumCovers ? (
-                            <img
-                              src={idx === 0 ? albumCovers.cover1 : albumCovers.cover2}
-                              alt={`Album Cover for Version ${idx + 1}`}
-                              className="w-16 h-16 rounded-md object-cover border border-border"
-                              onLoad={() => console.log(`Cover ${idx + 1} loaded:`, idx === 0 ? albumCovers.cover1 : albumCovers.cover2)}
-                              onError={() => console.log(`Cover ${idx + 1} failed to load:`, idx === 0 ? albumCovers.cover1 : albumCovers.cover2)}
-                            />
-                          ) : isGeneratingCovers ? (
-                            <div className="w-16 h-16 rounded-md bg-muted animate-pulse border border-border" />
-                          ) : (
-                            <div className="w-16 h-16 rounded-md bg-muted/50 border border-border" />
-                          )}
-                        </div>
-                        {/* Audio player and controls */}
-                        <div className="flex-1 space-y-2">
-                          <p className="text-sm text-muted-foreground">Version {idx + 1}</p>
-                          <audio
-                            src={url}
-                            controls
-                            className="w-full"
-                            preload="auto"
-                            onPlay={() => handleAudioPlay(idx)}
-                            onPause={handleAudioPause}
-                            onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
-                            onEnded={handleAudioPause}
-                            ref={(el) => { if (el) audioRefs.current[idx] = el; }}
-                          />
-                          <a
-                            href={url}
-                            download
-                            className="inline-flex h-10 items-center rounded-md bg-secondary px-4 text-sm"
-                          >
-                            Download version {idx + 1}
-                          </a>
-                        </div>
-                      </div>
-                    </div>
+                  <div key={`${url}-${idx}`} className="space-y-2">
+                    <p className="text-sm text-text-secondary">Version {idx + 1}</p>
+                    <audio
+                      src={url}
+                      controls
+                      className="w-full"
+                      preload="auto"
+                      onPlay={() => handleAudioPlay(idx)}
+                      onPause={handleAudioPause}
+                      onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
+                      onEnded={handleAudioPause}
+                      ref={(el) => { if (el) audioRefs.current[idx] = el; }}
+                    />
                   </div>
                 ))}
               </div>
             ) : audioUrl ? (
-              <div className="flex gap-4">
-                {/* Album cover - show first cover for single audio */}
-                <div className="flex-shrink-0">
-                  {albumCovers ? (
-                    <img
-                      src={albumCovers.cover1}
-                      alt="Album Cover"
-                      className="w-16 h-16 rounded-md object-cover border border-border"
-                      onLoad={() => console.log("Cover loaded:", albumCovers.cover1)}
-                      onError={() => console.log("Cover failed to load:", albumCovers.cover1)}
-                    />
-                  ) : isGeneratingCovers ? (
-                    <div className="w-16 h-16 rounded-md bg-muted animate-pulse border border-border" />
-                  ) : (
-                    <div className="w-16 h-16 rounded-md bg-muted/50 border border-border" />
-                  )}
-                </div>
-                {/* Audio player and controls */}
-                <div className="flex-1 space-y-3">
-                   <audio
-                     src={audioUrl}
-                     controls
-                     className="w-full"
-                     preload="none"
-                     onPlay={() => handleAudioPlay(0)}
-                     onPause={handleAudioPause}
-                     onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
-                     onEnded={handleAudioPause}
-                     ref={(el) => { if (el) audioRefs.current[0] = el; }}
-                   />
-                  <a
-                    href={audioUrl}
-                    download
-                    className="inline-flex h-10 items-center rounded-md bg-secondary px-4 text-sm"
-                  >
-                    Download track
-                  </a>
-                </div>
+              <div className="space-y-2">
+                <audio
+                  src={audioUrl}
+                  controls
+                  className="w-full"
+                  preload="none"
+                  onPlay={() => handleAudioPlay(0)}
+                  onPause={handleAudioPause}
+                  onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
+                  onEnded={handleAudioPause}
+                  ref={(el) => { if (el) audioRefs.current[0] = el; }}
+                />
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Your song will appear here once it’s ready.</p>
+              <p className="text-sm text-text-secondary">Your song will appear here once it's ready.</p>
             )}
-          </Card>
-          
+          </CyberCard>
+
+          {/* Karaoke Section */}
           {versions.length > 0 && (
-            <Card className="p-4 space-y-3">
+            <CyberCard className="space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium">Karaoke Lyrics</h2>
+                <h2 className="text-lg font-medium text-text-primary">Karaoke</h2>
                 {versions[currentAudioIndex]?.words?.length > 0 && (
                   <Button
                     variant="outline"
@@ -838,19 +731,20 @@ async function startGeneration() {
                   words={versions[currentAudioIndex].words}
                   currentTime={currentTime}
                   isPlaying={isPlaying}
+                  className="min-h-[200px] max-h-[300px]"
                 />
               ) : details.lyrics ? (
-                <div className="min-h-[200px] max-h-[400px] overflow-y-auto p-4 rounded-md border bg-muted/20 whitespace-pre-wrap">
+                <div className="min-h-[200px] max-h-[300px] overflow-y-auto p-4 rounded-md border border-border-main bg-card-alt whitespace-pre-wrap text-text-primary">
                   {details.lyrics}
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-text-secondary">
                   <p>No lyrics available</p>
                 </div>
               )}
-            </Card>
+            </CyberCard>
           )}
-        </aside>
+        </section>
       </main>
 
       {/* Full-screen Karaoke Overlay */}
@@ -866,7 +760,7 @@ async function startGeneration() {
                 <div className="w-48 h-48 bg-muted/20 rounded-lg flex items-center justify-center">
                   <div className="text-white/60">Generating cover...</div>
                 </div>
-              ) : (
+              ) : albumCovers ? (
                 <img 
                   src={currentAudioIndex === 1 ? albumCovers.cover2 : albumCovers.cover1}
                   alt="Album Cover"
@@ -875,7 +769,7 @@ async function startGeneration() {
                     e.currentTarget.style.display = 'none';
                   }}
                 />
-              )}
+              ) : null}
             </div>
             
             {/* Karaoke Lyrics */}

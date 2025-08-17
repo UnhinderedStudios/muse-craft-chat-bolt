@@ -61,12 +61,24 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Cyber theme colors
+				canvas: 'hsl(var(--bg-canvas))',
+				'card-alt': 'hsl(var(--bg-card-alt))',
+				'border-main': 'hsl(var(--border-main))',
+				'text-primary': 'hsl(var(--text-primary))',
+				'text-secondary': 'hsl(var(--text-secondary))',
+				'accent-primary': 'hsl(var(--accent-primary))',
+				'purple-chip': 'hsl(var(--purple-chip))',
+				'teal-chip': 'hsl(var(--teal-chip))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
+				sm: 'calc(var(--radius) - 4px)',
+				card: 'var(--radius-card)',
+				input: 'var(--radius-input)',
+				pill: 'var(--radius-pill)'
 			},
 			keyframes: {
 				'accordion-down': {

@@ -1,0 +1,83 @@
+/* Dark Neon Hot-Pink Cyber Aesthetic Theme */
+:root {
+  /* Canvas & Cards */
+  --bg-canvas: 11 11 11; /* #0B0B0B */
+  --bg-card: 18 18 18; /* #121212 */
+  --bg-card-alt: 22 22 22; /* #161616 */
+  --border-main: 42 42 42; /* #2A2A2A */
+
+  /* Hot Pink Accent System */
+  --accent-primary: 315 100% 60%; /* #FF2DAE */
+  --accent-gradient-start: 315 100% 60%; /* #FF2DAE */
+  --accent-gradient-end: 321 100% 68%; /* #FF5ACD */
+
+  /* Supporting Colors */
+  --purple-chip: 258 90% 66%; /* #8B5CF6 */
+  --teal-chip: 172 85% 67%; /* #2DD4BF */
+
+  /* Text */
+  --text-primary: 240 5% 93%; /* #EDEDED */
+  --text-secondary: 240 4% 66%; /* #A1A1AA */
+
+  /* Radii */
+  --radius-card: 16px;
+  --radius-input: 12px;
+  --radius-pill: 9999px;
+
+  /* Shadows & Effects */
+  --shadow-card: 0 4px 12px -2px hsl(0 0% 0% / 0.3);
+  --shadow-glow: 0 0 20px hsl(var(--accent-primary) / 0.3);
+  --shadow-glow-strong: 0 0 30px hsl(var(--accent-primary) / 0.5);
+}
+
+/* Custom gradient utilities */
+.gradient-primary {
+  background: linear-gradient(135deg, hsl(var(--accent-gradient-start)), hsl(var(--accent-gradient-end)));
+}
+
+.gradient-primary-hover {
+  background: linear-gradient(135deg, hsl(var(--accent-gradient-start) / 0.9), hsl(var(--accent-gradient-end) / 0.9));
+}
+
+/* Chat bubble stroke effects */
+.chat-bubble-assistant {
+  background: hsl(var(--bg-card));
+  border: 1.5px solid hsl(var(--accent-primary));
+  box-shadow: var(--shadow-glow);
+}
+
+.chat-bubble-user {
+  background: hsl(var(--bg-card));
+  border: 1.5px solid hsl(var(--text-primary));
+}
+
+/* Chip styles */
+.chip-purple {
+  background: hsl(var(--purple-chip) / 0.2);
+  color: hsl(var(--purple-chip));
+  border: 1px solid hsl(var(--purple-chip) / 0.4);
+}
+
+.chip-teal {
+  background: hsl(var(--teal-chip) / 0.2);
+  color: hsl(var(--teal-chip));
+  border: 1px solid hsl(var(--teal-chip) / 0.4);
+}
+
+/* Cyber-style scrollbar */
+.cyber-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cyber-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--bg-card));
+}
+
+.cyber-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--accent-primary) / 0.3);
+  border-radius: 3px;
+}
+
+.cyber-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--accent-primary) / 0.5);
+}
