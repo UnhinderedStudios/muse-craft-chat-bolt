@@ -742,13 +742,34 @@ async function startGeneration() {
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-8 cursor-pointer"
           onClick={() => setShowFullscreenKaraoke(false)}
         >
-          <div className="w-full max-w-4xl">
-            <KaraokeLyrics 
-              words={versions[currentAudioIndex].words}
-              currentTime={currentTime}
-              isPlaying={isPlaying}
-              className="min-h-[300px] max-h-[70vh] bg-transparent border-0 text-white text-2xl leading-relaxed"
-            />
+          <div className="w-full max-w-4xl flex flex-col items-center">
+            {/* Album Cover */}
+            <div className="mb-8">
+              {isGeneratingCovers ? (
+                <div className="w-48 h-48 bg-muted/20 rounded-lg flex items-center justify-center">
+                  <div className="text-white/60">Generating cover...</div>
+                </div>
+              ) : (
+                <img 
+                  src={currentAudioIndex === 1 ? albumCovers.cover2 : albumCovers.cover1}
+                  alt="Album Cover"
+                  className="w-48 h-48 object-cover rounded-lg shadow-2xl border border-white/10"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              )}
+            </div>
+            
+            {/* Karaoke Lyrics */}
+            <div className="w-full">
+              <KaraokeLyrics 
+                words={versions[currentAudioIndex].words}
+                currentTime={currentTime}
+                isPlaying={isPlaying}
+                className="min-h-[300px] max-h-[50vh] bg-transparent border-0 text-white text-2xl leading-relaxed"
+              />
+            </div>
           </div>
         </div>
       )}
