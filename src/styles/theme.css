@@ -92,10 +92,10 @@
 }
 
 .lyrics-scrollbar::-webkit-scrollbar-thumb {
-  background: #464646;
+  background: rgba(70, 70, 70, 0.8);
   border-radius: 4px;
 }
 
 .lyrics-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #565656;
+  background: #464646;
 }
