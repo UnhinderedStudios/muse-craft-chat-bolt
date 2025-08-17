@@ -446,7 +446,11 @@ async function startGeneration() {
                   }
                   
                   console.log(`[Timestamps] Fetching for version ${index + 1} (audioId: ${version.audioId})`);
-                  const timestampData = await api.getTimestampedLyrics(version.audioId);
+                  const timestampData = await api.getTimestampedLyrics({ 
+                    taskId: jobId, 
+                    audioId: version.audioId, 
+                    musicIndex: version.musicIndex 
+                  });
                   const rawWords = timestampData.alignedWords || [];
                   
                   // Transform API response to match TimestampedWord interface
@@ -487,6 +491,18 @@ async function startGeneration() {
           
           console.log("[Generation] All timestamp fetching completed");
           setVersions(updatedVersions);
+          
+          // Phase C: Generate album covers after lyrics are ready
+          console.log("[Generation] Phase C: Generating album covers...");
+          try {
+            const coverResult = await api.generateAlbumCovers(details);
+            console.log("[Generation] Album covers generated:", coverResult);
+            setAlbumCovers(coverResult);
+            toast.success("Album covers generated!");
+          } catch (coverError: any) {
+            console.warn("[Generation] Album cover generation failed:", coverError.message);
+            // Don't fail the whole process if covers fail
+          }
           
           setGenerationProgress(100);
           setLastProgressUpdate(Date.now());
