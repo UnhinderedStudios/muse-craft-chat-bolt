@@ -541,6 +541,8 @@ async function startGeneration() {
           {scrollTop > 0 && (
             <div className="absolute top-8 left-8 right-6 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none rounded-t-xl" />
           )}
+          {/* Bottom fade gradient overlay */}
+          <div className="absolute bottom-8 left-8 right-6 h-16 bg-gradient-to-t from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none" />
           {/* Chat Conversation */}
           <div 
             className="h-[400px] overflow-y-auto custom-scrollbar"
