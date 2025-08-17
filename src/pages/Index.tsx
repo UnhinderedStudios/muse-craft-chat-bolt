@@ -600,7 +600,7 @@ async function startGeneration() {
                   e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
                 }}
                 placeholder="Type out your question here..."
-                className="w-full bg-transparent border-0 pr-8 text-white placeholder-gray-500 focus:outline-none resize-none min-h-[32px] max-h-[120px] overflow-y-auto custom-scrollbar"
+                className="w-full bg-transparent border-0 pr-8 text-white placeholder-gray-500 focus:outline-none resize-none min-h-[32px] max-h-[120px] overflow-y-auto chat-input-scrollbar"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();

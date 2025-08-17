@@ -99,3 +99,21 @@
 .lyrics-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #464646;
 }
+
+/* Chat Input Scrollbar - Positioned at far right edge */
+.chat-input-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-input-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-input-scrollbar::-webkit-scrollbar-thumb {
+  background: #282828;
+  border-radius: 4px;
+}
+
+.chat-input-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #383838;
+}
