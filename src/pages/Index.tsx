@@ -538,13 +538,15 @@ async function startGeneration() {
         <div className="bg-[#151515] rounded-2xl pl-8 pr-6 py-8 space-y-4">
           {/* Chat Conversation */}
           <div 
-            className="h-[400px] overflow-y-auto custom-scrollbar"
+            className="h-[400px] overflow-y-auto custom-scrollbar relative"
             ref={scrollerRef}
             style={{
               scrollbarWidth: 'thin',
               scrollbarColor: '#282828 transparent'
             }}
           >
+            {/* Fade gradient overlay at top */}
+            <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-[#151515] to-transparent z-10 pointer-events-none" />
             <div className="space-y-4 pr-4 pl-4 pt-4 pb-4">
               {/* Chat messages */}
               {messages.map((m, i) => (
