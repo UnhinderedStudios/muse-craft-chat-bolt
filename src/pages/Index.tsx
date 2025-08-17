@@ -656,14 +656,14 @@ async function startGeneration() {
             {/* Right column: Lyrics section - external label */}
             <div className="col-span-7 space-y-2">
               <label className="text-sm font-medium text-white/80">Lyrics</label>
-              <div className="bg-[#2d2d2d] rounded-lg p-4 h-full">
+              <div className="bg-[#2d2d2d] rounded-lg p-4" style={{height: "calc(100% - 1.75rem)"}}>
                 <Textarea
                   value={details.lyrics || `Can't help but notice, all of the ways in which I failed myself, I failed the world all Can't help but notice, all of the ways in which I failed myself, I failed the world all Can't help but notice, all of the ways in which I failed myself, I failed the world all
 
 Can't help but notice, all of the ways in which I failed myself, I failed the world all Can't help but notice, all of the ways in which I failed myself, I failed the world all`}
                   onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
                   placeholder="Enter your lyrics here..."
-                  className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[200px] resize-none h-full"
+                  className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 resize-none w-full h-full"
                 />
               </div>
             </div>
