@@ -650,6 +650,47 @@ async function startGeneration() {
                 Test Art
               </Button>
             </div>
+            
+            {/* Test Album Covers Preview */}
+            {(albumCovers || isGeneratingCovers) && !audioUrls && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-muted-foreground">Test Album Covers</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground text-center">Cover 1</p>
+                    {isGeneratingCovers ? (
+                      <div className="w-full aspect-square rounded-lg bg-muted animate-pulse border border-border" />
+                    ) : albumCovers?.cover1 ? (
+                      <img
+                        src={albumCovers.cover1}
+                        alt="Test Album Cover 1"
+                        className="w-full aspect-square object-cover rounded-lg border border-border"
+                      />
+                    ) : (
+                      <div className="w-full aspect-square rounded-lg bg-muted/50 border border-border flex items-center justify-center">
+                        <span className="text-xs text-muted-foreground">No cover</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground text-center">Cover 2</p>
+                    {isGeneratingCovers ? (
+                      <div className="w-full aspect-square rounded-lg bg-muted animate-pulse border border-border" />
+                    ) : albumCovers?.cover2 ? (
+                      <img
+                        src={albumCovers.cover2}
+                        alt="Test Album Cover 2"
+                        className="w-full aspect-square object-cover rounded-lg border border-border"
+                      />
+                    ) : (
+                      <div className="w-full aspect-square rounded-lg bg-muted/50 border border-border flex items-center justify-center">
+                        <span className="text-xs text-muted-foreground">No cover</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </Card>
 
           <Card className="p-4 space-y-3">
