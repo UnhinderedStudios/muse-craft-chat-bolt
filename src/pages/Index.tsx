@@ -538,24 +538,26 @@ async function startGeneration() {
         <div className="bg-[#151515] rounded-2xl p-6 space-y-4">
           {/* Chat Conversation */}
           <div 
-            className="h-[400px] overflow-y-auto space-y-4 custom-scrollbar"
+            className="h-[400px] overflow-y-auto custom-scrollbar"
             ref={scrollerRef}
             style={{
               scrollbarWidth: 'thin',
               scrollbarColor: '#282828 transparent'
             }}
           >
-            {/* Chat messages */}
-            {messages.map((m, i) => (
-              <ChatBubble key={i} role={m.role} content={m.content} />
-            ))}
-            {busy && (
-              <div className="flex justify-start">
-                <div className="max-w-[85%] px-4 py-3 leading-relaxed rounded-[16px] bg-[#000000] border border-accent-primary text-text-primary shadow-[0_0_20px_rgba(255,45,174,0.4)]">
-                  <p>Thinking...</p>
+            <div className="space-y-4 pr-4 pl-1">
+              {/* Chat messages */}
+              {messages.map((m, i) => (
+                <ChatBubble key={i} role={m.role} content={m.content} />
+              ))}
+              {busy && (
+                <div className="flex justify-start">
+                  <div className="max-w-[85%] px-4 py-3 leading-relaxed rounded-[16px] bg-[#000000] border border-accent-primary text-text-primary shadow-[0_0_20px_rgba(255,45,174,0.4)]">
+                    <p>Thinking...</p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Tools Section */}
