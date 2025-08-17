@@ -80,7 +80,17 @@ const Index = () => {
   const [showFullscreenKaraoke, setShowFullscreenKaraoke] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<number>(0);
   const [lastProgressUpdate, setLastProgressUpdate] = useState<number>(Date.now());
-  const [albumCovers, setAlbumCovers] = useState<{ cover1: string; cover2: string } | null>(null);
+  const [albumCovers, setAlbumCovers] = useState<{ 
+    cover1: string; 
+    cover2: string; 
+    debug?: {
+      inputLyrics: string;
+      chatPrompt: string;
+      imagenPrompt: string;
+      imagenParams: any;
+      rawResponse: any;
+    }
+  } | null>(null);
   const [isGeneratingCovers, setIsGeneratingCovers] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const audioRefs = useRef<HTMLAudioElement[]>([]);
@@ -251,29 +261,17 @@ if (extracted) {
     setIsGeneratingCovers(true);
     setAlbumCovers(null);
     
-    // Use sample lyrics for testing
-    const sampleLyrics = `Verse 1:
-Neon lights are calling my name
-Dancing shadows in the midnight rain
-Electric dreams fill the air tonight
-Everything's glowing with electric light
-
-Chorus:
-Party lights, shining bright
-Take me higher, through the night
-Feel the rhythm, feel the beat
-Dancing on these neon streets
-
-Verse 2:
-City's alive with electric sound
-Bass is pumping underground
-Colors flowing like a rainbow stream
-Living inside this electric dream`;
+    // Use actual lyrics from details if available, fallback to test lyrics
+    const testLyrics = details.lyrics?.trim() || `Tree in a forest with sunlight filtering through leaves, natural and peaceful scene, artistic nature photography style`;
 
     try {
-      const covers = await api.generateAlbumCovers(sampleLyrics);
-      console.log("Test album covers generated:", covers);
-      setAlbumCovers(covers);
+      const result = await api.testAlbumCover(testLyrics);
+      console.log("Test album covers generated:", result);
+      setAlbumCovers({
+        cover1: result.cover1,
+        cover2: result.cover2,
+        debug: result.debug
+      });
       toast.success("Test album covers generated!");
     } catch (error) {
       console.error("Test album cover generation failed:", error);
@@ -689,6 +687,29 @@ async function startGeneration() {
                     )}
                   </div>
                 </div>
+                
+                {/* Debug Info */}
+                {albumCovers?.debug && (
+                  <details className="text-xs bg-muted/20 rounded-lg p-3">
+                    <summary className="cursor-pointer font-medium text-muted-foreground hover:text-foreground">Art Debug Info</summary>
+                    <div className="mt-2 space-y-2 font-mono">
+                      <div>
+                        <strong>Input:</strong> {albumCovers.debug.inputLyrics.substring(0, 100)}...
+                      </div>
+                      <div>
+                        <strong>ChatGPT Prompt:</strong> {albumCovers.debug.imagenPrompt}
+                      </div>
+                      <div>
+                        <strong>Imagen Params:</strong> {JSON.stringify(albumCovers.debug.imagenParams, null, 2)}
+                      </div>
+                      {albumCovers.debug.rawResponse?.debug && (
+                        <div>
+                          <strong>Edge Function:</strong> Model: {albumCovers.debug.rawResponse.debug.model}, Images: {albumCovers.debug.rawResponse.debug.imageCount}
+                        </div>
+                      )}
+                    </div>
+                  </details>
+                )}
               </div>
             )}
           </Card>

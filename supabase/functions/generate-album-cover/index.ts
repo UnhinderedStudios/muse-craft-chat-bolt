@@ -58,6 +58,19 @@ Deno.serve(async (req: Request) => {
 
     const model = Deno.env.get("IMAGEN_MODEL") || "imagen-4.0-fast-generate-001";
 
+    // Debug logging
+    console.log("🎯 Imagen Edge Function Debug:");
+    console.log("  📝 Received prompt:", prompt);
+    console.log("  📐 Aspect ratio:", aspectRatio);
+    console.log("  🔢 Number of images:", n);
+    console.log("  🤖 Model:", model);
+
+    const requestBody = {
+      instances: [{ prompt }],
+      parameters: { sampleCount: n, aspectRatio }
+    };
+    console.log("  📡 Full request to Google:", JSON.stringify(requestBody, null, 2));
+
     const googleRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:predict`,
       {
@@ -66,10 +79,7 @@ Deno.serve(async (req: Request) => {
           "Content-Type": "application/json",
           "x-goog-api-key": key,
         },
-        body: JSON.stringify({
-          instances: [{ prompt }],
-          parameters: { sampleCount: n, aspectRatio }
-        })
+        body: JSON.stringify(requestBody)
       }
     );
 
@@ -95,7 +105,18 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    return new Response(JSON.stringify({ images }), { headers: CORS });
+    console.log("  ✅ Success! Generated", images.length, "images");
+    
+    return new Response(JSON.stringify({ 
+      images,
+      debug: {
+        prompt,
+        aspectRatio,
+        n,
+        model,
+        imageCount: images.length
+      }
+    }), { headers: CORS });
   } catch (err: any) {
     return new Response(
       JSON.stringify({ error: err?.message || "Unhandled error" }),

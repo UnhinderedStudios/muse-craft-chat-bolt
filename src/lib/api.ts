@@ -80,7 +80,19 @@ export const api = {
     return handle(resp);
   },
 
-  async generateAlbumCovers(lyrics: string): Promise<{ cover1: string; cover2: string }> {
+  async generateAlbumCovers(lyrics: string): Promise<{ 
+    cover1: string; 
+    cover2: string; 
+    debug?: {
+      inputLyrics: string;
+      chatPrompt: string;
+      imagenPrompt: string;
+      imagenParams: any;
+      rawResponse: any;
+    }
+  }> {
+    console.log("🎨 generateAlbumCovers - Input lyrics:", lyrics);
+    
     // First, get the album cover prompt from ChatGPT
     const promptResponse = await this.chat([
       {
@@ -90,28 +102,43 @@ export const api = {
     ]);
 
     const albumPrompt = promptResponse.content;
+    console.log("🤖 ChatGPT generated prompt:", albumPrompt);
+
+    const requestParams = { prompt: albumPrompt, aspectRatio: "1:1", n: 2 };
+    console.log("📡 Sending to Imagen:", requestParams);
 
     // Generate album covers with new response format
     const response = await fetch(`${FUNCTIONS_BASE}/generate-album-cover`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: albumPrompt, aspectRatio: "1:1", n: 2 }),
+      body: JSON.stringify(requestParams),
     });
 
     const data = await handle(response);
+    console.log("🖼️ Imagen response:", data);
+
+    const debug = {
+      inputLyrics: lyrics,
+      chatPrompt: `Summarise the song lyrics as if you were making a cool vibrant album cover that shouldn't have any humans being shown in it, this is meant to be a prompt for Google Imagen 4, do not use any parameter instructions such as AR16:9, I only want the prompt text\n\nSong Lyrics: ${lyrics}`,
+      imagenPrompt: albumPrompt,
+      imagenParams: requestParams,
+      rawResponse: data
+    };
 
     // Handle response format with base64 images array
     if (data.images && Array.isArray(data.images) && data.images.length > 0) {
       return {
         cover1: data.images[0] || '',
-        cover2: data.images[1] || data.images[0] || '' // Fallback to first image if only one generated
+        cover2: data.images[1] || data.images[0] || '', // Fallback to first image if only one generated
+        debug
       };
     }
 
     // If no images returned, return empty strings
     return {
       cover1: '',
-      cover2: ''
+      cover2: '',
+      debug
     };
   },
 
@@ -129,8 +156,24 @@ export const api = {
     return handle(response);
   },
 
-  async testAlbumCover(): Promise<{ cover1: string; cover2: string }> {
+  async testAlbumCover(lyrics?: string): Promise<{ 
+    cover1: string; 
+    cover2: string; 
+    debug?: {
+      inputLyrics: string;
+      chatPrompt: string;
+      imagenPrompt: string;
+      imagenParams: any;
+      rawResponse: any;
+    }
+  }> {
+    if (lyrics) {
+      console.log("🧪 testAlbumCover - Using provided lyrics:", lyrics);
+      return this.generateAlbumCovers(lyrics);
+    }
+    
     const testPrompt = "A vibrant abstract digital art album cover with swirling colors, musical notes floating in space, cosmic background, no humans, artistic and modern style";
+    console.log("🧪 testAlbumCover - Using test prompt:", testPrompt);
     
     const response = await fetch(`${FUNCTIONS_BASE}/generate-album-cover`, {
       method: "POST",
@@ -141,10 +184,19 @@ export const api = {
     const data = await handle(response);
     console.log("Test album cover response:", data);
 
+    const debug = {
+      inputLyrics: "N/A (direct prompt test)",
+      chatPrompt: "N/A (direct prompt test)",
+      imagenPrompt: testPrompt,
+      imagenParams: { prompt: testPrompt },
+      rawResponse: data
+    };
+
     if (data.images && Array.isArray(data.images) && data.images.length > 0) {
       const covers = {
         cover1: data.images[0] || '',
-        cover2: data.images[1] || data.images[0] || ''
+        cover2: data.images[1] || data.images[0] || '',
+        debug
       };
       console.log("Parsed covers:", covers);
       return covers;
@@ -153,7 +205,8 @@ export const api = {
     // If no images returned, return empty strings
     const emptyCovers = {
       cover1: '',
-      cover2: ''
+      cover2: '',
+      debug
     };
     console.log("No images returned:", emptyCovers);
     return emptyCovers;
