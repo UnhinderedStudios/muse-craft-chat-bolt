@@ -98,6 +98,7 @@ const Index = () => {
     }
   } | null>(null);
   const [isGeneratingCovers, setIsGeneratingCovers] = useState(false);
+  const [scrollTop, setScrollTop] = useState<number>(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const audioRefs = useRef<HTMLAudioElement[]>([]);
   const lastDiceAt = useRef<number>(0);
@@ -535,18 +536,24 @@ async function startGeneration() {
       {/* Single Column Layout - Chat + Form */}
       <main className="max-w-4xl mx-auto p-6 space-y-6">
         {/* Chat Container with #151515 background */}
-        <div className="bg-[#151515] rounded-2xl pl-8 pr-6 py-8 space-y-4">
+        <div className="bg-[#151515] rounded-2xl pl-8 pr-6 py-8 space-y-4 relative">
+          {/* Fade gradient overlay - only shows when scrolled */}
+          {scrollTop > 0 && (
+            <div className="absolute top-8 left-8 right-6 h-12 bg-gradient-to-b from-[#151515] to-transparent z-30 pointer-events-none rounded-t-xl" />
+          )}
           {/* Chat Conversation */}
           <div 
-            className="h-[400px] overflow-y-auto custom-scrollbar relative"
+            className="h-[400px] overflow-y-auto custom-scrollbar"
             ref={scrollerRef}
+            onScroll={(e) => {
+              const target = e.target as HTMLDivElement;
+              setScrollTop(target.scrollTop);
+            }}
             style={{
               scrollbarWidth: 'thin',
               scrollbarColor: '#282828 transparent'
             }}
           >
-            {/* Fade gradient overlay at top */}
-            <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-[#151515] via-[#151515]/80 to-transparent z-20 pointer-events-none" />
             <div className="space-y-4 pr-4 pl-4 pt-4 pb-4">
               {/* Chat messages */}
               {messages.map((m, i) => (
