@@ -625,7 +625,7 @@ async function startGeneration() {
           {/* Two-column layout: Left (Title + Song Parameters stacked), Right (Lyrics tall) */}
           <div className="grid grid-cols-12 gap-4 h-auto">
             {/* Left column: Title and Song Parameters stacked */}
-            <div className="col-span-5 space-y-3 flex flex-col">
+            <div className="col-span-5 space-y-3">
               {/* Title section - external label */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-white/80">Title</label>
@@ -640,14 +640,14 @@ async function startGeneration() {
               </div>
               
               {/* Song Parameters section - external label */}
-              <div className="space-y-2 flex-1">
+              <div className="space-y-2">
                 <label className="text-sm font-medium text-white/80">Song Parameters</label>
-                <div className="bg-[#2d2d2d] rounded-lg p-4 h-full">
+                <div className="bg-[#2d2d2d] rounded-lg p-4">
                   <Textarea
                     value={details.style || ""}
                     onChange={(e) => setDetails({ ...details, style: e.target.value })}
                     placeholder="Describe the style, genre, mood, tempo..."
-                    className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[120px] resize-none h-full"
+                    className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[120px] resize-none"
                   />
                 </div>
               </div>
