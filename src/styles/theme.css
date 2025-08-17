@@ -64,20 +64,20 @@
   border: 1px solid hsl(var(--teal-chip) / 0.4);
 }
 
-/* Cyber-style scrollbar */
-.cyber-scrollbar::-webkit-scrollbar {
-  width: 6px;
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
 }
 
-.cyber-scrollbar::-webkit-scrollbar-track {
-  background: hsl(var(--bg-card));
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.cyber-scrollbar::-webkit-scrollbar-thumb {
-  background: hsl(var(--accent-primary) / 0.3);
-  border-radius: 3px;
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #282828;
+  border-radius: 4px;
 }
 
-.cyber-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--accent-primary) / 0.5);
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #383838;
 }

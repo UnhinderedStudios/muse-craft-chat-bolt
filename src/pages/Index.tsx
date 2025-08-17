@@ -537,7 +537,14 @@ async function startGeneration() {
         {/* Chat Container with #151515 background */}
         <div className="bg-[#151515] rounded-2xl p-6 space-y-4">
           {/* Chat Conversation */}
-          <div className="min-h-[400px] space-y-4">
+          <div 
+            className="h-[400px] overflow-y-auto space-y-4 pr-2 custom-scrollbar"
+            ref={scrollerRef}
+            style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: '#282828 transparent'
+            }}
+          >
             {/* Chat messages */}
             {messages.map((m, i) => (
               <ChatBubble key={i} role={m.role} content={m.content} />
