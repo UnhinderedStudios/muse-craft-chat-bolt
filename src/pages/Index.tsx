@@ -552,14 +552,18 @@ async function startGeneration() {
           </div>
 
           {/* Tools Section */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-end gap-3">
             <div className="flex-1 relative">
-              <input
-                type="text"
+              <textarea
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  // Auto-resize functionality
+                  e.target.style.height = 'auto';
+                  e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                }}
                 placeholder="Type out your question here..."
-                className="w-full bg-[#040404] border-0 rounded-xl px-4 py-3 pr-12 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-primary/50"
+                className="w-full bg-[#040404] border-0 rounded-xl px-4 py-3 pr-12 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-accent-primary/50 resize-none min-h-[48px] max-h-[120px] overflow-y-auto"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -567,11 +571,12 @@ async function startGeneration() {
                   }
                 }}
                 disabled={busy}
+                rows={1}
               />
               <button
                 onClick={onSend}
                 disabled={busy || !input.trim()}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 text-white hover:text-accent-primary transition-colors disabled:opacity-50"
+                className="absolute right-3 bottom-3 p-2 text-white hover:text-accent-primary transition-colors disabled:opacity-50"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffffff" stroke="none">
                   <path d="M12 19V5M5 12l7-7 7 7" stroke="#ffffff" strokeWidth="2" fill="none"/>
