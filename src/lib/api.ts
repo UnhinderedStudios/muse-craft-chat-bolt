@@ -80,12 +80,12 @@ export const api = {
     return handle(resp);
   },
 
-  async generateAlbumCovers(title: string): Promise<{ cover1: string; cover2: string }> {
+  async generateAlbumCovers(lyrics: string): Promise<{ cover1: string; cover2: string }> {
     // First, get the album cover prompt from ChatGPT
     const promptResponse = await this.chat([
       {
         role: "user",
-        content: `Create a concise, vivid prompt for an image generator to generate a square album cover, without people or text. Use symbolic imagery that reflects the mood and themes of the title. Emphasize one striking focal element, strong composition, rich color, and atmospheric light. Avoid logos, faces, hands, frames, and watermarks. Don't mention any parameters like aspect ration or AR:16:9 or anything like that.\n\nSong Title: ${title}`
+        content: `Summarise the song lyrics as if you were making a cool vibrant album cover that shouldn't have any humans being shown in it, this is meant to be a prompt for Google Imagen 4, do not use any parameter instructions such as AR16:9, I only want the prompt text\n\nSong Lyrics: ${lyrics}`
       }
     ]);
 

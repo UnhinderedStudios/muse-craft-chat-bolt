@@ -246,6 +246,43 @@ if (extracted) {
     }
   }
 
+  async function testAlbumCoverWithLyrics() {
+    if (busy) return;
+    setIsGeneratingCovers(true);
+    setAlbumCovers(null);
+    
+    // Use sample lyrics for testing
+    const sampleLyrics = `Verse 1:
+Neon lights are calling my name
+Dancing shadows in the midnight rain
+Electric dreams fill the air tonight
+Everything's glowing with electric light
+
+Chorus:
+Party lights, shining bright
+Take me higher, through the night
+Feel the rhythm, feel the beat
+Dancing on these neon streets
+
+Verse 2:
+City's alive with electric sound
+Bass is pumping underground
+Colors flowing like a rainbow stream
+Living inside this electric dream`;
+
+    try {
+      const covers = await api.generateAlbumCovers(sampleLyrics);
+      console.log("Test album covers generated:", covers);
+      setAlbumCovers(covers);
+      toast.success("Test album covers generated!");
+    } catch (error) {
+      console.error("Test album cover generation failed:", error);
+      toast.error("Failed to generate test album covers");
+    } finally {
+      setIsGeneratingCovers(false);
+    }
+  }
+
 async function startGeneration() {
     if (!canGenerate) {
       toast.message("Add a few details first", { description: "Chat a bit more until I extract a song request." });
@@ -262,9 +299,9 @@ async function startGeneration() {
     setBusy(true);
     
     // Start album cover generation immediately in parallel
-    if (details.title) {
+    if (details.lyrics) {
       setIsGeneratingCovers(true);
-      api.generateAlbumCovers(details.title)
+      api.generateAlbumCovers(details.lyrics)
         .then(covers => {
           console.log("Album covers generated:", covers);
           setAlbumCovers(covers);
@@ -599,9 +636,20 @@ async function startGeneration() {
                 </div>
               </div>
             )}
-            <Button onClick={startGeneration} disabled={busy || !canGenerate} variant="hero" className="w-full">
-              {busy ? "Working..." : jobId ? "Generating..." : "Generate with Suno"}
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={startGeneration} disabled={busy || !canGenerate} variant="hero" className="flex-1">
+                {busy ? "Working..." : jobId ? "Generating..." : "Generate with Suno"}
+              </Button>
+              <Button 
+                onClick={testAlbumCoverWithLyrics} 
+                disabled={busy || isGeneratingCovers} 
+                variant="outline" 
+                size="default"
+                className="shrink-0"
+              >
+                Test Art
+              </Button>
+            </div>
           </Card>
 
           <Card className="p-4 space-y-3">
