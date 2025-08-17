@@ -571,7 +571,7 @@ async function startGeneration() {
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#151515] via-[#151515]/98 via-[#151515]/90 to-transparent pt-8 pb-8 px-8">
             <div className="flex items-stretch gap-3">
             {/* Chat Input - DEBUG: Should be 56px height (p-3 = 12px*2 + 32px icon height) */}
-            <div className="flex-1 relative bg-[#040404] rounded-xl p-3 min-h-[56px] flex items-center focus-within:shadow-[0_0_5px_rgba(255,255,255,0.5)] hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] transition-shadow duration-200">
+            <div className="flex-1 relative bg-[#040404] rounded-xl p-3 min-h-[56px] flex items-center hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] focus-within:shadow-[0_0_5px_rgba(255,255,255,0.5)] focus-within:hover:shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-shadow duration-200">
               <textarea
                 value={input}
                 onChange={(e) => {
