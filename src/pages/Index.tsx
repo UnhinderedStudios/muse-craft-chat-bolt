@@ -546,7 +546,7 @@ async function startGeneration() {
             }}
           >
             {/* Fade gradient overlay at top */}
-            <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-[#151515] to-transparent z-10 pointer-events-none" />
+            <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-[#151515] via-[#151515]/80 to-transparent z-20 pointer-events-none" />
             <div className="space-y-4 pr-4 pl-4 pt-4 pb-4">
               {/* Chat messages */}
               {messages.map((m, i) => (
