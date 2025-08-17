@@ -592,17 +592,17 @@ async function startGeneration() {
                 </svg>
               </button>
             </div>
-            <div className="bg-[#040404] rounded-xl p-2 flex gap-2">
-              <button className="text-white hover:text-accent-primary transition-colors" disabled={busy}>
+            <div className="bg-[#040404] rounded-xl p-3 flex gap-2">
+              <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
                 <Upload size={20} />
               </button>
-              <button className="text-white hover:text-accent-primary transition-colors" disabled={busy}>
+              <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
                 <Grid3X3 size={20} />
               </button>
-              <button className="text-white hover:text-accent-primary transition-colors" onClick={randomizeAll} disabled={busy}>
+              <button className="p-2 text-white hover:text-accent-primary transition-colors" onClick={randomizeAll} disabled={busy}>
                 <Dice5 size={20} />
               </button>
-              <button className="text-white hover:text-accent-primary transition-colors" disabled={busy}>
+              <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
                 <List size={20} />
               </button>
             </div>
