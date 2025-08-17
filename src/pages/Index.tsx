@@ -84,7 +84,8 @@ const Index = () => {
     cover1: string; 
     cover2: string; 
     debug?: {
-      inputLyrics: string;
+      inputSource: string;
+      inputContent: string;
       chatPrompt: string;
       imagenPrompt: string;
       imagenParams: any;
@@ -260,11 +261,10 @@ if (extracted) {
     if (busy) return;
     setIsGeneratingCovers(true);
     setAlbumCovers(null);
-    // Use actual lyrics from details if available, fallback to test lyrics
-    const testLyrics = details.lyrics?.trim() || `Tree in a forest with sunlight filtering through leaves, natural and peaceful scene, artistic nature photography style`;
-    console.log("🧪 Test Art using lyrics:", testLyrics);
+    
+    console.log("🧪 Test Art using song details:", details);
     try {
-      const result = await api.testAlbumCover(testLyrics);
+      const result = await api.testAlbumCover(details);
       console.log("Test album covers generated:", result);
       setAlbumCovers({
         cover1: result.cover1,
@@ -296,9 +296,9 @@ async function startGeneration() {
     setBusy(true);
     
     // Start album cover generation immediately in parallel
-    if (details.lyrics) {
+    if (details.title || details.lyrics || details.style) {
       setIsGeneratingCovers(true);
-      api.generateAlbumCovers(details.lyrics)
+      api.generateAlbumCovers(details)
         .then(covers => {
           console.log("Album covers generated:", covers);
           setAlbumCovers(covers);
@@ -693,7 +693,10 @@ async function startGeneration() {
                     <summary className="cursor-pointer font-medium text-muted-foreground hover:text-foreground">Art Debug Info</summary>
                     <div className="mt-2 space-y-2 font-mono">
                       <div>
-                        <strong>Input:</strong> {albumCovers.debug.inputLyrics.substring(0, 100)}...
+                        <strong>Source:</strong> {albumCovers.debug.inputSource}
+                      </div>
+                      <div>
+                        <strong>Input:</strong> {albumCovers.debug.inputContent.substring(0, 100)}...
                       </div>
                       <div>
                         <strong>ChatGPT Prompt:</strong> {albumCovers.debug.imagenPrompt}

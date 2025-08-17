@@ -80,24 +80,44 @@ export const api = {
     return handle(resp);
   },
 
-  async generateAlbumCovers(lyrics: string): Promise<{ 
+  async generateAlbumCovers(songDetails: SongDetails): Promise<{ 
     cover1: string; 
     cover2: string; 
     debug?: {
-      inputLyrics: string;
+      inputSource: string;
+      inputContent: string;
       chatPrompt: string;
       imagenPrompt: string;
       imagenParams: any;
       rawResponse: any;
     }
   }> {
-    console.log("🎨 generateAlbumCovers - Input lyrics:", lyrics);
+    // Determine the source for the prompt in priority order: title > lyrics > style
+    let source = "fallback";
+    let content = "A cinematic, realistic musical album cover without humans or text";
+    let chatInstruction = "";
+
+    if (songDetails.title?.trim()) {
+      source = "title";
+      content = songDetails.title.trim();
+      chatInstruction = `Create a simple 1 sentence prompt for an image generation tool for a musical album cover based on this song title. Keep it cinematic and realistic, do not show humans or text in it. Do not use any parameter instructions such as AR16:9.\n\nSong Title: ${content}`;
+    } else if (songDetails.lyrics?.trim()) {
+      source = "lyrics";
+      content = songDetails.lyrics.trim();
+      chatInstruction = `Summarize the song lyrics into a simple 1 sentence prompt for an image generation tool for a musical album cover. Keep it cinematic and realistic, do not show humans or text in it. Do not use any parameter instructions such as AR16:9.\n\nSong Lyrics: ${content}`;
+    } else if (songDetails.style?.trim()) {
+      source = "style";
+      content = songDetails.style.trim();
+      chatInstruction = `Create a simple 1 sentence prompt for an image generation tool for a musical album cover based on this music style. Keep it cinematic and realistic, do not show humans or text in it. Do not use any parameter instructions such as AR16:9.\n\nMusic Style: ${content}`;
+    }
+
+    console.log(`🎨 generateAlbumCovers - Using ${source}:`, content);
     
-    // First, get the album cover prompt from ChatGPT
+    // Get the album cover prompt from ChatGPT
     const promptResponse = await this.chat([
       {
         role: "user",
-        content: `Summarize the song lyrics into a simple 1 sentence prompt for an image generation tool for a musical album cover. Keep it cinematic and realistic, do not show humans or text in it. Do not use any parameter instructions such as AR16:9.\n\nSong Lyrics: ${lyrics}`
+        content: chatInstruction
       }
     ]);
 
@@ -118,8 +138,9 @@ export const api = {
     console.log("🖼️ Imagen response:", data);
 
     const debug = {
-      inputLyrics: lyrics,
-      chatPrompt: `Summarize the song lyrics into a simple 1 sentence prompt for an image generation tool for a musical album cover. Keep it cinematic and realistic, do not show humans or text in it. Do not use any parameter instructions such as AR16:9.\n\nSong Lyrics: ${lyrics}`,
+      inputSource: source,
+      inputContent: content,
+      chatPrompt: chatInstruction,
       imagenPrompt: albumPrompt,
       imagenParams: requestParams,
       rawResponse: data
@@ -156,20 +177,21 @@ export const api = {
     return handle(response);
   },
 
-  async testAlbumCover(lyrics?: string): Promise<{ 
+  async testAlbumCover(songDetails?: SongDetails): Promise<{ 
     cover1: string; 
     cover2: string; 
     debug?: {
-      inputLyrics: string;
+      inputSource: string;
+      inputContent: string;
       chatPrompt: string;
       imagenPrompt: string;
       imagenParams: any;
       rawResponse: any;
     }
   }> {
-    if (lyrics) {
-      console.log("🧪 testAlbumCover - Using provided lyrics:", lyrics);
-      return this.generateAlbumCovers(lyrics);
+    if (songDetails && (songDetails.title || songDetails.lyrics || songDetails.style)) {
+      console.log("🧪 testAlbumCover - Using provided song details:", songDetails);
+      return this.generateAlbumCovers(songDetails);
     }
     
     const testPrompt = "A vibrant abstract digital art album cover with swirling colors, musical notes floating in space, cosmic background, no humans, artistic and modern style";
@@ -185,8 +207,9 @@ export const api = {
     console.log("Test album cover response:", data);
 
     const debug = {
-      inputLyrics: "N/A (direct prompt test)",
-      chatPrompt: "N/A (direct prompt test)",
+      inputSource: "fallback",
+      inputContent: "test prompt (no song details provided)",
+      chatPrompt: "Direct test prompt (no ChatGPT processing)",
       imagenPrompt: testPrompt,
       imagenParams: { prompt: testPrompt },
       rawResponse: data
