@@ -532,219 +532,234 @@ async function startGeneration() {
       {/* Cyber Header */}
       <CyberHeader />
 
-      {/* 3-Column Layout */}
-      <main className="flex h-[calc(100vh-64px)]">
-        {/* Left Column (52%) - Chat + Tools + Form */}
-        <section className="w-[52%] p-4 space-y-4 flex flex-col">
-          {/* Chat Area */}
-          <CyberCard className="flex-1 p-0 flex flex-col">
-            <div className="flex-1 min-h-0">
-              <ScrollArea className="h-full cyber-scrollbar" ref={scrollerRef as any}>
-                <div className="p-4 space-y-4">
-                  {/* Sample messages for demo */}
-                  <ChatBubble role="assistant" content="Hey! I can help write and generate a song. What vibe are you going for?" />
-                  <ChatBubble role="user" content="I want something upbeat and electronic" />
-                  <ChatBubble role="assistant" content="Perfect! Electronic music with an upbeat vibe. Any specific style like house, synthwave, or drum & bass? And what should the song be about?" />
-                  {messages.slice(1).map((m, i) => (
-                    <ChatBubble key={i + 1} role={m.role} content={m.content} />
-                  ))}
-                </div>
-              </ScrollArea>
-            </div>
-            <Separator className="bg-border-main" />
-            {/* Tools Row */}
-            <div className="p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="flex-1">
-                  <Input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="Type out your question here…"
-                    className="bg-card-alt border-border-main rounded-pill text-text-primary placeholder:text-text-secondary h-10"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        onSend();
-                      }
-                    }}
-                    disabled={busy}
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <CyberButton variant="icon" disabled={busy}>
-                    <Upload className="w-4 h-4 text-text-secondary" />
-                  </CyberButton>
-                  <CyberButton variant="icon" disabled={busy}>
-                    <Grid3X3 className="w-4 h-4 text-text-secondary" />
-                  </CyberButton>
-                  <CyberButton variant="icon" onClick={randomizeAll} disabled={busy}>
-                    <Dice5 className="w-4 h-4 text-text-secondary" />
-                  </CyberButton>
-                  <CyberButton variant="icon" disabled={busy}>
-                    <List className="w-4 h-4 text-text-secondary" />
-                  </CyberButton>
-                </div>
+      {/* Single Column Layout - Chat + Form */}
+      <main className="max-w-4xl mx-auto p-6 space-y-6">
+        {/* Main Chat + Tools Area */}
+        <div className="space-y-4">
+          {/* Chat Conversation */}
+          <div className="min-h-[400px] space-y-4">
+            {/* Reference conversation from the image */}
+            <div className="flex justify-start">
+              <div className="max-w-[85%] px-4 py-3 leading-relaxed rounded-[16px] chat-bubble-assistant text-text-primary">
+                <p>What sort of music would you like for me to make?</p>
               </div>
-              <Button onClick={onSend} type="button" disabled={busy} className="w-full">Send</Button>
             </div>
-          </CyberCard>
+            
+            <div className="flex justify-end">
+              <div className="max-w-[85%] px-4 py-3 leading-relaxed rounded-[16px] chat-bubble-user text-text-primary">
+                <p>I want the song to be about dancing</p>
+              </div>
+            </div>
+            
+            <div className="flex justify-start">
+              <div className="max-w-[85%] px-4 py-3 leading-relaxed rounded-[16px] chat-bubble-assistant text-text-primary">
+                <p>Great! So what kind of genre are you thinking for this song, something like rock, pop..?</p>
+              </div>
+            </div>
+            
+            <div className="flex justify-end">
+              <div className="max-w-[85%] px-4 py-3 leading-relaxed rounded-[16px] chat-bubble-user text-text-primary">
+                <p>I'm thinking something similar to a Taylor Swift song in terms of genre, ok?</p>
+              </div>
+            </div>
 
-          {/* Form Section */}
-          <CyberCard className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-sm text-text-secondary">Title</label>
+            {/* Additional messages from actual conversation */}
+            {messages.slice(1).map((m, i) => (
+              <ChatBubble key={i + 1} role={m.role} content={m.content} />
+            ))}
+          </div>
+
+          {/* Tools Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm text-text-secondary">Tools</h3>
+              <h3 className="text-sm text-text-secondary">Tools</h3>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <Input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Type out your question here..."
+                  className="bg-card-alt border-border-main rounded-lg text-text-primary placeholder:text-text-secondary h-12 px-4"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      onSend();
+                    }
+                  }}
+                  disabled={busy}
+                />
+              </div>
+              <div className="flex gap-2">
+                <CyberButton variant="icon" disabled={busy}>
+                  <Upload className="w-5 h-5 text-text-secondary" />
+                </CyberButton>
+                <CyberButton variant="icon" disabled={busy}>
+                  <Grid3X3 className="w-5 h-5 text-text-secondary" />
+                </CyberButton>
+                <CyberButton variant="icon" onClick={randomizeAll} disabled={busy}>
+                  <Dice5 className="w-5 h-5 text-text-secondary" />
+                </CyberButton>
+                <CyberButton variant="icon" disabled={busy}>
+                  <List className="w-5 h-5 text-text-secondary" />
+                </CyberButton>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Form Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Left Column - Title & Parameters */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm text-text-primary font-medium">Title</label>
               <Input
-                value={details.title || ""}
+                value={details.title || "A singing bird"}
                 onChange={(e) => setDetails({ ...details, title: e.target.value })}
-                placeholder="e.g. Neon Skies"
-                className="bg-card-alt border-border-main rounded-input text-text-primary"
+                placeholder="A singing bird"
+                className="bg-card-alt border-border-main rounded-lg text-text-primary h-12 px-4"
               />
             </div>
             
-            <div className="space-y-2">
-              <label className="text-sm text-text-secondary">Song Parameters</label>
-              <div className="flex gap-2 flex-wrap">
+            <div className="space-y-3">
+              <label className="text-sm text-text-primary font-medium">Song Parameters</label>
+              <div className="flex gap-3">
                 <CyberChip variant="purple">Female Voice</CyberChip>
                 <CyberChip variant="teal">125 BPM</CyberChip>
               </div>
             </div>
+          </div>
 
-            <div className="space-y-1">
-              <label className="text-sm text-text-secondary">Lyrics</label>
-              <Textarea
-                value={details.lyrics || ""}
-                onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
-                placeholder="Paste your lyrics here or let AI help in chat..."
-                className="min-h-[120px] bg-card-alt border-border-main rounded-input text-text-primary placeholder:text-text-secondary resize-none"
-                rows={6}
+          {/* Right Column - Lyrics */}
+          <div className="space-y-2">
+            <label className="text-sm text-text-primary font-medium">Lyrics</label>
+            <Textarea
+              value={details.lyrics || `Can't help but notice, all of the ways in which I failed myself, I failed the world all Can't help but notice, all of the ways in which I failed myself, I failed the world all Can't help but notice, all of the ways in which I failed myself, I failed the world all
+
+Can't help but notice, all of the ways in which I failed myself, I failed the world all Can't help but notice, all of the ways in which I failed myself, I failed the world all`}
+              onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
+              placeholder="Enter your lyrics here..."
+              className="min-h-[200px] bg-card-alt border-border-main rounded-lg text-text-primary placeholder:text-text-secondary resize-none p-4"
+              rows={8}
+            />
+          </div>
+        </div>
+
+        {/* Generate Button */}
+        <div className="space-y-4">
+          {busy && generationProgress > 0 && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-text-secondary">Generating...</span>
+                <span className="font-medium text-accent-primary">{Math.round(generationProgress)}%</span>
+              </div>
+              <Progress 
+                value={generationProgress} 
+                className="h-2"
               />
             </div>
+          )}
 
-            {busy && generationProgress > 0 && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-text-secondary">Generating...</span>
-                  <span className="font-medium text-accent-primary">{Math.round(generationProgress)}%</span>
-                </div>
-                <Progress 
-                  value={generationProgress} 
-                  className="h-2"
-                />
-              </div>
-            )}
+          <CyberButton onClick={startGeneration} disabled={busy || !canGenerate}>
+            ✦ Generate
+          </CyberButton>
 
-            <CyberButton onClick={startGeneration} disabled={busy || !canGenerate}>
-              ✦ Generate
-            </CyberButton>
-
+          <div className="flex gap-2">
+            <Button onClick={onSend} type="button" disabled={busy} variant="outline" className="flex-1">
+              Send Message
+            </Button>
             <Button 
               onClick={testAlbumCoverWithLyrics} 
               disabled={busy || isGeneratingCovers} 
-              variant="outline" 
-              size="default"
-              className="w-full"
+              variant="outline"
             >
               Test Art
             </Button>
-          </CyberCard>
-        </section>
+          </div>
+        </div>
 
-        {/* Middle Column (24%) - Placeholder */}
-        <section className="w-[24%] p-4">
-          <CyberCard className="h-full flex items-center justify-center">
-            <div className="text-center text-text-secondary">
-              <div className="w-16 h-16 bg-border-main rounded-lg mx-auto mb-4"></div>
-              <p className="text-sm">Future Module</p>
-            </div>
-          </CyberCard>
-        </section>
-
-        {/* Right Column (24%) - Placeholder + Output */}
-        <section className="w-[24%] p-4 space-y-4 flex flex-col">
-          <CyberCard className="flex-1 flex items-center justify-center">
-            <div className="text-center text-text-secondary">
-              <div className="w-16 h-16 bg-border-main rounded-lg mx-auto mb-4"></div>
-              <p className="text-sm">Future Module</p>
-            </div>
-          </CyberCard>
-
-          {/* Output Section */}
-          <CyberCard className="space-y-3">
-            <h2 className="text-lg font-medium text-text-primary">Output</h2>
-            {audioUrls && audioUrls.length > 0 ? (
-              <div className="space-y-4">
-                {audioUrls.map((url, idx) => (
-                  <div key={`${url}-${idx}`} className="space-y-2">
-                    <p className="text-sm text-text-secondary">Version {idx + 1}</p>
-                    <audio
-                      src={url}
-                      controls
-                      className="w-full"
-                      preload="auto"
-                      onPlay={() => handleAudioPlay(idx)}
-                      onPause={handleAudioPause}
-                      onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
-                      onEnded={handleAudioPause}
-                      ref={(el) => { if (el) audioRefs.current[idx] = el; }}
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : audioUrl ? (
-              <div className="space-y-2">
-                <audio
-                  src={audioUrl}
-                  controls
-                  className="w-full"
-                  preload="none"
-                  onPlay={() => handleAudioPlay(0)}
-                  onPause={handleAudioPause}
-                  onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
-                  onEnded={handleAudioPause}
-                  ref={(el) => { if (el) audioRefs.current[0] = el; }}
-                />
-              </div>
-            ) : (
-              <p className="text-sm text-text-secondary">Your song will appear here once it's ready.</p>
-            )}
-          </CyberCard>
-
-          {/* Karaoke Section */}
-          {versions.length > 0 && (
+        {/* Output Sections */}
+        {(audioUrls?.length || audioUrl || versions.length > 0) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+            {/* Audio Output */}
             <CyberCard className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium text-text-primary">Karaoke</h2>
-                {versions[currentAudioIndex]?.words?.length > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowFullscreenKaraoke(true)}
-                    className="flex items-center gap-2"
-                  >
-                    <Mic className="w-4 h-4" />
-                    Fullscreen
-                  </Button>
-                )}
-              </div>
-              {versions[currentAudioIndex]?.words?.length > 0 ? (
-                <KaraokeLyrics 
-                  words={versions[currentAudioIndex].words}
-                  currentTime={currentTime}
-                  isPlaying={isPlaying}
-                  className="min-h-[200px] max-h-[300px]"
-                />
-              ) : details.lyrics ? (
-                <div className="min-h-[200px] max-h-[300px] overflow-y-auto p-4 rounded-md border border-border-main bg-card-alt whitespace-pre-wrap text-text-primary">
-                  {details.lyrics}
+              <h2 className="text-lg font-medium text-text-primary">Output</h2>
+              {audioUrls && audioUrls.length > 0 ? (
+                <div className="space-y-4">
+                  {audioUrls.map((url, idx) => (
+                    <div key={`${url}-${idx}`} className="space-y-2">
+                      <p className="text-sm text-text-secondary">Version {idx + 1}</p>
+                      <audio
+                        src={url}
+                        controls
+                        className="w-full"
+                        preload="auto"
+                        onPlay={() => handleAudioPlay(idx)}
+                        onPause={handleAudioPause}
+                        onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
+                        onEnded={handleAudioPause}
+                        ref={(el) => { if (el) audioRefs.current[idx] = el; }}
+                      />
+                    </div>
+                  ))}
                 </div>
-              ) : (
-                <div className="text-center py-8 text-text-secondary">
-                  <p>No lyrics available</p>
+              ) : audioUrl ? (
+                <div className="space-y-2">
+                  <audio
+                    src={audioUrl}
+                    controls
+                    className="w-full"
+                    preload="none"
+                    onPlay={() => handleAudioPlay(0)}
+                    onPause={handleAudioPause}
+                    onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
+                    onEnded={handleAudioPause}
+                    ref={(el) => { if (el) audioRefs.current[0] = el; }}
+                  />
                 </div>
-              )}
+              ) : null}
             </CyberCard>
-          )}
-        </section>
+
+            {/* Karaoke Section */}
+            {versions.length > 0 && (
+              <CyberCard className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-medium text-text-primary">Karaoke</h2>
+                  {versions[currentAudioIndex]?.words?.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowFullscreenKaraoke(true)}
+                      className="flex items-center gap-2"
+                    >
+                      <Mic className="w-4 h-4" />
+                      Fullscreen
+                    </Button>
+                  )}
+                </div>
+                {versions[currentAudioIndex]?.words?.length > 0 ? (
+                  <KaraokeLyrics 
+                    words={versions[currentAudioIndex].words}
+                    currentTime={currentTime}
+                    isPlaying={isPlaying}
+                    className="min-h-[200px] max-h-[300px]"
+                  />
+                ) : details.lyrics ? (
+                  <div className="min-h-[200px] max-h-[300px] overflow-y-auto p-4 rounded-md border border-border-main bg-card-alt whitespace-pre-wrap text-text-primary">
+                    {details.lyrics}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-text-secondary">
+                    <p>No lyrics available</p>
+                  </div>
+                )}
+              </CyberCard>
+            )}
+          </div>
+        )}
       </main>
 
       {/* Full-screen Karaoke Overlay */}
