@@ -534,18 +534,17 @@ async function startGeneration() {
       <CyberHeader />
 
       {/* Single Column Layout - Chat + Form */}
-      <main className="max-w-4xl mx-auto p-6 space-y-6">
-        {/* Chat Container with #151515 background */}
-        <div className="bg-[#151515] rounded-2xl pl-8 pr-6 py-8 space-y-4 relative">
+      <main className="max-w-4xl mx-auto p-6">
+        {/* Chat Container with #151515 background - extended to bottom */}
+        <div className="bg-[#151515] rounded-2xl relative overflow-hidden">
           {/* Fade gradient overlay - only shows when scrolled */}
           {scrollTop > 0 && (
-            <div className="absolute top-8 left-8 right-6 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none rounded-t-xl" />
+            <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none" />
           )}
-          {/* Bottom fade gradient overlay */}
-          <div className="absolute bottom-8 left-8 right-6 h-16 bg-gradient-to-t from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none" />
-          {/* Chat Conversation */}
+          
+          {/* Chat Conversation - extends full height */}
           <div 
-            className="h-[400px] overflow-y-auto custom-scrollbar"
+            className="h-[500px] overflow-y-auto custom-scrollbar pl-8 pr-6 pt-8"
             ref={scrollerRef}
             onScroll={(e) => {
               const target = e.target as HTMLDivElement;
@@ -556,7 +555,7 @@ async function startGeneration() {
               scrollbarColor: '#282828 transparent'
             }}
           >
-            <div className="space-y-4 pr-4 pl-4 pt-4 pb-4">
+            <div className="space-y-4 pr-4 pl-4 pt-4 pb-32">
               {/* Chat messages */}
               {messages.map((m, i) => (
                 <ChatBubble key={i} role={m.role} content={m.content} />
@@ -571,8 +570,9 @@ async function startGeneration() {
             </div>
           </div>
 
-          {/* Tools Section */}
-          <div className="flex items-stretch gap-3">
+          {/* Tools Section - positioned absolute at bottom with fade background */}
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#151515] via-[#151515]/98 via-[#151515]/90 to-transparent pt-8 pb-8 px-8">
+            <div className="flex items-stretch gap-3">
             {/* Chat Input - DEBUG: Should be 56px height (p-3 = 12px*2 + 32px icon height) */}
             <div className="flex-1 relative bg-[#040404] rounded-xl p-3 min-h-[56px] flex items-center focus-within:shadow-[0_0_10px_#FFFFFF]">
               <textarea
@@ -619,8 +619,11 @@ async function startGeneration() {
                 <List size={20} />
               </button>
             </div>
+            </div>
           </div>
         </div>
+
+        {/* Form Section */}
 
         {/* Form Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
