@@ -23,7 +23,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ role, content }) => {
           "rounded-[16px] bg-[#000000]",
           isUser
             ? "border border-white text-text-primary shadow-[0_0_20px_rgba(255,255,255,0.3)]"
-            : "border border-accent-primary text-text-primary shadow-[0_0_20px_rgba(255,45,174,0.4)]"
+            : "border border-accent-primary text-text-primary shadow-[0_0_20px_rgba(202,36,116,0.4)]"
         )}
       >
         <p className="whitespace-pre-wrap">{content}</p>
