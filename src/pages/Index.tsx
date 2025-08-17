@@ -600,7 +600,7 @@ async function startGeneration() {
                   e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
                 }}
                 placeholder="Type out your question here..."
-                className="w-full bg-transparent border-0 pr-8 text-white placeholder-gray-500 focus:outline-none resize-none min-h-[32px] max-h-[120px] overflow-y-auto"
+                className="w-full bg-transparent border-0 pr-8 text-white placeholder-gray-500 focus:outline-none resize-none min-h-[32px] max-h-[120px] overflow-y-auto custom-scrollbar"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -680,7 +680,7 @@ async function startGeneration() {
                   value={details.lyrics || ""}
                   onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
                   placeholder="Enter your lyrics here..."
-                  className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 resize-none w-full h-full"
+                  className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 resize-none w-full h-full custom-scrollbar"
                 />
               </div>
             </div>
