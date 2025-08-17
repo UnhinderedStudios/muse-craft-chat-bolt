@@ -552,7 +552,7 @@ async function startGeneration() {
 
       {/* Two Column Layout - Chat + Form Left, New Container Right */}
       <main className="max-w-7xl mx-auto p-6">
-        <div className="grid grid-cols-12 gap-4">
+        <div className="grid grid-cols-12 gap-[1.08rem]">
           {/* Left Column - Chat + Form (75% width) */}
           <div className="col-span-9 space-y-5">
         {/* Chat Container with #151515 background - extended to bottom */}
