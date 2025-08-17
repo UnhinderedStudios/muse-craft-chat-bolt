@@ -100,11 +100,11 @@ export const api = {
 
     const data = await handle(response);
 
-    // Handle new response format with coverUrls array
-    if (data.coverUrls && Array.isArray(data.coverUrls)) {
+    // Handle new response format with base64 images array
+    if (data.images && Array.isArray(data.images)) {
       return {
-        cover1: data.coverUrls[0] || '',
-        cover2: data.coverUrls[1] || data.coverUrls[0] || '' // Fallback to first image if only one generated
+        cover1: data.images[0] || '',
+        cover2: data.images[1] || data.images[0] || '' // Fallback to first image if only one generated
       };
     }
 
@@ -141,10 +141,10 @@ export const api = {
     const data = await handle(response);
     console.log("Test album cover response:", data);
 
-    if (data.coverUrls && Array.isArray(data.coverUrls)) {
+    if (data.images && Array.isArray(data.images)) {
       const covers = {
-        cover1: data.coverUrls[0] || '',
-        cover2: data.coverUrls[1] || data.coverUrls[0] || ''
+        cover1: data.images[0] || '',
+        cover2: data.images[1] || data.images[0] || ''
       };
       console.log("Parsed covers:", covers);
       return covers;
