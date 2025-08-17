@@ -100,18 +100,18 @@ export const api = {
 
     const data = await handle(response);
 
-    // Handle new response format with base64 images array
-    if (data.images && Array.isArray(data.images)) {
+    // Handle response format with base64 images array
+    if (data.images && Array.isArray(data.images) && data.images.length > 0) {
       return {
         cover1: data.images[0] || '',
         cover2: data.images[1] || data.images[0] || '' // Fallback to first image if only one generated
       };
     }
 
-    // Fallback to old response format if needed
+    // If no images returned, return empty strings
     return {
-      cover1: data.imageUrl || '',
-      cover2: data.imageUrl || ''
+      cover1: '',
+      cover2: ''
     };
   },
 
@@ -141,7 +141,7 @@ export const api = {
     const data = await handle(response);
     console.log("Test album cover response:", data);
 
-    if (data.images && Array.isArray(data.images)) {
+    if (data.images && Array.isArray(data.images) && data.images.length > 0) {
       const covers = {
         cover1: data.images[0] || '',
         cover2: data.images[1] || data.images[0] || ''
@@ -150,11 +150,12 @@ export const api = {
       return covers;
     }
 
-    const fallbackCovers = {
-      cover1: data.imageUrl || '',
-      cover2: data.imageUrl || ''
+    // If no images returned, return empty strings
+    const emptyCovers = {
+      cover1: '',
+      cover2: ''
     };
-    console.log("Fallback covers:", fallbackCovers);
-    return fallbackCovers;
+    console.log("No images returned:", emptyCovers);
+    return emptyCovers;
   },
 };
