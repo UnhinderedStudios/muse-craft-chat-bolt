@@ -711,81 +711,94 @@ async function startGeneration() {
 
         {/* Output Sections */}
         {(audioUrls?.length || audioUrl || versions.length > 0) && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
-            {/* Audio Output */}
-            <CyberCard className="space-y-3">
-              <h2 className="text-lg font-medium text-text-primary">Output</h2>
-              {audioUrls && audioUrls.length > 0 ? (
-                <div className="space-y-4">
-                  {audioUrls.map((url, idx) => (
-                    <div key={`${url}-${idx}`} className="space-y-2">
-                      <p className="text-sm text-text-secondary">Version {idx + 1}</p>
-                      <audio
-                        src={url}
-                        controls
-                        className="w-full"
-                        preload="auto"
-                        onPlay={() => handleAudioPlay(idx)}
-                        onPause={handleAudioPause}
-                        onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
-                        onEnded={handleAudioPause}
-                        ref={(el) => { if (el) audioRefs.current[idx] = el; }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : audioUrl ? (
-                <div className="space-y-2">
-                  <audio
-                    src={audioUrl}
-                    controls
-                    className="w-full"
-                    preload="none"
-                    onPlay={() => handleAudioPlay(0)}
-                    onPause={handleAudioPause}
-                    onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
-                    onEnded={handleAudioPause}
-                    ref={(el) => { if (el) audioRefs.current[0] = el; }}
-                  />
-                </div>
-              ) : null}
-            </CyberCard>
-
-            {/* Karaoke Section */}
-            {versions.length > 0 && (
+          <div className="flex gap-6 mt-8">
+            {/* Left side - Audio Output and Karaoke (65% width) */}
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6" style={{ width: '65%' }}>
+              {/* Audio Output */}
               <CyberCard className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-medium text-text-primary">Karaoke</h2>
-                  {versions[currentAudioIndex]?.words?.length > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowFullscreenKaraoke(true)}
-                      className="flex items-center gap-2"
-                    >
-                      <Mic className="w-4 h-4" />
-                      Fullscreen
-                    </Button>
-                  )}
-                </div>
-                {versions[currentAudioIndex]?.words?.length > 0 ? (
-                  <KaraokeLyrics 
-                    words={versions[currentAudioIndex].words}
-                    currentTime={currentTime}
-                    isPlaying={isPlaying}
-                    className="min-h-[200px] max-h-[300px]"
-                  />
-                ) : details.lyrics ? (
-                  <div className="min-h-[200px] max-h-[300px] overflow-y-auto p-4 rounded-md border border-border-main bg-card-alt whitespace-pre-wrap text-text-primary">
-                    {details.lyrics}
+                <h2 className="text-lg font-medium text-text-primary">Output</h2>
+                {audioUrls && audioUrls.length > 0 ? (
+                  <div className="space-y-4">
+                    {audioUrls.map((url, idx) => (
+                      <div key={`${url}-${idx}`} className="space-y-2">
+                        <p className="text-sm text-text-secondary">Version {idx + 1}</p>
+                        <audio
+                          src={url}
+                          controls
+                          className="w-full"
+                          preload="auto"
+                          onPlay={() => handleAudioPlay(idx)}
+                          onPause={handleAudioPause}
+                          onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
+                          onEnded={handleAudioPause}
+                          ref={(el) => { if (el) audioRefs.current[idx] = el; }}
+                        />
+                      </div>
+                    ))}
                   </div>
-                ) : (
-                  <div className="text-center py-8 text-text-secondary">
-                    <p>No lyrics available</p>
+                ) : audioUrl ? (
+                  <div className="space-y-2">
+                    <audio
+                      src={audioUrl}
+                      controls
+                      className="w-full"
+                      preload="none"
+                      onPlay={() => handleAudioPlay(0)}
+                      onPause={handleAudioPause}
+                      onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
+                      onEnded={handleAudioPause}
+                      ref={(el) => { if (el) audioRefs.current[0] = el; }}
+                    />
                   </div>
-                )}
+                ) : null}
               </CyberCard>
-            )}
+
+              {/* Karaoke Section */}
+              {versions.length > 0 && (
+                <CyberCard className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-medium text-text-primary">Karaoke</h2>
+                    {versions[currentAudioIndex]?.words?.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowFullscreenKaraoke(true)}
+                        className="flex items-center gap-2"
+                      >
+                        <Mic className="w-4 h-4" />
+                        Fullscreen
+                      </Button>
+                    )}
+                  </div>
+                  {versions[currentAudioIndex]?.words?.length > 0 ? (
+                    <KaraokeLyrics 
+                      words={versions[currentAudioIndex].words}
+                      currentTime={currentTime}
+                      isPlaying={isPlaying}
+                      className="min-h-[200px] max-h-[300px]"
+                    />
+                  ) : details.lyrics ? (
+                    <div className="min-h-[200px] max-h-[300px] overflow-y-auto p-4 rounded-md border border-border-main bg-card-alt whitespace-pre-wrap text-text-primary">
+                      {details.lyrics}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-text-secondary">
+                      <p>No lyrics available</p>
+                    </div>
+                  )}
+                </CyberCard>
+              )}
+            </div>
+
+            {/* Right side - New container (35% width) */}
+            <div style={{ width: '35%' }}>
+              <div className="bg-[#151515] rounded-lg p-6 h-full border border-border-main">
+                {/* Content for the new container can go here */}
+                <div className="text-text-secondary text-center">
+                  New Container
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </main>
