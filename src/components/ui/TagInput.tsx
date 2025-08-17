@@ -80,7 +80,7 @@ export const TagInput: React.FC<TagInputProps> = ({
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
         placeholder={tags.length === 0 ? placeholder : ""}
-        className="bg-transparent border-0 text-white placeholder:text-white/40 focus:outline-none flex-1 min-w-[120px]"
+        className="bg-transparent border-0 text-white placeholder:text-white/40 focus:outline-none flex-1 min-w-[120px] text-sm"
       />
     </div>
   );
