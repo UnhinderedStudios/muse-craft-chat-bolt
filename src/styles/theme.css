@@ -81,3 +81,21 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #383838;
 }
+
+/* Lyrics Scrollbar - Different color */
+.lyrics-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.lyrics-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lyrics-scrollbar::-webkit-scrollbar-thumb {
+  background: #464646;
+  border-radius: 4px;
+}
+
+.lyrics-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #565656;
+}
