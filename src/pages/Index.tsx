@@ -620,53 +620,52 @@ async function startGeneration() {
           </div>
         </div>
 
-        {/* Form Section */}
-
-        {/* Form Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left Column - Title & Parameters */}
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm text-text-primary font-medium">Title</label>
+        {/* Form Section - Main container matching chat interface */}
+        <div className="bg-[#151515] rounded-xl p-4 space-y-4">
+          {/* Separate bubbles for each section */}
+          <div className="grid gap-3">
+            {/* Title section bubble */}
+            <div className="bg-[#2d2d2d] rounded-lg p-4">
+              <label className="text-sm font-medium text-white/80 block mb-3">Title</label>
               <Input
                 value={details.title || "A singing bird"}
                 onChange={(e) => setDetails({ ...details, title: e.target.value })}
                 placeholder="A singing bird"
-                className="bg-card-alt border-border-main rounded-lg text-text-primary h-12 px-4"
+                className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
               />
             </div>
             
-            <div className="space-y-3">
-              <label className="text-sm text-text-primary font-medium">Song Parameters</label>
-              <div className="flex gap-3">
-                <CyberChip variant="purple">Female Voice</CyberChip>
-                <CyberChip variant="teal">125 BPM</CyberChip>
-              </div>
+            {/* Song Parameters section bubble */}
+            <div className="bg-[#2d2d2d] rounded-lg p-4">
+              <label className="text-sm font-medium text-white/80 block mb-3">Song Parameters</label>
+              <Textarea
+                value={details.style || ""}
+                onChange={(e) => setDetails({ ...details, style: e.target.value })}
+                placeholder="Describe the style, genre, mood, tempo..."
+                className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[80px] resize-none"
+              />
+            </div>
+            
+            {/* Lyrics section bubble */}
+            <div className="bg-[#2d2d2d] rounded-lg p-4">
+              <label className="text-sm font-medium text-white/80 block mb-3">Lyrics</label>
+              <Textarea
+                value={details.lyrics || `Can't help but notice, all of the ways in which I failed myself, I failed the world all Can't help but notice, all of the ways in which I failed myself, I failed the world all Can't help but notice, all of the ways in which I failed myself, I failed the world all
+
+Can't help but notice, all of the ways in which I failed myself, I failed the world all Can't help but notice, all of the ways in which I failed myself, I failed the world all`}
+                onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
+                placeholder="Enter your lyrics here..."
+                className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[200px] resize-none"
+              />
             </div>
           </div>
 
-          {/* Right Column - Lyrics */}
-          <div className="space-y-2">
-            <label className="text-sm text-text-primary font-medium">Lyrics</label>
-            <Textarea
-              value={details.lyrics || `Can't help but notice, all of the ways in which I failed myself, I failed the world all Can't help but notice, all of the ways in which I failed myself, I failed the world all Can't help but notice, all of the ways in which I failed myself, I failed the world all
-
-Can't help but notice, all of the ways in which I failed myself, I failed the world all Can't help but notice, all of the ways in which I failed myself, I failed the world all`}
-              onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
-              placeholder="Enter your lyrics here..."
-              className="min-h-[200px] bg-card-alt border-border-main rounded-lg text-text-primary placeholder:text-text-secondary resize-none p-4"
-              rows={8}
-            />
-          </div>
-        </div>
-
-        {/* Generate Button */}
-        <div className="space-y-4">
+          {/* Progress bar inside the container */}
           {busy && generationProgress > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-2 pt-2">
               <div className="flex justify-between text-sm">
-                <span className="text-text-secondary">Generating...</span>
-                <span className="font-medium text-accent-primary">{Math.round(generationProgress)}%</span>
+                <span className="text-white/60">Generating...</span>
+                <span className="font-medium text-pink-400">{Math.round(generationProgress)}%</span>
               </div>
               <Progress 
                 value={generationProgress} 
@@ -675,21 +674,15 @@ Can't help but notice, all of the ways in which I failed myself, I failed the wo
             </div>
           )}
 
-          <CyberButton onClick={startGeneration} disabled={busy || !canGenerate}>
-            ✦ Generate
-          </CyberButton>
-
-          <div className="flex gap-2">
-            <Button onClick={onSend} type="button" disabled={busy} variant="outline" className="flex-1">
-              Send Message
-            </Button>
-            <Button 
-              onClick={testAlbumCoverWithLyrics} 
-              disabled={busy || isGeneratingCovers} 
-              variant="outline"
+          {/* Generate Button - Styled like the reference */}
+          <div className="pt-2">
+            <CyberButton 
+              onClick={startGeneration} 
+              disabled={busy || !canGenerate}
+              className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-medium h-12 rounded-lg"
             >
-              Test Art
-            </Button>
+              ✦ Generate
+            </CyberButton>
           </div>
         </div>
 
