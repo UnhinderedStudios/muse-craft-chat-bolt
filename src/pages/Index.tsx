@@ -680,7 +680,7 @@ async function startGeneration() {
                   value={details.lyrics || ""}
                   onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
                   placeholder="Enter your lyrics here..."
-                  className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 resize-none w-full h-full custom-scrollbar"
+                  className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 resize-none w-full h-full lyrics-scrollbar"
                 />
               </div>
             </div>
