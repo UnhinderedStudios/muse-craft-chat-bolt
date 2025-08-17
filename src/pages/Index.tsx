@@ -561,7 +561,7 @@ async function startGeneration() {
           </div>
 
           {/* Tools Section */}
-          <div className="flex items-end gap-3">
+          <div className="flex items-center gap-3">
             <div className="flex-1 relative">
               <textarea
                 value={input}
@@ -592,7 +592,7 @@ async function startGeneration() {
                 </svg>
               </button>
             </div>
-            <div className="bg-[#040404] rounded-xl p-2 flex gap-2">
+            <div className="bg-[#040404] rounded-xl p-3 flex gap-2 min-h-[48px] items-center">
               <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
                 <Upload size={20} />
               </button>
