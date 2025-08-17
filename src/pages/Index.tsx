@@ -788,7 +788,7 @@ async function startGeneration() {
                     className="min-h-[200px] max-h-[300px]"
                   />
                 ) : details.lyrics ? (
-                  <div className="min-h-[200px] max-h-[300px] overflow-y-auto p-4 rounded-md border border-border-main bg-card-alt whitespace-pre-wrap text-text-primary">
+                  <div className="min-h-[200px] max-h-[300px] overflow-y-auto pr-2 pl-4 py-4 rounded-md border border-border-main bg-card-alt whitespace-pre-wrap text-text-primary lyrics-scrollbar">
                     {details.lyrics}
                   </div>
                 ) : (
