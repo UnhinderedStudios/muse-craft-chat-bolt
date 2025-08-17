@@ -552,8 +552,10 @@ async function startGeneration() {
 
       {/* Single Column Layout - Chat + Form */}
       <main className="max-w-4xl mx-auto p-6">
-        {/* Chat Container with #151515 background - extended to bottom */}
-        <div className="bg-[#151515] rounded-2xl relative overflow-hidden">
+        {/* Flex Layout - Chat + New Container */}
+        <div className="flex gap-6">
+        {/* Chat Container - 65% width */}
+        <div className="bg-[#151515] rounded-2xl relative overflow-hidden" style={{ width: '65%' }}>
           {/* Fade gradient overlay - only shows when scrolled */}
           {scrollTop > 0 && (
             <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none" />
@@ -635,6 +637,14 @@ async function startGeneration() {
             </div>
           </div>
         </div>
+
+        {/* New Container - 35% width, same height as chat */}
+        <div className="bg-[#151515] rounded-2xl p-6 border border-border-main h-[500px]" style={{ width: '35%' }}>
+          <div className="text-text-secondary text-center">
+            New Container
+          </div>
+        </div>
+      </div>
 
         {/* Form Section - Main container matching chat interface */}
         <div className="bg-[#151515] rounded-xl p-4 space-y-4 mt-5">
