@@ -662,7 +662,7 @@ async function startGeneration() {
                   <TagInput
                     tags={styleTags}
                     onChange={handleStyleTagsChange}
-                    placeholder="Add parameters like: indie rock, moody, 102 BPM..."
+                    placeholder="Add parameters..."
                     className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[120px] resize-none"
                   />
                 </div>
