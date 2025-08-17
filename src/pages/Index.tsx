@@ -260,10 +260,9 @@ if (extracted) {
     if (busy) return;
     setIsGeneratingCovers(true);
     setAlbumCovers(null);
-    
     // Use actual lyrics from details if available, fallback to test lyrics
     const testLyrics = details.lyrics?.trim() || `Tree in a forest with sunlight filtering through leaves, natural and peaceful scene, artistic nature photography style`;
-
+    console.log("🧪 Test Art using lyrics:", testLyrics);
     try {
       const result = await api.testAlbumCover(testLyrics);
       console.log("Test album covers generated:", result);
@@ -699,6 +698,11 @@ async function startGeneration() {
                       <div>
                         <strong>ChatGPT Prompt:</strong> {albumCovers.debug.imagenPrompt}
                       </div>
+                      {albumCovers.debug.rawResponse?.debug?.prompt && (
+                        <div>
+                          <strong>Edge Prompt:</strong> {albumCovers.debug.rawResponse.debug.prompt}
+                        </div>
+                      )}
                       <div>
                         <strong>Imagen Params:</strong> {JSON.stringify(albumCovers.debug.imagenParams, null, 2)}
                       </div>
