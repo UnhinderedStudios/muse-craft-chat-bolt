@@ -552,9 +552,9 @@ async function startGeneration() {
 
       {/* Two Column Layout - Chat + Form Left, New Container Right */}
       <main className="max-w-7xl mx-auto p-6">
-        <div className="grid grid-cols-12 gap-5">
-          {/* Left Column - Chat + Form (65% width) */}
-          <div className="col-span-8 space-y-5">
+        <div className="grid grid-cols-12 gap-4">
+          {/* Left Column - Chat + Form (75% width) */}
+          <div className="col-span-9 space-y-5">
         {/* Chat Container with #151515 background - extended to bottom */}
         <div className="bg-[#151515] rounded-2xl relative overflow-hidden">
           {/* Fade gradient overlay - only shows when scrolled */}
@@ -713,9 +713,9 @@ async function startGeneration() {
         </div>
           </div>
 
-          {/* Right Column - New Container (35% width) */}
-          <div className="col-span-4">
-            <div className="bg-[#151515] rounded-2xl h-[400px]">
+          {/* Right Column - New Container (25% width) */}
+          <div className="col-span-3">
+            <div className="bg-[#151515] rounded-2xl h-[500px]">
               {/* Empty container with same styling as chat container */}
             </div>
           </div>
