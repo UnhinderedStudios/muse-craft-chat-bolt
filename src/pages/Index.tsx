@@ -629,7 +629,7 @@ async function startGeneration() {
               {/* Title section - external label */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-white/80">Title</label>
-                <div className="bg-[#2d2d2d] rounded-lg p-4 hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] focus-within:shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-shadow duration-200">
+                <div className="bg-[#2d2d2d] rounded-lg p-4 hover:shadow-[0_0_5px_rgba(246,49,140,0.25)] focus-within:shadow-[0_0_5px_rgba(246,49,140,0.5)] focus-within:hover:shadow-[0_0_5px_rgba(246,49,140,0.5)] transition-shadow duration-200">
                   <Input
                     value={details.title || ""}
                     onChange={(e) => setDetails({ ...details, title: e.target.value })}
@@ -642,7 +642,7 @@ async function startGeneration() {
               {/* Song Parameters section - external label */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-white/80">Song Parameters</label>
-                <div className="bg-[#2d2d2d] rounded-lg p-4 hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] focus-within:shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-shadow duration-200">
+                <div className="bg-[#2d2d2d] rounded-lg p-4 hover:shadow-[0_0_5px_rgba(246,49,140,0.25)] focus-within:shadow-[0_0_5px_rgba(246,49,140,0.5)] focus-within:hover:shadow-[0_0_5px_rgba(246,49,140,0.5)] transition-shadow duration-200">
                   <Textarea
                     value={details.style || ""}
                     onChange={(e) => setDetails({ ...details, style: e.target.value })}
@@ -656,7 +656,7 @@ async function startGeneration() {
             {/* Right column: Lyrics section - external label */}
             <div className="col-span-7 space-y-2 flex flex-col">
               <label className="text-sm font-medium text-white/80">Lyrics</label>
-              <div className="bg-[#2d2d2d] rounded-lg p-4 flex-1 hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] focus-within:shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-shadow duration-200">
+              <div className="bg-[#2d2d2d] rounded-lg p-4 flex-1 hover:shadow-[0_0_5px_rgba(246,49,140,0.25)] focus-within:shadow-[0_0_5px_rgba(246,49,140,0.5)] focus-within:hover:shadow-[0_0_5px_rgba(246,49,140,0.5)] transition-shadow duration-200">
                 <Textarea
                   value={details.lyrics || ""}
                   onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
@@ -686,7 +686,7 @@ async function startGeneration() {
             <CyberButton 
               onClick={startGeneration} 
               disabled={busy || !canGenerate}
-              className="w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-medium h-12 rounded-lg"
+              className="w-full bg-[#f6318c] hover:bg-[#d42874] text-white font-medium h-12 rounded-lg"
             >
               ✦ Generate
             </CyberButton>
