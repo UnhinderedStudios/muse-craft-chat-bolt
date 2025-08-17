@@ -10,7 +10,8 @@ import { ChatBubble } from "@/components/chat/ChatBubble";
 import { KaraokeLyrics, type TimestampedWord } from "@/components/KaraokeLyrics";
 import { sanitizeStyle } from "@/lib/styleSanitizer";
 import { Progress } from "@/components/ui/progress";
-import { Dice5, Mic } from "lucide-react";
+import { Dice5, Mic, Star, Sparkles, Download, Play, Pause, Maximize2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const systemPrompt = `You are Melody Muse, a friendly creative assistant for songwriting.
 Your goal is to chat naturally and quickly gather two things only: (1) a unified Style description and (2) Lyrics.
@@ -205,16 +206,16 @@ const Index = () => {
     try {
       const res = await api.chat(next, systemPrompt);
       const assistantMsg = res.content;
-setMessages((m) => [...m, { role: "assistant", content: assistantMsg }]);
-const extracted = extractDetails(assistantMsg);
-if (extracted) {
-  const now = Date.now();
-  if (now - lastDiceAt.current >= 4000) {
-    const finalStyle = sanitizeStyleSafe(extracted.style);
-    const cleaned: SongDetails = { ...extracted, ...(finalStyle ? { style: finalStyle } : {}) };
-    setDetails((d) => mergeNonEmpty(d, cleaned));
-  }
-}
+      setMessages((m) => [...m, { role: "assistant", content: assistantMsg }]);
+      const extracted = extractDetails(assistantMsg);
+      if (extracted) {
+        const now = Date.now();
+        if (now - lastDiceAt.current >= 4000) {
+          const finalStyle = sanitizeStyleSafe(extracted.style);
+          const cleaned: SongDetails = { ...extracted, ...(finalStyle ? { style: finalStyle } : {}) };
+          setDetails((d) => mergeNonEmpty(d, cleaned));
+        }
+      }
 
     } catch (e: any) {
       toast.error(e.message || "Something went wrong");
@@ -238,7 +239,7 @@ if (extracted) {
       if (r2.status === "fulfilled") msgs.push(r2.value.content);
       const extractions = msgs.map(extractDetails).filter(Boolean) as SongDetails[];
       if (extractions.length === 0) {
-        toast.message("Couldn’t parse random song", { description: "Try again in a moment." });
+        toast.message("Couldn't parse random song", { description: "Try again in a moment." });
       } else {
         const cleanedList = extractions.map((ex) => {
           const finalStyle = sanitizeStyleSafe(ex.style);
@@ -443,468 +444,419 @@ async function startGeneration() {
                     console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}, waiting ${exponentialBackoff}ms`);
                     await new Promise(r => setTimeout(r, exponentialBackoff));
                   }
-
-                  console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}: Using audioId=${version.audioId}, musicIndex=${version.musicIndex}`);
                   
-                  const result = await api.getTimestampedLyrics({
-                    taskId: jobId,
-                    audioId: version.audioId,
-                    musicIndex: version.musicIndex
-                  });
-
-                  if (result.alignedWords && result.alignedWords.length > 0) {
-                    console.log(`[Timestamps] Version ${index + 1}: Success with ${result.alignedWords.length} words`);
+                  console.log(`[Timestamps] Fetching for version ${index + 1} (audioId: ${version.audioId})`);
+                  const timestampData = await api.getTimestampedLyrics(version.audioId);
+                  const words = timestampData.alignedWords || [];
+                  console.log(`[Timestamps] Success for version ${index + 1}:`, words.length, "words");
+                  
+                  return {
+                    ...version,
+                    words,
+                    hasTimestamps: words.length > 0,
+                  };
+                } catch (error: any) {
+                  console.warn(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts} failed:`, error.message);
+                  
+                  if (retryAttempts >= maxRetryAttempts) {
+                    console.error(`[Timestamps] Max retries exceeded for version ${index + 1}`);
                     return {
                       ...version,
-                      words: result.alignedWords.map((word: any) => {
-                        // Handle different API response formats
-                        const start = word.startS || word.start_s || word.start || 0;
-                        const end = word.endS || word.end_s || word.end || 0;
-                        console.log(`[Word mapping] "${word.word}" -> start: ${start}, end: ${end}`);
-                        return {
-                          word: word.word,
-                          start,
-                          end,
-                          success: !!word.success,
-                          p_align: word.p_align || word.palign || 0
-                        };
-                      }),
-                      hasTimestamps: true
+                      words: [],
+                      hasTimestamps: false,
+                      timestampError: `Failed after ${maxRetryAttempts} attempts: ${error.message}`
                     };
-                  } else {
-                    console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}: No aligned words yet`);
                   }
-                } catch (e) {
-                  console.warn(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts} failed:`, e);
                 }
               }
-
-              // All retries exhausted
-              console.warn(`[Timestamps] Version ${index + 1}: Failed after ${maxRetryAttempts} attempts`);
-              return {
-                ...version,
-                hasTimestamps: false,
-                timestampError: "Timestamped lyrics not available after retries"
-              };
+              
+              // This should never be reached, but TypeScript safety
+              return version;
             })
           );
-
-          console.log("[Generation] Final versions with timestamps:", updatedVersions);
+          
+          console.log("[Generation] All timestamp fetching completed");
           setVersions(updatedVersions);
           
-          const successCount = updatedVersions.filter(v => v.hasTimestamps).length;
           setGenerationProgress(100);
           setLastProgressUpdate(Date.now());
-          if (successCount > 0) {
-            toast.success(`Song ready with karaoke lyrics! (${successCount}/${updatedVersions.length} versions)`);
-          } else {
-            toast.success("Song ready! (Karaoke lyrics unavailable)");
-          }
-
-          
           break;
         }
         
-        if (status.status === "error") {
-          throw new Error(status.error || "Audio generation failed");
+        if (status.status === "failed") {
+          throw new Error(status.error || "Generation failed");
         }
       }
-
-      if (audioAttempts >= maxAudioAttempts) {
-        throw new Error("Timed out waiting for audio URLs");
+      
+      if (!audioUrls) {
+        throw new Error("Audio generation timed out");
       }
-
     } catch (e: any) {
       console.error("[Generation] Error:", e);
       toast.error(e.message || "Generation failed");
+      setGenerationProgress(0);
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/40">
-      <header className="sticky top-0 z-10 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container py-6">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">AI Song Studio</h1>
-              <p className="text-sm text-muted-foreground">Chat to craft lyrics and generate music with Suno.</p>
+    <div className="min-h-screen bg-background text-foreground">
+      {/* Header */}
+      <header className="border-b border-border bg-surface-primary/50 backdrop-blur-sm">
+        <div className="flex items-center justify-between p-4">
+          <div className="flex items-center gap-6">
+            <h1 className="text-2xl font-bold text-primary">ITSOUNDSVIRAL</h1>
+            
+            {/* Toggle Switches */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-text-secondary">Song Creator</span>
+                <div className="w-10 h-5 bg-primary rounded-full relative">
+                  <div className="w-4 h-4 bg-white rounded-full absolute top-0.5 right-0.5"></div>
+                </div>
+                <span className="text-text-primary">Artist Creator</span>
+              </div>
+              
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-text-secondary">Simple Mode</span>
+                <div className="w-10 h-5 bg-muted rounded-full relative">
+                  <div className="w-4 h-4 bg-white rounded-full absolute top-0.5 left-0.5"></div>
+                </div>
+                <span className="text-text-primary">Studio Mode</span>
+              </div>
             </div>
-            <Button variant="hero" size="lg" onClick={() => window.location.reload()}>New session</Button>
+          </div>
+          
+          {/* Credits */}
+          <div className="text-sm text-text-secondary">
+            Credits available: <span className="text-text-primary font-semibold">2,847</span>
           </div>
         </div>
       </header>
 
-      <main className="container py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <section className="lg:col-span-2">
-          <Card className="p-0">
-            <div className="h-[60vh] sm:h-[65vh] md:h-[70vh]">
-              <ScrollArea className="h-full" ref={scrollerRef as any}>
-                <div className="p-4 space-y-4">
-                  {messages.map((m, i) => (
-                    <ChatBubble key={i} role={m.role} content={m.content} />
+      {/* Main Layout */}
+      <div className="flex-1 p-6">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* Chat Section */}
+          <div className="lg:col-span-1">
+            <Card className="h-[600px] flex flex-col bg-surface-primary border-border">
+              <div className="p-4 border-b border-border">
+                <h3 className="font-semibold text-text-primary">AI Assistant</h3>
+              </div>
+              
+              {/* Chat Messages */}
+              <ScrollArea className="flex-1 p-4" ref={scrollerRef}>
+                <div className="space-y-4">
+                  {messages.map((message, i) => (
+                    <ChatBubble key={i} role={message.role} content={message.content} />
                   ))}
                 </div>
               </ScrollArea>
-            </div>
-            <Separator />
-            <div className="p-3 sm:p-4">
-              <div className="flex items-end gap-2">
-                <Textarea
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Describe your song idea..."
-                  className="min-h-[52px]"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      onSend();
-                    }
-                  }}
-                  disabled={busy}
-                />
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  onClick={randomizeAll}
-                  type="button"
-                  disabled={busy}
-                  aria-label="Randomize song"
-                  title="Randomize song"
-                >
-                  <Dice5 />
-                </Button>
-                <Button onClick={onSend} type="button" disabled={busy} className="shrink-0">Send</Button>
+              
+              {/* Chat Input */}
+              <div className="p-4 border-t border-border">
+                <div className="flex gap-2">
+                  <Textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Describe your song idea..."
+                    className="flex-1 min-h-[60px] bg-input border-border text-text-primary placeholder:text-text-muted resize-none"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        onSend();
+                      }
+                    }}
+                  />
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      onClick={onSend} 
+                      disabled={busy || !input.trim()}
+                      size="sm"
+                      className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                    >
+                      <Mic className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      onClick={randomizeAll} 
+                      disabled={busy}
+                      variant="outline"
+                      size="sm"
+                      className="border-border text-text-secondary hover:text-text-primary"
+                    >
+                      <Dice5 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Tools Section 1 - Empty Pillar */}
+          <div className="lg:col-span-1">
+            <Card className="h-[300px] bg-surface-primary border-border border-dashed">
+              <div className="flex items-center justify-center h-full text-text-muted">
+                <div className="text-center">
+                  <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Coming Soon</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Tools Section 2 - Empty Pillar */}
+          <div className="lg:col-span-1">
+            <Card className="h-[300px] bg-surface-primary border-border border-dashed">
+              <div className="flex items-center justify-center h-full text-text-muted">
+                <div className="text-center">
+                  <Sparkles className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Coming Soon</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+
+        {/* Song Details Section */}
+        <div className="max-w-7xl mx-auto mt-6">
+          <Card className="bg-surface-primary border-border">
+            <div className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                {/* Left Column - Song Details */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-text-primary mb-4">Song Details</h3>
+                  
+                  {/* Title */}
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">Title</label>
+                    <input
+                      type="text"
+                      value={details.title || ""}
+                      onChange={(e) => setDetails(d => ({ ...d, title: e.target.value }))}
+                      className="w-full px-3 py-2 bg-input border border-border rounded-lg text-text-primary placeholder:text-text-muted focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="Enter song title..."
+                    />
+                  </div>
+                  
+                  {/* Lyrics */}
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">Lyrics</label>
+                    <Textarea
+                      value={details.lyrics || ""}
+                      onChange={(e) => setDetails(d => ({ ...d, lyrics: e.target.value }))}
+                      className="w-full h-32 bg-input border border-border text-text-primary placeholder:text-text-muted resize-none"
+                      placeholder="Enter your lyrics here..."
+                    />
+                  </div>
+                </div>
+
+                {/* Right Column - Parameters & Generate */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-text-primary mb-4">Song Parameters</h3>
+                  
+                  {/* Style Input */}
+                  <div>
+                    <label className="block text-sm font-medium text-text-secondary mb-2">Style & Parameters</label>
+                    <Textarea
+                      value={details.style || ""}
+                      onChange={(e) => setDetails(d => ({ ...d, style: e.target.value }))}
+                      className="w-full h-20 bg-input border border-border text-text-primary placeholder:text-text-muted resize-none"
+                      placeholder="e.g., pop, upbeat, 120 BPM, female vocals..."
+                    />
+                  </div>
+
+                  {/* Parameter Pills */}
+                  <div className="flex flex-wrap gap-2">
+                    <span className="px-3 py-1 bg-primary/20 text-primary text-xs rounded-full">Female Voice</span>
+                    <span className="px-3 py-1 bg-accent/20 text-accent-foreground text-xs rounded-full">125 BPM</span>
+                    <span className="px-3 py-1 bg-secondary text-secondary-foreground text-xs rounded-full">Pop</span>
+                  </div>
+
+                  {/* Generate Button */}
+                  <div className="pt-4">
+                    <Button
+                      onClick={startGeneration}
+                      disabled={!canGenerate || busy}
+                      className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg"
+                    >
+                      <Star className="w-6 h-6 mr-2" />
+                      {busy ? "Generating..." : "Generate Song"}
+                    </Button>
+                    
+                    {/* Test Art Button */}
+                    <Button
+                      onClick={testAlbumCoverWithLyrics}
+                      disabled={busy || isGeneratingCovers}
+                      variant="outline"
+                      className="w-full mt-2 border-border text-text-secondary hover:text-text-primary"
+                    >
+                      {isGeneratingCovers ? "Generating Art..." : "Test Art"}
+                    </Button>
+                  </div>
+
+                  {/* Progress */}
+                  {busy && (
+                    <div className="pt-2">
+                      <Progress value={generationProgress} className="h-2" />
+                      <p className="text-xs text-text-muted mt-1">{Math.round(generationProgress)}% complete</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </Card>
-        </section>
+        </div>
 
-        <aside className="space-y-4">
-          <Card className="p-4 space-y-3">
-            <h2 className="text-lg font-medium">Song details</h2>
-            <p className="text-sm text-muted-foreground">These auto-fill from the chat. Provide Style + Lyrics.</p>
-            <div className="grid grid-cols-1 gap-3">
-              <input className="hidden" />
-              <div className="space-y-1">
-                <label className="text-sm text-muted-foreground">Title</label>
-                <input
-                  className="w-full h-10 rounded-md border bg-background px-3"
-                  value={details.title || ""}
-                  onChange={(e) => setDetails({ ...details, title: e.target.value })}
-                  placeholder="e.g. Neon Skies"
-                />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">Style</label>
-              <Textarea
-                value={details.style || ""}
-                onChange={(e) => setDetails({ ...details, style: e.target.value })}
-                placeholder="Combine genre, mood, tempo/BPM, language, vocal type, ref artists, production notes"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm text-muted-foreground">Lyrics (optional)</label>
-              <Textarea
-                value={details.lyrics || ""}
-                onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
-                placeholder="Paste a short verse/chorus or let AI help in chat"
-                className="min-h-[120px]"
-              />
-            </div>
-            {busy && generationProgress > 0 && (
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Generating...</span>
-                  <span className="font-medium text-primary">{Math.round(generationProgress)}%</span>
-                </div>
-                <Progress 
-                  value={generationProgress} 
-                  className="h-2 bg-gradient-to-r from-primary/20 to-accent/20"
-                />
-                <div className="text-xs text-center text-muted-foreground">
-                  {generationProgress < 25 ? "Starting generation..." :
-                   generationProgress < 50 ? "Composing music..." :
-                   generationProgress < 75 ? "Finalizing tracks..." :
-                   generationProgress < 90 ? "Processing audio..." :
-                   "Adding karaoke lyrics..."}
-                </div>
-              </div>
-            )}
-            <div className="flex gap-2">
-              <Button onClick={startGeneration} disabled={busy || !canGenerate} variant="hero" className="flex-1">
-                {busy ? "Working..." : jobId ? "Generating..." : "Generate with Suno"}
-              </Button>
-              <Button 
-                onClick={testAlbumCoverWithLyrics} 
-                disabled={busy || isGeneratingCovers} 
-                variant="outline" 
-                size="default"
-                className="shrink-0"
-              >
-                Test Art
-              </Button>
-            </div>
-            
-            {/* Test Album Covers Preview */}
-            {(albumCovers || isGeneratingCovers) && !audioUrls && (
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium text-muted-foreground">Test Album Covers</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground text-center">Cover 1</p>
-                    {isGeneratingCovers ? (
-                      <div className="w-full aspect-square rounded-lg bg-muted animate-pulse border border-border" />
-                    ) : albumCovers?.cover1 ? (
-                      <img
-                        src={albumCovers.cover1}
-                        alt="Test Album Cover 1"
-                        className="w-full aspect-square object-cover rounded-lg border border-border"
-                      />
-                    ) : (
-                      <div className="w-full aspect-square rounded-lg bg-muted/50 border border-border flex items-center justify-center">
-                        <span className="text-xs text-muted-foreground">No cover</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground text-center">Cover 2</p>
-                    {isGeneratingCovers ? (
-                      <div className="w-full aspect-square rounded-lg bg-muted animate-pulse border border-border" />
-                    ) : albumCovers?.cover2 ? (
-                      <img
-                        src={albumCovers.cover2}
-                        alt="Test Album Cover 2"
-                        className="w-full aspect-square object-cover rounded-lg border border-border"
-                      />
-                    ) : (
-                      <div className="w-full aspect-square rounded-lg bg-muted/50 border border-border flex items-center justify-center">
-                        <span className="text-xs text-muted-foreground">No cover</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+        {/* Results Section */}
+        {versions.length > 0 && (
+          <div className="max-w-7xl mx-auto mt-6">
+            <Card className="bg-surface-primary border-border">
+              <div className="p-6">
+                <h3 className="text-lg font-semibold text-text-primary mb-4">Generated Songs</h3>
                 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {versions.map((version, index) => (
+                    <Card key={index} className="bg-surface-secondary border-border">
+                      <div className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="font-medium text-text-primary">Version {index + 1}</h4>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setShowFullscreenKaraoke(true)}
+                              disabled={!version.hasTimestamps}
+                              className="border-border"
+                            >
+                              <Maximize2 className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              asChild
+                              className="border-border"
+                            >
+                              <a href={version.url} download>
+                                <Download className="w-4 h-4" />
+                              </a>
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        <audio
+                          ref={(el) => { if (el) audioRefs.current[index] = el; }}
+                          src={version.url}
+                          controls
+                          className="w-full"
+                          onPlay={() => handleAudioPlay(index)}
+                          onPause={handleAudioPause}
+                          onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
+                        />
+                        
+                        {version.hasTimestamps && (
+                          <div className="mt-3">
+                            <KaraokeLyrics
+                              words={version.words}
+                              currentTime={currentAudioIndex === index ? currentTime : 0}
+                              isPlaying={isPlaying && currentAudioIndex === index}
+                            />
+                          </div>
+                        )}
+                        
+                        {version.timestampError && (
+                          <p className="text-xs text-destructive mt-2">{version.timestampError}</p>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Album Covers */}
+        {albumCovers && (
+          <div className="max-w-7xl mx-auto mt-6">
+            <Card className="bg-surface-primary border-border">
+              <div className="p-6">
+                <h3 className="text-lg font-semibold text-text-primary mb-4">Album Covers</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="relative group">
+                    <img 
+                      src={albumCovers.cover1} 
+                      alt="Album Cover 1" 
+                      className="w-full aspect-square object-cover rounded-lg border border-border"
+                    />
+                  </div>
+                  <div className="relative group">
+                    <img 
+                      src={albumCovers.cover2} 
+                      alt="Album Cover 2" 
+                      className="w-full aspect-square object-cover rounded-lg border border-border"
+                    />
+                  </div>
+                </div>
+
                 {/* Debug Info */}
-                {albumCovers?.debug && (
-                  <details className="text-xs bg-muted/20 rounded-lg p-3">
-                    <summary className="cursor-pointer font-medium text-muted-foreground hover:text-foreground">Art Debug Info</summary>
-                    <div className="mt-2 space-y-2 font-mono">
-                      <div>
-                        <strong>Source:</strong> {albumCovers.debug.inputSource}
-                      </div>
-                      <div>
-                        <strong>Input:</strong> {albumCovers.debug.inputContent.substring(0, 100)}...
-                      </div>
-                      <div>
-                        <strong>ChatGPT Prompt:</strong> {albumCovers.debug.imagenPrompt}
-                      </div>
-                      {albumCovers.debug.rawResponse?.debug?.prompt && (
-                        <div>
-                          <strong>Edge Prompt:</strong> {albumCovers.debug.rawResponse.debug.prompt}
-                        </div>
-                      )}
-                      <div>
-                        <strong>Imagen Params:</strong> {JSON.stringify(albumCovers.debug.imagenParams, null, 2)}
-                      </div>
-                      {albumCovers.debug.rawResponse?.debug && (
-                        <div>
-                          <strong>Edge Function:</strong> Model: {albumCovers.debug.rawResponse.debug.model}, Images: {albumCovers.debug.rawResponse.debug.imageCount}
-                        </div>
-                      )}
+                {albumCovers.debug && (
+                  <details className="mt-4">
+                    <summary className="text-sm text-text-muted cursor-pointer hover:text-text-secondary">
+                      Debug Information
+                    </summary>
+                    <div className="mt-2 p-3 bg-surface-elevated rounded-lg text-xs text-text-muted space-y-1">
+                      <p><strong>Input Source:</strong> {albumCovers.debug.inputSource}</p>
+                      <p><strong>Content:</strong> {albumCovers.debug.inputContent.substring(0, 100)}...</p>
+                      <p><strong>ChatGPT Prompt:</strong> {albumCovers.debug.chatPrompt.substring(0, 100)}...</p>
+                      <p><strong>Imagen Prompt:</strong> {albumCovers.debug.imagenPrompt}</p>
                     </div>
                   </details>
                 )}
               </div>
-            )}
-          </Card>
-
-          <Card className="p-4 space-y-3">
-            <h2 className="text-lg font-medium">Output</h2>
-            {audioUrls && audioUrls.length > 0 ? (
-              <div className="space-y-4">
-                {audioUrls.map((url, idx) => (
-                  <div key={`${url}-${idx}`} className="relative overflow-hidden rounded-lg border border-border bg-background/50 hover:bg-background/80 transition-all duration-300">
-                    <div className="p-4">
-                      <div className="flex gap-4">
-                        {/* Album cover - show appropriate cover for each version */}
-                        <div className="flex-shrink-0">
-                          {albumCovers ? (
-                            <img
-                              src={idx === 0 ? albumCovers.cover1 : albumCovers.cover2}
-                              alt={`Album Cover for Version ${idx + 1}`}
-                              className="w-16 h-16 rounded-md object-cover border border-border"
-                              onLoad={() => console.log(`Cover ${idx + 1} loaded:`, idx === 0 ? albumCovers.cover1 : albumCovers.cover2)}
-                              onError={() => console.log(`Cover ${idx + 1} failed to load:`, idx === 0 ? albumCovers.cover1 : albumCovers.cover2)}
-                            />
-                          ) : isGeneratingCovers ? (
-                            <div className="w-16 h-16 rounded-md bg-muted animate-pulse border border-border" />
-                          ) : (
-                            <div className="w-16 h-16 rounded-md bg-muted/50 border border-border" />
-                          )}
-                        </div>
-                        {/* Audio player and controls */}
-                        <div className="flex-1 space-y-2">
-                          <p className="text-sm text-muted-foreground">Version {idx + 1}</p>
-                          <audio
-                            src={url}
-                            controls
-                            className="w-full"
-                            preload="auto"
-                            onPlay={() => handleAudioPlay(idx)}
-                            onPause={handleAudioPause}
-                            onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
-                            onEnded={handleAudioPause}
-                            ref={(el) => { if (el) audioRefs.current[idx] = el; }}
-                          />
-                          <a
-                            href={url}
-                            download
-                            className="inline-flex h-10 items-center rounded-md bg-secondary px-4 text-sm"
-                          >
-                            Download version {idx + 1}
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : audioUrl ? (
-              <div className="flex gap-4">
-                {/* Album cover - show first cover for single audio */}
-                <div className="flex-shrink-0">
-                  {albumCovers ? (
-                    <img
-                      src={albumCovers.cover1}
-                      alt="Album Cover"
-                      className="w-16 h-16 rounded-md object-cover border border-border"
-                      onLoad={() => console.log("Cover loaded:", albumCovers.cover1)}
-                      onError={() => console.log("Cover failed to load:", albumCovers.cover1)}
-                    />
-                  ) : isGeneratingCovers ? (
-                    <div className="w-16 h-16 rounded-md bg-muted animate-pulse border border-border" />
-                  ) : (
-                    <div className="w-16 h-16 rounded-md bg-muted/50 border border-border" />
-                  )}
-                </div>
-                {/* Audio player and controls */}
-                <div className="flex-1 space-y-3">
-                   <audio
-                     src={audioUrl}
-                     controls
-                     className="w-full"
-                     preload="none"
-                     onPlay={() => handleAudioPlay(0)}
-                     onPause={handleAudioPause}
-                     onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
-                     onEnded={handleAudioPause}
-                     ref={(el) => { if (el) audioRefs.current[0] = el; }}
-                   />
-                  <a
-                    href={audioUrl}
-                    download
-                    className="inline-flex h-10 items-center rounded-md bg-secondary px-4 text-sm"
-                  >
-                    Download track
-                  </a>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Your song will appear here once it’s ready.</p>
-            )}
-          </Card>
-          
-          {versions.length > 0 && (
-            <Card className="p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium">Karaoke Lyrics</h2>
-                {versions[currentAudioIndex]?.words?.length > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowFullscreenKaraoke(true)}
-                    className="flex items-center gap-2"
-                  >
-                    <Mic className="w-4 h-4" />
-                    Fullscreen
-                  </Button>
-                )}
-              </div>
-              {versions[currentAudioIndex]?.words?.length > 0 ? (
-                <KaraokeLyrics 
-                  words={versions[currentAudioIndex].words}
-                  currentTime={currentTime}
-                  isPlaying={isPlaying}
-                />
-              ) : details.lyrics ? (
-                <div className="min-h-[200px] max-h-[400px] overflow-y-auto p-4 rounded-md border bg-muted/20 whitespace-pre-wrap">
-                  {details.lyrics}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>No lyrics available</p>
-                </div>
-              )}
             </Card>
-          )}
-        </aside>
-      </main>
+          </div>
+        )}
+      </div>
 
-      {/* Full-screen Karaoke Overlay */}
-      {showFullscreenKaraoke && versions[currentAudioIndex]?.words?.length > 0 && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-8 cursor-pointer"
-          onClick={() => setShowFullscreenKaraoke(false)}
-        >
-          <div className="w-full max-w-4xl flex flex-col items-center">
-            {/* Album Cover */}
-            <div className="mb-8">
-              {isGeneratingCovers ? (
-                <div className="w-48 h-48 bg-muted/20 rounded-lg flex items-center justify-center">
-                  <div className="text-white/60">Generating cover...</div>
-                </div>
-              ) : (
-                <img 
-                  src={currentAudioIndex === 1 ? albumCovers.cover2 : albumCovers.cover1}
-                  alt="Album Cover"
-                  className="w-48 h-48 object-cover rounded-lg shadow-2xl border border-white/10"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              )}
-            </div>
+      {/* Fullscreen Karaoke */}
+      {showFullscreenKaraoke && versions[currentAudioIndex]?.hasTimestamps && (
+        <div className="fixed inset-0 bg-background z-50 flex items-center justify-center">
+          <div className="text-center max-w-4xl mx-auto p-8">
+            <Button
+              onClick={() => setShowFullscreenKaraoke(false)}
+              className="absolute top-4 right-4 bg-surface-secondary border-border"
+              variant="outline"
+              size="sm"
+            >
+              ✕
+            </Button>
             
-            {/* Karaoke Lyrics */}
-            <div className="w-full">
-              <KaraokeLyrics 
-                words={versions[currentAudioIndex].words}
-                currentTime={currentTime}
-                isPlaying={isPlaying}
-                className="min-h-[300px] max-h-[50vh] bg-transparent border-0 text-white text-2xl leading-relaxed"
+            <h2 className="text-3xl font-bold text-text-primary mb-8">{details.title || "Untitled Song"}</h2>
+            
+            <KaraokeLyrics
+              words={versions[currentAudioIndex]?.words || []}
+              currentTime={currentTime}
+              isPlaying={isPlaying}
+              className="text-2xl"
+            />
+            
+            <div className="mt-8">
+              <audio
+                src={versions[currentAudioIndex]?.url}
+                controls
+                className="mx-auto"
+                onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
               />
             </div>
           </div>
         </div>
       )}
-
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "SoftwareApplication",
-            name: "AI Song Studio",
-            applicationCategory: "MultimediaApplication",
-            description:
-              "Chat with AI to craft lyrics and generate custom songs via Suno.",
-            operatingSystem: "Web",
-          }),
-        }}
-      />
     </div>
   );
 };
