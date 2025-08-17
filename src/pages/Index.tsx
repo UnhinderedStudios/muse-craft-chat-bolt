@@ -16,6 +16,7 @@ import { CyberCard } from "@/components/ui/CyberCard";
 import { CyberButton } from "@/components/ui/CyberButton";
 import { CyberChip } from "@/components/ui/CyberChip";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 
 const systemPrompt = `You are Melody Muse, a friendly creative assistant for songwriting.
 Your goal is to chat naturally and quickly gather two things only: (1) a unified Style description and (2) Lyrics.
@@ -561,11 +562,7 @@ async function startGeneration() {
                 <ChatBubble key={i} role={m.role} content={m.content} />
               ))}
               {busy && (
-                <div className="flex justify-start">
-                  <div className="max-w-[85%] px-4 py-3 leading-relaxed rounded-[16px] bg-[#000000] border border-accent-primary text-text-primary shadow-[0_0_20px_rgba(255,45,174,0.4)]">
-                    <p>Thinking...</p>
-                  </div>
-                </div>
+                <Spinner />
               )}
             </div>
           </div>
