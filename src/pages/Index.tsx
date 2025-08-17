@@ -262,9 +262,9 @@ async function startGeneration() {
     setBusy(true);
     
     // Start album cover generation immediately in parallel
-    if (details.lyrics) {
+    if (details.title) {
       setIsGeneratingCovers(true);
-      api.generateAlbumCovers(details.lyrics)
+      api.generateAlbumCovers(details.title)
         .then(covers => {
           console.log("Album covers generated:", covers);
           setAlbumCovers(covers);
