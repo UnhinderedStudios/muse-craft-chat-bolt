@@ -602,7 +602,7 @@ async function startGeneration() {
               </button>
             </div>
             {/* Icons Container - DEBUG: Should be 56px height (p-3 = 12px*2 + p-2*2 = 8px*2 + 20px icon = 56px) */}
-            <div className="bg-[#040404] rounded-xl p-3 flex gap-2 min-h-[56px] items-center">
+            <div className="bg-[#040404] rounded-xl p-3 flex gap-2 min-h-[56px] items-center hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] transition-shadow duration-200">
               <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
                 <Upload size={20} />
               </button>
