@@ -622,10 +622,10 @@ async function startGeneration() {
 
         {/* Form Section - Main container matching chat interface */}
         <div className="bg-[#151515] rounded-xl p-4 space-y-4">
-          {/* Separate bubbles for each section */}
-          <div className="grid gap-3">
-            {/* Title section bubble */}
-            <div className="bg-[#2d2d2d] rounded-lg p-4">
+          {/* Three-column horizontal layout */}
+          <div className="grid grid-cols-12 gap-3">
+            {/* Title section bubble - 20% width */}
+            <div className="col-span-2 bg-[#2d2d2d] rounded-lg p-4">
               <label className="text-sm font-medium text-white/80 block mb-3">Title</label>
               <Input
                 value={details.title || "A singing bird"}
@@ -635,19 +635,19 @@ async function startGeneration() {
               />
             </div>
             
-            {/* Song Parameters section bubble */}
-            <div className="bg-[#2d2d2d] rounded-lg p-4">
+            {/* Song Parameters section bubble - 40% width, taller */}
+            <div className="col-span-5 bg-[#2d2d2d] rounded-lg p-4">
               <label className="text-sm font-medium text-white/80 block mb-3">Song Parameters</label>
               <Textarea
                 value={details.style || ""}
                 onChange={(e) => setDetails({ ...details, style: e.target.value })}
                 placeholder="Describe the style, genre, mood, tempo..."
-                className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[80px] resize-none"
+                className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[120px] resize-none"
               />
             </div>
             
-            {/* Lyrics section bubble */}
-            <div className="bg-[#2d2d2d] rounded-lg p-4">
+            {/* Lyrics section bubble - 40% width */}
+            <div className="col-span-5 bg-[#2d2d2d] rounded-lg p-4">
               <label className="text-sm font-medium text-white/80 block mb-3">Lyrics</label>
               <Textarea
                 value={details.lyrics || `Can't help but notice, all of the ways in which I failed myself, I failed the world all Can't help but notice, all of the ways in which I failed myself, I failed the world all Can't help but notice, all of the ways in which I failed myself, I failed the world all
@@ -655,7 +655,7 @@ async function startGeneration() {
 Can't help but notice, all of the ways in which I failed myself, I failed the world all Can't help but notice, all of the ways in which I failed myself, I failed the world all`}
                 onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
                 placeholder="Enter your lyrics here..."
-                className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[200px] resize-none"
+                className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[120px] resize-none"
               />
             </div>
           </div>
