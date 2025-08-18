@@ -95,7 +95,7 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
                 ? '#ffffff' 
                 : isPast && !isHighlighted 
                   ? '#f1f1f1' 
-                  : '#424242',
+                  : '#656565',
               textShadow: isHighlighted ? '0 0 8px rgba(255, 255, 255, 0.3)' : 'none',
               marginRight: word.word.endsWith('\n') ? '0' : '0.25rem',
             }}
