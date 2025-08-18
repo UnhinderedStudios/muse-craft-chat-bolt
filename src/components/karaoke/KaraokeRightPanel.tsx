@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import { Play, Pause, Mic } from "lucide-react";
 import { KaraokeLyrics } from "@/components/audio/KaraokeLyrics";
 import { TimestampedWord } from "@/types";
@@ -71,21 +71,6 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   };
 
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const lyricsScrollRef = useRef<HTMLDivElement>(null);
-
-  // Auto-scroll lyrics when playing
-  useEffect(() => {
-    if (isPlaying && hasContent && currentVersion?.words?.length && lyricsScrollRef.current) {
-      const container = lyricsScrollRef.current;
-      const highlightedElement = container.querySelector('[data-highlighted="true"]');
-      if (highlightedElement) {
-        highlightedElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center'
-        });
-      }
-    }
-  }, [currentTime, isPlaying, hasContent, currentVersion?.words]);
 
   return (
     <div className="bg-[#151515] rounded-2xl h-[500px] flex flex-col overflow-hidden">
@@ -155,10 +140,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
         {/* Scrollable Lyrics Container */}
         <div className="flex-1 mb-4 min-h-0">
           {hasContent ? (
-            <div 
-              ref={lyricsScrollRef}
-              className="h-full overflow-y-auto custom-scrollbar pr-2"
-            >
+            <div className="h-full overflow-y-auto custom-scrollbar pr-2">
               <div className="py-2">
                 <KaraokeLyrics
                   words={currentVersion?.words || []}
