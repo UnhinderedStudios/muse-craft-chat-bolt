@@ -197,7 +197,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             </CyberButton>
           </div>
           
-          <div className="h-32">
+          <div className="h-64">
             <KaraokeLyrics
               words={timestampedLyrics}
               currentTime={currentTime}
