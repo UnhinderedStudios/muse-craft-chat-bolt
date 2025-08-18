@@ -69,16 +69,16 @@ export const TagInput: React.FC<TagInputProps> = ({
       {tags.map((tag, index) => (
         <div
           key={index}
-          className="inline-flex items-center gap-1 px-3 py-1 bg-white text-[#2d2d2d] rounded-full text-sm font-medium cursor-default"
+          className="inline-flex items-center gap-1 px-3 py-1 bg-white text-[#2d2d2d] rounded-full text-sm font-medium cursor-default max-w-full"
           onClick={(e) => e.stopPropagation()}
         >
-          <span>{tag}</span>
+          <span className="break-words break-all">{tag}</span>
           <button
             onClick={(e) => {
               e.stopPropagation();
               removeTag(index);
             }}
-            className="hover:bg-gray-200 rounded-full p-0.5 transition-colors"
+            className="hover:bg-gray-200 rounded-full p-0.5 transition-colors flex-shrink-0"
           >
             <X size={12} />
           </button>
