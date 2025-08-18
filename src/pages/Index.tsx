@@ -835,15 +835,59 @@ async function startGeneration() {
                   {audioUrls.map((url, idx) => (
                     <div key={`${url}-${idx}`} className="space-y-2">
                       <p className="text-sm text-text-secondary">Version {idx + 1}</p>
+                      
+                      {/* Custom Progress Bar */}
+                      <div className="space-y-2">
+                        <div 
+                          className="h-2 bg-border-main rounded-full cursor-pointer"
+                          onClick={(e) => {
+                            const audio = audioRefs.current[idx];
+                            if (audio && audio.duration) {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const clickX = e.clientX - rect.left;
+                              const percentage = clickX / rect.width;
+                              const seekTime = percentage * audio.duration;
+                              audio.currentTime = seekTime;
+                              if (idx === currentAudioIndex) {
+                                setCurrentTime(seekTime);
+                              }
+                            }
+                          }}
+                        >
+                          <div 
+                            className="h-full bg-accent rounded-full transition-all duration-300"
+                            style={{ 
+                              width: `${audioRefs.current[idx]?.duration > 0 ? 
+                                ((idx === currentAudioIndex ? currentTime : audioRefs.current[idx]?.currentTime || 0) / audioRefs.current[idx].duration) * 100 : 0}%` 
+                            }}
+                          />
+                        </div>
+                        <div className="flex justify-between text-xs text-text-secondary">
+                          <span>
+                            {idx === currentAudioIndex ? 
+                              `${Math.floor(currentTime / 60)}:${(Math.floor(currentTime % 60)).toString().padStart(2, '0')}` :
+                              `${Math.floor((audioRefs.current[idx]?.currentTime || 0) / 60)}:${(Math.floor((audioRefs.current[idx]?.currentTime || 0) % 60)).toString().padStart(2, '0')}`
+                            }
+                          </span>
+                          <span>{audioRefs.current[idx]?.duration ? `${Math.floor(audioRefs.current[idx].duration / 60)}:${(Math.floor(audioRefs.current[idx].duration % 60)).toString().padStart(2, '0')}` : '0:00'}</span>
+                        </div>
+                      </div>
+                      
                       <audio
                         src={url}
-                        controls
-                        className="w-full"
+                        className="hidden"
                         preload="auto"
                         onPlay={() => handleAudioPlay(idx)}
                         onPause={handleAudioPause}
                         onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
                         onEnded={handleAudioPause}
+                        onLoadedMetadata={(e) => {
+                          // Force re-render when duration is loaded
+                          const audio = e.currentTarget;
+                          if (audio.duration && !isNaN(audio.duration)) {
+                            setCurrentTime(currentTime); // Trigger re-render
+                          }
+                        }}
                         ref={(el) => { if (el) audioRefs.current[idx] = el; }}
                       />
                     </div>
@@ -851,15 +895,50 @@ async function startGeneration() {
                 </div>
               ) : audioUrl ? (
                 <div className="space-y-2">
+                  {/* Custom Progress Bar */}
+                  <div className="space-y-2">
+                    <div 
+                      className="h-2 bg-border-main rounded-full cursor-pointer"
+                      onClick={(e) => {
+                        const audio = audioRefs.current[0];
+                        if (audio && audio.duration) {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const clickX = e.clientX - rect.left;
+                          const percentage = clickX / rect.width;
+                          const seekTime = percentage * audio.duration;
+                          audio.currentTime = seekTime;
+                          setCurrentTime(seekTime);
+                        }
+                      }}
+                    >
+                      <div 
+                        className="h-full bg-accent rounded-full transition-all duration-300"
+                        style={{ 
+                          width: `${audioRefs.current[0]?.duration > 0 ? (currentTime / audioRefs.current[0].duration) * 100 : 0}%` 
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-text-secondary">
+                      <span>{Math.floor(currentTime / 60)}:{(Math.floor(currentTime % 60)).toString().padStart(2, '0')}</span>
+                      <span>{audioRefs.current[0]?.duration ? `${Math.floor(audioRefs.current[0].duration / 60)}:${(Math.floor(audioRefs.current[0].duration % 60)).toString().padStart(2, '0')}` : '0:00'}</span>
+                    </div>
+                  </div>
+                  
                   <audio
                     src={audioUrl}
-                    controls
-                    className="w-full"
+                    className="hidden"
                     preload="none"
                     onPlay={() => handleAudioPlay(0)}
                     onPause={handleAudioPause}
                     onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
                     onEnded={handleAudioPause}
+                    onLoadedMetadata={(e) => {
+                      // Force re-render when duration is loaded
+                      const audio = e.currentTarget;
+                      if (audio.duration && !isNaN(audio.duration)) {
+                        setCurrentTime(currentTime); // Trigger re-render
+                      }
+                    }}
                     ref={(el) => { if (el) audioRefs.current[0] = el; }}
                   />
                 </div>

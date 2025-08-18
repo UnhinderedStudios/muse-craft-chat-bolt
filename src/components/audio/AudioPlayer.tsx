@@ -16,6 +16,7 @@ interface AudioPlayerProps {
   covers: string[];
   timestampedLyrics: TimestampedWord[];
   onFullscreenKaraoke: () => void;
+  onSeek?: (time: number) => void;
 }
 
 export const AudioPlayer: React.FC<AudioPlayerProps> = ({
@@ -28,9 +29,11 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   setIsPlaying,
   covers,
   timestampedLyrics,
-  onFullscreenKaraoke
+  onFullscreenKaraoke,
+  onSeek
 }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [duration, setDuration] = React.useState(0);
 
   const togglePlayPause = () => {
     if (audioRef.current) {
@@ -53,6 +56,28 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
     if (currentIndex < audioUrls.length - 1) {
       setCurrentIndex(currentIndex + 1);
     }
+  };
+
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!audioRef.current) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percentage = clickX / rect.width;
+    const seekTime = percentage * duration;
+    
+    audioRef.current.currentTime = seekTime;
+    setCurrentTime(seekTime);
+    
+    if (onSeek) {
+      onSeek(seekTime);
+    }
+  };
+
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   if (!audioUrls?.length) return null;
@@ -115,6 +140,23 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             Track {currentIndex + 1} of {audioUrls.length}
           </p>
 
+          {/* Custom Progress Bar */}
+          <div className="space-y-2">
+            <div 
+              className="h-2 bg-border-main rounded-full cursor-pointer"
+              onClick={handleSeek}
+            >
+              <div 
+                className="h-full bg-accent rounded-full transition-all duration-300"
+                style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-xs text-text-secondary">
+              <span>{formatTime(currentTime)}</span>
+              <span>{formatTime(duration)}</span>
+            </div>
+          </div>
+
           {/* Hidden audio element */}
           <audio
             ref={audioRef}
@@ -124,13 +166,17 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                 setCurrentTime(audioRef.current.currentTime);
               }
             }}
+            onLoadedMetadata={() => {
+              if (audioRef.current) {
+                setDuration(audioRef.current.duration);
+              }
+            }}
             onLoadedData={() => {
               if (isPlaying && audioRef.current) {
                 audioRef.current.play();
               }
             }}
-            className="w-full"
-            controls
+            className="hidden"
           />
         </div>
       </CyberCard>
