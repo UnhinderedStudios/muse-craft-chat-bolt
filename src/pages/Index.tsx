@@ -324,7 +324,9 @@ const Index = () => {
     // Only update time for the currently active audio
     const activeIndex = audioRefs.current.findIndex(ref => ref === audio);
     if (activeIndex === currentAudioIndex) {
-      setCurrentTime(audio.currentTime);
+      const newTime = audio.currentTime;
+      setCurrentTime(newTime);
+      console.log('[Audio Debug] Time update:', newTime.toFixed(2), 'for audio', activeIndex);
     }
   };
 
@@ -636,6 +638,20 @@ async function startGeneration() {
 
           console.log("[Generation] Final versions with timestamps:", updatedVersions);
           setVersions(updatedVersions);
+          
+          // CRITICAL: Reset audio state when new songs are loaded
+          setCurrentTime(0);
+          setCurrentAudioIndex(0);
+          setIsPlaying(false);
+          
+          // Reset all audio elements to start position
+          setTimeout(() => {
+            audioRefs.current.forEach((audio) => {
+              if (audio) {
+                audio.currentTime = 0;
+              }
+            });
+          }, 100);
           
           const successCount = updatedVersions.filter(v => v.hasTimestamps).length;
           setGenerationProgress(100);

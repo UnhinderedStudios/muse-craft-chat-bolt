@@ -18,67 +18,56 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Reset karaoke state when words change (new song)
+  // Reset when words change or when switching between songs
   useEffect(() => {
-    console.log('[Karaoke] Words changed, resetting state');
+    console.log('[Karaoke Reset] Words changed, resetting to top');
     setHighlightedIndex(-1);
     if (containerRef.current) {
-      console.log('[Karaoke] Scrolling to top due to words change');
       containerRef.current.scrollTop = 0;
     }
   }, [words]);
 
-  // Simple reset when playback starts from beginning
+  // Reset when currentTime goes back to 0 (new song)
   useEffect(() => {
-    if (isPlaying && containerRef.current && currentTime < 1) {
-      containerRef.current.scrollTop = 0;
-    }
-  }, [isPlaying, currentTime]);
-
-  useEffect(() => {
-    console.log('[Karaoke] isPlaying changed:', isPlaying, 'currentTime:', currentTime);
-    
-    if (!isPlaying) {
+    if (currentTime === 0) {
+      console.log('[Karaoke Reset] Time reset to 0, resetting to top');
       setHighlightedIndex(-1);
-      return;
+      if (containerRef.current) {
+        containerRef.current.scrollTop = 0;
+      }
     }
+  }, [currentTime]);
 
-    // Reset scroll to top when playback starts from beginning
-    if (isPlaying && containerRef.current && currentTime < 2) {
-      console.log('[Karaoke] Playback started, forcing scroll to top');
-      containerRef.current.scrollTop = 0;
-    }
+  // Main effect: Find current word and handle scrolling
+  useEffect(() => {
+    if (!isPlaying || words.length === 0) return;
 
-    // Find the current word - only highlight if we're exactly within the word's time range
+    // Find the word that should be highlighted based on current time
     let currentWordIndex = -1;
-    
     for (let i = 0; i < words.length; i++) {
-      const word = words[i];
-      
-      // For zero-duration words, use a small buffer
-      if (word.start === word.end) {
-        const bufferTime = 0.05; // 50ms buffer for zero-duration words
-        if (Math.abs(currentTime - word.start) <= bufferTime) {
-          currentWordIndex = i;
-          console.log(`[Karaoke] Zero-duration word ${i}: "${word.word}" highlighted at time ${currentTime}`);
-          break;
-        }
-      } else {
-        // For normal words, only highlight if we're within the exact time range
-        if (currentTime >= word.start && currentTime <= word.end) {
-          currentWordIndex = i;
-          console.log(`[Karaoke] Word ${i}: "${word.word}" (${word.start}-${word.end}) highlighted at time ${currentTime}`);
-          break;
-        }
+      if (currentTime >= words[i].start && currentTime <= words[i].end) {
+        currentWordIndex = i;
+        break;
+      }
+      // If we're past the end of this word but before the start of the next
+      if (i < words.length - 1 && currentTime > words[i].end && currentTime < words[i + 1].start) {
+        currentWordIndex = i; // Keep the previous word highlighted
+        break;
+      }
+      // If this is the last word and we're past its end
+      if (i === words.length - 1 && currentTime > words[i].end) {
+        currentWordIndex = i;
+        break;
       }
     }
 
+    console.log('[Karaoke Debug] currentTime:', currentTime.toFixed(2), 'wordIndex:', currentWordIndex, 'isPlaying:', isPlaying);
+
     setHighlightedIndex(currentWordIndex);
 
-    // Smart auto-scroll: only scroll when word goes off-screen
+    // Simple auto-scroll: only when word is off-screen
     if (currentWordIndex >= 0 && containerRef.current) {
       const highlightedElement = containerRef.current.querySelector('[data-highlighted="true"]');
-      console.log('[Karaoke Scroll] Checking word', currentWordIndex, 'found element:', !!highlightedElement);
       
       if (highlightedElement) {
         const container = containerRef.current;
@@ -87,31 +76,20 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
         const containerHeight = container.clientHeight;
         const containerScrollTop = container.scrollTop;
         
-        // Calculate if element is visible in viewport
+        // Check if element is fully visible
         const elementBottom = elementTop + elementHeight;
         const viewportTop = containerScrollTop;
         const viewportBottom = containerScrollTop + containerHeight;
-        
         const isVisible = elementTop >= viewportTop && elementBottom <= viewportBottom;
         
-        console.log('[Karaoke Scroll] Visibility check:', {
-          elementTop,
-          elementBottom,
-          viewportTop,
-          viewportBottom,
-          isVisible
-        });
-        
-        // Only scroll if the element is not fully visible
+        // Only scroll if element is not visible
         if (!isVisible) {
-          const targetScrollTop = elementTop - (containerHeight / 2) + (elementHeight / 2);
+          const targetScrollTop = elementTop - (containerHeight / 3); // Scroll to top third instead of center
           const maxScrollTop = container.scrollHeight - containerHeight;
           const finalScrollTop = Math.max(0, Math.min(targetScrollTop, maxScrollTop));
           
-          console.log('[Karaoke Scroll] Element not visible, scrolling to:', finalScrollTop);
           container.scrollTop = finalScrollTop;
-        } else {
-          console.log('[Karaoke Scroll] Element is visible, no scroll needed');
+          console.log('[Karaoke Scroll] Scrolled to show word', currentWordIndex, 'at position:', finalScrollTop);
         }
       }
     }
