@@ -99,7 +99,7 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
         
         return (
           <span
-            key={index}
+            key={`word-${index}`}
             data-highlighted={isHighlighted ? "true" : "false"}
             className={cn(
               "inline-block transition-all duration-300 px-1 rounded",
