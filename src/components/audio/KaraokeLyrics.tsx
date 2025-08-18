@@ -16,7 +16,9 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
   className
 }) => {
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Reset when words change or when switching between songs
   useEffect(() => {
@@ -66,9 +68,24 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
     setHighlightedIndex(currentWordIndex);
   }, [currentTime, isPlaying, words]);
 
-  // Separate effect for scrolling - always center the highlighted word
+  // Handle user scroll detection
+  const handleScroll = () => {
+    setIsUserScrolling(true);
+    
+    // Clear existing timeout
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    
+    // Set timeout to resume auto-scroll after user stops scrolling
+    scrollTimeoutRef.current = setTimeout(() => {
+      setIsUserScrolling(false);
+    }, 1500); // Wait 1.5 seconds after user stops scrolling
+  };
+
+  // Separate effect for scrolling - only auto-scroll when user isn't manually scrolling
   useEffect(() => {
-    if (highlightedIndex >= 0 && containerRef.current) {
+    if (highlightedIndex >= 0 && containerRef.current && !isUserScrolling) {
       const highlightedElement = containerRef.current.querySelector('[data-highlighted="true"]');
       
       if (highlightedElement) {
@@ -81,7 +98,16 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
         console.log('[Karaoke Scroll] Centered word', highlightedIndex);
       }
     }
-  }, [highlightedIndex]);
+  }, [highlightedIndex, isUserScrolling]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (!words.length) {
     return (
@@ -94,6 +120,7 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
   return (
     <div 
       ref={containerRef}
+      onScroll={handleScroll}
       className={cn(
         "overflow-y-auto pr-2 pl-4 pt-2 pb-4 rounded-md border bg-muted/20",
         "leading-relaxed text-sm lyrics-scrollbar",
