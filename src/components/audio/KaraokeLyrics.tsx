@@ -146,6 +146,7 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
             ref={(el) => {
               wordRefs.current[index] = el;
             }}
+            data-highlighted={isHighlighted ? "true" : "false"}
             className={cn(
               "inline-block transition-all duration-300 px-1 rounded",
               {

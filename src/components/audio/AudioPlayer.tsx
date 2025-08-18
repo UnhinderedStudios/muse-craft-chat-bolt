@@ -197,14 +197,12 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             </CyberButton>
           </div>
           
-          <div className="h-64">
-            <KaraokeLyrics
-              words={timestampedLyrics}
-              currentTime={currentTime}
-              isPlaying={isPlaying}
-              className="h-full"
-            />
-          </div>
+          <KaraokeLyrics
+            words={timestampedLyrics}
+            currentTime={currentTime}
+            isPlaying={isPlaying}
+            className="h-64"
+          />
         </CyberCard>
       )}
     </>
