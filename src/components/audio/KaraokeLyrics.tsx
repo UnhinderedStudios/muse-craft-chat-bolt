@@ -63,18 +63,27 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
       const container = containerRef.current;
       
       if (wordElement && container) {
-        const containerRect = container.getBoundingClientRect();
-        const wordRect = wordElement.getBoundingClientRect();
+        const wordOffsetTop = wordElement.offsetTop;
+        const containerScrollTop = container.scrollTop;
+        const containerHeight = container.clientHeight;
+        const wordHeight = wordElement.clientHeight;
         
-        // Check if word is outside visible area
-        const isAboveView = wordRect.top < containerRect.top;
-        const isBelowView = wordRect.bottom > containerRect.bottom;
+        // Check if word is outside visible scroll area
+        const wordTop = wordOffsetTop;
+        const wordBottom = wordOffsetTop + wordHeight;
+        const visibleTop = containerScrollTop;
+        const visibleBottom = containerScrollTop + containerHeight;
+        
+        const isAboveView = wordTop < visibleTop;
+        const isBelowView = wordBottom > visibleBottom;
+        
+        console.log(`[Karaoke Debug] Word ${currentWordIndex}: "${words[currentWordIndex]?.word}"`);
+        console.log(`[Karaoke Debug] Word position: ${wordTop}-${wordBottom}, Visible area: ${visibleTop}-${visibleBottom}`);
+        console.log(`[Karaoke Debug] Above view: ${isAboveView}, Below view: ${isBelowView}`);
         
         if (isAboveView || isBelowView) {
           // Calculate scroll position to center the highlighted word
-          const containerScrollTop = container.scrollTop;
-          const wordOffsetTop = wordElement.offsetTop;
-          const centerPosition = wordOffsetTop - (container.clientHeight / 2) + (wordElement.clientHeight / 2);
+          const centerPosition = wordOffsetTop - (containerHeight / 2) + (wordHeight / 2);
           
           console.log(`[Karaoke] Scrolling to word ${currentWordIndex}: "${words[currentWordIndex]?.word}" at position ${centerPosition}`);
           
