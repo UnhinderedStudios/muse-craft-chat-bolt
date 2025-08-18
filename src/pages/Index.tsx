@@ -87,6 +87,9 @@ const Index = () => {
   const [styleTags, setStyleTags] = useState<string[]>([]);
   const [chatHeight, setChatHeight] = useState(500);
   const [isResizing, setIsResizing] = useState(false);
+  
+  // Ref for chat input to maintain focus
+  const chatInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Sync styleTags with details.style
   useEffect(() => {
@@ -350,6 +353,12 @@ const Index = () => {
     setMessages(next);
     setInput("");
     setBusy(true);
+    
+    // Refocus the input immediately after state updates
+    setTimeout(() => {
+      chatInputRef.current?.focus();
+    }, 0);
+    
     try {
       const res = await api.chat(next, systemPrompt);
       const assistantMsg = res.content;
@@ -742,6 +751,7 @@ async function startGeneration() {
             {/* Chat Input - DEBUG: Should be 56px height (p-3 = 12px*2 + 32px icon height) */}
             <div className="flex-1 relative bg-[#040404] rounded-xl p-3 min-h-[56px] flex items-center hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] focus-within:shadow-[0_0_5px_rgba(255,255,255,0.5)] focus-within:hover:shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-shadow duration-200">
               <textarea
+                ref={chatInputRef}
                 value={input}
                 onChange={(e) => {
                   setInput(e.target.value);
