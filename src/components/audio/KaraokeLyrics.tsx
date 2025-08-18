@@ -16,7 +16,9 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
   className
 }) => {
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Reset when words change or when switching between songs 
   useEffect(() => {
@@ -66,31 +68,35 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
     setHighlightedIndex(currentWordIndex);
   }, [currentTime, isPlaying, words]);
 
-  // Auto-scroll effect - centers the highlighted word within container only
+  // Detect user scrolling and temporarily disable auto-scroll
+  const handleScroll = () => {
+    setIsUserScrolling(true);
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    scrollTimeoutRef.current = setTimeout(() => {
+      setIsUserScrolling(false);
+    }, 1500); // Resume auto-scroll after 1.5s of no user scrolling
+  };
+
+  // Auto-scroll effect - only when user isn't manually scrolling
   useEffect(() => {
-    if (highlightedIndex >= 0 && containerRef.current) {
+    if (highlightedIndex >= 0 && containerRef.current && !isUserScrolling) {
       const highlightedElement = containerRef.current.querySelector('[data-highlighted="true"]') as HTMLElement;
       
       if (highlightedElement) {
-        // Calculate position to center the word within the container
-        const container = containerRef.current;
-        const elementTop = highlightedElement.offsetTop;
-        const containerHeight = container.clientHeight;
-        const elementHeight = highlightedElement.clientHeight;
-        
-        // Center the element: elementTop - half container height + half element height
-        const scrollTo = elementTop - (containerHeight / 2) + (elementHeight / 2);
-        
-        // Scroll only within the container, never affecting page scroll
-        container.scrollTo({
-          top: Math.max(0, scrollTo),
-          behavior: 'smooth'
+        // Use scrollIntoView but ensure it only affects this container
+        // by making sure no parent elements are scrollable during this operation
+        highlightedElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'nearest'
         });
         
-        console.log('[Karaoke Scroll] Centered word', highlightedIndex, 'scrollTo:', scrollTo);
+        console.log('[Karaoke Scroll] Auto-centered word', highlightedIndex, 'userScrolling:', isUserScrolling);
       }
     }
-  }, [highlightedIndex]);
+  }, [highlightedIndex, isUserScrolling]);
 
   if (!words.length) {
     return (
@@ -103,6 +109,7 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
   return (
     <div 
       ref={containerRef}
+      onScroll={handleScroll}
       className={cn(
         "overflow-y-auto pr-2 pl-4 pt-2 pb-4 rounded-md border bg-muted/20",
         "leading-relaxed text-sm lyrics-scrollbar",
