@@ -19,7 +19,6 @@ import { ChatInput } from "@/components/chat/ChatInput";
 import { SongDetailsForm } from "@/components/song/SongDetailsForm";
 import { AudioPlayer } from "@/components/audio/AudioPlayer";
 import { KaraokeLyrics } from "@/components/audio/KaraokeLyrics";
-import { KaraokeContainer } from "@/components/karaoke/KaraokeContainer";
 import { ResizableContainer } from "@/components/layout/ResizableContainer";
 import { TagInput } from "@/components/song/TagInput";
 
@@ -689,10 +688,8 @@ async function startGeneration() {
           </div>
         </div>
 
-        {/* Two-column layout: Left side forms, Right side Karaoke */}
-        <div className="grid grid-cols-4 gap-5 mt-5">
-          {/* Left: Form Section (75% width) */}
-          <div className="col-span-3 bg-[#151515] rounded-xl p-4 space-y-4">
+        {/* Form Section - Main container matching chat interface */}
+        <div className="bg-[#151515] rounded-xl p-4 space-y-4 mt-5">
           {/* Two-column layout: Left (Title + Song Parameters stacked), Right (Lyrics tall) */}
           <div className="grid grid-cols-12 gap-4 h-auto">
             {/* Left column: Title and Song Parameters stacked */}
@@ -762,29 +759,14 @@ async function startGeneration() {
               ✦ Generate
             </CyberButton>
           </div>
+        </div>
           </div>
 
-          {/* Right Column - Karaoke Container (25% width) */}
-          <div className="col-span-1">
-            <KaraokeContainer
-              versions={versions}
-              currentAudioIndex={currentAudioIndex}
-              currentTime={currentTime}
-              isPlaying={isPlaying}
-              albumCovers={albumCovers}
-              audioElement={audioRefs.current[currentAudioIndex] || null}
-              onPlayPause={() => {
-                const currentAudio = audioRefs.current[currentAudioIndex];
-                if (currentAudio) {
-                  if (isPlaying) {
-                    currentAudio.pause();
-                  } else {
-                    currentAudio.play();
-                  }
-                }
-              }}
-              className="h-[500px]"
-            />
+          {/* Right Column - New Container (25% width) */}
+          <div className="col-span-3">
+            <div className="bg-[#151515] rounded-2xl h-[500px]">
+              {/* Empty container with same styling as chat container */}
+            </div>
           </div>
         </div>
 
@@ -867,8 +849,6 @@ async function startGeneration() {
             )}
           </div>
         )}
-          </div>
-        </div>
       </main>
 
       {/* Full-screen Karaoke Overlay */}
