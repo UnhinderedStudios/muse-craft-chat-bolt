@@ -66,19 +66,28 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
     setHighlightedIndex(currentWordIndex);
   }, [currentTime, isPlaying, words]);
 
-  // Auto-scroll effect - always centers the highlighted word
+  // Auto-scroll effect - centers the highlighted word within container only
   useEffect(() => {
     if (highlightedIndex >= 0 && containerRef.current) {
-      const highlightedElement = containerRef.current.querySelector('[data-highlighted="true"]');
+      const highlightedElement = containerRef.current.querySelector('[data-highlighted="true"]') as HTMLElement;
       
       if (highlightedElement) {
-        // Always center the highlighted word smoothly
-        highlightedElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-          inline: 'nearest'
+        // Calculate position to center the word within the container
+        const container = containerRef.current;
+        const elementTop = highlightedElement.offsetTop;
+        const containerHeight = container.clientHeight;
+        const elementHeight = highlightedElement.clientHeight;
+        
+        // Center the element: elementTop - half container height + half element height
+        const scrollTo = elementTop - (containerHeight / 2) + (elementHeight / 2);
+        
+        // Scroll only within the container, never affecting page scroll
+        container.scrollTo({
+          top: Math.max(0, scrollTo),
+          behavior: 'smooth'
         });
-        console.log('[Karaoke Scroll] Centered word', highlightedIndex);
+        
+        console.log('[Karaoke Scroll] Centered word', highlightedIndex, 'scrollTo:', scrollTo);
       }
     }
   }, [highlightedIndex]);
