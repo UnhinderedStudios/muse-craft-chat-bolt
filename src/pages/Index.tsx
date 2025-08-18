@@ -354,11 +354,6 @@ const Index = () => {
     setInput("");
     setBusy(true);
     
-    // Refocus the input immediately after state updates
-    setTimeout(() => {
-      chatInputRef.current?.focus();
-    }, 0);
-    
     try {
       const res = await api.chat(next, systemPrompt);
       const assistantMsg = res.content;
@@ -391,6 +386,19 @@ const Index = () => {
       toast.error(e.message || "Something went wrong");
     } finally {
       setBusy(false);
+      
+      // Refocus input after all state updates using nested requestAnimationFrame
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (chatInputRef.current && document.activeElement !== chatInputRef.current) {
+            try {
+              chatInputRef.current.focus();
+            } catch (error) {
+              console.log('Focus error:', error);
+            }
+          }
+        });
+      });
     }
   }
   async function randomizeAll() {
