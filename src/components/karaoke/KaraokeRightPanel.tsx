@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Play, Pause, Mic } from "lucide-react";
 import { KaraokeLyrics } from "@/components/audio/KaraokeLyrics";
 import { TimestampedWord } from "@/types";
@@ -58,11 +58,26 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   };
 
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const lyricsScrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll lyrics when playing
+  useEffect(() => {
+    if (isPlaying && hasContent && currentVersion?.words?.length && lyricsScrollRef.current) {
+      const container = lyricsScrollRef.current;
+      const highlightedElement = container.querySelector('[data-highlighted="true"]');
+      if (highlightedElement) {
+        highlightedElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }
+    }
+  }, [currentTime, isPlaying, hasContent, currentVersion?.words]);
 
   return (
     <div className="bg-[#151515] rounded-2xl h-[500px] flex flex-col overflow-hidden">
-      {/* Album Art Section - Top 20% */}
-      <div className="relative h-[100px] bg-muted/10 rounded-t-2xl overflow-hidden">
+      {/* Album Art Section - Expanded by 15% */}
+      <div className="relative h-[115px] bg-muted/10 rounded-t-2xl overflow-hidden">
         {currentAlbumCover ? (
           <div
             className="absolute inset-0 bg-cover bg-center opacity-50"
@@ -72,7 +87,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-muted/10" />
         )}
         
-        {/* Audio Controls Overlay */}
+        {/* Audio Controls Overlay - Positioned at bottom of expanded album area */}
         <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm p-3">
           {hasContent ? (
             <div className="flex items-center gap-3">
@@ -119,16 +134,24 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
         </div>
       </div>
 
-      {/* Karaoke Lyrics Section - Bottom 80% */}
-      <div className="flex-1 p-4 flex flex-col">
-        <div className="flex-1">
+      {/* Karaoke Lyrics Section - Scrollable area between album cover and fullscreen button */}
+      <div className="flex-1 flex flex-col p-4">
+        {/* Scrollable Lyrics Container */}
+        <div className="flex-1 mb-4">
           {hasContent ? (
-            <KaraokeLyrics
-              words={currentVersion?.words || []}
-              currentTime={currentTime}
-              isPlaying={isPlaying}
-              className="h-full border-0 bg-transparent"
-            />
+            <div 
+              ref={lyricsScrollRef}
+              className="h-full overflow-y-auto custom-scrollbar pr-2"
+            >
+              <div className="py-2">
+                <KaraokeLyrics
+                  words={currentVersion?.words || []}
+                  currentTime={currentTime}
+                  isPlaying={isPlaying}
+                  className="border-0 bg-transparent"
+                />
+              </div>
+            </div>
           ) : (
             <div className="h-full flex items-center justify-center text-muted-foreground text-center">
               <div>
@@ -139,9 +162,9 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
           )}
         </div>
         
-        {/* Fullscreen Button */}
+        {/* Fullscreen Button - Fixed at bottom */}
         {hasContent && currentVersion?.words?.length > 0 && (
-          <div className="flex justify-center mt-4">
+          <div className="flex justify-center">
             <Button
               variant="outline"
               size="sm"
