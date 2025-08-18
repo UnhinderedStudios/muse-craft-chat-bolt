@@ -85,12 +85,18 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
       const highlightedElement = containerRef.current.querySelector('[data-highlighted="true"]') as HTMLElement;
       
       if (highlightedElement) {
-        // Use scrollIntoView but ensure it only affects this container
-        // by making sure no parent elements are scrollable during this operation
-        highlightedElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-          inline: 'nearest'
+        // Use manual scrollTo to ONLY affect this container, never the page
+        const container = containerRef.current;
+        const elementTop = highlightedElement.offsetTop;
+        const containerHeight = container.clientHeight;
+        const elementHeight = highlightedElement.clientHeight;
+        
+        // Center the element within the container
+        const scrollTo = elementTop - (containerHeight / 2) + (elementHeight / 2);
+        
+        container.scrollTo({
+          top: Math.max(0, scrollTo),
+          behavior: 'smooth'
         });
         
         console.log('[Karaoke Scroll] Auto-centered word', highlightedIndex, 'userScrolling:', isUserScrolling);
