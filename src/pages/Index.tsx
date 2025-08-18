@@ -19,6 +19,7 @@ import { ChatInput } from "@/components/chat/ChatInput";
 import { SongDetailsForm } from "@/components/song/SongDetailsForm";
 import { AudioPlayer } from "@/components/audio/AudioPlayer";
 import { KaraokeLyrics } from "@/components/audio/KaraokeLyrics";
+import { KaraokeRightPanel } from "@/components/karaoke/KaraokeRightPanel";
 import { ResizableContainer } from "@/components/layout/ResizableContainer";
 import { TagInput } from "@/components/song/TagInput";
 
@@ -762,11 +763,19 @@ async function startGeneration() {
         </div>
           </div>
 
-          {/* Right Column - New Container (25% width) */}
+          {/* Right Column - Karaoke Panel (25% width) */}
           <div className="col-span-3">
-            <div className="bg-[#151515] rounded-2xl h-[500px]">
-              {/* Empty container with same styling as chat container */}
-            </div>
+            <KaraokeRightPanel
+              versions={versions}
+              currentAudioIndex={currentAudioIndex}
+              currentTime={currentTime}
+              isPlaying={isPlaying}
+              albumCovers={albumCovers}
+              isGeneratingCovers={isGeneratingCovers}
+              audioRefs={audioRefs}
+              onPlayPause={handleAudioPlay}
+              onAudioPause={handleAudioPause}
+            />
           </div>
         </div>
 
