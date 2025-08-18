@@ -23,9 +23,18 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
     console.log('[Karaoke] Words changed, resetting state');
     setHighlightedIndex(-1);
     if (containerRef.current) {
+      console.log('[Karaoke] Scrolling to top due to words change');
       containerRef.current.scrollTop = 0;
     }
   }, [words]);
+
+  // Force scroll to top when playback starts
+  useEffect(() => {
+    if (isPlaying && containerRef.current) {
+      console.log('[Karaoke] Playback started, forcing scroll to top');
+      containerRef.current.scrollTop = 0;
+    }
+  }, [isPlaying]);
 
   useEffect(() => {
     console.log('[Karaoke] isPlaying changed:', isPlaying, 'currentTime:', currentTime);
