@@ -18,7 +18,7 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Reset when words change or when switching between songs
+  // Reset when words change or when switching between songs 
   useEffect(() => {
     console.log('[Karaoke Reset] Words changed, resetting to top');
     setHighlightedIndex(-1);
