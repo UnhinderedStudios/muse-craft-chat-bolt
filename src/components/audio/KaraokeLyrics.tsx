@@ -79,30 +79,39 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
     }, 1500); // Resume auto-scroll after 1.5s of no user scrolling
   };
 
-  // Auto-scroll effect - only when user isn't manually scrolling
+  // Auto-scroll effect with continuous centering - only when user isn't manually scrolling
   useEffect(() => {
-    if (highlightedIndex >= 0 && containerRef.current && !isUserScrolling) {
+    if (highlightedIndex >= 0 && containerRef.current && !isUserScrolling && isPlaying) {
       const highlightedElement = containerRef.current.querySelector('[data-highlighted="true"]') as HTMLElement;
       
       if (highlightedElement) {
-        // Use manual scrollTo to ONLY affect this container, never the page
         const container = containerRef.current;
         const elementTop = highlightedElement.offsetTop;
         const containerHeight = container.clientHeight;
         const elementHeight = highlightedElement.clientHeight;
         
-        // Center the element within the container
-        const scrollTo = elementTop - (containerHeight / 2) + (elementHeight / 2);
+        // Calculate precise center position
+        const elementCenter = elementTop + (elementHeight / 2);
+        const containerCenter = containerHeight / 2;
+        const scrollTo = elementCenter - containerCenter;
         
-        container.scrollTo({
-          top: Math.max(0, scrollTo),
-          behavior: 'smooth'
-        });
+        // Ensure we don't scroll beyond bounds
+        const maxScroll = container.scrollHeight - containerHeight;
+        const targetScroll = Math.max(0, Math.min(scrollTo, maxScroll));
         
-        console.log('[Karaoke Scroll] Auto-centered word', highlightedIndex, 'userScrolling:', isUserScrolling);
+        // Only scroll if there's a meaningful difference to avoid jitter
+        const currentScroll = container.scrollTop;
+        if (Math.abs(targetScroll - currentScroll) > 5) {
+          container.scrollTo({
+            top: targetScroll,
+            behavior: 'smooth'
+          });
+          
+          console.log('[Karaoke Scroll] Centering word', highlightedIndex, 'at time', currentTime.toFixed(2));
+        }
       }
     }
-  }, [highlightedIndex, isUserScrolling]);
+  }, [highlightedIndex, currentTime, isUserScrolling, isPlaying]);
 
   if (!words.length) {
     return (
