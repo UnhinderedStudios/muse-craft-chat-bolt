@@ -76,8 +76,8 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
 
   return (
     <div className="bg-[#151515] rounded-2xl h-[500px] flex flex-col overflow-hidden">
-      {/* Album Art Section - Fixed height, never changes */}
-      <div className="relative h-[115px] bg-muted/10 rounded-t-2xl overflow-hidden flex-shrink-0">
+      {/* Album Art Section - Made 10% taller (115px -> 127px) */}
+      <div className="relative h-[127px] bg-muted/10 rounded-t-2xl overflow-hidden flex-shrink-0">
         {currentAlbumCover ? (
           <div
             className="absolute inset-0 bg-cover bg-center opacity-50"
@@ -87,34 +87,34 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-muted/10" />
         )}
         
-        {/* Audio Controls Overlay - Positioned at bottom of expanded album area */}
-        <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm p-3">
+        {/* Audio Controls Overlay - Made 10% smaller */}
+        <div className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm p-2">
           {hasContent ? (
-            <div className="flex items-center gap-3">
-              {/* Play/Pause Button */}
+            <div className="flex items-center gap-2">
+              {/* Play/Pause Button - Made smaller */}
               <button
                 onClick={handlePlayPause}
                 className={cn(
-                  "flex items-center justify-center w-8 h-8 rounded-full transition-colors",
+                  "flex items-center justify-center w-7 h-7 rounded-full transition-colors",
                   hasContent ? "bg-primary hover:bg-primary/80" : "bg-muted cursor-not-allowed"
                 )}
                 disabled={!hasContent}
               >
                 {hasContent && isPlaying ? (
-                  <Pause size={16} className="text-primary-foreground" />
+                  <Pause size={14} className="text-primary-foreground" />
                 ) : (
-                  <Play size={16} className="text-primary-foreground ml-0.5" />
+                  <Play size={14} className="text-primary-foreground ml-0.5" />
                 )}
               </button>
 
               {/* Track Info & Progress */}
               <div className="flex-1 min-w-0">
-                <div className="text-xs text-white/80 mb-1">
+                <div className="text-xs text-white/80 mb-0.5">
                   {hasContent ? `Version ${currentAudioIndex + 1}` : "Waiting for audio..."}
                 </div>
                 
-                {/* Progress Bar */}
-                <div className="flex items-center gap-2 text-xs text-white/60">
+                {/* Progress Bar - Made more compact */}
+                <div className="flex items-center gap-1.5 text-xs text-white/60">
                   <span>{hasContent ? formatTime(currentTime) : "--:--"}</span>
                   <div className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
                     <div
@@ -134,8 +134,8 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
         </div>
       </div>
 
-      {/* Karaoke Lyrics Section - Takes remaining space (385px - padding) */}
-      <div className="flex flex-col p-4" style={{ height: 'calc(500px - 115px)' }}>
+      {/* Karaoke Lyrics Section - Adjusted for new album art height (373px) */}
+      <div className="flex flex-col p-4" style={{ height: 'calc(500px - 127px)' }}>
         {/* Scrollable Lyrics Container */}
         <div className="flex-1 mb-4 min-h-0">
           {hasContent ? (
