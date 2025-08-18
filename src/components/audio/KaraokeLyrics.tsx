@@ -72,11 +72,9 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
         // Calculate optimal scroll position to center the element
         const targetScrollTop = elementTop - (containerHeight / 2) + (elementHeight / 2);
         
-        // Smooth scroll within container only
-        container.scrollTo({
-          top: targetScrollTop,
-          behavior: 'smooth'
-        });
+        // Direct scrollTop manipulation - no browser interference with main page
+        const maxScrollTop = container.scrollHeight - containerHeight;
+        container.scrollTop = Math.max(0, Math.min(targetScrollTop, maxScrollTop));
       }
     }
   }, [currentTime, isPlaying, words]);
