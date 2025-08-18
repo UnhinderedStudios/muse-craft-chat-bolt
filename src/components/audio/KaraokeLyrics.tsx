@@ -16,9 +16,7 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
   className
 }) => {
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
-  const [isUserScrolling, setIsUserScrolling] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const lastCurrentTimeRef = useRef<number>(0);
 
   // Reset when words change or when switching between songs
   useEffect(() => {
@@ -40,20 +38,9 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
     }
   }, [currentTime]);
 
-  // Main effect: Find current word and detect seeking
+  // Main effect: Find current word
   useEffect(() => {
     if (words.length === 0) return;
-
-    // Check if user seeked (significant time jump)
-    const timeDiff = Math.abs(currentTime - lastCurrentTimeRef.current);
-    const hasUserSeeked = timeDiff > 1; // More than 1 second difference indicates seeking
-    
-    // Resume auto-scroll if user seeked to a different time
-    if (hasUserSeeked) {
-      setIsUserScrolling(false);
-    }
-    
-    lastCurrentTimeRef.current = currentTime;
 
     // Find the word that should be highlighted based on current time
     let currentWordIndex = -1;
@@ -79,14 +66,9 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
     setHighlightedIndex(currentWordIndex);
   }, [currentTime, isPlaying, words]);
 
-  // Handle user scroll detection
-  const handleScroll = () => {
-    setIsUserScrolling(true);
-  };
-
-  // Separate effect for scrolling - only auto-scroll when user isn't manually scrolling
+  // Auto-scroll effect - always centers the highlighted word
   useEffect(() => {
-    if (highlightedIndex >= 0 && containerRef.current && !isUserScrolling) {
+    if (highlightedIndex >= 0 && containerRef.current) {
       const highlightedElement = containerRef.current.querySelector('[data-highlighted="true"]');
       
       if (highlightedElement) {
@@ -99,7 +81,7 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
         console.log('[Karaoke Scroll] Centered word', highlightedIndex);
       }
     }
-  }, [highlightedIndex, isUserScrolling]);
+  }, [highlightedIndex]);
 
   if (!words.length) {
     return (
@@ -112,7 +94,6 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
   return (
     <div 
       ref={containerRef}
-      onScroll={handleScroll}
       className={cn(
         "overflow-y-auto pr-2 pl-4 pt-2 pb-4 rounded-md border bg-muted/20",
         "leading-relaxed text-sm lyrics-scrollbar",
