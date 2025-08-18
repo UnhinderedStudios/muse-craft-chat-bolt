@@ -17,14 +17,11 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
 }) => {
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const containerRef = useRef<HTMLDivElement>(null);
-  const wordRefs = useRef<(HTMLSpanElement | null)[]>([]);
-  const lastScrolledIndexRef = useRef<number>(-1);
 
   // Reset karaoke state when words change (new song)
   useEffect(() => {
     console.log('[Karaoke] Words changed, resetting state');
     setHighlightedIndex(-1);
-    wordRefs.current = new Array(words.length).fill(null);
     if (containerRef.current) {
       containerRef.current.scrollTop = 0;
     }
@@ -33,7 +30,6 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
   useEffect(() => {
     if (!isPlaying) {
       setHighlightedIndex(-1);
-      lastScrolledIndexRef.current = -1;
       return;
     }
 
@@ -63,53 +59,14 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
 
     setHighlightedIndex(currentWordIndex);
 
-    // Only scroll if we have a new highlighted word and it's different from the last scrolled one
-    if (currentWordIndex >= 0 && 
-        currentWordIndex !== lastScrolledIndexRef.current && 
-        containerRef.current && 
-        wordRefs.current[currentWordIndex]) {
-      
-      const wordElement = wordRefs.current[currentWordIndex];
-      const container = containerRef.current;
-      
-      if (wordElement && container) {
-        const wordOffsetTop = wordElement.offsetTop;
-        const containerScrollTop = container.scrollTop;
-        const containerHeight = container.clientHeight;
-        const wordHeight = wordElement.clientHeight;
-        
-        // Check if word is outside visible scroll area - LOG BEFORE CALCULATION
-        const wordTop = wordOffsetTop;
-        const wordBottom = wordOffsetTop + wordHeight;
-        const visibleTop = containerScrollTop;
-        const visibleBottom = containerScrollTop + containerHeight;
-        
-        const isAboveView = wordTop < visibleTop;
-        const isBelowView = wordBottom > visibleBottom;
-        
-        console.log(`[Karaoke PRE-SCROLL] Word ${currentWordIndex}: "${words[currentWordIndex]?.word}"`);
-        console.log(`[Karaoke PRE-SCROLL] Word position: ${wordTop}-${wordBottom}, Visible area: ${visibleTop}-${visibleBottom}`);
-        console.log(`[Karaoke PRE-SCROLL] Above view: ${isAboveView}, Below view: ${isBelowView}`);
-        console.log(`[Karaoke PRE-SCROLL] Container height: ${containerHeight}, Word offset: ${wordOffsetTop}`);
-        
-        if (isAboveView || isBelowView) {
-          // Calculate scroll position to center the highlighted word
-          const centerPosition = wordOffsetTop - (containerHeight / 2) + (wordHeight / 2);
-          
-          console.log(`[Karaoke SCROLLING] Word ${currentWordIndex}: "${words[currentWordIndex]?.word}" to position ${centerPosition}`);
-          
-          container.scrollTo({
-            top: Math.max(0, centerPosition),
-            behavior: "smooth"
-          });
-          
-          lastScrolledIndexRef.current = currentWordIndex;
-          
-          // Log after scroll initiation
-          console.log(`[Karaoke POST-SCROLL] Initiated scroll for word ${currentWordIndex}`);
-        } else {
-          console.log(`[Karaoke NO-SCROLL] Word ${currentWordIndex} is already visible, no scroll needed`);
-        }
+    // Simple auto-scroll using scrollIntoView - non-invasive approach
+    if (currentWordIndex >= 0 && containerRef.current) {
+      const highlightedElement = containerRef.current.querySelector('[data-highlighted="true"]');
+      if (highlightedElement) {
+        highlightedElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
       }
     }
   }, [currentTime, isPlaying, words]);
@@ -143,9 +100,6 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
         return (
           <span
             key={index}
-            ref={(el) => {
-              wordRefs.current[index] = el;
-            }}
             data-highlighted={isHighlighted ? "true" : "false"}
             className={cn(
               "inline-block transition-all duration-300 px-1 rounded",
