@@ -18,7 +18,7 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
+  const lastCurrentTimeRef = useRef<number>(0);
 
   // Reset when words change or when switching between songs
   useEffect(() => {
@@ -40,9 +40,20 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
     }
   }, [currentTime]);
 
-  // Main effect: Find current word and handle scrolling
+  // Main effect: Find current word and detect seeking
   useEffect(() => {
     if (words.length === 0) return;
+
+    // Check if user seeked (significant time jump)
+    const timeDiff = Math.abs(currentTime - lastCurrentTimeRef.current);
+    const hasUserSeeked = timeDiff > 1; // More than 1 second difference indicates seeking
+    
+    // Resume auto-scroll if user seeked to a different time
+    if (hasUserSeeked) {
+      setIsUserScrolling(false);
+    }
+    
+    lastCurrentTimeRef.current = currentTime;
 
     // Find the word that should be highlighted based on current time
     let currentWordIndex = -1;
@@ -71,16 +82,6 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
   // Handle user scroll detection
   const handleScroll = () => {
     setIsUserScrolling(true);
-    
-    // Clear existing timeout
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
-    
-    // Set timeout to resume auto-scroll after user stops scrolling
-    scrollTimeoutRef.current = setTimeout(() => {
-      setIsUserScrolling(false);
-    }, 1500); // Wait 1.5 seconds after user stops scrolling
   };
 
   // Separate effect for scrolling - only auto-scroll when user isn't manually scrolling
@@ -99,15 +100,6 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
       }
     }
   }, [highlightedIndex, isUserScrolling]);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-    };
-  }, []);
 
   if (!words.length) {
     return (
