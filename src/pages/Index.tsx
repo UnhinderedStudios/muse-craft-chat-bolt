@@ -244,55 +244,67 @@ const Index = () => {
       return;
     }
     
-    // If same audio is already playing, do nothing
+    // If same audio is already playing, just toggle pause/play
     if (currentAudioIndex === index && isPlaying) {
-      console.log(`[AudioPlay] Audio ${index} is already playing`);
+      console.log(`[AudioPlay] Audio ${index} is already playing, pausing`);
+      handleAudioPause();
       return;
     }
-    
-    // Pause all other audio elements first
-    audioRefs.current.forEach((a, i) => {
-      if (i !== index && a && !a.paused) {
-        try { 
-          a.pause(); 
-          console.log(`[AudioPlay] Paused audio ${i}`);
+
+    // STEP 1: Immediately pause ALL audio elements and reset their times
+    console.log(`[AudioPlay] Stopping all audio and switching to ${index}`);
+    audioRefs.current.forEach((audio, i) => {
+      if (audio) {
+        try {
+          if (!audio.paused) {
+            audio.pause();
+            console.log(`[AudioPlay] Paused audio ${i}`);
+          }
+          // Reset ALL audio elements to beginning
+          audio.currentTime = 0;
         } catch (e) {
-          console.log(`[AudioPlay] Error pausing audio ${i}:`, e);
+          console.log(`[AudioPlay] Error stopping audio ${i}:`, e);
         }
       }
     });
     
-    // Update state immediately to prevent race conditions
-    setCurrentAudioIndex(index);
+    // STEP 2: Update state immediately - this will reset karaoke display
+    setIsPlaying(false);
     setCurrentTime(0);
-    setIsPlaying(false); // Set to false first, then true after play starts
+    setCurrentAudioIndex(index);
     
-    // Play the selected audio
-    const audioElement = audioRefs.current[index];
-    if (audioElement) {
-      try {
-        audioElement.currentTime = 0;
-        console.log(`[AudioPlay] Starting playback for audio ${index}`);
-        
-        // Use async/await for better error handling
-        audioElement.play().then(() => {
-          console.log(`[AudioPlay] Successfully started audio ${index}`);
-          setIsPlaying(true);
-        }).catch(error => {
-          // Only log error if it's not an AbortError from switching tracks
-          if (error.name !== 'AbortError') {
-            console.error(`[AudioPlay] Error playing audio ${index}:`, error);
+    // STEP 3: Small delay to ensure state has updated before playing new audio
+    setTimeout(() => {
+      const audioElement = audioRefs.current[index];
+      if (audioElement) {
+        try {
+          // Ensure audio is at beginning
+          audioElement.currentTime = 0;
+          console.log(`[AudioPlay] Starting playback for audio ${index}`);
+          
+          // Start playing the new audio
+          const playPromise = audioElement.play();
+          if (playPromise) {
+            playPromise.then(() => {
+              console.log(`[AudioPlay] Successfully started audio ${index}`);
+              setIsPlaying(true);
+            }).catch(error => {
+              // Only log non-AbortError errors
+              if (error.name !== 'AbortError') {
+                console.error(`[AudioPlay] Error playing audio ${index}:`, error);
+              }
+              setIsPlaying(false);
+            });
           }
+        } catch (error) {
+          console.error(`[AudioPlay] Sync error playing audio ${index}:`, error);
           setIsPlaying(false);
-        });
-      } catch (error) {
-        console.error(`[AudioPlay] Sync error playing audio ${index}:`, error);
+        }
+      } else {
+        console.log(`[AudioPlay] Audio element ${index} not ready`);
         setIsPlaying(false);
       }
-    } else {
-      console.log(`[AudioPlay] Audio element ${index} not ready, will retry when loaded`);
-      setIsPlaying(false);
-    }
+    }, 50); // 50ms delay to ensure clean state transition
   }
 
   const handleAudioPause = () => {

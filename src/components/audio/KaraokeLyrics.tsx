@@ -18,6 +18,15 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Reset karaoke state when words change (new song)
+  useEffect(() => {
+    console.log('[Karaoke] Words changed, resetting state');
+    setHighlightedIndex(-1);
+    if (containerRef.current) {
+      containerRef.current.scrollTop = 0;
+    }
+  }, [words]);
+
   useEffect(() => {
     if (!isPlaying) {
       setHighlightedIndex(-1);
