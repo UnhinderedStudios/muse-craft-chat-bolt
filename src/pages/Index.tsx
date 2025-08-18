@@ -775,6 +775,7 @@ async function startGeneration() {
               audioRefs={audioRefs}
               onPlayPause={handleAudioPlay}
               onAudioPause={handleAudioPause}
+              onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
             />
           </div>
         </div>
@@ -821,41 +822,6 @@ async function startGeneration() {
               ) : null}
             </CyberCard>
 
-            {/* Karaoke Section */}
-            {versions.length > 0 && (
-              <CyberCard className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-medium text-text-primary">Karaoke</h2>
-                  {versions[currentAudioIndex]?.words?.length > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowFullscreenKaraoke(true)}
-                      className="flex items-center gap-2"
-                    >
-                      <Mic className="w-4 h-4" />
-                      Fullscreen
-                    </Button>
-                  )}
-                </div>
-                {versions[currentAudioIndex]?.words?.length > 0 ? (
-                  <KaraokeLyrics 
-                    words={versions[currentAudioIndex].words}
-                    currentTime={currentTime}
-                    isPlaying={isPlaying}
-                    className="min-h-[200px] max-h-[300px]"
-                  />
-                ) : details.lyrics ? (
-                  <div className="min-h-[200px] max-h-[300px] overflow-y-auto pr-2 pl-4 py-4 rounded-md border border-border-main bg-card-alt whitespace-pre-wrap text-text-primary lyrics-scrollbar">
-                    {details.lyrics}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-text-secondary">
-                    <p>No lyrics available</p>
-                  </div>
-                )}
-              </CyberCard>
-            )}
           </div>
         )}
       </main>

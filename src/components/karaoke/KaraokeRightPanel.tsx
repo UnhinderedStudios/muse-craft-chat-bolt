@@ -1,8 +1,9 @@
 import React from "react";
-import { Play, Pause } from "lucide-react";
+import { Play, Pause, Mic } from "lucide-react";
 import { KaraokeLyrics } from "@/components/audio/KaraokeLyrics";
 import { TimestampedWord } from "@/types";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface KaraokeRightPanelProps {
   versions: Array<{
@@ -19,6 +20,7 @@ interface KaraokeRightPanelProps {
   audioRefs: React.MutableRefObject<HTMLAudioElement[]>;
   onPlayPause: (index: number) => void;
   onAudioPause: () => void;
+  onFullscreenKaraoke: () => void;
 }
 
 export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
@@ -31,6 +33,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   audioRefs,
   onPlayPause,
   onAudioPause,
+  onFullscreenKaraoke,
 }) => {
   const hasContent = versions.length > 0;
   const currentVersion = hasContent ? versions[currentAudioIndex] : null;
@@ -117,20 +120,37 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
       </div>
 
       {/* Karaoke Lyrics Section - Bottom 80% */}
-      <div className="flex-1 p-4">
-        {hasContent ? (
-          <KaraokeLyrics
-            words={currentVersion?.words || []}
-            currentTime={currentTime}
-            isPlaying={isPlaying}
-            className="h-full border-0 bg-transparent"
-          />
-        ) : (
-          <div className="h-full flex items-center justify-center text-muted-foreground text-center">
-            <div>
-              <div className="text-lg mb-2">🎤</div>
-              <p>Karaoke lyrics will appear here when you generate a song</p>
+      <div className="flex-1 p-4 flex flex-col">
+        <div className="flex-1">
+          {hasContent ? (
+            <KaraokeLyrics
+              words={currentVersion?.words || []}
+              currentTime={currentTime}
+              isPlaying={isPlaying}
+              className="h-full border-0 bg-transparent"
+            />
+          ) : (
+            <div className="h-full flex items-center justify-center text-muted-foreground text-center">
+              <div>
+                <div className="text-lg mb-2">🎤</div>
+                <p>Karaoke lyrics will appear here when you generate a song</p>
+              </div>
             </div>
+          )}
+        </div>
+        
+        {/* Fullscreen Button */}
+        {hasContent && currentVersion?.words?.length > 0 && (
+          <div className="flex justify-center mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onFullscreenKaraoke}
+              className="flex items-center gap-2"
+            >
+              <Mic className="w-4 h-4" />
+              Fullscreen
+            </Button>
           </div>
         )}
       </div>
