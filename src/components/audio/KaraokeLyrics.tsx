@@ -46,14 +46,23 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
 
     setHighlightedIndex(currentWordIndex);
 
-    // Auto-scroll to highlighted word
+    // Auto-scroll to highlighted word within container only
     if (currentWordIndex >= 0 && containerRef.current) {
       const wordElement = containerRef.current.children[currentWordIndex] as HTMLElement;
       if (wordElement) {
-        wordElement.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
+        // Scroll within the container, not the entire page
+        const container = containerRef.current;
+        const containerRect = container.getBoundingClientRect();
+        const wordRect = wordElement.getBoundingClientRect();
+        
+        // Only scroll if the word is outside the visible area
+        if (wordRect.top < containerRect.top || wordRect.bottom > containerRect.bottom) {
+          const scrollTop = wordElement.offsetTop - container.offsetTop - (container.clientHeight / 2) + (wordElement.clientHeight / 2);
+          container.scrollTo({
+            top: scrollTop,
+            behavior: "smooth"
+          });
+        }
       }
     }
   }, [currentTime, isPlaying, words]);

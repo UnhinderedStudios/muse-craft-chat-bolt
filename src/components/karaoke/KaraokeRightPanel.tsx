@@ -21,6 +21,7 @@ interface KaraokeRightPanelProps {
   onPlayPause: (index: number) => void;
   onAudioPause: () => void;
   onFullscreenKaraoke: () => void;
+  onSeek?: (time: number) => void;
 }
 
 export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
@@ -34,6 +35,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   onPlayPause,
   onAudioPause,
   onFullscreenKaraoke,
+  onSeek,
 }) => {
   const hasContent = versions.length > 0;
   const currentVersion = hasContent ? versions[currentAudioIndex] : null;
@@ -49,6 +51,17 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
     } else {
       onPlayPause(currentAudioIndex);
     }
+  };
+
+  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!hasContent || !audioElement || !onSeek) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percentage = clickX / rect.width;
+    const seekTime = percentage * duration;
+    
+    onSeek(seekTime);
   };
 
   const formatTime = (time: number) => {
@@ -116,7 +129,10 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
                 {/* Progress Bar - Made more compact */}
                 <div className="flex items-center gap-1.5 text-xs text-white/60">
                   <span>{hasContent ? formatTime(currentTime) : "--:--"}</span>
-                  <div className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden">
+                  <div 
+                    className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden cursor-pointer"
+                    onClick={handleProgressClick}
+                  >
                     <div
                       className="h-full bg-primary transition-all duration-200"
                       style={{ width: hasContent ? `${progressPercentage}%` : '0%' }}
