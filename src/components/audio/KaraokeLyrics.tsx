@@ -28,32 +28,12 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
     }
   }, [words]);
 
-  // Force scroll to top when playback starts - multiple attempts
+  // Simple reset when playback starts from beginning
   useEffect(() => {
-    if (isPlaying && containerRef.current) {
-      const container = containerRef.current;
-      console.log('[Karaoke] Playback started, forcing scroll to top - initial attempt');
-      
-      // Immediate reset
-      container.scrollTop = 0;
-      
-      // Delayed resets to override any other scroll setting
-      setTimeout(() => {
-        container.scrollTop = 0;
-        console.log('[Karaoke] Timeout 1 scroll reset:', container.scrollTop);
-      }, 10);
-      
-      setTimeout(() => {
-        container.scrollTop = 0;
-        console.log('[Karaoke] Timeout 2 scroll reset:', container.scrollTop);
-      }, 50);
-      
-      setTimeout(() => {
-        container.scrollTop = 0;
-        console.log('[Karaoke] Timeout 3 scroll reset:', container.scrollTop);
-      }, 100);
+    if (isPlaying && containerRef.current && currentTime < 1) {
+      containerRef.current.scrollTop = 0;
     }
-  }, [isPlaying]);
+  }, [isPlaying, currentTime]);
 
   useEffect(() => {
     console.log('[Karaoke] isPlaying changed:', isPlaying, 'currentTime:', currentTime);
@@ -150,8 +130,8 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
     <div 
       ref={containerRef}
       className={cn(
-        "overflow-y-auto pr-2 pl-4 pb-4 rounded-md border bg-muted/20",
-        "leading-relaxed text-sm space-y-1 lyrics-scrollbar",
+        "overflow-y-auto pr-2 pl-4 pt-2 pb-4 rounded-md border bg-muted/20",
+        "leading-relaxed text-sm lyrics-scrollbar",
         className
       )}
       style={{ 
