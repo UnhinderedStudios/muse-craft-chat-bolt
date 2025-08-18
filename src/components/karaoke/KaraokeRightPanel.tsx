@@ -137,19 +137,15 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
 
       {/* Karaoke Lyrics Section - Adjusted for new album art height (373px) */}
       <div className="flex flex-col p-4" style={{ height: 'calc(500px - 127px)' }}>
-        {/* Scrollable Lyrics Container */}
+        {/* Lyrics Container - Let KaraokeLyrics handle its own scrolling */}
         <div className="flex-1 mb-4 min-h-0">
           {hasContent ? (
-            <div className="h-full overflow-y-auto custom-scrollbar pr-2">
-              <div className="py-2">
-                <KaraokeLyrics
-                  words={currentVersion?.words || []}
-                  currentTime={currentTime}
-                  isPlaying={isPlaying}
-                  className="border-0 bg-transparent"
-                />
-              </div>
-            </div>
+            <KaraokeLyrics
+              words={currentVersion?.words || []}
+              currentTime={currentTime}
+              isPlaying={isPlaying}
+              className="h-full border-0 bg-transparent"
+            />
           ) : (
             <div className="h-full flex items-center justify-center text-muted-foreground text-center">
               <div>
