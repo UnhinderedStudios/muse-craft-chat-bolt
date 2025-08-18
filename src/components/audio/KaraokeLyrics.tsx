@@ -22,18 +22,27 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
 
   // Function to detect if a word is metadata/action rather than actual lyrics
   const isNonSungWord = (word: string): boolean => {
-    const cleanWord = word.toLowerCase().trim().replace(/[^\w\s]/g, '');
+    const cleanWord = word.toLowerCase().trim();
     const nonSungPatterns = [
-      /^(verse|chorus|bridge|intro|outro|refrain|pre|solo|instrumental)/,
+      // Section markers
+      /^(verse|chorus|bridge|intro|outro|refrain|pre|solo|instrumental|finale|coda)/,
       /^(verse|chorus)\s*\d+/,
+      // Action words and stage directions
+      /^\*.*\*$/,  // Words wrapped in asterisks like *Cheesy time*
+      /^.*:$/,     // Words ending with colon like "Finale:"
+      /^\[.*\]$/,  // Words in brackets
+      /^\(.*\)$/,  // Words in parentheses
+      // Vocal expressions and adlibs
+      /^(shout|shooting|screaming|laughing|crying|whisper|yelling|cheering|applause)/,
+      /^(oh|ah|yeah|hey|yo|uh|huh|mm|hmm|ooh|wow|whoa|aha|haha|wooo|ayy)$/,
+      // Repetition markers
       /\d+x|x\d+/,
-      /^(shout|shooting|screaming|laughing|crying|whisper|yelling)/,
-      /^(oh|ah|yeah|hey|yo|uh|huh|mm|hmm|ooh|wow|whoa)$/,
-      /^\[.*\]$/,
-      /^\(.*\)$/,
       /^repeat/,
       /^fade/,
-      /^end/
+      /^end$/,
+      // Common metadata
+      /^(time|moment|part|section)/,
+      /^(cheesy|funky|groovy|smooth|dramatic|epic)/
     ];
     
     return nonSungPatterns.some(pattern => pattern.test(cleanWord));
