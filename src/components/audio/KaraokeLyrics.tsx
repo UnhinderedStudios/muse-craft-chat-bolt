@@ -1,13 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
-
-export interface TimestampedWord {
-  word: string;
-  success: boolean;
-  start: number;   // Normalized field names
-  end: number;     // Normalized field names
-  p_align?: number;
-}
+import { TimestampedWord } from "@/types";
 
 interface KaraokeLyricsProps {
   words: TimestampedWord[];

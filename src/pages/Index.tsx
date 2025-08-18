@@ -1,23 +1,35 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { toast } from "sonner";
-import { api, type ChatMessage, type SongDetails } from "@/lib/api";
-import { ChatBubble } from "@/components/chat/ChatBubble";
-import { KaraokeLyrics, type TimestampedWord } from "@/components/KaraokeLyrics";
-import { sanitizeStyle } from "@/lib/styleSanitizer";
 import { Progress } from "@/components/ui/progress";
-import { Dice5, Mic, Upload, Grid3X3, Plus, List } from "lucide-react";
-import { CyberHeader } from "@/components/ui/CyberHeader";
-import { CyberCard } from "@/components/ui/CyberCard";
-import { CyberButton } from "@/components/ui/CyberButton";
-import { CyberChip } from "@/components/ui/CyberChip";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { TagInput } from "@/components/ui/TagInput";
+import { Textarea } from "@/components/ui/textarea";
+import { api, type SongDetails } from "@/lib/api";
+import { sanitizeStyle } from "@/lib/styleSanitizer";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
+import { Dice5, Mic, Upload, Grid3X3, Plus, List } from "lucide-react";
+
+// Components
+import { CyberHeader } from "@/components/cyber/CyberHeader";
+import { CyberCard } from "@/components/cyber/CyberCard";
+import { CyberButton } from "@/components/cyber/CyberButton";
+import { ChatBubble } from "@/components/chat/ChatBubble";
+import { ChatContainer } from "@/components/chat/ChatContainer";
+import { ChatInput } from "@/components/chat/ChatInput";
+import { SongDetailsForm } from "@/components/song/SongDetailsForm";
+import { AudioPlayer } from "@/components/audio/AudioPlayer";
+import { KaraokeLyrics } from "@/components/audio/KaraokeLyrics";
+import { ResizableContainer } from "@/components/layout/ResizableContainer";
+import { TagInput } from "@/components/song/TagInput";
+
+// Hooks
+import { useChat } from "@/hooks/use-chat";
+import { useResize } from "@/hooks/use-resize";
+import { useSongGeneration } from "@/hooks/use-song-generation";
+
+// Types
+import { type TimestampedWord, type ChatMessage } from "@/types";
+import { SYSTEM_PROMPT } from "@/utils/constants";
 
 const systemPrompt = `You are Melody Muse, a friendly creative assistant for songwriting.
 Your goal is to chat naturally and quickly gather two things only: (1) a unified Style description and (2) Lyrics.

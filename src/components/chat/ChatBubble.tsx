@@ -1,12 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-
-export type ChatRole = "user" | "assistant";
-
-interface ChatBubbleProps {
-  role: ChatRole;
-  content: string;
-}
+import { ChatBubbleProps } from "@/types";
 
 export const ChatBubble: React.FC<ChatBubbleProps> = ({ role, content }) => {
   const isUser = role === "user";
