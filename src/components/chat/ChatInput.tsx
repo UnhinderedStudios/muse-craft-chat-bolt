@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { CyberButton } from "@/components/cyber/CyberButton";
 import { Textarea } from "@/components/ui/textarea";
 import { Dice5, Mic, Upload, Grid3X3, Plus, List } from "lucide-react";
@@ -18,11 +18,25 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onRandomize,
   disabled = false
 }) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       onSend();
+      // Refocus the input after sending
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 50);
     }
+  };
+
+  const handleSendClick = () => {
+    onSend();
+    // Refocus the input after sending
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 50);
   };
 
   return (
@@ -32,6 +46,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           {/* Chat Input */}
           <div className="relative">
             <Textarea
+              ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -41,7 +56,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             />
             <CyberButton
               variant="icon"
-              onClick={onSend}
+              onClick={handleSendClick}
               disabled={!input.trim() || disabled}
               className="absolute bottom-2 right-2"
             >
