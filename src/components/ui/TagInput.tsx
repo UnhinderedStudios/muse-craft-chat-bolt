@@ -56,7 +56,7 @@ export const TagInput: React.FC<TagInputProps> = ({
   };
 
   return (
-    <div className={cn("min-h-[120px] flex flex-wrap gap-2 items-start", className)}>
+    <div className={cn("min-h-[120px] flex flex-wrap gap-2 items-start relative", className)}>
       {/* Render existing tags */}
       {tags.map((tag, index) => (
         <div
@@ -73,13 +73,20 @@ export const TagInput: React.FC<TagInputProps> = ({
         </div>
       ))}
       
+      {/* Show multiline placeholder when no tags and no input */}
+      {tags.length === 0 && !inputValue && (
+        <div className="absolute inset-0 pointer-events-none text-white/40 text-sm whitespace-pre-wrap leading-relaxed">
+          {placeholder}
+        </div>
+      )}
+      
       {/* Input field */}
       <input
         type="text"
         value={inputValue}
         onChange={handleInputChange}
         onKeyDown={handleKeyDown}
-        placeholder={tags.length === 0 ? placeholder : ""}
+        placeholder=""
         className="bg-transparent border-0 text-white placeholder:text-white/40 focus:outline-none flex-1 min-w-[120px] text-sm"
       />
     </div>
