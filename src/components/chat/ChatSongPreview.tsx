@@ -61,7 +61,7 @@ export const ChatSongPreview: React.FC<ChatSongPreviewProps> = ({
       {/* Lyrics */}
       {songRequest.lyrics && (
         <div className="bg-black/20 border border-accent-primary/20 rounded-lg p-4">
-          <h4 className="text-white font-bold text-lg mb-3 uppercase tracking-wide">
+          <h4 className="text-white font-bold text-lg mb-3 tracking-wide">
             {songRequest.title}
           </h4>
           <div className="space-y-1">
