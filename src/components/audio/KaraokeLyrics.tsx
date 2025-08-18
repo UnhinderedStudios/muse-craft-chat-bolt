@@ -17,11 +17,13 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
 }) => {
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const containerRef = useRef<HTMLDivElement>(null);
+  const wordRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
   // Reset karaoke state when words change (new song)
   useEffect(() => {
     console.log('[Karaoke] Words changed, resetting state');
     setHighlightedIndex(-1);
+    wordRefs.current = new Array(words.length).fill(null);
     if (containerRef.current) {
       containerRef.current.scrollTop = 0;
     }
@@ -56,17 +58,31 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
     setHighlightedIndex(currentWordIndex);
 
     // Auto-scroll to highlighted word within container only
-    if (currentWordIndex >= 0 && containerRef.current && isPlaying) {
-      const wordElement = containerRef.current.children[currentWordIndex] as HTMLElement;
-      if (wordElement) {
-        // Calculate scroll position to center the highlighted word
-        const container = containerRef.current;
-        const scrollTop = wordElement.offsetTop - (container.clientHeight / 2) + (wordElement.clientHeight / 2);
+    if (currentWordIndex >= 0 && containerRef.current && isPlaying && wordRefs.current[currentWordIndex]) {
+      const wordElement = wordRefs.current[currentWordIndex];
+      const container = containerRef.current;
+      
+      if (wordElement && container) {
+        const containerRect = container.getBoundingClientRect();
+        const wordRect = wordElement.getBoundingClientRect();
         
-        container.scrollTo({
-          top: Math.max(0, scrollTop),
-          behavior: "smooth"
-        });
+        // Check if word is outside visible area
+        const isAboveView = wordRect.top < containerRect.top;
+        const isBelowView = wordRect.bottom > containerRect.bottom;
+        
+        if (isAboveView || isBelowView) {
+          // Calculate scroll position to center the highlighted word
+          const containerScrollTop = container.scrollTop;
+          const wordOffsetTop = wordElement.offsetTop;
+          const centerPosition = wordOffsetTop - (container.clientHeight / 2) + (wordElement.clientHeight / 2);
+          
+          console.log(`[Karaoke] Scrolling to word ${currentWordIndex}: "${words[currentWordIndex]?.word}" at position ${centerPosition}`);
+          
+          container.scrollTo({
+            top: Math.max(0, centerPosition),
+            behavior: "smooth"
+          });
+        }
       }
     }
   }, [currentTime, isPlaying, words]);
@@ -100,6 +116,9 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
         return (
           <span
             key={index}
+            ref={(el) => {
+              wordRefs.current[index] = el;
+            }}
             className={cn(
               "inline-block transition-all duration-300 px-1 rounded",
               {
