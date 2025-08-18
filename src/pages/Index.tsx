@@ -236,24 +236,35 @@ const Index = () => {
   const canGenerate = useMemo(() => !!details.lyrics, [details]);
 
   function handleAudioPlay(index: number) {
+    // Pause all other audio elements first
     audioRefs.current.forEach((a, i) => {
       if (i !== index && a && !a.paused) {
         try { a.pause(); a.currentTime = 0; } catch {}
       }
     });
     
+    // Set the new audio index and reset time
+    setCurrentAudioIndex(index);
+    setCurrentTime(0);
+    
     // Actually play the selected audio
     const audioElement = audioRefs.current[index];
     if (audioElement) {
       try {
-        audioElement.play();
+        audioElement.currentTime = 0; // Reset to beginning
+        audioElement.play().then(() => {
+          setIsPlaying(true);
+        }).catch(error => {
+          console.error('Error playing audio:', error);
+          setIsPlaying(false);
+        });
       } catch (error) {
         console.error('Error playing audio:', error);
+        setIsPlaying(false);
       }
+    } else {
+      setIsPlaying(true); // Set to true even if element not ready yet
     }
-    
-    setIsPlaying(true);
-    setCurrentAudioIndex(index);
   }
 
   const handleAudioPause = () => {
