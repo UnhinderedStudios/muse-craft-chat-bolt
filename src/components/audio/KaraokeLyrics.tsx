@@ -96,9 +96,10 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
     setHighlightedIndex(currentWordIndex);
 
     // Container-specific auto-scroll that doesn't hijack main page scrolling
-    if (currentWordIndex >= 0 && containerRef.current) {
+    // Don't auto-scroll for the first few words to keep it at the top
+    if (currentWordIndex >= 3 && containerRef.current) {
       const highlightedElement = containerRef.current.querySelector('[data-highlighted="true"]');
-      console.log('[Karaoke Scroll] Looking for highlighted element, found:', !!highlightedElement);
+      console.log('[Karaoke Scroll] Auto-scroll enabled for word', currentWordIndex, 'found element:', !!highlightedElement);
       
       if (highlightedElement) {
         const container = containerRef.current;
@@ -132,6 +133,8 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
         
         console.log('[Karaoke Scroll] After scroll:', container.scrollTop);
       }
+    } else if (currentWordIndex >= 0) {
+      console.log('[Karaoke Scroll] Skipping auto-scroll for early word', currentWordIndex);
     }
   }, [currentTime, isPlaying, words]);
 
