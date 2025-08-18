@@ -116,14 +116,19 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
     <div 
       ref={containerRef}
       onScroll={handleScroll}
+      tabIndex={-1}
       className={cn(
         "overflow-y-auto pr-2 pl-4 pt-2 pb-4 rounded-md border bg-muted/20",
-        "leading-relaxed text-sm lyrics-scrollbar",
+        "leading-relaxed text-sm lyrics-scrollbar relative",
         className
       )}
       style={{ 
         scrollbarGutter: 'stable',
-        maxHeight: '100%' 
+        maxHeight: '100%',
+        contain: 'layout style paint',
+        overflowAnchor: 'none',
+        willChange: 'scroll-position',
+        isolation: 'isolate'
       }}
     >
       {words.map((word, index) => {
