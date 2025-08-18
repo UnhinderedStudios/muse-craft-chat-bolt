@@ -277,6 +277,18 @@ const Index = () => {
     }
   };
 
+  const handleSeek = (time: number) => {
+    const audioElement = audioRefs.current[currentAudioIndex];
+    if (audioElement) {
+      try {
+        audioElement.currentTime = time;
+        setCurrentTime(time);
+      } catch (error) {
+        console.error('Error seeking audio:', error);
+      }
+    }
+  };
+
   async function onSend() {
     const content = input.trim();
     if (!content) return;
@@ -796,6 +808,7 @@ async function startGeneration() {
               onPlayPause={handleAudioPlay}
               onAudioPause={handleAudioPause}
               onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
+              onSeek={handleSeek}
             />
           </div>
         </div>
