@@ -33,6 +33,12 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
       return;
     }
 
+    // Reset scroll to top when playback starts
+    if (isPlaying && containerRef.current && currentTime < 1) {
+      console.log('[Karaoke] Playback started, scrolling to top');
+      containerRef.current.scrollTop = 0;
+    }
+
     // Find the current word - only highlight if we're exactly within the word's time range
     let currentWordIndex = -1;
     
