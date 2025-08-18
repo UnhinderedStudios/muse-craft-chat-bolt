@@ -46,30 +46,23 @@ export const ChatSongPreview: React.FC<ChatSongPreviewProps> = ({
 
   return (
     <div className={cn("space-y-4", className)}>
-      {/* Title */}
-      <div>
-        <h3 className="text-text-primary font-bold text-lg mb-2">
-          {songRequest.title}
-        </h3>
-        
-        {/* Style chips */}
-        <div className="flex flex-wrap gap-2">
-          {styleElements.map((element, index) => (
-            <CyberChip 
-              key={index} 
-              variant={index % 2 === 0 ? "purple" : "teal"}
-            >
-              {element}
-            </CyberChip>
-          ))}
-        </div>
+      {/* Style chips */}
+      <div className="flex flex-wrap gap-2">
+        {styleElements.map((element, index) => (
+          <CyberChip 
+            key={index} 
+            variant={index % 2 === 0 ? "purple" : "teal"}
+          >
+            {element}
+          </CyberChip>
+        ))}
       </div>
 
       {/* Lyrics */}
       {songRequest.lyrics && (
         <div className="bg-black/20 border border-accent-primary/20 rounded-lg p-4">
           <h4 className="text-accent-primary font-semibold text-sm mb-3 uppercase tracking-wide">
-            Lyrics
+            {songRequest.title}
           </h4>
           <div className="space-y-1">
             {formatLyrics(songRequest.lyrics)}
