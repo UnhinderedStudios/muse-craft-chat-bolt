@@ -77,6 +77,39 @@ function sanitizeStyleSafe(input?: string): string | undefined {
   return finalVal || input.trim();
 }
 
+function isKeyboardSmash(text: string): boolean {
+  const s = text.toLowerCase();
+  const lettersOnly = s.replace(/[^a-z]/g, "");
+  if (lettersOnly.length < 6) return false;
+  let score = 0;
+  // Repeated same character runs
+  if (/(.)\1{3,}/.test(lettersOnly)) score++;
+  // Low diversity of characters
+  const unique = new Set(lettersOnly).size;
+  if (unique / lettersOnly.length < 0.3) score++;
+  // Very low vowel ratio
+  const vowels = (lettersOnly.match(/[aeiou]/g) || []).length;
+  if (vowels / lettersOnly.length < 0.15) score++;
+  // Long string without spaces
+  if (!/\s/.test(text) && text.length > 10) score++;
+  // Repeating bigrams/trigrams
+  if (/^([a-z]{2,3})\1{2,}/.test(lettersOnly)) score++;
+  return score >= 2;
+}
+
+function getLastAssistantQuestion(msgs: ChatMessage[]): string | null {
+  for (let i = msgs.length - 1; i >= 0; i--) {
+    const m = msgs[i];
+    if (m.role !== "assistant") continue;
+    const sentences = m.content.split(/(?<=[.?!])\s+/);
+    for (let j = sentences.length - 1; j >= 0; j--) {
+      const s = sentences[j].trim();
+      if (s.endsWith("?")) return s;
+    }
+  }
+  return null;
+}
+
 const Index = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "assistant", content: "Hey! I can help write and generate a song. What vibe are you going for?" },
@@ -352,8 +385,24 @@ const Index = () => {
     const next = [...messages, { role: "user", content } as ChatMessage];
     setMessages(next);
     setInput("");
+
+    // Detect keyboard smashing and short-circuit with playful reply
+    if (isKeyboardSmash(content)) {
+      const lastQ = getLastAssistantQuestion(messages);
+      const fallbackQ = "Could you share the vibe you want? For example: genre, mood/energy, tempo/BPM, language, vocal type, and any instruments or production notes.";
+      const ask = lastQ || fallbackQ;
+      const assistantText = `Haha, looks like a keyboard smash 😄 ${ask}`;
+      setMessages([...next, { role: "assistant", content: assistantText }]);
+      // Refocus quickly without hitting the API
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          try { chatInputRef.current?.focus(); } catch {}
+        });
+      });
+      return;
+    }
+
     setBusy(true);
-    
     try {
       const res = await api.chat(next, systemPrompt);
       const assistantMsg = res.content;
