@@ -76,8 +76,8 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
 
   return (
     <div className="bg-[#151515] rounded-2xl h-[500px] flex flex-col overflow-hidden">
-      {/* Album Art Section - Expanded by 15% */}
-      <div className="relative h-[115px] bg-muted/10 rounded-t-2xl overflow-hidden">
+      {/* Album Art Section - Fixed height, never changes */}
+      <div className="relative h-[115px] bg-muted/10 rounded-t-2xl overflow-hidden flex-shrink-0">
         {currentAlbumCover ? (
           <div
             className="absolute inset-0 bg-cover bg-center opacity-50"
@@ -134,10 +134,10 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
         </div>
       </div>
 
-      {/* Karaoke Lyrics Section - Scrollable area between album cover and fullscreen button */}
-      <div className="flex-1 flex flex-col p-4">
+      {/* Karaoke Lyrics Section - Takes remaining space (385px - padding) */}
+      <div className="flex flex-col p-4" style={{ height: 'calc(500px - 115px)' }}>
         {/* Scrollable Lyrics Container */}
-        <div className="flex-1 mb-4">
+        <div className="flex-1 mb-4 min-h-0">
           {hasContent ? (
             <div 
               ref={lyricsScrollRef}
