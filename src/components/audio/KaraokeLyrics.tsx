@@ -78,7 +78,7 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
         const containerHeight = container.clientHeight;
         const wordHeight = wordElement.clientHeight;
         
-        // Check if word is outside visible scroll area
+        // Check if word is outside visible scroll area - LOG BEFORE CALCULATION
         const wordTop = wordOffsetTop;
         const wordBottom = wordOffsetTop + wordHeight;
         const visibleTop = containerScrollTop;
@@ -87,15 +87,16 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
         const isAboveView = wordTop < visibleTop;
         const isBelowView = wordBottom > visibleBottom;
         
-        console.log(`[Karaoke Debug] Word ${currentWordIndex}: "${words[currentWordIndex]?.word}"`);
-        console.log(`[Karaoke Debug] Word position: ${wordTop}-${wordBottom}, Visible area: ${visibleTop}-${visibleBottom}`);
-        console.log(`[Karaoke Debug] Above view: ${isAboveView}, Below view: ${isBelowView}`);
+        console.log(`[Karaoke PRE-SCROLL] Word ${currentWordIndex}: "${words[currentWordIndex]?.word}"`);
+        console.log(`[Karaoke PRE-SCROLL] Word position: ${wordTop}-${wordBottom}, Visible area: ${visibleTop}-${visibleBottom}`);
+        console.log(`[Karaoke PRE-SCROLL] Above view: ${isAboveView}, Below view: ${isBelowView}`);
+        console.log(`[Karaoke PRE-SCROLL] Container height: ${containerHeight}, Word offset: ${wordOffsetTop}`);
         
         if (isAboveView || isBelowView) {
           // Calculate scroll position to center the highlighted word
           const centerPosition = wordOffsetTop - (containerHeight / 2) + (wordHeight / 2);
           
-          console.log(`[Karaoke] Scrolling to word ${currentWordIndex}: "${words[currentWordIndex]?.word}" at position ${centerPosition}`);
+          console.log(`[Karaoke SCROLLING] Word ${currentWordIndex}: "${words[currentWordIndex]?.word}" to position ${centerPosition}`);
           
           container.scrollTo({
             top: Math.max(0, centerPosition),
@@ -103,6 +104,11 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
           });
           
           lastScrolledIndexRef.current = currentWordIndex;
+          
+          // Log after scroll initiation
+          console.log(`[Karaoke POST-SCROLL] Initiated scroll for word ${currentWordIndex}`);
+        } else {
+          console.log(`[Karaoke NO-SCROLL] Word ${currentWordIndex} is already visible, no scroll needed`);
         }
       }
     }
