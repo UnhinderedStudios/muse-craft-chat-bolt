@@ -36,10 +36,10 @@ import { parseSongRequest, convertToSongDetails } from "@/lib/parseSongRequest";
 const systemPrompt = `You are Melody Muse, a friendly creative assistant for songwriting.
 Your goal is to chat naturally and quickly gather two things only: (1) a unified Style description and (2) Lyrics.
 IMPORTANT: Never include artist names in Style. If the user mentions an artist (e.g., "like Ed Sheeran"), translate that into neutral descriptors (timbre, instrumentation, tempo/BPM, mood, era) and DO NOT name the artist. Style must combine: genre/subgenre, mood/energy, tempo or BPM, language, vocal type (male/female/duet/none), and production notes.
-Ask concise questions one at a time. When you have enough info, output a compact JSON between triple backticks with the key song_request containing fields: title, style, lyrics. The style must not contain artist names. The lyrics MUST ALWAYS be a complete song with the following sections in order: Intro, Verse, Pre-Chorus, Chorus, Bridge, Outro. Do not ask if the user wants more verses; always deliver the full structure.
+Ask concise questions one at a time. When you have enough info, output a compact JSON between triple backticks with the key song_request containing fields: title, style, lyrics. The style must not contain artist names. The lyrics MUST ALWAYS be a complete song with the following sections in this exact order: Intro, Verse 1, Pre-Chorus, Chorus, Verse 2, Pre-Chorus, Chorus, Bridge, Chorus, Outro. Do not ask if the user wants more verses; always deliver the full structure.
 
 \`\`\`
-{"song_request": {"title": "Neon Skies", "style": "synthpop, uplifting, 120 BPM, English, female vocals, bright analog synths, sidechain bass, shimmering pads", "lyrics": "Full song with labeled sections: Intro, Verse, Pre-Chorus, Chorus, Bridge, Outro"}}
+{"song_request": {"title": "Neon Skies", "style": "synthpop, uplifting, 120 BPM, English, female vocals, bright analog synths, sidechain bass, shimmering pads", "lyrics": "Full song with labeled sections in this order: Intro, Verse 1, Pre-Chorus, Chorus, Verse 2, Pre-Chorus, Chorus, Bridge, Chorus, Outro"}}
 \`\`\`
 
 Continue the conversation after the JSON if needed.`;
@@ -386,7 +386,7 @@ const Index = () => {
   }
   async function randomizeAll() {
     if (busy) return;
-    const content = "Please generate a completely randomized song_request and output ONLY the JSON in a fenced code block as specified. The lyrics must be a complete song containing Intro, Verse, Pre-Chorus, Chorus, Bridge, and Outro. No extra text.";
+    const content = "Please generate a completely randomized song_request and output ONLY the JSON in a fenced code block as specified. The lyrics must be a complete song with sections in this exact order: Intro, Verse 1, Pre-Chorus, Chorus, Verse 2, Pre-Chorus, Chorus, Bridge, Chorus, Outro. No extra text.";
     setBusy(true);
     try {
       // Use a minimal, stateless prompt so we don't get follow-ups that could override fields
