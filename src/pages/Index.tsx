@@ -241,11 +241,31 @@ const Index = () => {
         try { a.pause(); a.currentTime = 0; } catch {}
       }
     });
+    
+    // Actually play the selected audio
+    const audioElement = audioRefs.current[index];
+    if (audioElement) {
+      try {
+        audioElement.play();
+      } catch (error) {
+        console.error('Error playing audio:', error);
+      }
+    }
+    
     setIsPlaying(true);
     setCurrentAudioIndex(index);
   }
 
   const handleAudioPause = () => {
+    // Actually pause the current audio
+    const audioElement = audioRefs.current[currentAudioIndex];
+    if (audioElement && !audioElement.paused) {
+      try {
+        audioElement.pause();
+      } catch (error) {
+        console.error('Error pausing audio:', error);
+      }
+    }
     setIsPlaying(false);
   };
 
