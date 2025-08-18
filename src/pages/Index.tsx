@@ -236,34 +236,62 @@ const Index = () => {
   const canGenerate = useMemo(() => !!details.lyrics, [details]);
 
   function handleAudioPlay(index: number) {
+    console.log(`[AudioPlay] Attempting to play audio ${index}, current index: ${currentAudioIndex}, isPlaying: ${isPlaying}`);
+    
+    // Prevent multiple rapid calls
+    if (busy) {
+      console.log(`[AudioPlay] Blocked - generation is busy`);
+      return;
+    }
+    
+    // If same audio is already playing, do nothing
+    if (currentAudioIndex === index && isPlaying) {
+      console.log(`[AudioPlay] Audio ${index} is already playing`);
+      return;
+    }
+    
     // Pause all other audio elements first
     audioRefs.current.forEach((a, i) => {
       if (i !== index && a && !a.paused) {
-        try { a.pause(); a.currentTime = 0; } catch {}
+        try { 
+          a.pause(); 
+          console.log(`[AudioPlay] Paused audio ${i}`);
+        } catch (e) {
+          console.log(`[AudioPlay] Error pausing audio ${i}:`, e);
+        }
       }
     });
     
-    // Set the new audio index and reset time
+    // Update state immediately to prevent race conditions
     setCurrentAudioIndex(index);
     setCurrentTime(0);
+    setIsPlaying(false); // Set to false first, then true after play starts
     
-    // Actually play the selected audio
+    // Play the selected audio
     const audioElement = audioRefs.current[index];
     if (audioElement) {
       try {
-        audioElement.currentTime = 0; // Reset to beginning
+        audioElement.currentTime = 0;
+        console.log(`[AudioPlay] Starting playback for audio ${index}`);
+        
+        // Use async/await for better error handling
         audioElement.play().then(() => {
+          console.log(`[AudioPlay] Successfully started audio ${index}`);
           setIsPlaying(true);
         }).catch(error => {
-          console.error('Error playing audio:', error);
+          // Only log error if it's not an AbortError from switching tracks
+          if (error.name !== 'AbortError') {
+            console.error(`[AudioPlay] Error playing audio ${index}:`, error);
+          }
           setIsPlaying(false);
         });
       } catch (error) {
-        console.error('Error playing audio:', error);
+        console.error(`[AudioPlay] Sync error playing audio ${index}:`, error);
         setIsPlaying(false);
       }
     } else {
-      setIsPlaying(true); // Set to true even if element not ready yet
+      console.log(`[AudioPlay] Audio element ${index} not ready, will retry when loaded`);
+      setIsPlaying(false);
     }
   }
 
@@ -900,7 +928,11 @@ async function startGeneration() {
                         src={url}
                         className="hidden"
                         preload="auto"
-                        onPlay={() => handleAudioPlay(idx)}
+                        onPlay={(e) => {
+                          // Prevent onPlay from triggering handleAudioPlay when user clicks play button
+                          // The button click already handles this
+                          console.log(`[Audio Event] onPlay triggered for audio ${idx}, currentIndex: ${currentAudioIndex}`);
+                        }}
                         onPause={handleAudioPause}
                         onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
                         onEnded={handleAudioPause}
@@ -976,7 +1008,10 @@ async function startGeneration() {
                     src={audioUrl}
                     className="hidden"
                     preload="none"
-                    onPlay={() => handleAudioPlay(0)}
+                    onPlay={(e) => {
+                      // Prevent onPlay from triggering handleAudioPlay when user clicks play button
+                      console.log(`[Audio Event] onPlay triggered for single audio, currentIndex: ${currentAudioIndex}`);
+                    }}
                     onPause={handleAudioPause}
                     onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
                     onEnded={handleAudioPause}
