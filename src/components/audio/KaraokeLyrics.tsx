@@ -86,13 +86,17 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
             className={cn(
               "inline-block transition-all duration-300 px-1 rounded",
               {
-                "bg-primary text-primary-foreground shadow-sm scale-105": isHighlighted,
-                "text-muted-foreground": isPast && !isHighlighted,
-                "text-foreground": isFuture && !isHighlighted,
+                "scale-105": isHighlighted,
                 "opacity-80": !isPlaying,
               }
             )}
             style={{
+              color: isHighlighted 
+                ? '#ffffff' 
+                : isPast && !isHighlighted 
+                  ? '#f1f1f1' 
+                  : '#424242',
+              textShadow: isHighlighted ? '0 0 8px rgba(255, 255, 255, 0.3)' : 'none',
               marginRight: word.word.endsWith('\n') ? '0' : '0.25rem',
             }}
           >
