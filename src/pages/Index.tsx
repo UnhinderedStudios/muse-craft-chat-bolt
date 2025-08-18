@@ -965,10 +965,13 @@ async function startGeneration() {
                         onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
                         onEnded={handleAudioPause}
                         onLoadedMetadata={(e) => {
-                          // Force re-render when duration is loaded
+                          // Reset audio to beginning when metadata loads
                           const audio = e.currentTarget;
-                          if (audio.duration && !isNaN(audio.duration)) {
-                            setCurrentTime(currentTime); // Trigger re-render
+                          console.log(`[Audio Metadata] Audio ${idx} loaded, resetting to 0. Duration:`, audio.duration);
+                          audio.currentTime = 0;
+                          // If this is the current audio, update the state
+                          if (idx === currentAudioIndex) {
+                            setCurrentTime(0);
                           }
                         }}
                         ref={(el) => { if (el) audioRefs.current[idx] = el; }}
@@ -1044,11 +1047,11 @@ async function startGeneration() {
                     onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
                     onEnded={handleAudioPause}
                     onLoadedMetadata={(e) => {
-                      // Force re-render when duration is loaded
+                      // Reset audio to beginning when metadata loads
                       const audio = e.currentTarget;
-                      if (audio.duration && !isNaN(audio.duration)) {
-                        setCurrentTime(currentTime); // Trigger re-render
-                      }
+                      console.log(`[Audio Metadata] Single audio loaded, resetting to 0. Duration:`, audio.duration);
+                      audio.currentTime = 0;
+                      setCurrentTime(0);
                     }}
                     ref={(el) => { if (el) audioRefs.current[0] = el; }}
                   />
