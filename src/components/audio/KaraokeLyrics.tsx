@@ -20,6 +20,25 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout>();
 
+  // Function to detect if a word is metadata/action rather than actual lyrics
+  const isNonSungWord = (word: string): boolean => {
+    const cleanWord = word.toLowerCase().trim().replace(/[^\w\s]/g, '');
+    const nonSungPatterns = [
+      /^(verse|chorus|bridge|intro|outro|refrain|pre|solo|instrumental)/,
+      /^(verse|chorus)\s*\d+/,
+      /\d+x|x\d+/,
+      /^(shout|shooting|screaming|laughing|crying|whisper|yelling)/,
+      /^(oh|ah|yeah|hey|yo|uh|huh|mm|hmm|ooh|wow|whoa)$/,
+      /^\[.*\]$/,
+      /^\(.*\)$/,
+      /^repeat/,
+      /^fade/,
+      /^end/
+    ];
+    
+    return nonSungPatterns.some(pattern => pattern.test(cleanWord));
+  };
+
   // Reset when words change or when switching between songs 
   useEffect(() => {
     console.log('[Karaoke Reset] Words changed, resetting to top');
@@ -144,6 +163,7 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
         const isHighlighted = index === highlightedIndex;
         const isPast = currentTime > word.end;
         const isFuture = currentTime < word.start;
+        const isNonSung = isNonSungWord(word.word);
         
         return (
           <span
@@ -157,11 +177,13 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
               }
             )}
             style={{
-              color: isHighlighted 
-                ? '#ffffff' 
-                : isPast && !isHighlighted 
-                  ? '#f1f1f1' 
-                  : '#656565',
+              color: isNonSung 
+                ? '#f92c8f' // Pink color for non-sung words (matches Generate button)
+                : isHighlighted 
+                  ? '#ffffff' 
+                  : isPast && !isHighlighted 
+                    ? '#f1f1f1' 
+                    : '#656565',
               textShadow: isHighlighted ? '0 0 8px rgba(255, 255, 255, 0.3)' : 'none',
               marginRight: word.word.endsWith('\n') ? '0' : '0.25rem',
             }}
