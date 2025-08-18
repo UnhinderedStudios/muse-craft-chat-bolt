@@ -1,4 +1,4 @@
-import React, { useState, KeyboardEvent } from "react";
+import React, { useState, KeyboardEvent, useRef } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +16,7 @@ export const TagInput: React.FC<TagInputProps> = ({
   className
 }) => {
   const [inputValue, setInputValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -55,17 +56,28 @@ export const TagInput: React.FC<TagInputProps> = ({
     onChange(newTags);
   };
 
+  const handleContainerClick = () => {
+    inputRef.current?.focus();
+  };
+
   return (
-    <div className={cn("min-h-[120px] flex flex-wrap gap-2 items-start relative", className)}>
+    <div 
+      className={cn("min-h-[120px] flex flex-wrap gap-2 items-start relative cursor-text", className)}
+      onClick={handleContainerClick}
+    >
       {/* Render existing tags */}
       {tags.map((tag, index) => (
         <div
           key={index}
-          className="inline-flex items-center gap-1 px-3 py-1 bg-white text-[#2d2d2d] rounded-full text-sm font-medium"
+          className="inline-flex items-center gap-1 px-3 py-1 bg-white text-[#2d2d2d] rounded-full text-sm font-medium cursor-default"
+          onClick={(e) => e.stopPropagation()}
         >
           <span>{tag}</span>
           <button
-            onClick={() => removeTag(index)}
+            onClick={(e) => {
+              e.stopPropagation();
+              removeTag(index);
+            }}
             className="hover:bg-gray-200 rounded-full p-0.5 transition-colors"
           >
             <X size={12} />
@@ -82,6 +94,7 @@ export const TagInput: React.FC<TagInputProps> = ({
       
       {/* Input field */}
       <input
+        ref={inputRef}
         type="text"
         value={inputValue}
         onChange={handleInputChange}
