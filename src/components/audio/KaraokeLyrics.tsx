@@ -59,13 +59,23 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
 
     setHighlightedIndex(currentWordIndex);
 
-    // Simple auto-scroll using scrollIntoView - non-invasive approach
+    // Container-specific auto-scroll that doesn't hijack main page scrolling
     if (currentWordIndex >= 0 && containerRef.current) {
       const highlightedElement = containerRef.current.querySelector('[data-highlighted="true"]');
       if (highlightedElement) {
-        highlightedElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center'
+        const container = containerRef.current;
+        const elementTop = (highlightedElement as HTMLElement).offsetTop;
+        const elementHeight = (highlightedElement as HTMLElement).offsetHeight;
+        const containerHeight = container.clientHeight;
+        const containerScrollTop = container.scrollTop;
+        
+        // Calculate optimal scroll position to center the element
+        const targetScrollTop = elementTop - (containerHeight / 2) + (elementHeight / 2);
+        
+        // Smooth scroll within container only
+        container.scrollTo({
+          top: targetScrollTop,
+          behavior: 'smooth'
         });
       }
     }
