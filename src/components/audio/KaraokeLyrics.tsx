@@ -83,7 +83,7 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
     <div 
       ref={containerRef}
       className={cn(
-        "min-h-[200px] overflow-y-auto pr-2 pl-4 py-4 rounded-md border bg-muted/20",
+        "overflow-y-auto pr-2 pl-4 py-4 rounded-md border bg-muted/20",
         "leading-relaxed text-sm space-y-1 lyrics-scrollbar",
         className
       )}
