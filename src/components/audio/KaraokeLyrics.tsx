@@ -87,7 +87,10 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
         "leading-relaxed text-sm space-y-1 lyrics-scrollbar",
         className
       )}
-      style={{ scrollbarGutter: 'stable' }}
+      style={{ 
+        scrollbarGutter: 'stable',
+        maxHeight: '100%' 
+      }}
     >
       {words.map((word, index) => {
         const isHighlighted = index === highlightedIndex;
