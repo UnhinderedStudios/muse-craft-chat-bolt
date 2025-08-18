@@ -7,7 +7,7 @@ import { api, type SongDetails } from "@/lib/api";
 import { sanitizeStyle } from "@/lib/styleSanitizer";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import { Dice5, Mic, Upload, Grid3X3, Plus, List } from "lucide-react";
+import { Dice5, Mic, Upload, Grid3X3, Plus, List, Play, Pause } from "lucide-react";
 
 // Components
 import { CyberHeader } from "@/components/cyber/CyberHeader";
@@ -834,7 +834,30 @@ async function startGeneration() {
                 <div className="space-y-4">
                   {audioUrls.map((url, idx) => (
                     <div key={`${url}-${idx}`} className="space-y-2">
-                      <p className="text-sm text-text-secondary">Version {idx + 1}</p>
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-text-secondary">Version {idx + 1}</p>
+                        <CyberButton
+                          variant="icon"
+                          onClick={() => {
+                            const audio = audioRefs.current[idx];
+                            if (audio) {
+                              if (currentAudioIndex === idx && isPlaying) {
+                                audio.pause();
+                                setIsPlaying(false);
+                              } else {
+                                handleAudioPlay(idx);
+                              }
+                            }
+                          }}
+                          className="w-8 h-8"
+                        >
+                          {currentAudioIndex === idx && isPlaying ? (
+                            <Pause className="w-4 h-4" />
+                          ) : (
+                            <Play className="w-4 h-4" />
+                          )}
+                        </CyberButton>
+                      </div>
                       
                       {/* Custom Progress Bar */}
                       <div className="space-y-2">
@@ -895,6 +918,31 @@ async function startGeneration() {
                 </div>
               ) : audioUrl ? (
                 <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-text-secondary">Single Version</p>
+                    <CyberButton
+                      variant="icon"
+                      onClick={() => {
+                        const audio = audioRefs.current[0];
+                        if (audio) {
+                          if (currentAudioIndex === 0 && isPlaying) {
+                            audio.pause();
+                            setIsPlaying(false);
+                          } else {
+                            handleAudioPlay(0);
+                          }
+                        }
+                      }}
+                      className="w-8 h-8"
+                    >
+                      {currentAudioIndex === 0 && isPlaying ? (
+                        <Pause className="w-4 h-4" />
+                      ) : (
+                        <Play className="w-4 h-4" />
+                      )}
+                    </CyberButton>
+                  </div>
+                  
                   {/* Custom Progress Bar */}
                   <div className="space-y-2">
                     <div 
