@@ -600,7 +600,7 @@ async function startGeneration() {
                   e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
                 }}
                 placeholder="Type out your question here..."
-                className="w-full bg-transparent border-0 pr-8 text-white placeholder-gray-500 focus:outline-none resize-none min-h-[32px] max-h-[120px] overflow-y-auto chat-input-scrollbar"
+                className="w-full bg-transparent border-0 pr-2 text-white placeholder-gray-500 focus:outline-none resize-none min-h-[32px] max-h-[120px] overflow-y-auto chat-input-scrollbar"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -613,7 +613,7 @@ async function startGeneration() {
               <button
                 onClick={onSend}
                 disabled={busy || !input.trim()}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 text-white hover:text-accent-primary transition-colors disabled:opacity-50"
+                className="absolute right-1 top-1/2 transform -translate-y-1/2 p-1 text-white hover:text-accent-primary transition-colors disabled:opacity-50"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffffff" stroke="none">
                   <path d="M12 19V5M5 12l7-7 7 7" stroke="#ffffff" strokeWidth="2" fill="none"/>
