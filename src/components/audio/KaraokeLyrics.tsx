@@ -18,6 +18,7 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
   const containerRef = useRef<HTMLDivElement>(null);
   const wordRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const lastScrolledIndexRef = useRef<number>(-1);
 
   // Reset karaoke state when words change (new song)
   useEffect(() => {
@@ -32,33 +33,42 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
   useEffect(() => {
     if (!isPlaying) {
       setHighlightedIndex(-1);
+      lastScrolledIndexRef.current = -1;
       return;
     }
 
-    // Find the current word based on time
-    const currentWordIndex = words.findIndex((word, index) => {
-      const isInRange = currentTime >= word.start && currentTime <= word.end;
-      // Also check if we're between this word and the next
-      const nextWord = words[index + 1];
-      const isBeforeNext = !nextWord || currentTime < nextWord.start;
+    // Find the current word - only highlight if we're exactly within the word's time range
+    let currentWordIndex = -1;
+    
+    for (let i = 0; i < words.length; i++) {
+      const word = words[i];
       
-      // Handle zero-duration words by checking if we're within a small buffer
-      const bufferTime = 0.1; // 100ms buffer
-      const isNearWord = Math.abs(currentTime - word.start) <= bufferTime;
-      
-      const shouldHighlight = isInRange || (currentTime >= word.start && isBeforeNext) || (word.start === word.end && isNearWord);
-      
-      if (shouldHighlight) {
-        console.log(`[Karaoke] Word ${index}: "${word.word}" (${word.start}-${word.end}) highlighted at time ${currentTime}`);
+      // For zero-duration words, use a small buffer
+      if (word.start === word.end) {
+        const bufferTime = 0.05; // 50ms buffer for zero-duration words
+        if (Math.abs(currentTime - word.start) <= bufferTime) {
+          currentWordIndex = i;
+          console.log(`[Karaoke] Zero-duration word ${i}: "${word.word}" highlighted at time ${currentTime}`);
+          break;
+        }
+      } else {
+        // For normal words, only highlight if we're within the exact time range
+        if (currentTime >= word.start && currentTime <= word.end) {
+          currentWordIndex = i;
+          console.log(`[Karaoke] Word ${i}: "${word.word}" (${word.start}-${word.end}) highlighted at time ${currentTime}`);
+          break;
+        }
       }
-      
-      return shouldHighlight;
-    });
+    }
 
     setHighlightedIndex(currentWordIndex);
 
-    // Auto-scroll to highlighted word within container only
-    if (currentWordIndex >= 0 && containerRef.current && isPlaying && wordRefs.current[currentWordIndex]) {
+    // Only scroll if we have a new highlighted word and it's different from the last scrolled one
+    if (currentWordIndex >= 0 && 
+        currentWordIndex !== lastScrolledIndexRef.current && 
+        containerRef.current && 
+        wordRefs.current[currentWordIndex]) {
+      
       const wordElement = wordRefs.current[currentWordIndex];
       const container = containerRef.current;
       
@@ -91,6 +101,8 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
             top: Math.max(0, centerPosition),
             behavior: "smooth"
           });
+          
+          lastScrolledIndexRef.current = currentWordIndex;
         }
       }
     }
