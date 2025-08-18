@@ -68,6 +68,8 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
     // Container-specific auto-scroll that doesn't hijack main page scrolling
     if (currentWordIndex >= 0 && containerRef.current) {
       const highlightedElement = containerRef.current.querySelector('[data-highlighted="true"]');
+      console.log('[Karaoke Scroll] Looking for highlighted element, found:', !!highlightedElement);
+      
       if (highlightedElement) {
         const container = containerRef.current;
         const elementTop = (highlightedElement as HTMLElement).offsetTop;
@@ -75,12 +77,30 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
         const containerHeight = container.clientHeight;
         const containerScrollTop = container.scrollTop;
         
+        console.log('[Karaoke Scroll] Container dimensions:', {
+          containerHeight,
+          containerScrollTop,
+          elementTop,
+          elementHeight
+        });
+        
         // Calculate optimal scroll position to center the element
         const targetScrollTop = elementTop - (containerHeight / 2) + (elementHeight / 2);
         
         // Direct scrollTop manipulation - no browser interference with main page
         const maxScrollTop = container.scrollHeight - containerHeight;
-        container.scrollTop = Math.max(0, Math.min(targetScrollTop, maxScrollTop));
+        const finalScrollTop = Math.max(0, Math.min(targetScrollTop, maxScrollTop));
+        
+        console.log('[Karaoke Scroll] Scroll calculation:', {
+          targetScrollTop,
+          maxScrollTop,
+          finalScrollTop,
+          beforeScroll: container.scrollTop
+        });
+        
+        container.scrollTop = finalScrollTop;
+        
+        console.log('[Karaoke Scroll] After scroll:', container.scrollTop);
       }
     }
   }, [currentTime, isPlaying, words]);
