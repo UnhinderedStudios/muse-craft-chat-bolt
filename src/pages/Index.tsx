@@ -71,6 +71,8 @@ const Index = () => {
   const [busy, setBusy] = useState(false);
   const [details, setDetails] = useState<SongDetails>({});
   const [styleTags, setStyleTags] = useState<string[]>([]);
+  const [chatHeight, setChatHeight] = useState(500);
+  const [isResizing, setIsResizing] = useState(false);
 
   // Sync styleTags with details.style
   useEffect(() => {
@@ -120,6 +122,30 @@ const Index = () => {
   const audioRefs = useRef<HTMLAudioElement[]>([]);
   const lastDiceAt = useRef<number>(0);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Handle chat resize functionality
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    
+    const startY = e.clientY;
+    const startHeight = chatHeight;
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaY = e.clientY - startY;
+      const newHeight = Math.max(300, Math.min(800, startHeight + deltaY)); // Min 300px, Max 800px
+      setChatHeight(newHeight);
+    };
+    
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
 
   useEffect(() => {
     scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
@@ -562,17 +588,14 @@ async function startGeneration() {
             <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none" />
           )}
           
-          {/* Chat Conversation - extends full height */}
+          {/* Chat Conversation - dynamic height */}
           <div 
-            className="h-[500px] overflow-y-auto custom-scrollbar pl-8 pr-6 pt-8"
+            className="overflow-y-auto custom-scrollbar pl-8 pr-6 pt-8"
             ref={scrollerRef}
+            style={{ height: `${chatHeight}px` }}
             onScroll={(e) => {
               const target = e.target as HTMLDivElement;
               setScrollTop(target.scrollTop);
-            }}
-            style={{
-              scrollbarWidth: 'thin',
-              scrollbarColor: '#282828 transparent'
             }}
           >
             <div className="space-y-4 pr-4 pl-4 pt-4 pb-32">
@@ -636,6 +659,20 @@ async function startGeneration() {
               </button>
             </div>
             </div>
+          </div>
+          
+          {/* Resize Handle */}
+          <div 
+            className={`absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize group ${isResizing ? 'bg-accent-primary/50' : 'bg-white/20 hover:bg-white/40'} transition-colors duration-200`}
+            onMouseDown={handleMouseDown}
+            style={{ 
+              clipPath: 'polygon(100% 0%, 0% 100%, 100% 100%)',
+              borderBottomRightRadius: '16px' 
+            }}
+          >
+            <div className="absolute bottom-1 right-1 w-1 h-1 bg-white/60 rounded-full"></div>
+            <div className="absolute bottom-1 right-2.5 w-1 h-1 bg-white/40 rounded-full"></div>
+            <div className="absolute bottom-2.5 right-1 w-1 h-1 bg-white/40 rounded-full"></div>
           </div>
         </div>
 
