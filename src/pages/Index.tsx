@@ -31,6 +31,7 @@ import { useSongGeneration } from "@/hooks/use-song-generation";
 // Types
 import { type TimestampedWord, type ChatMessage } from "@/types";
 import { SYSTEM_PROMPT } from "@/utils/constants";
+import { parseSongRequest, convertToSongDetails } from "@/lib/parseSongRequest";
 
 const systemPrompt = `You are Melody Muse, a friendly creative assistant for songwriting.
 Your goal is to chat naturally and quickly gather two things only: (1) a unified Style description and (2) Lyrics.
@@ -352,16 +353,30 @@ const Index = () => {
     try {
       const res = await api.chat(next, systemPrompt);
       const assistantMsg = res.content;
-setMessages((m) => [...m, { role: "assistant", content: assistantMsg }]);
-const extracted = extractDetails(assistantMsg);
-if (extracted) {
-  const now = Date.now();
-  if (now - lastDiceAt.current >= 4000) {
-    const finalStyle = sanitizeStyleSafe(extracted.style);
-    const cleaned: SongDetails = { ...extracted, ...(finalStyle ? { style: finalStyle } : {}) };
-    setDetails((d) => mergeNonEmpty(d, cleaned));
-  }
-}
+      setMessages((m) => [...m, { role: "assistant", content: assistantMsg }]);
+      
+      // Try new parser first
+      const songRequest = parseSongRequest(assistantMsg);
+      if (songRequest) {
+        const converted = convertToSongDetails(songRequest);
+        const now = Date.now();
+        if (now - lastDiceAt.current >= 4000) {
+          const finalStyle = sanitizeStyleSafe(converted.style);
+          const cleaned: SongDetails = { ...converted, ...(finalStyle ? { style: finalStyle } : {}) };
+          setDetails((d) => mergeNonEmpty(d, cleaned));
+        }
+      } else {
+        // Fallback to old extraction method
+        const extracted = extractDetails(assistantMsg);
+        if (extracted) {
+          const now = Date.now();
+          if (now - lastDiceAt.current >= 4000) {
+            const finalStyle = sanitizeStyleSafe(extracted.style);
+            const cleaned: SongDetails = { ...extracted, ...(finalStyle ? { style: finalStyle } : {}) };
+            setDetails((d) => mergeNonEmpty(d, cleaned));
+          }
+        }
+      }
 
     } catch (e: any) {
       toast.error(e.message || "Something went wrong");
