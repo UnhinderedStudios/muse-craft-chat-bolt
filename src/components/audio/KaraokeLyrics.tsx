@@ -75,11 +75,10 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
 
     setHighlightedIndex(currentWordIndex);
 
-    // Container-specific auto-scroll that doesn't hijack main page scrolling
-    // Don't auto-scroll for the first few words to keep it at the top
-    if (currentWordIndex >= 3 && containerRef.current) {
+    // Smart auto-scroll: only scroll when word goes off-screen
+    if (currentWordIndex >= 0 && containerRef.current) {
       const highlightedElement = containerRef.current.querySelector('[data-highlighted="true"]');
-      console.log('[Karaoke Scroll] Auto-scroll enabled for word', currentWordIndex, 'found element:', !!highlightedElement);
+      console.log('[Karaoke Scroll] Checking word', currentWordIndex, 'found element:', !!highlightedElement);
       
       if (highlightedElement) {
         const container = containerRef.current;
@@ -88,33 +87,33 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
         const containerHeight = container.clientHeight;
         const containerScrollTop = container.scrollTop;
         
-        console.log('[Karaoke Scroll] Container dimensions:', {
-          containerHeight,
-          containerScrollTop,
+        // Calculate if element is visible in viewport
+        const elementBottom = elementTop + elementHeight;
+        const viewportTop = containerScrollTop;
+        const viewportBottom = containerScrollTop + containerHeight;
+        
+        const isVisible = elementTop >= viewportTop && elementBottom <= viewportBottom;
+        
+        console.log('[Karaoke Scroll] Visibility check:', {
           elementTop,
-          elementHeight
+          elementBottom,
+          viewportTop,
+          viewportBottom,
+          isVisible
         });
         
-        // Calculate optimal scroll position to center the element
-        const targetScrollTop = elementTop - (containerHeight / 2) + (elementHeight / 2);
-        
-        // Direct scrollTop manipulation - no browser interference with main page
-        const maxScrollTop = container.scrollHeight - containerHeight;
-        const finalScrollTop = Math.max(0, Math.min(targetScrollTop, maxScrollTop));
-        
-        console.log('[Karaoke Scroll] Scroll calculation:', {
-          targetScrollTop,
-          maxScrollTop,
-          finalScrollTop,
-          beforeScroll: container.scrollTop
-        });
-        
-        container.scrollTop = finalScrollTop;
-        
-        console.log('[Karaoke Scroll] After scroll:', container.scrollTop);
+        // Only scroll if the element is not fully visible
+        if (!isVisible) {
+          const targetScrollTop = elementTop - (containerHeight / 2) + (elementHeight / 2);
+          const maxScrollTop = container.scrollHeight - containerHeight;
+          const finalScrollTop = Math.max(0, Math.min(targetScrollTop, maxScrollTop));
+          
+          console.log('[Karaoke Scroll] Element not visible, scrolling to:', finalScrollTop);
+          container.scrollTop = finalScrollTop;
+        } else {
+          console.log('[Karaoke Scroll] Element is visible, no scroll needed');
+        }
       }
-    } else if (currentWordIndex >= 0) {
-      console.log('[Karaoke Scroll] Skipping auto-scroll for early word', currentWordIndex);
     }
   }, [currentTime, isPlaying, words]);
 
