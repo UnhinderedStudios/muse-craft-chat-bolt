@@ -31,8 +31,20 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
   // Force scroll to top when playback starts
   useEffect(() => {
     if (isPlaying && containerRef.current) {
-      console.log('[Karaoke] Playback started, forcing scroll to top');
-      containerRef.current.scrollTop = 0;
+      console.log('[Karaoke] Playback started, forcing scroll to top with RAF');
+      const container = containerRef.current;
+      
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+        container.scrollTop = 0;
+        console.log('[Karaoke] After RAF scroll reset:', container.scrollTop);
+        
+        // Double-check with another frame
+        requestAnimationFrame(() => {
+          container.scrollTop = 0;
+          console.log('[Karaoke] After second RAF scroll reset:', container.scrollTop);
+        });
+      });
     }
   }, [isPlaying]);
 
