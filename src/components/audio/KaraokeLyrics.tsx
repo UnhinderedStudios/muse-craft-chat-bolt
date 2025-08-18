@@ -40,7 +40,7 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
 
   // Main effect: Find current word and handle scrolling
   useEffect(() => {
-    if (!isPlaying || words.length === 0) return;
+    if (words.length === 0) return;
 
     // Find the word that should be highlighted based on current time
     let currentWordIndex = -1;
@@ -64,36 +64,24 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
     console.log('[Karaoke Debug] currentTime:', currentTime.toFixed(2), 'wordIndex:', currentWordIndex, 'isPlaying:', isPlaying);
 
     setHighlightedIndex(currentWordIndex);
+  }, [currentTime, isPlaying, words]);
 
-    // Simple auto-scroll: only when word is off-screen
-    if (currentWordIndex >= 0 && containerRef.current) {
+  // Separate effect for scrolling - always center the highlighted word
+  useEffect(() => {
+    if (highlightedIndex >= 0 && containerRef.current) {
       const highlightedElement = containerRef.current.querySelector('[data-highlighted="true"]');
       
       if (highlightedElement) {
-        const container = containerRef.current;
-        const elementTop = (highlightedElement as HTMLElement).offsetTop;
-        const elementHeight = (highlightedElement as HTMLElement).offsetHeight;
-        const containerHeight = container.clientHeight;
-        const containerScrollTop = container.scrollTop;
-        
-        // Check if element is fully visible
-        const elementBottom = elementTop + elementHeight;
-        const viewportTop = containerScrollTop;
-        const viewportBottom = containerScrollTop + containerHeight;
-        const isVisible = elementTop >= viewportTop && elementBottom <= viewportBottom;
-        
-        // Only scroll if element is not visible
-        if (!isVisible) {
-          const targetScrollTop = elementTop - (containerHeight / 3); // Scroll to top third instead of center
-          const maxScrollTop = container.scrollHeight - containerHeight;
-          const finalScrollTop = Math.max(0, Math.min(targetScrollTop, maxScrollTop));
-          
-          container.scrollTop = finalScrollTop;
-          console.log('[Karaoke Scroll] Scrolled to show word', currentWordIndex, 'at position:', finalScrollTop);
-        }
+        // Always center the highlighted word smoothly
+        highlightedElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'nearest'
+        });
+        console.log('[Karaoke Scroll] Centered word', highlightedIndex);
       }
     }
-  }, [currentTime, isPlaying, words]);
+  }, [highlightedIndex]);
 
   if (!words.length) {
     return (
