@@ -40,14 +40,18 @@ export function useSongGeneration() {
       // Poll for completion
       let result;
       let attempts = 0;
-      const maxAttempts = 60;
+      const POLL_INTERVAL_MS = 5000;
+      const MAX_WAIT_MS = 10 * 60 * 1000; // 10 minutes
+      const maxAttempts = Math.ceil(MAX_WAIT_MS / POLL_INTERVAL_MS);
 
+      const phaseStart = Date.now();
       do {
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
         result = await api.pollSong(jobId);
         attempts++;
         
-        const progress = Math.min((attempts / maxAttempts) * 80, 80);
+        const elapsed = Date.now() - phaseStart;
+        const progress = Math.min((elapsed / MAX_WAIT_MS) * 80, 80);
         const stepIndex = Math.floor((progress / 80) * (GENERATION_STEPS.length - 1));
         
         setGenerationState(prev => ({ 

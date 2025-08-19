@@ -537,15 +537,19 @@ async function startGeneration() {
 
       // Phase A: Wait for generation completion with status confirmation
       console.log("[Generation] Phase A: Waiting for completion...");
+      // Phase A: Wait up to 10 minutes for generation completion (time-based)
+      const PHASE_A_MAX_MS = 10 * 60 * 1000; // 10 minutes
+      const PHASE_A_START = Date.now();
       let completionAttempts = 0;
-      const maxCompletionAttempts = 40; // ~60-90s max
       let statusRaw = "PENDING";
       let sunoData: any[] = [];
       let generationComplete = false;
 
-      while (completionAttempts++ < maxCompletionAttempts) {
-        // More conservative real progress updates
-        const baseProgress = Math.min((completionAttempts / maxCompletionAttempts) * 40, 40);
+      while (Date.now() - PHASE_A_START < PHASE_A_MAX_MS) {
+        completionAttempts++;
+        // Progress based on elapsed time (never goes backward)
+        const elapsed = Date.now() - PHASE_A_START;
+        const baseProgress = Math.min((elapsed / PHASE_A_MAX_MS) * 40, 40);
         let statusProgress = 5;
         if (statusRaw === "PENDING") statusProgress = 15;
         else if (statusRaw === "FIRST_SUCCESS") statusProgress = 35;
@@ -553,7 +557,6 @@ async function startGeneration() {
         else if (statusRaw === "SUCCESS") statusProgress = 70;
         
         const newProgress = Math.max(baseProgress, statusProgress);
-        // Update progress only if it's higher (never go backward)
         setGenerationProgress(current => {
           if (newProgress > current) {
             setLastProgressUpdate(Date.now());
@@ -593,7 +596,7 @@ async function startGeneration() {
       }
 
       if (!generationComplete) {
-        throw new Error("Generation timed out waiting for completion");
+        throw new Error("Generation timed out after 10 minutes");
       }
 
       // Get audio URLs via regular polling
