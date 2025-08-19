@@ -158,20 +158,45 @@ export const FullscreenKaraoke: React.FC<FullscreenKaraokeProps> = ({
     }
   }, [currentLineIndex, isUserScrolling]);
 
-  // Initial scroll to first line on mount
+  // Initial scroll to first line on mount with delay to ensure DOM is ready
   useEffect(() => {
-    if (containerRef.current) {
+    const scrollToFirstLine = () => {
+      if (containerRef.current) {
+        const lineElements = containerRef.current.querySelectorAll('[data-line-index]');
+        const firstLineElement = lineElements[0] as HTMLElement;
+        
+        if (firstLineElement) {
+          firstLineElement.scrollIntoView({
+            behavior: 'auto', // Use 'auto' for immediate positioning
+            block: 'center'
+          });
+        }
+      }
+    };
+
+    // Immediate scroll
+    scrollToFirstLine();
+    
+    // Delayed scroll to ensure DOM is fully rendered
+    const timeoutId = setTimeout(scrollToFirstLine, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  // Force scroll to first line when song starts (first word becomes highlighted)
+  useEffect(() => {
+    if (highlightedIndex === 0 && containerRef.current) {
       const lineElements = containerRef.current.querySelectorAll('[data-line-index]');
       const firstLineElement = lineElements[0] as HTMLElement;
       
       if (firstLineElement) {
         firstLineElement.scrollIntoView({
-          behavior: 'smooth',
+          behavior: 'auto',
           block: 'center'
         });
       }
     }
-  }, []);
+  }, [highlightedIndex]);
 
   return (
     <div 
