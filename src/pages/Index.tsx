@@ -177,6 +177,8 @@ const Index = () => {
   const lastDiceAt = useRef<number>(0);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [attachedFiles, setAttachedFiles] = useState<FileAttachment[]>([]);
+  const formContainerRef = useRef<HTMLDivElement>(null);
+  const [formContainerHeight, setFormContainerHeight] = useState<number>(0);
 
   // Handle chat resize functionality
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -205,6 +207,33 @@ const Index = () => {
   useEffect(() => {
     scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
+
+  // Measure the real height of the form container
+  useEffect(() => {
+    const measureHeight = () => {
+      if (formContainerRef.current) {
+        const height = formContainerRef.current.getBoundingClientRect().height;
+        setFormContainerHeight(height);
+      }
+    };
+
+    measureHeight();
+    // Re-measure after a short delay to ensure all elements are rendered
+    const timer = setTimeout(measureHeight, 100);
+    
+    // Add resize observer to update height if layout changes
+    if (formContainerRef.current) {
+      const resizeObserver = new ResizeObserver(measureHeight);
+      resizeObserver.observe(formContainerRef.current);
+      
+      return () => {
+        resizeObserver.disconnect();
+        clearTimeout(timer);
+      };
+    }
+
+    return () => clearTimeout(timer);
+  }, [details, styleTags, busy, generationProgress]);
 
   useEffect(() => {
     // reset audio refs when result list changes
@@ -1005,7 +1034,7 @@ async function startGeneration() {
         </div>
 
         {/* Form Section - Main container matching chat interface */}
-        <div className="bg-[#151515] rounded-xl p-4 space-y-4 mt-5">
+        <div ref={formContainerRef} className="bg-[#151515] rounded-xl p-4 space-y-4 mt-5">
           {/* Two-column layout: Left (Title + Song Parameters stacked), Right (Lyrics tall) */}
           <div className="grid grid-cols-12 gap-4 h-auto">
             {/* Left column: Title and Song Parameters stacked */}
@@ -1095,8 +1124,11 @@ async function startGeneration() {
             />
             
             {/* Blank Element Under Karaoke Panel */}
-            <div className="bg-[#151515] rounded-2xl h-[400px] mt-5 flex items-center justify-center">
-              <span className="text-text-secondary">TEMPLATE</span>
+            <div 
+              className="bg-[#151515] rounded-2xl mt-5 flex items-center justify-center"
+              style={{ height: formContainerHeight > 0 ? `${formContainerHeight}px` : '400px' }}
+            >
+              <span className="text-text-secondary">TEMPLATE ({formContainerHeight}px)</span>
             </div>
           </div>
         </div>
