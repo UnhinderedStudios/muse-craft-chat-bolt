@@ -7,6 +7,7 @@ import { api, type SongDetails } from "@/lib/api";
 import { FileAttachment } from "@/types";
 import { sanitizeStyle } from "@/lib/styleSanitizer";
 import { Spinner } from "@/components/ui/spinner";
+import { ImageAnalysisLoader } from "@/components/ui/image-analysis-loader";
 import { toast } from "sonner";
 import { Dice5, Mic, Upload, Grid3X3, Plus, List, Play, Pause, X } from "lucide-react";
 
@@ -113,6 +114,7 @@ const Index = () => {
   ]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const [details, setDetails] = useState<SongDetails>({});
   const [styleTags, setStyleTags] = useState<string[]>([]);
   const [chatHeight, setChatHeight] = useState(500);
@@ -428,6 +430,11 @@ const Index = () => {
     setAttachedFiles([]); // Clear attachments after sending
 
     setBusy(true);
+    
+    // Check if there are image attachments to show image analysis loader
+    const hasImageAttachments = fileAttachments?.some(file => file.type.startsWith('image/'));
+    setIsAnalyzingImage(hasImageAttachments || false);
+    
     try {
       console.debug("[Chat] Using systemPrompt (first 160 chars):", systemPrompt.slice(0, 160));
       const res = await api.chat(next, systemPrompt);
@@ -461,6 +468,7 @@ const Index = () => {
       toast.error(e.message || "Something went wrong");
     } finally {
       setBusy(false);
+      setIsAnalyzingImage(false);
       
       // Refocus input after all state updates using nested requestAnimationFrame
       requestAnimationFrame(() => {
@@ -833,7 +841,7 @@ async function startGeneration() {
                 <ChatBubble key={i} role={m.role} content={m.content} />
               ))}
               {busy && (
-                <Spinner />
+                isAnalyzingImage ? <ImageAnalysisLoader /> : <Spinner />
               )}
             </div>
           </div>
