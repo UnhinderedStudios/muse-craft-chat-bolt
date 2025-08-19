@@ -1033,18 +1033,8 @@ async function startGeneration() {
           </div>
         </div>
 
-        {/* Form Section - Grid layout with Session Element on left */}
-        <div className="grid grid-cols-12 gap-5 mt-5">
-          {/* Session Element */}
-          <div 
-            className="col-span-3 bg-[#151515] rounded-xl flex items-center justify-center"
-            style={{ height: formContainerHeight > 0 ? `${formContainerHeight}px` : '400px' }}
-          >
-            <span className="text-text-secondary">SESSION ELEMENT</span>
-          </div>
-          
-          {/* Form Container */}
-          <div ref={formContainerRef} className="col-span-9 bg-[#151515] rounded-xl p-4 space-y-4">
+        {/* Form Section - Main container matching chat interface */}
+        <div ref={formContainerRef} className="bg-[#151515] rounded-xl p-4 space-y-4 mt-5">
           {/* Two-column layout: Left (Title + Song Parameters stacked), Right (Lyrics tall) */}
           <div className="grid grid-cols-12 gap-4 h-auto">
             {/* Left column: Title and Song Parameters stacked */}
@@ -1116,7 +1106,6 @@ async function startGeneration() {
           </div>
         </div>
           </div>
-        </div>
 
           {/* Right Column - Karaoke Panel (25% width) */}
           <div className="col-span-3">
