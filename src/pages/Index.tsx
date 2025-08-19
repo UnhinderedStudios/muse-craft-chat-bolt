@@ -293,8 +293,10 @@ const Index = () => {
       return;
     }
 
-    // STEP 1: Immediately pause ALL audio elements and reset their times
-    console.log(`[AudioPlay] Stopping all audio and switching to ${index}`);
+    const isSwitchingTracks = currentAudioIndex !== index;
+
+    // STEP 1: Immediately pause ALL audio elements
+    console.log(`[AudioPlay] Stopping all audio and switching to ${index}, isSwitchingTracks: ${isSwitchingTracks}`);
     audioRefs.current.forEach((audio, i) => {
       if (audio) {
         try {
@@ -302,17 +304,22 @@ const Index = () => {
             audio.pause();
             console.log(`[AudioPlay] Paused audio ${i}`);
           }
-          // Reset ALL audio elements to beginning
-          audio.currentTime = 0;
+          // Only reset time when switching tracks, not when resuming the same track
+          if (isSwitchingTracks) {
+            audio.currentTime = 0;
+          }
         } catch (e) {
           console.log(`[AudioPlay] Error stopping audio ${i}:`, e);
         }
       }
     });
     
-    // STEP 2: Update state immediately - this will reset karaoke display
+    // STEP 2: Update state immediately
     setIsPlaying(false);
-    setCurrentTime(0);
+    // Only reset currentTime when switching tracks
+    if (isSwitchingTracks) {
+      setCurrentTime(0);
+    }
     setCurrentAudioIndex(index);
     
     // STEP 3: Small delay to ensure state has updated before playing new audio
