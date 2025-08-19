@@ -327,10 +327,11 @@ const Index = () => {
       const audioElement = audioRefs.current[index];
       if (audioElement) {
         try {
-          // Ensure audio is at beginning
-          audioElement.currentTime = 0;
+          // Reset to start only when switching tracks or if audio already ended
+          if (isSwitchingTracks || audioElement.ended) {
+            audioElement.currentTime = 0;
+          }
           console.log(`[AudioPlay] Starting playback for audio ${index}`);
-          
           // Start playing the new audio
           const playPromise = audioElement.play();
           if (playPromise) {
