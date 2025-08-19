@@ -6,34 +6,10 @@ async function extractTextFromPdf(arrayBuffer: ArrayBuffer): Promise<string> {
   try {
     // Load PDF.js lazily
     const pdfjs = await import("pdfjs-dist");
-    let workerUrl: string | undefined;
-    try {
-      // @ts-ignore
-      const mod = await import("pdfjs-dist/build/pdf.worker.mjs?url");
-      // @ts-ignore - default export is the url string
-      workerUrl = mod.default as string;
-    } catch {
-      try {
-        const mod = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
-        // @ts-ignore
-        workerUrl = mod.default as string;
-      } catch {
-        try {
-          const mod = await import("pdfjs-dist/build/pdf.worker.js?url");
-          // @ts-ignore
-          workerUrl = mod.default as string;
-        } catch {
-          try {
-            const mod = await import("pdfjs-dist/build/pdf.worker.min.js?url");
-            // @ts-ignore
-            workerUrl = mod.default as string;
-          } catch {
-            // Fallback to CDN if local worker cannot be resolved
-            workerUrl = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.8.69/build/pdf.worker.min.mjs";
-          }
-        }
-      }
-    }
+    
+    // Use CDN worker URL for reliable builds
+    const workerUrl = "https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.54/build/pdf.worker.min.mjs";
+    
     // @ts-ignore - types from pdfjs-dist may not include GlobalWorkerOptions shape
     pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 
