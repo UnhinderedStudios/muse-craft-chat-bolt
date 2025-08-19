@@ -14,7 +14,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ role, content }) => {
   let displayContent = content;
   if (songRequest) {
     displayContent = content
-      .replace(/```(?:json)?\s*\{[\s\S]*?\}\s*```/g, '')
+      .replace(/```(?:json)?\s*\{[\s\S]*?\}\s*```/gi, '')
       .replace(/\{"song_request"[\s\S]*?\}\}/g, '')
       .trim();
   }

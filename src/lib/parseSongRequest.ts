@@ -8,30 +8,28 @@ export interface ParsedSongRequest {
 
 export function parseSongRequest(text: string): ParsedSongRequest | null {
   try {
-    // Look for JSON in code blocks
-    const codeBlockMatch = text.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
-    if (codeBlockMatch) {
-      const jsonStr = codeBlockMatch[1];
-      const parsed = JSON.parse(jsonStr);
-      
-      if (parsed.song_request) {
+    // Handle language-tagged fenced blocks like ```json { ... } ```
+    const fenceJson = text.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i);
+    if (fenceJson) {
+      const obj = JSON.parse(fenceJson[1]);
+      if (obj.song_request && typeof obj.song_request === "object") {
         return {
-          title: parsed.song_request.title || "Untitled",
-          style: parsed.song_request.style || "",
-          lyrics: parsed.song_request.lyrics || ""
+          title: obj.song_request.title || "Untitled",
+          style: obj.song_request.style || "",
+          lyrics: obj.song_request.lyrics || ""
         };
       }
     }
     
-    // Fallback: look for plain JSON object
+    // Fallback: look for plain JSON object anywhere in the text
     const jsonMatch = text.match(/\{"song_request"[\s\S]*?\}\}/);
     if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0]);
-      if (parsed.song_request) {
+      const obj = JSON.parse(jsonMatch[0]);
+      if (obj.song_request && typeof obj.song_request === "object") {
         return {
-          title: parsed.song_request.title || "Untitled",
-          style: parsed.song_request.style || "",
-          lyrics: parsed.song_request.lyrics || ""
+          title: obj.song_request.title || "Untitled",
+          style: obj.song_request.style || "",
+          lyrics: obj.song_request.lyrics || ""
         };
       }
     }
