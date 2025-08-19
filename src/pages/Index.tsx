@@ -1093,6 +1093,11 @@ async function startGeneration() {
               onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
               onSeek={handleSeek}
             />
+            
+            {/* Blank Element Under Karaoke Panel */}
+            <div className="bg-[#151515] rounded-2xl h-[500px] mt-5 flex items-center justify-center">
+              <span className="text-text-secondary">TEMPLATE</span>
+            </div>
           </div>
         </div>
 
