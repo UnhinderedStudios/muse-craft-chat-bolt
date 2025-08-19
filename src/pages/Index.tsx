@@ -438,7 +438,16 @@ const Index = () => {
       file.type.startsWith('text/') || 
       file.name.endsWith('.txt') || 
       file.name.endsWith('.md') || 
-      file.name.endsWith('.json')
+      file.name.endsWith('.json') ||
+      file.name.endsWith('.docx') ||
+      file.name.endsWith('.doc') ||
+      file.name.endsWith('.pdf') ||
+      file.name.endsWith('.rtf') ||
+      file.name.endsWith('.odt') ||
+      file.name.endsWith('.xlsx') ||
+      file.name.endsWith('.xls') ||
+      file.name.endsWith('.pptx') ||
+      file.name.endsWith('.ppt')
     );
     setIsAnalyzingImage(hasImageAttachments || false);
     setIsReadingText(hasTextAttachments || false);

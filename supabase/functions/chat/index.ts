@@ -42,7 +42,10 @@ serve(async (req) => {
                   url: `data:${attachment.type};base64,${attachment.data}`
                 }
               });
-            } else if (attachment.type.includes('text') || attachment.name.endsWith('.txt') || attachment.name.endsWith('.md')) {
+            } else if (attachment.type.includes('text') || 
+                      attachment.name.endsWith('.txt') || 
+                      attachment.name.endsWith('.md') || 
+                      attachment.name.endsWith('.json')) {
               // For text files, decode and include content
               try {
                 const textContent = atob(attachment.data);
@@ -50,6 +53,17 @@ serve(async (req) => {
               } catch (e) {
                 console.error('Error decoding text file:', e);
               }
+            } else if (attachment.name.endsWith('.docx') || 
+                      attachment.name.endsWith('.doc') || 
+                      attachment.name.endsWith('.pdf') || 
+                      attachment.name.endsWith('.rtf') || 
+                      attachment.name.endsWith('.odt') || 
+                      attachment.name.endsWith('.xlsx') || 
+                      attachment.name.endsWith('.xls') || 
+                      attachment.name.endsWith('.pptx') || 
+                      attachment.name.endsWith('.ppt')) {
+              // For binary document formats that can't be directly decoded
+              content[0].text += `\n\nDocument "${attachment.name}" was uploaded but cannot be directly read. Please copy and paste the text content if you'd like me to analyze it.`;
             }
           }
           
