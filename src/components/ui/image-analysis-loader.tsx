@@ -2,11 +2,12 @@ import React from "react";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface ImageAnalysisLoaderProps {
+interface AnalysisLoaderProps {
   className?: string;
+  text?: string;
 }
 
-export const ImageAnalysisLoader: React.FC<ImageAnalysisLoaderProps> = ({ className }) => {
+export const AnalysisLoader: React.FC<AnalysisLoaderProps> = ({ className, text = "Analyzing Image..." }) => {
   return (
     <div className="flex justify-start">
       <div className="max-w-[85%] px-4 py-3 rounded-[16px] bg-[#000000] border border-accent-primary shadow-[0_0_20px_rgba(202,36,116,0.4)] flex items-center gap-3">
@@ -29,9 +30,11 @@ export const ImageAnalysisLoader: React.FC<ImageAnalysisLoaderProps> = ({ classN
           />
         </div>
         <span className="text-white/90 text-sm font-medium">
-          Analyzing Image...
+          {text}
         </span>
       </div>
     </div>
   );
 };
+
+export const ImageAnalysisLoader = AnalysisLoader;

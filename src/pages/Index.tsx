@@ -115,6 +115,7 @@ const Index = () => {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+  const [isReadingText, setIsReadingText] = useState(false);
   const [details, setDetails] = useState<SongDetails>({});
   const [styleTags, setStyleTags] = useState<string[]>([]);
   const [chatHeight, setChatHeight] = useState(500);
@@ -431,9 +432,16 @@ const Index = () => {
 
     setBusy(true);
     
-    // Check if there are image attachments to show image analysis loader
+    // Check attachment types to show appropriate loader
     const hasImageAttachments = fileAttachments?.some(file => file.type.startsWith('image/'));
+    const hasTextAttachments = fileAttachments?.some(file => 
+      file.type.startsWith('text/') || 
+      file.name.endsWith('.txt') || 
+      file.name.endsWith('.md') || 
+      file.name.endsWith('.json')
+    );
     setIsAnalyzingImage(hasImageAttachments || false);
+    setIsReadingText(hasTextAttachments || false);
     
     try {
       console.debug("[Chat] Using systemPrompt (first 160 chars):", systemPrompt.slice(0, 160));
@@ -469,6 +477,7 @@ const Index = () => {
     } finally {
       setBusy(false);
       setIsAnalyzingImage(false);
+      setIsReadingText(false);
       
       // Refocus input after all state updates using nested requestAnimationFrame
       requestAnimationFrame(() => {
@@ -841,7 +850,9 @@ async function startGeneration() {
                 <ChatBubble key={i} role={m.role} content={m.content} />
               ))}
               {busy && (
-                isAnalyzingImage ? <ImageAnalysisLoader /> : <Spinner />
+                isAnalyzingImage ? <ImageAnalysisLoader text="Analyzing Image..." /> :
+                isReadingText ? <ImageAnalysisLoader text="Reading text..." /> :
+                <Spinner />
               )}
             </div>
           </div>
