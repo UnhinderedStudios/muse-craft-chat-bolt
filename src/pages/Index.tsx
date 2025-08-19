@@ -384,7 +384,7 @@ const Index = () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.multiple = true;
-    input.accept = 'image/*,.txt,.md,.doc,.docx';
+    input.accept = 'image/*,.txt,.md,.doc,.docx,.pdf,.rtf,.odt,.json';
     
     input.onchange = async (e) => {
       const files = Array.from((e.target as HTMLInputElement).files || []);
@@ -423,9 +423,26 @@ const Index = () => {
 
   async function onSend() {
     const content = input.trim();
-    if (!content) return;
+    if (!content && attachedFiles.length === 0) return; // Allow attachments-only messages
     const fileAttachments = attachedFiles.length > 0 ? [...attachedFiles] : undefined;
-    const next = [...messages, { role: "user", content, attachments: fileAttachments } as ChatMessage];
+    
+    // Extract text from attachments on client side before sending
+    let appendedText = "";
+    try {
+      if (fileAttachments && fileAttachments.length > 0) {
+        console.log("[Chat] Extracting text from", fileAttachments.length, "attachments");
+        const { extractTextFromAttachments } = await import("@/lib/extractTextFromFiles");
+        appendedText = await extractTextFromAttachments(fileAttachments);
+        if (appendedText) {
+          console.log("[Chat] Extracted text length:", appendedText.length);
+        }
+      }
+    } catch (e) {
+      console.error("[Chat] Attachment text extraction failed:", e);
+    }
+    
+    const finalContent = appendedText ? `${content}\n\n${appendedText}` : content;
+    const next = [...messages, { role: "user", content: finalContent, attachments: fileAttachments } as ChatMessage];
     setMessages(next);
     setInput("");
     setAttachedFiles([]); // Clear attachments after sending
