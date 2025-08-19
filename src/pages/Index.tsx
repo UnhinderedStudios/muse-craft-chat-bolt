@@ -866,7 +866,7 @@ async function startGeneration() {
       <CyberHeader />
 
       {/* Two Column Layout - Chat + Form Left, New Container Right */}
-      <main className="max-w-7xl ml-[40px] mr-auto p-6">
+      <main className="max-w-7xl ml-[140px] mr-auto p-6">
         <div className="grid grid-cols-12 gap-[1.066rem]">
           {/* Left Column - Chat + Form (75% width) */}
           <div className="col-span-9 space-y-5">
