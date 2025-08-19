@@ -94,7 +94,8 @@ export const FullscreenKaraoke: React.FC<FullscreenKaraokeProps> = ({
 
   // Find which line contains the highlighted word
   const getCurrentLineIndex = (): number => {
-    if (highlightedIndex === -1) return -1;
+    // Start with first line if no word is highlighted yet
+    if (highlightedIndex === -1) return 0;
     
     let wordCount = 0;
     for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
@@ -104,15 +105,13 @@ export const FullscreenKaraoke: React.FC<FullscreenKaraokeProps> = ({
       }
       wordCount += lineWordCount;
     }
-    return -1;
+    return 0; // Fallback to first line
   };
 
   const currentLineIndex = getCurrentLineIndex();
 
   // Calculate distance-based opacity for lines
   const getLineOpacity = (lineIndex: number): number => {
-    if (currentLineIndex === -1) return 0.4;
-    
     const distance = Math.abs(lineIndex - currentLineIndex);
     if (distance === 0) return 1; // Current line - full white
     if (distance === 1) return 0.7; // Adjacent lines
@@ -146,7 +145,7 @@ export const FullscreenKaraoke: React.FC<FullscreenKaraokeProps> = ({
 
   // Auto-scroll to current line
   useEffect(() => {
-    if (currentLineIndex >= 0 && containerRef.current && !isUserScrolling && isPlaying) {
+    if (containerRef.current && !isUserScrolling) {
       const lineElements = containerRef.current.querySelectorAll('[data-line-index]');
       const currentLineElement = lineElements[currentLineIndex] as HTMLElement;
       
@@ -157,7 +156,22 @@ export const FullscreenKaraoke: React.FC<FullscreenKaraokeProps> = ({
         });
       }
     }
-  }, [currentLineIndex, isUserScrolling, isPlaying]);
+  }, [currentLineIndex, isUserScrolling]);
+
+  // Initial scroll to first line on mount
+  useEffect(() => {
+    if (containerRef.current) {
+      const lineElements = containerRef.current.querySelectorAll('[data-line-index]');
+      const firstLineElement = lineElements[0] as HTMLElement;
+      
+      if (firstLineElement) {
+        firstLineElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }
+    }
+  }, []);
 
   return (
     <div 
@@ -226,7 +240,7 @@ export const FullscreenKaraoke: React.FC<FullscreenKaraokeProps> = ({
                     <span
                       key={`word-${currentGlobalIndex}`}
                       className={cn(
-                        "inline-block transition-all duration-300 mx-1",
+                        "inline-block transition-all duration-300",
                         {
                           "animate-pulse": isHighlighted && isPlaying,
                         }
@@ -246,10 +260,16 @@ export const FullscreenKaraoke: React.FC<FullscreenKaraokeProps> = ({
                           : lineIndex === currentLineIndex
                             ? '0 0 15px rgba(255, 255, 255, 0.3)'
                             : '0 0 10px rgba(0, 0, 0, 0.8)',
-                        transform: isHighlighted && lineIndex === currentLineIndex 
-                          ? 'scale(1.1)' 
-                          : 'scale(1)',
-                        willChange: 'transform, font-size',
+                        paddingLeft: isHighlighted && lineIndex === currentLineIndex ? '0.5rem' : '0.25rem',
+                        paddingRight: isHighlighted && lineIndex === currentLineIndex ? '0.5rem' : '0.25rem',
+                        marginLeft: '0.125rem',
+                        marginRight: '0.125rem',
+                        position: 'relative',
+                        zIndex: isHighlighted && lineIndex === currentLineIndex ? 10 : 1,
+                        transformOrigin: 'center',
+                        whiteSpace: 'nowrap',
+                        contain: 'layout style',
+                        willChange: 'font-size, color, padding',
                         transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
                       }}
                     >
