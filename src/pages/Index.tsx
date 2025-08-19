@@ -1093,6 +1093,21 @@ async function startGeneration() {
               onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
               onSeek={handleSeek}
             />
+            
+            {/* Blank Template Element Below Karaoke */}
+            <div className="mt-5 bg-[#151515] rounded-2xl h-[200px] flex items-center justify-center">
+              <span className="text-muted-foreground text-sm">KARAOKE TEMPLATE</span>
+            </div>
+          </div>
+        </div>
+
+        {/* New Row Below Main Content - Two Side-by-Side Template Elements */}
+        <div className="mt-5 grid grid-cols-2 gap-[1.066rem]">
+          <div className="bg-[#151515] rounded-2xl h-[200px] flex items-center justify-center">
+            <span className="text-muted-foreground text-sm">KARAOKE TEMPLATE</span>
+          </div>
+          <div className="bg-[#151515] rounded-2xl h-[200px] flex items-center justify-center">
+            <span className="text-muted-foreground text-sm">KARAOKE TEMPLATE</span>
           </div>
         </div>
 
