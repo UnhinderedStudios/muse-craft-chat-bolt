@@ -21,6 +21,7 @@ import { ChatInput } from "@/components/chat/ChatInput";
 import { SongDetailsForm } from "@/components/song/SongDetailsForm";
 import { AudioPlayer } from "@/components/audio/AudioPlayer";
 import { KaraokeLyrics } from "@/components/audio/KaraokeLyrics";
+import { FullscreenKaraoke } from "@/components/karaoke/FullscreenKaraoke";
 import { KaraokeRightPanel } from "@/components/karaoke/KaraokeRightPanel";
 import { ResizableContainer } from "@/components/layout/ResizableContainer";
 import { TagInput } from "@/components/song/TagInput";
@@ -1272,40 +1273,13 @@ async function startGeneration() {
 
       {/* Full-screen Karaoke Overlay */}
       {showFullscreenKaraoke && versions[currentAudioIndex]?.words?.length > 0 && (
-        <div 
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-8 cursor-pointer"
-          onClick={() => setShowFullscreenKaraoke(false)}
-        >
-          <div className="w-full max-w-4xl flex flex-col items-center">
-            {/* Album Cover */}
-            <div className="mb-8">
-              {isGeneratingCovers ? (
-                <div className="w-48 h-48 bg-muted/20 rounded-lg flex items-center justify-center">
-                  <div className="text-white/60">Generating cover...</div>
-                </div>
-              ) : albumCovers ? (
-                <img 
-                  src={currentAudioIndex === 1 ? albumCovers.cover2 : albumCovers.cover1}
-                  alt="Album Cover"
-                  className="w-48 h-48 object-cover rounded-lg shadow-2xl border border-white/10"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              ) : null}
-            </div>
-            
-            {/* Karaoke Lyrics */}
-            <div className="w-full">
-              <KaraokeLyrics 
-                words={versions[currentAudioIndex].words}
-                currentTime={currentTime}
-                isPlaying={isPlaying}
-                className="min-h-[300px] max-h-[50vh] bg-transparent border-0 text-white text-2xl leading-relaxed"
-              />
-            </div>
-          </div>
-        </div>
+        <FullscreenKaraoke
+          words={versions[currentAudioIndex].words}
+          currentTime={currentTime}
+          isPlaying={isPlaying}
+          albumCoverUrl={albumCovers ? (currentAudioIndex === 1 ? albumCovers.cover2 : albumCovers.cover1) : undefined}
+          onClose={() => setShowFullscreenKaraoke(false)}
+        />
       )}
 
       <script
