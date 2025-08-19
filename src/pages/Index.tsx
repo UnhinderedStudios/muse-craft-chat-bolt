@@ -441,9 +441,14 @@ const Index = () => {
       console.error("[Chat] Attachment text extraction failed:", e);
     }
     
-    const finalContent = appendedText ? `${content}\n\n${appendedText}` : content;
-    const next = [...messages, { role: "user", content: finalContent, attachments: fileAttachments } as ChatMessage];
+    // Display original user content in chat (without extracted text)
+    const displayMessage = { role: "user", content, attachments: fileAttachments } as ChatMessage;
+    const next = [...messages, displayMessage];
     setMessages(next);
+    
+    // But send combined content to API (user content + extracted text)
+    const apiContent = appendedText ? `${content}\n\n${appendedText}` : content;
+    const apiMessages = [...messages, { role: "user", content: apiContent, attachments: fileAttachments } as ChatMessage];
     setInput("");
     setAttachedFiles([]); // Clear attachments after sending
 
@@ -471,7 +476,7 @@ const Index = () => {
     
     try {
       console.debug("[Chat] Using systemPrompt (first 160 chars):", systemPrompt.slice(0, 160));
-      const res = await api.chat(next, systemPrompt);
+      const res = await api.chat(apiMessages, systemPrompt);
       const assistantMsg = res.content;
       setMessages((m) => [...m, { role: "assistant", content: assistantMsg }]);
       
