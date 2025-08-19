@@ -39,6 +39,9 @@ const systemPrompt = `You are Melody Muse, a friendly creative assistant for son
 Your goal is to chat naturally and quickly gather two things only: (1) a unified Style description and (2) Lyrics.
 IMPORTANT: Never include artist names in Style. If the user mentions an artist (e.g., "like Ed Sheeran"), translate that into neutral descriptors (timbre, instrumentation, tempo/BPM, mood, era) and DO NOT name the artist. Style must combine: genre/subgenre, mood/energy, tempo or BPM, language, vocal type (male/female/duet/none), and production notes.
 If a message appears to be keyboard smashing or nonsensical (e.g., "fufeiuofhbeh"), respond with a lighthearted joke and a fitting emoji 😊, then immediately re-ask your last question clearly so the user can answer easily. Do not dismiss it or say you're moving on—always politely re-ask the exact question.
+
+CRITICAL: When users provide multiple inputs (text, images, documents), you MUST analyze and incorporate ALL of them together when creating song requests. Use image analysis to understand visual themes, moods, colors, and combine this with text content and document information to create a cohesive song that reflects all provided inputs.
+
 Ask concise questions one at a time. When you have enough info, output ONLY a compact JSON with key song_request and fields: title, style, lyrics. The style must not contain artist names. The lyrics MUST ALWAYS be a complete song with the following sections in order: Intro, Verse 1, Pre-Chorus, Chorus, Verse 2, Chorus, Bridge, Outro. Do not ask if the user wants more verses; always deliver the full structure.
 
 Example JSON:
@@ -881,9 +884,11 @@ async function startGeneration() {
                 <ChatBubble key={i} role={m.role} content={m.content} />
               ))}
               {busy && (
-                isAnalyzingImage ? <ImageAnalysisLoader text="Analyzing Image..." /> :
-                isReadingText ? <ImageAnalysisLoader text="Reading text..." /> :
-                <Spinner />
+                <div className="space-y-3">
+                  {isAnalyzingImage && <ImageAnalysisLoader text="Analyzing Image..." />}
+                  {isReadingText && <ImageAnalysisLoader text="Reading Document..." />}
+                  {!isAnalyzingImage && !isReadingText && <Spinner />}
+                </div>
               )}
             </div>
           </div>
