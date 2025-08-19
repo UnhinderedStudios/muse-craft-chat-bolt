@@ -45,15 +45,42 @@ Example JSON:
 Continue the conversation after the JSON if needed.`;
 
 function extractDetails(text: string): SongDetails | null {
-  // Look for a JSON fenced block and parse it
-  const fenceMatch = text.match(/```[\s\S]*?```/);
-  const candidate = fenceMatch ? fenceMatch[0].replace(/```/g, "").trim() : text.trim();
+  // Prefer the shared robust parser first
   try {
-    const obj = JSON.parse(candidate);
-    if (obj.song_request && typeof obj.song_request === "object") {
-      return obj.song_request as SongDetails;
+    const parsed = parseSongRequest(text);
+    if (parsed) {
+      return convertToSongDetails(parsed);
     }
-  } catch {}
+  } catch (e) {
+    console.debug("[Parse] parseSongRequest failed:", e);
+  }
+
+  // Handle language-tagged fenced blocks like ```json { ... } ```
+  try {
+    const fenceJson = text.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i);
+    if (fenceJson) {
+      const obj = JSON.parse(fenceJson[1]);
+      if (obj.song_request && typeof obj.song_request === "object") {
+        return obj.song_request as SongDetails;
+      }
+    }
+  } catch (e) {
+    console.debug("[Parse] Fenced JSON parse failed:", e);
+  }
+
+  // Fallback: look for plain JSON object anywhere in the text
+  try {
+    const jsonMatch = text.match(/\{"song_request"[\s\S]*?\}\}/);
+    if (jsonMatch) {
+      const obj = JSON.parse(jsonMatch[0]);
+      if (obj.song_request && typeof obj.song_request === "object") {
+        return obj.song_request as SongDetails;
+      }
+    }
+  } catch (e) {
+    console.debug("[Parse] Inline JSON parse failed:", e);
+  }
+
   return null;
 }
 
@@ -407,11 +434,12 @@ const Index = () => {
   }
   async function randomizeAll() {
     if (busy) return;
-    const content = "Please generate a completely randomized song_request and output ONLY the JSON in a fenced code block as specified. The lyrics must be a complete song containing Intro, Verse 1, Pre-Chorus, Chorus, Verse 2, Chorus, Bridge, and Outro. No extra text.";
+    const content = "Please generate a completely randomized song_request and output ONLY the JSON in a JSON fenced code block (```json ... ```). The lyrics must be a complete song containing Intro, Verse 1, Pre-Chorus, Chorus, Verse 2, Chorus, Bridge, and Outro. No extra text.";
     setBusy(true);
     try {
       // Use a minimal, stateless prompt so we don't get follow-ups that could override fields
       const minimal: ChatMessage[] = [{ role: "user", content }];
+      console.debug("[Dice] Sending randomize prompt. systemPrompt snippet:", systemPrompt.slice(0,120));
       const [r1, r2] = await Promise.allSettled([
         api.chat(minimal, systemPrompt),
         api.chat(minimal, systemPrompt),
@@ -419,8 +447,14 @@ const Index = () => {
       const msgs: string[] = [];
       if (r1.status === "fulfilled") msgs.push(r1.value.content);
       if (r2.status === "fulfilled") msgs.push(r2.value.content);
-      const extractions = msgs.map(extractDetails).filter(Boolean) as SongDetails[];
+      console.debug("[Dice] Received responses:", msgs.map(m => m.slice(0, 160)));
+      const extractions = msgs.map((m) => {
+        const parsed = parseSongRequest(m);
+        if (parsed) return convertToSongDetails(parsed);
+        return extractDetails(m);
+      }).filter(Boolean) as SongDetails[];
       if (extractions.length === 0) {
+        console.debug("[Dice] Failed to parse any random song. First response preview:", msgs[0]?.slice(0, 300));
         toast.message("Couldn't parse random song", { description: "Try again in a moment." });
       } else {
         const cleanedList = extractions.map((ex) => {
