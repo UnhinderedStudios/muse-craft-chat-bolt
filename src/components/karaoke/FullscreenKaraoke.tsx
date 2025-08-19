@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { TimestampedWord } from "@/types";
 
@@ -18,9 +18,6 @@ export const FullscreenKaraoke: React.FC<FullscreenKaraokeProps> = ({
   onClose
 }) => {
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
-  const [isUserScrolling, setIsUserScrolling] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Function to detect if a word is metadata/action rather than actual lyrics
   const isNonSungWord = (word: string): boolean => {
@@ -45,20 +42,61 @@ export const FullscreenKaraoke: React.FC<FullscreenKaraokeProps> = ({
     return nonSungPatterns.some(pattern => pattern.test(cleanWord));
   };
 
-  // Group words into lines for better fullscreen display
+  // Group words into lines respecting natural line breaks
   const groupWordsIntoLines = (words: TimestampedWord[]): TimestampedWord[][] => {
     const lines: TimestampedWord[][] = [];
     let currentLine: TimestampedWord[] = [];
     
-    words.forEach((word, index) => {
-      currentLine.push(word);
+    for (let i = 0; i < words.length; i++) {
+      const word = words[i];
       
-      // Check if this word ends with a line break or if we should start a new line
-      if (word.word.includes('\n') || currentLine.length >= 8) {
-        lines.push([...currentLine]);
-        currentLine = [];
+      // Check if the word contains a line break
+      if (word.word.includes('\n')) {
+        const parts = word.word.split('\n');
+        
+        // Add the part before the line break to the current line
+        if (parts[0].trim()) {
+          currentLine.push({
+            ...word,
+            word: parts[0].trim()
+          });
+        }
+        
+        // Finish the current line
+        if (currentLine.length > 0) {
+          lines.push(currentLine);
+          currentLine = [];
+        }
+        
+        // Add any parts after the line break to new lines
+        for (let j = 1; j < parts.length; j++) {
+          if (parts[j].trim()) {
+            if (j === parts.length - 1) {
+              currentLine.push({
+                ...word,
+                word: parts[j].trim()
+              });
+            } else {
+              lines.push([{
+                ...word,
+                word: parts[j].trim()
+              }]);
+            }
+          }
+        }
+      } else {
+        currentLine.push(word);
+        
+        // Natural break after 8-12 words or punctuation
+        if (currentLine.length >= 8 && 
+            (word.word.endsWith('.') || word.word.endsWith(',') || 
+             word.word.endsWith('!') || word.word.endsWith('?') ||
+             isNonSungWord(word.word))) {
+          lines.push(currentLine);
+          currentLine = [];
+        }
       }
-    });
+    }
     
     if (currentLine.length > 0) {
       lines.push(currentLine);
@@ -94,7 +132,6 @@ export const FullscreenKaraoke: React.FC<FullscreenKaraokeProps> = ({
 
   // Find which line contains the highlighted word
   const getCurrentLineIndex = (): number => {
-    // Start with first line if no word is highlighted yet
     if (highlightedIndex === -1) return 0;
     
     let wordCount = 0;
@@ -105,98 +142,49 @@ export const FullscreenKaraoke: React.FC<FullscreenKaraokeProps> = ({
       }
       wordCount += lineWordCount;
     }
-    return 0; // Fallback to first line
+    return 0;
   };
 
   const currentLineIndex = getCurrentLineIndex();
 
-  // Calculate distance-based opacity for lines
-  const getLineOpacity = (lineIndex: number): number => {
-    const distance = Math.abs(lineIndex - currentLineIndex);
-    if (distance === 0) return 1; // Current line - full white
-    if (distance === 1) return 0.7; // Adjacent lines
-    if (distance === 2) return 0.4; // Further lines
-    return 0.2; // Very distant lines - almost black
-  };
-
-  // Get word index within the current line
-  const getWordIndexInLine = (globalWordIndex: number): number => {
-    let wordCount = 0;
-    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-      const lineWordCount = lines[lineIndex].length;
-      if (globalWordIndex >= wordCount && globalWordIndex < wordCount + lineWordCount) {
-        return globalWordIndex - wordCount;
-      }
-      wordCount += lineWordCount;
-    }
-    return -1;
-  };
-
-  // Detect user scrolling
-  const handleScroll = () => {
-    setIsUserScrolling(true);
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
-    scrollTimeoutRef.current = setTimeout(() => {
-      setIsUserScrolling(false);
-    }, 1500);
-  };
-
-  // Auto-scroll to current line
-  useEffect(() => {
-    if (containerRef.current && !isUserScrolling) {
-      const lineElements = containerRef.current.querySelectorAll('[data-line-index]');
-      const currentLineElement = lineElements[currentLineIndex] as HTMLElement;
-      
-      if (currentLineElement) {
-        currentLineElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center'
-        });
-      }
-    }
-  }, [currentLineIndex, isUserScrolling]);
-
-  // Initial scroll to first line on mount with delay to ensure DOM is ready
-  useEffect(() => {
-    const scrollToFirstLine = () => {
-      if (containerRef.current) {
-        const lineElements = containerRef.current.querySelectorAll('[data-line-index]');
-        const firstLineElement = lineElements[0] as HTMLElement;
-        
-        if (firstLineElement) {
-          firstLineElement.scrollIntoView({
-            behavior: 'auto', // Use 'auto' for immediate positioning
-            block: 'center'
-          });
-        }
-      }
-    };
-
-    // Immediate scroll
-    scrollToFirstLine();
+  // Calculate visible lines (sliding window of 5 lines: current + 2 above + 2 below)
+  const getVisibleLines = () => {
+    const windowSize = 5;
+    const halfWindow = Math.floor(windowSize / 2);
     
-    // Delayed scroll to ensure DOM is fully rendered
-    const timeoutId = setTimeout(scrollToFirstLine, 100);
+    let startIndex = Math.max(0, currentLineIndex - halfWindow);
+    let endIndex = Math.min(lines.length, startIndex + windowSize);
     
-    return () => clearTimeout(timeoutId);
-  }, []);
-
-  // Force scroll to first line when song starts (first word becomes highlighted)
-  useEffect(() => {
-    if (highlightedIndex === 0 && containerRef.current) {
-      const lineElements = containerRef.current.querySelectorAll('[data-line-index]');
-      const firstLineElement = lineElements[0] as HTMLElement;
-      
-      if (firstLineElement) {
-        firstLineElement.scrollIntoView({
-          behavior: 'auto',
-          block: 'center'
-        });
-      }
+    // Adjust if we're near the end
+    if (endIndex - startIndex < windowSize && startIndex > 0) {
+      startIndex = Math.max(0, endIndex - windowSize);
     }
-  }, [highlightedIndex]);
+    
+    return lines.slice(startIndex, endIndex).map((line, index) => ({
+      line,
+      originalIndex: startIndex + index,
+      isCurrentLine: startIndex + index === currentLineIndex,
+      distanceFromCurrent: Math.abs(startIndex + index - currentLineIndex)
+    }));
+  };
+
+  const visibleLines = getVisibleLines();
+
+  // Calculate vertical offset to center the current line
+  const getVerticalOffset = () => {
+    const totalVisibleLines = visibleLines.length;
+    const currentLinePositionInWindow = visibleLines.findIndex(l => l.isCurrentLine);
+    
+    if (currentLinePositionInWindow === -1) return 0;
+    
+    // Calculate offset to center the current line
+    const lineHeight = 120; // Approximate height per line in pixels
+    const centerOffset = (totalVisibleLines / 2 - currentLinePositionInWindow - 0.5) * lineHeight;
+    
+    return centerOffset;
+  };
+
+  const verticalOffset = getVerticalOffset();
 
   return (
     <div 
@@ -212,45 +200,41 @@ export const FullscreenKaraoke: React.FC<FullscreenKaraokeProps> = ({
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: `url(${albumCoverUrl})`,
-            opacity: 0.11 // 89% opacity over black = 11% visible
+            opacity: 0.11
           }}
         />
       )}
       
-      {/* Lyrics Container */}
-      <div 
-        ref={containerRef}
-        onScroll={handleScroll}
-        className="absolute inset-0 overflow-y-auto px-8 py-16 flex flex-col justify-center"
-        style={{
-          scrollbarWidth: 'none',
-          msOverflowStyle: 'none'
-        }}
-      >
-        <style>{`
-          .fullscreen-karaoke::-webkit-scrollbar {
-            display: none;
-          }
-        `}</style>
-        
-        <div className="max-w-6xl mx-auto space-y-6">
-          {lines.map((line, lineIndex) => {
-            const lineOpacity = getLineOpacity(lineIndex);
-            let globalWordIndex = 0;
+      {/* Centered Lyrics Container - No Scrolling */}
+      <div className="absolute inset-0 flex items-center justify-center px-8">
+        <div 
+          className="relative max-w-6xl w-full"
+          style={{
+            transform: `translateY(${verticalOffset}px)`,
+            transition: 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}
+        >
+          {visibleLines.map((lineData) => {
+            const { line, originalIndex, isCurrentLine, distanceFromCurrent } = lineData;
             
+            // Calculate opacity based on distance from current line
+            const lineOpacity = distanceFromCurrent === 0 ? 1 : 
+                              distanceFromCurrent === 1 ? 0.7 : 
+                              distanceFromCurrent === 2 ? 0.4 : 0.2;
+            
+            let globalWordIndex = 0;
             // Calculate the starting global index for this line
-            for (let i = 0; i < lineIndex; i++) {
+            for (let i = 0; i < originalIndex; i++) {
               globalWordIndex += lines[i].length;
             }
             
             return (
               <div 
-                key={`line-${lineIndex}`}
-                data-line-index={lineIndex}
-                className="text-center leading-relaxed transition-all duration-500"
+                key={`line-${originalIndex}`}
+                className="text-center py-8 leading-relaxed transition-all duration-500"
                 style={{
                   opacity: lineOpacity,
-                  textShadow: lineIndex === currentLineIndex 
+                  textShadow: isCurrentLine 
                     ? '0 0 20px rgba(255, 255, 255, 0.5), 0 0 40px rgba(255, 255, 255, 0.3)' 
                     : '0 0 10px rgba(0, 0, 0, 0.8)'
                 }}
@@ -258,7 +242,6 @@ export const FullscreenKaraoke: React.FC<FullscreenKaraokeProps> = ({
                 {line.map((word, wordIndexInLine) => {
                   const currentGlobalIndex = globalWordIndex + wordIndexInLine;
                   const isHighlighted = currentGlobalIndex === highlightedIndex;
-                  const isPast = currentTime > word.end;
                   const isNonSung = isNonSungWord(word.word);
                   
                   return (
@@ -271,26 +254,26 @@ export const FullscreenKaraoke: React.FC<FullscreenKaraokeProps> = ({
                         }
                       )}
                       style={{
-                        fontSize: lineIndex === currentLineIndex 
+                        fontSize: isCurrentLine 
                           ? (isHighlighted ? '4rem' : '3.5rem') 
                           : '2.5rem',
-                        fontWeight: lineIndex === currentLineIndex ? '700' : '500',
+                        fontWeight: isCurrentLine ? '700' : '500',
                         color: isNonSung 
-                          ? `rgba(249, 44, 143, ${lineOpacity})` // Pink color for non-sung words
-                          : isHighlighted && lineIndex === currentLineIndex
+                          ? `rgba(249, 44, 143, ${lineOpacity})`
+                          : isHighlighted && isCurrentLine
                             ? '#ffffff'
                             : `rgba(255, 255, 255, ${lineOpacity})`,
-                        textShadow: isHighlighted && lineIndex === currentLineIndex
+                        textShadow: isHighlighted && isCurrentLine
                           ? '0 0 30px rgba(255, 255, 255, 0.8), 0 0 60px rgba(255, 255, 255, 0.4)'
-                          : lineIndex === currentLineIndex
+                          : isCurrentLine
                             ? '0 0 15px rgba(255, 255, 255, 0.3)'
                             : '0 0 10px rgba(0, 0, 0, 0.8)',
-                        paddingLeft: isHighlighted && lineIndex === currentLineIndex ? '0.5rem' : '0.25rem',
-                        paddingRight: isHighlighted && lineIndex === currentLineIndex ? '0.5rem' : '0.25rem',
+                        paddingLeft: isHighlighted && isCurrentLine ? '0.5rem' : '0.25rem',
+                        paddingRight: isHighlighted && isCurrentLine ? '0.5rem' : '0.25rem',
                         marginLeft: '0.125rem',
                         marginRight: '0.125rem',
                         position: 'relative',
-                        zIndex: isHighlighted && lineIndex === currentLineIndex ? 10 : 1,
+                        zIndex: isHighlighted && isCurrentLine ? 10 : 1,
                         transformOrigin: 'center',
                         whiteSpace: 'nowrap',
                         contain: 'layout style',
