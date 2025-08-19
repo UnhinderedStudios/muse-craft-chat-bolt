@@ -163,7 +163,12 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             src={audioUrls[currentIndex]}
             onTimeUpdate={() => {
               if (audioRef.current) {
-                setCurrentTime(audioRef.current.currentTime);
+                // Higher frequency time updates for better karaoke sync
+                requestAnimationFrame(() => {
+                  if (audioRef.current) {
+                    setCurrentTime(audioRef.current.currentTime);
+                  }
+                });
               }
             }}
             onLoadedMetadata={() => {

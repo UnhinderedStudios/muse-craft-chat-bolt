@@ -107,21 +107,24 @@ export const FullscreenKaraoke: React.FC<FullscreenKaraokeProps> = ({
 
   const lines = groupWordsIntoLines(words);
 
-  // Find current word and line
+  // Find current word and line with timing offset compensation
   useEffect(() => {
     if (words.length === 0) return;
 
+    // Add 0.3s timing offset to compensate for delay
+    const adjustedTime = currentTime + 0.3;
+
     let currentWordIndex = -1;
     for (let i = 0; i < words.length; i++) {
-      if (currentTime >= words[i].start && currentTime <= words[i].end) {
+      if (adjustedTime >= words[i].start && adjustedTime <= words[i].end) {
         currentWordIndex = i;
         break;
       }
-      if (i < words.length - 1 && currentTime > words[i].end && currentTime < words[i + 1].start) {
+      if (i < words.length - 1 && adjustedTime > words[i].end && adjustedTime < words[i + 1].start) {
         currentWordIndex = i;
         break;
       }
-      if (i === words.length - 1 && currentTime > words[i].end) {
+      if (i === words.length - 1 && adjustedTime > words[i].end) {
         currentWordIndex = i;
         break;
       }
@@ -247,12 +250,7 @@ export const FullscreenKaraoke: React.FC<FullscreenKaraokeProps> = ({
                   return (
                     <span
                       key={`word-${currentGlobalIndex}`}
-                      className={cn(
-                        "inline-block transition-all duration-300",
-                        {
-                          "animate-pulse": isHighlighted && isPlaying,
-                        }
-                      )}
+                      className="inline-block transition-all duration-300"
                       style={{
                         fontSize: isCurrentLine 
                           ? (isHighlighted ? '4rem' : '3.5rem') 
