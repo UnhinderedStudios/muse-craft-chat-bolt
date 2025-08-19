@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { ChatMessage } from "@/types";
+import { ChatMessage, FileAttachment } from "@/types";
 import { api } from "@/lib/api";
 // System prompt will be passed from parent component
 
@@ -16,10 +16,10 @@ export function useChat() {
     });
   }, [messages]);
 
-  const sendMessage = async (message: string, systemPrompt: string) => {
+  const sendMessage = async (message: string, systemPrompt: string, attachments?: FileAttachment[]) => {
     if (!message.trim()) return;
 
-    const userMessage: ChatMessage = { role: "user", content: message };
+    const userMessage: ChatMessage = { role: "user", content: message, attachments };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput("");

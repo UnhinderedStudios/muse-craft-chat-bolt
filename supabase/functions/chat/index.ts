@@ -26,9 +26,40 @@ serve(async (req) => {
       return cors(new Response(JSON.stringify({ error: "messages must be an array" }), { status: 400 }));
     }
 
+    // Convert messages to OpenAI format, handling attachments
     const openAiMessages = [
       ...(system ? [{ role: "system", content: system }] : []),
-      ...messages,
+      ...messages.map((msg: any) => {
+        if (msg.attachments && msg.attachments.length > 0) {
+          // Create multimodal content for messages with attachments
+          const content: any[] = [{ type: "text", text: msg.content }];
+          
+          for (const attachment of msg.attachments) {
+            if (attachment.type.startsWith('image/')) {
+              content.push({
+                type: "image_url",
+                image_url: {
+                  url: `data:${attachment.type};base64,${attachment.data}`
+                }
+              });
+            } else if (attachment.type.includes('text') || attachment.name.endsWith('.txt') || attachment.name.endsWith('.md')) {
+              // For text files, decode and include content
+              try {
+                const textContent = atob(attachment.data);
+                content[0].text += `\n\nFile "${attachment.name}":\n${textContent}`;
+              } catch (e) {
+                console.error('Error decoding text file:', e);
+              }
+            }
+          }
+          
+          return {
+            role: msg.role,
+            content: content
+          };
+        }
+        return msg;
+      }),
     ];
 
     const resp = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -41,6 +72,7 @@ serve(async (req) => {
         model: "gpt-4.1-2025-04-14",
         messages: openAiMessages,
         temperature: 0.7,
+        max_tokens: 4000,
       }),
     });
 

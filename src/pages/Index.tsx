@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { api, type SongDetails } from "@/lib/api";
+import { FileAttachment } from "@/types";
 import { sanitizeStyle } from "@/lib/styleSanitizer";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import { Dice5, Mic, Upload, Grid3X3, Plus, List, Play, Pause } from "lucide-react";
+import { Dice5, Mic, Upload, Grid3X3, Plus, List, Play, Pause, X } from "lucide-react";
 
 // Components
 import { CyberHeader } from "@/components/cyber/CyberHeader";
@@ -168,6 +169,7 @@ const Index = () => {
   const audioRefs = useRef<HTMLAudioElement[]>([]);
   const lastDiceAt = useRef<number>(0);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [attachedFiles, setAttachedFiles] = useState<FileAttachment[]>([]);
 
   // Handle chat resize functionality
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -375,13 +377,55 @@ const Index = () => {
     }
   };
 
+  const handleFileUpload = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = 'image/*,.txt,.md,.doc,.docx';
+    
+    input.onchange = async (e) => {
+      const files = Array.from((e.target as HTMLInputElement).files || []);
+      const newAttachments: FileAttachment[] = [];
+      
+      for (const file of files) {
+        if (file.size > 20 * 1024 * 1024) { // 20MB limit
+          console.error(`File ${file.name} is too large`);
+          continue;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64 = reader.result as string;
+          newAttachments.push({
+            name: file.name,
+            type: file.type,
+            size: file.size,
+            data: base64.split(',')[1] // Remove data:type;base64, prefix
+          });
+          
+          if (newAttachments.length === files.length) {
+            setAttachedFiles(prev => [...prev, ...newAttachments]);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    
+    input.click();
+  };
+
+  const removeFile = (index: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   async function onSend() {
     const content = input.trim();
     if (!content) return;
-    const next = [...messages, { role: "user", content } as ChatMessage];
+    const fileAttachments = attachedFiles.length > 0 ? [...attachedFiles] : undefined;
+    const next = [...messages, { role: "user", content, attachments: fileAttachments } as ChatMessage];
     setMessages(next);
     setInput("");
-
+    setAttachedFiles([]); // Clear attachments after sending
 
     setBusy(true);
     try {
@@ -796,9 +840,42 @@ async function startGeneration() {
 
           {/* Tools Section - positioned absolute at bottom with fade background */}
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#151515] via-[#151515]/98 via-[#151515]/90 to-transparent pt-8 pb-8 px-8">
-            <div className="flex items-end gap-3">
-            {/* Chat Input - DEBUG: Should be 56px height (p-3 = 12px*2 + 32px icon height) */}
-            <div className="flex-1 relative bg-[#040404] rounded-xl p-3 min-h-[56px] flex items-center hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] focus-within:shadow-[0_0_5px_rgba(255,255,255,0.5)] focus-within:hover:shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-shadow duration-200">
+            <div className="space-y-4">
+              {/* File Attachments Preview */}
+              {attachedFiles.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {attachedFiles.map((file, index) => (
+                    <div key={index} className="bg-[#040404] rounded-lg p-2 flex items-center gap-2 text-sm text-white/80">
+                      <div className="flex items-center gap-2">
+                        {file.type.startsWith('image/') ? (
+                          <div className="w-6 h-6 bg-accent-primary/20 rounded flex items-center justify-center">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                            </svg>
+                          </div>
+                        ) : (
+                          <div className="w-6 h-6 bg-accent-primary/20 rounded flex items-center justify-center">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                            </svg>
+                          </div>
+                        )}
+                        <span className="truncate max-w-[100px]">{file.name}</span>
+                      </div>
+                      <button
+                        onClick={() => removeFile(index)}
+                        className="p-1 hover:bg-white/10 rounded text-white/60 hover:text-white"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <div className="flex items-end gap-3">
+              {/* Chat Input - DEBUG: Should be 56px height (p-3 = 12px*2 + 32px icon height) */}
+              <div className="flex-1 relative bg-[#040404] rounded-xl p-3 min-h-[56px] flex items-center hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] focus-within:shadow-[0_0_5px_rgba(255,255,255,0.5)] focus-within:hover:shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-shadow duration-200">
               <textarea
                 ref={chatInputRef}
                 value={input}
@@ -829,21 +906,22 @@ async function startGeneration() {
                 </svg>
               </button>
             </div>
-            {/* Icons Container - DEBUG: Should be 56px height (p-3 = 12px*2 + p-2*2 = 8px*2 + 20px icon = 56px) */}
-            <div className="bg-[#040404] rounded-xl p-3 flex gap-2 min-h-[56px] items-center hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] transition-shadow duration-200">
-              <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
-                <Upload size={20} />
-              </button>
+              {/* Icons Container - DEBUG: Should be 56px height (p-3 = 12px*2 + p-2*2 = 8px*2 + 20px icon = 56px) */}
+              <div className="bg-[#040404] rounded-xl p-3 flex gap-2 min-h-[56px] items-center hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] transition-shadow duration-200">
+                <button onClick={handleFileUpload} className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
+                  <Upload size={20} />
+                </button>
               <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
                 <Grid3X3 size={20} />
               </button>
               <button className="p-2 text-white hover:text-accent-primary transition-colors" onClick={randomizeAll} disabled={busy}>
                 <Dice5 size={20} />
               </button>
-              <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
-                <List size={20} />
-              </button>
-            </div>
+                <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
+                  <List size={20} />
+                </button>
+              </div>
+              </div>
             </div>
           </div>
           
