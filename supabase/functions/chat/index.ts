@@ -54,6 +54,7 @@ serve(async (req) => {
                 console.error('Error decoding text file:', e);
               }
           }
+          }
           
           return {
             role: msg.role,
