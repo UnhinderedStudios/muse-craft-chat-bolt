@@ -1095,7 +1095,7 @@ async function startGeneration() {
             />
             
             {/* Blank Element Under Karaoke Panel */}
-            <div className="bg-[#151515] rounded-2xl h-[500px] mt-5 flex items-center justify-center">
+            <div className="bg-[#151515] rounded-2xl h-[320px] mt-5 flex items-center justify-center">
               <span className="text-text-secondary">TEMPLATE</span>
             </div>
           </div>
