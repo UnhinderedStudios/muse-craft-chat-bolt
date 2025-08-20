@@ -1,7 +1,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
-interface CyberCardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface CyberCardProps {
   children: React.ReactNode;
   className?: string;
   variant?: "default" | "alt";
@@ -10,12 +10,10 @@ interface CyberCardProps extends React.HTMLAttributes<HTMLDivElement> {
 export const CyberCard: React.FC<CyberCardProps> = ({ 
   children, 
   className, 
-  variant = "default",
-  ...props
+  variant = "default" 
 }) => {
   return (
     <div 
-      {...props}
       className={cn(
         "rounded-card p-6 border border-border-main",
         variant === "default" ? "bg-card" : "bg-card-alt",
