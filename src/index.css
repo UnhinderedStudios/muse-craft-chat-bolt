@@ -115,9 +115,9 @@ All colors MUST be HSL.
   .app-grid {
     /* Base track sizes */
     --left-col: 260px;                     /* Sessions */
-    --chat-base: minmax(720px, 1fr);       /* Chat + Form (resizes, never smaller than 720px) */
-    --karaoke-base: 360px;                 /* Karaoke + Template */
-    --track-base: minmax(320px, 0.9fr);    /* Track list (resizes with page) */
+    --chat-base: minmax(960px, 1.34fr);    /* Chat/Form 34% wider */
+    --karaoke-base: 270px;                 /* Karaoke/Template 25% slimmer */
+    --track-base: minmax(400px, 1.25fr);   /* Track List 25% wider */
 
     /* "Bumps" to widen columns precisely */
     --chat-bump: 0px;
