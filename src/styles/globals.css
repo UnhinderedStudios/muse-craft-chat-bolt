@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* === App layout grid utilities === */
 @layer utilities {
   .app-grid {
