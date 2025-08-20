@@ -4,43 +4,33 @@ import { useChat } from "@/hooks/use-chat";
 import { cn } from "@/lib/utils";
 
 interface ChatContainerProps {
-  chatHeight: number;
-  scrollTop: number;
-  setScrollTop: (scrollTop: number) => void;
   messages: any[];
-  scrollerRef: React.RefObject<HTMLDivElement>;
+  input: string;
+  setInput: (input: string) => void;
+  onSend: () => void;
+  busy: boolean;
+  isAnalyzingImage: boolean;
+  isReadingText: boolean;
+  attachedFiles: any[];
+  onFileUpload: () => void;
+  removeFile: (index: number) => void;
+  chatHeight: number;
 }
 
 export const ChatContainer: React.FC<ChatContainerProps> = ({
-  chatHeight,
-  scrollTop,
-  setScrollTop,
   messages,
-  scrollerRef
+  chatHeight
 }) => {
   return (
-    <>
-      {/* Gradient overlay at top when scrolled */}
-      {scrollTop > 50 && (
-        <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none" />
-      )}
-      
-      {/* Chat Conversation - dynamic height */}
-      <div 
-        className="overflow-y-auto custom-scrollbar pl-8 pr-6 pt-8"
-        ref={scrollerRef}
-        style={{ height: `${chatHeight}px` }}
-        onScroll={(e) => {
-          const target = e.target as HTMLDivElement;
-          setScrollTop(target.scrollTop);
-        }}
-      >
-        <div className="space-y-4 pr-4 pl-4 pt-4 pb-32">
-          {messages.map((msg, i) => (
-            <ChatBubble key={i} role={msg.role} content={msg.content} />
-          ))}
-        </div>
+    <div 
+      className="overflow-y-auto custom-scrollbar pl-8 pr-6 pt-8"
+      style={{ height: `${chatHeight}px` }}
+    >
+      <div className="space-y-4 pr-4 pl-4 pt-4 pb-32">
+        {messages.map((msg, i) => (
+          <ChatBubble key={i} role={msg.role} content={msg.content} />
+        ))}
       </div>
-    </>
+    </div>
   );
 };

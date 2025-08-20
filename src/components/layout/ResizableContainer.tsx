@@ -3,15 +3,17 @@ import { cn } from "@/lib/utils";
 
 interface ResizableContainerProps {
   children: React.ReactNode;
+  chatHeight: number;
+  onMouseDown: (e: React.MouseEvent) => void;
   isResizing: boolean;
-  handleMouseDown: (e: React.MouseEvent) => void;
   className?: string;
 }
 
 export const ResizableContainer: React.FC<ResizableContainerProps> = ({
   children,
+  chatHeight,
+  onMouseDown,
   isResizing,
-  handleMouseDown,
   className
 }) => {
   return (
@@ -24,7 +26,7 @@ export const ResizableContainer: React.FC<ResizableContainerProps> = ({
           "absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize group transition-colors duration-200",
           isResizing ? "bg-accent-primary/50" : "bg-white/20 hover:bg-white/40"
         )}
-        onMouseDown={handleMouseDown}
+        onMouseDown={onMouseDown}
         style={{ 
           clipPath: 'polygon(100% 0%, 0% 100%, 100% 100%)',
           borderBottomRightRadius: '16px' 
