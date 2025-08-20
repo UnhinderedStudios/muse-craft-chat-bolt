@@ -898,14 +898,14 @@ async function startGeneration() {
       <main className="max-w-[1583px] mr-auto p-6">
         <div className="flex gap-5">
           {/* Sessions Column (263px width) */}
-          <div className="w-[263px] space-y-5 relative">
+          <div className="w-[263px] flex flex-col gap-5">
             <div className="bg-[#151515] rounded-2xl p-6">
               <h3 className="text-white font-semibold mb-4">Sessions</h3>
               <p className="text-gray-400 text-sm">Session management coming soon...</p>
             </div>
             
-            {/* Session 2 - positioned below Session 1 but spanning to match Form height */}
-            <div className="bg-[#151515] rounded-2xl p-6 w-[263px]" style={{ height: `${formContainerHeight}px` }}>
+            {/* Session 2 - positioned below Session 1 and stretching to align bottom with form */}
+            <div className="bg-[#151515] rounded-2xl p-6 w-[263px] flex-1">
               <h3 className="text-white font-semibold mb-4">Session 2</h3>
               <p className="text-gray-400 text-sm">Additional session functionality...</p>
             </div>
