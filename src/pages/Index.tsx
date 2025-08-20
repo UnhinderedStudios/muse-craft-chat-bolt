@@ -177,8 +177,6 @@ const Index = () => {
   const lastDiceAt = useRef<number>(0);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [attachedFiles, setAttachedFiles] = useState<FileAttachment[]>([]);
-  const formContainerRef = useRef<HTMLDivElement>(null);
-  const [formContainerHeight, setFormContainerHeight] = useState<number>(0);
 
   // Handle chat resize functionality
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -208,32 +206,6 @@ const Index = () => {
     scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  // Measure the real height of the form container
-  useEffect(() => {
-    const measureHeight = () => {
-      if (formContainerRef.current) {
-        const height = formContainerRef.current.getBoundingClientRect().height;
-        setFormContainerHeight(height);
-      }
-    };
-
-    measureHeight();
-    // Re-measure after a short delay to ensure all elements are rendered
-    const timer = setTimeout(measureHeight, 100);
-    
-    // Add resize observer to update height if layout changes
-    if (formContainerRef.current) {
-      const resizeObserver = new ResizeObserver(measureHeight);
-      resizeObserver.observe(formContainerRef.current);
-      
-      return () => {
-        resizeObserver.disconnect();
-        clearTimeout(timer);
-      };
-    }
-
-    return () => clearTimeout(timer);
-  }, [details, styleTags, busy, generationProgress]);
 
   useEffect(() => {
     // reset audio refs when result list changes
@@ -896,237 +868,149 @@ async function startGeneration() {
 
       {/* Three Column Layout - Sessions, Chat + Form, Karaoke + Template */}
       <main className="max-w-[1583px] mr-auto p-6">
-        <div className="flex gap-5">
-          {/* Sessions Column (263px width) */}
-          <div className="w-[263px] flex flex-col gap-5">
-            <div className="bg-[#151515] rounded-2xl p-6">
-              <h3 className="text-white font-semibold mb-4">Sessions</h3>
-              <p className="text-gray-400 text-sm">Session management coming soon...</p>
-            </div>
+        {/* 3 cols, 2 rows */}
+        <div className="grid grid-cols-[263px,960px,320px] grid-rows-[auto,auto] gap-5 items-start">
+
+          {/* Row 1 */}
+          <div className="row-start-1 col-start-1 bg-[#151515] rounded-2xl p-6">
+            <h3 className="text-white font-semibold mb-4">Sessions</h3>
+            <p className="text-gray-400 text-sm">Session management coming soon...</p>
+          </div>
+
+          <div className="row-start-1 col-start-2 bg-[#151515] rounded-2xl relative overflow-hidden">
+            {/* Fade gradient overlay - only shows when scrolled */}
+            {scrollTop > 0 && (
+              <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none" />
+            )}
             
-            {/* Session 2 - aligned with form section */}
+            {/* Chat Conversation - dynamic height */}
             <div 
-              className="bg-[#151515] rounded-2xl p-6 w-[263px] mt-5"
-              style={{ 
-                height: formContainerHeight > 0 ? `${formContainerHeight}px` : '400px'
+              className="overflow-y-auto custom-scrollbar pl-8 pr-6 pt-8"
+              ref={scrollerRef}
+              style={{ height: `${chatHeight}px` }}
+              onScroll={(e) => {
+                const target = e.target as HTMLDivElement;
+                setScrollTop(target.scrollTop);
               }}
             >
-              <h3 className="text-white font-semibold mb-4">Session 2</h3>
-              <p className="text-gray-400 text-sm">Additional session functionality...</p>
+              <div className="space-y-4 pr-4 pl-4 pt-4 pb-32">
+                {/* Chat messages */}
+                {messages.map((m, i) => (
+                  <ChatBubble key={i} role={m.role} content={m.content} />
+                ))}
+                {busy && (
+                  <div className="space-y-3">
+                    {isAnalyzingImage && <ImageAnalysisLoader text="Analyzing Image..." />}
+                    {isReadingText && <ImageAnalysisLoader text="Reading Document..." />}
+                    {!isAnalyzingImage && !isReadingText && <Spinner />}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-          {/* Chat + Form Column (960px width) */}
-          <div className="w-[960px] space-y-5">
-        {/* Chat Container with #151515 background - extended to bottom */}
-        <div className="bg-[#151515] rounded-2xl relative overflow-hidden">
-          {/* Fade gradient overlay - only shows when scrolled */}
-          {scrollTop > 0 && (
-            <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none" />
-          )}
-          
-          {/* Chat Conversation - dynamic height */}
-          <div 
-            className="overflow-y-auto custom-scrollbar pl-8 pr-6 pt-8"
-            ref={scrollerRef}
-            style={{ height: `${chatHeight}px` }}
-            onScroll={(e) => {
-              const target = e.target as HTMLDivElement;
-              setScrollTop(target.scrollTop);
-            }}
-          >
-            <div className="space-y-4 pr-4 pl-4 pt-4 pb-32">
-              {/* Chat messages */}
-              {messages.map((m, i) => (
-                <ChatBubble key={i} role={m.role} content={m.content} />
-              ))}
-              {busy && (
-                <div className="space-y-3">
-                  {isAnalyzingImage && <ImageAnalysisLoader text="Analyzing Image..." />}
-                  {isReadingText && <ImageAnalysisLoader text="Reading Document..." />}
-                  {!isAnalyzingImage && !isReadingText && <Spinner />}
-                </div>
-              )}
-            </div>
-          </div>
 
-          {/* Tools Section - positioned absolute at bottom with fade background */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#151515] via-[#151515]/98 via-[#151515]/90 to-transparent pt-8 pb-8 px-8">
-            <div className="space-y-4">
-              {/* File Attachments Preview */}
-              {attachedFiles.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {attachedFiles.map((file, index) => (
-                    <div key={index} className="bg-[#040404] rounded-lg p-2 flex items-center gap-2 text-sm text-white/80">
-                      <div className="flex items-center gap-2">
-                        {file.type.startsWith('image/') ? (
-                          <div className="w-6 h-6 bg-accent-primary/20 rounded flex items-center justify-center">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
-                            </svg>
-                          </div>
-                        ) : (
-                          <div className="w-6 h-6 bg-accent-primary/20 rounded flex items-center justify-center">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-                            </svg>
-                          </div>
-                        )}
-                        <span className="truncate max-w-[100px]">{file.name}</span>
+            {/* Tools Section - positioned absolute at bottom with fade background */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#151515] via-[#151515]/98 via-[#151515]/90 to-transparent pt-8 pb-8 px-8">
+              <div className="space-y-4">
+                {/* File Attachments Preview */}
+                {attachedFiles.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {attachedFiles.map((file, index) => (
+                      <div key={index} className="bg-[#040404] rounded-lg p-2 flex items-center gap-2 text-sm text-white/80">
+                        <div className="flex items-center gap-2">
+                          {file.type.startsWith('image/') ? (
+                            <div className="w-6 h-6 bg-accent-primary/20 rounded flex items-center justify-center">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                              </svg>
+                            </div>
+                          ) : (
+                            <div className="w-6 h-6 bg-accent-primary/20 rounded flex items-center justify-center">
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                              </svg>
+                            </div>
+                          )}
+                          <span className="truncate max-w-[100px]">{file.name}</span>
+                        </div>
+                        <button
+                          onClick={() => removeFile(index)}
+                          className="p-1 hover:bg-white/10 rounded text-white/60 hover:text-white"
+                        >
+                          <X size={12} />
+                        </button>
                       </div>
-                      <button
-                        onClick={() => removeFile(index)}
-                        className="p-1 hover:bg-white/10 rounded text-white/60 hover:text-white"
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              
-              <div className="flex items-end gap-3">
-              {/* Chat Input - DEBUG: Should be 56px height (p-3 = 12px*2 + 32px icon height) */}
-              <div className="flex-1 relative bg-[#040404] rounded-xl p-3 min-h-[56px] flex items-center hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] focus-within:shadow-[0_0_5px_rgba(255,255,255,0.5)] focus-within:hover:shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-shadow duration-200">
-              <textarea
-                ref={chatInputRef}
-                value={input}
-                onChange={(e) => {
-                  setInput(e.target.value);
-                  // Auto-resize functionality
-                  e.target.style.height = 'auto';
-                  e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
-                }}
-                placeholder="Type out your question here..."
-                className="w-full bg-transparent border-0 pr-2 text-white placeholder-gray-500 focus:outline-none resize-none min-h-[32px] max-h-[120px] overflow-y-auto chat-input-scrollbar"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    onSend();
-                  }
-                }}
-                disabled={busy}
-                rows={1}
-              />
-              <button
-                onClick={onSend}
-                disabled={busy || !input.trim()}
-                className="absolute right-1 top-1/2 transform -translate-y-1/2 p-1 text-white hover:text-accent-primary transition-colors disabled:opacity-50"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffffff" stroke="none">
-                  <path d="M12 19V5M5 12l7-7 7 7" stroke="#ffffff" strokeWidth="2" fill="none"/>
-                </svg>
-              </button>
-            </div>
-              {/* Icons Container - DEBUG: Should be 56px height (p-3 = 12px*2 + p-2*2 = 8px*2 + 20px icon = 56px) */}
-              <div className="bg-[#040404] rounded-xl p-3 flex gap-2 min-h-[56px] items-center hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] transition-shadow duration-200">
-                <button onClick={handleFileUpload} className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
-                  <Upload size={20} />
+                    ))}
+                  </div>
+                )}
+                
+                <div className="flex items-end gap-3">
+                {/* Chat Input - DEBUG: Should be 56px height (p-3 = 12px*2 + 32px icon height) */}
+                <div className="flex-1 relative bg-[#040404] rounded-xl p-3 min-h-[56px] flex items-center hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] focus-within:shadow-[0_0_5px_rgba(255,255,255,0.5)] focus-within:hover:shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-shadow duration-200">
+                <textarea
+                  ref={chatInputRef}
+                  value={input}
+                  onChange={(e) => {
+                    setInput(e.target.value);
+                    // Auto-resize functionality
+                    e.target.style.height = 'auto';
+                    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                  }}
+                  placeholder="Type out your question here..."
+                  className="w-full bg-transparent border-0 pr-2 text-white placeholder-gray-500 focus:outline-none resize-none min-h-[32px] max-h-[120px] overflow-y-auto chat-input-scrollbar"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      onSend();
+                    }
+                  }}
+                  disabled={busy}
+                  rows={1}
+                />
+                <button
+                  onClick={onSend}
+                  disabled={busy || !input.trim()}
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 p-1 text-white hover:text-accent-primary transition-colors disabled:opacity-50"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffffff" stroke="none">
+                    <path d="M12 19V5M5 12l7-7 7 7" stroke="#ffffff" strokeWidth="2" fill="none"/>
+                  </svg>
                 </button>
-              <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
-                <Grid3X3 size={20} />
-              </button>
-              <button className="p-2 text-white hover:text-accent-primary transition-colors" onClick={randomizeAll} disabled={busy}>
-                <Dice5 size={20} />
-              </button>
+              </div>
+                {/* Icons Container - DEBUG: Should be 56px height (p-3 = 12px*2 + p-2*2 = 8px*2 + 20px icon = 56px) */}
+                <div className="bg-[#040404] rounded-xl p-3 flex gap-2 min-h-[56px] items-center hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] transition-shadow duration-200">
+                  <button onClick={handleFileUpload} className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
+                    <Upload size={20} />
+                  </button>
                 <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
-                  <List size={20} />
+                  <Grid3X3 size={20} />
                 </button>
-              </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Resize Handle */}
-          <div 
-            className={`absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize group ${isResizing ? 'bg-accent-primary/50' : 'bg-white/20 hover:bg-white/40'} transition-colors duration-200`}
-            onMouseDown={handleMouseDown}
-            style={{ 
-              clipPath: 'polygon(100% 0%, 0% 100%, 100% 100%)',
-              borderBottomRightRadius: '16px' 
-            }}
-          >
-            <div className="absolute bottom-1 right-1 w-1 h-1 bg-white/60 rounded-full"></div>
-            <div className="absolute bottom-1 right-2.5 w-1 h-1 bg-white/40 rounded-full"></div>
-            <div className="absolute bottom-2.5 right-1 w-1 h-1 bg-white/40 rounded-full"></div>
-          </div>
-        </div>
-
-        {/* Form Section - Main container matching chat interface */}
-        <div ref={formContainerRef} className="bg-[#151515] rounded-xl p-4 space-y-4 mt-5">
-          {/* Two-column layout: Left (Title + Song Parameters stacked), Right (Lyrics tall) */}
-          <div className="grid grid-cols-12 gap-4 h-auto">
-            {/* Left column: Title and Song Parameters stacked */}
-            <div className="col-span-5 space-y-3">
-              {/* Title section - external label */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/80">Title</label>
-                <div className="bg-[#2d2d2d] rounded-lg p-4 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
-                  <Input
-                    value={details.title || ""}
-                    onChange={(e) => setDetails({ ...details, title: e.target.value })}
-                    placeholder="Enter song title..."
-                    className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
-                  />
+                <button className="p-2 text-white hover:text-accent-primary transition-colors" onClick={randomizeAll} disabled={busy}>
+                  <Dice5 size={20} />
+                </button>
+                  <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
+                    <List size={20} />
+                  </button>
                 </div>
-              </div>
-              
-              {/* Song Parameters section - external label */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/80">Song Parameters</label>
-                <div className="bg-[#2d2d2d] rounded-lg p-4 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
-                  <TagInput
-                    tags={styleTags}
-                    onChange={handleStyleTagsChange}
-                    placeholder='Add song parameters such as "Pop", "128bpm", "female vocals" and separate them by comma'
-                    className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[120px] resize-none"
-                  />
                 </div>
               </div>
             </div>
             
-            {/* Right column: Lyrics section - external label */}
-            <div className="col-span-7 space-y-2 flex flex-col">
-              <label className="text-sm font-medium text-white/80">Lyrics</label>
-              <div className="bg-[#2d2d2d] rounded-lg p-4 flex-1 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
-                <Textarea
-                  value={details.lyrics || ""}
-                  onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
-                  placeholder="Enter your lyrics here..."
-                  className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 pr-3 resize-none w-full h-full lyrics-scrollbar"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Progress bar inside the container */}
-          {busy && generationProgress > 0 && (
-            <div className="space-y-2 pt-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-white/60">Generating...</span>
-                <span className="font-medium text-pink-400">{Math.round(generationProgress)}%</span>
-              </div>
-              <Progress 
-                value={generationProgress} 
-                className="h-2"
-              />
-            </div>
-          )}
-
-          {/* Generate Button - Styled like the reference */}
-          <div className="pt-2">
-            <CyberButton 
-              onClick={startGeneration} 
-              disabled={busy || !canGenerate}
-              className="w-full bg-[#f92c8f] hover:bg-[#e02681] text-white font-medium h-12 rounded-lg"
+            {/* Resize Handle */}
+            <div 
+              className={`absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize group ${isResizing ? 'bg-accent-primary/50' : 'bg-white/20 hover:bg-white/40'} transition-colors duration-200`}
+              onMouseDown={handleMouseDown}
+              style={{ 
+                clipPath: 'polygon(100% 0%, 0% 100%, 100% 100%)',
+                borderBottomRightRadius: '16px' 
+              }}
             >
-              ✦ Generate
-            </CyberButton>
-          </div>
-        </div>
+              <div className="absolute bottom-1 right-1 w-1 h-1 bg-white/60 rounded-full"></div>
+              <div className="absolute bottom-1 right-2.5 w-1 h-1 bg-white/40 rounded-full"></div>
+              <div className="absolute bottom-2.5 right-1 w-1 h-1 bg-white/40 rounded-full"></div>
+            </div>
           </div>
 
-          {/* Karaoke + Template Column (320px width) */}
-          <div className="w-[320px]">
+          <div className="row-start-1 col-start-3">
             <KaraokeRightPanel
               versions={versions}
               currentAudioIndex={currentAudioIndex}
@@ -1140,14 +1024,88 @@ async function startGeneration() {
               onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
               onSeek={handleSeek}
             />
-            
-            {/* Blank Element Under Karaoke Panel */}
-            <div 
-              className="bg-[#151515] rounded-2xl mt-5 flex items-center justify-center"
-              style={{ height: formContainerHeight > 0 ? `${formContainerHeight}px` : '400px' }}
-            >
-              <span className="text-text-secondary">TEMPLATE ({formContainerHeight}px)</span>
+          </div>
+
+          {/* Row 2 */}
+          <div className="row-start-2 col-start-1 bg-[#151515] rounded-2xl p-6 h-full">
+            <h3 className="text-white font-semibold mb-4">Session 2</h3>
+            <p className="text-gray-400 text-sm">Additional session functionality...</p>
+          </div>
+
+          <div className="row-start-2 col-start-2 bg-[#151515] rounded-xl p-4 space-y-4 h-full">
+            {/* Two-column layout: Left (Title + Song Parameters stacked), Right (Lyrics tall) */}
+            <div className="grid grid-cols-12 gap-4 h-auto">
+              {/* Left column: Title and Song Parameters stacked */}
+              <div className="col-span-5 space-y-3">
+                {/* Title section - external label */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-white/80">Title</label>
+                  <div className="bg-[#2d2d2d] rounded-lg p-4 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
+                    <Input
+                      value={details.title || ""}
+                      onChange={(e) => setDetails({ ...details, title: e.target.value })}
+                      placeholder="Enter song title..."
+                      className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
+                    />
+                  </div>
+                </div>
+                
+                {/* Song Parameters section - external label */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-white/80">Song Parameters</label>
+                  <div className="bg-[#2d2d2d] rounded-lg p-4 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
+                    <TagInput
+                      tags={styleTags}
+                      onChange={handleStyleTagsChange}
+                      placeholder='Add song parameters such as "Pop", "128bpm", "female vocals" and separate them by comma'
+                      className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[120px] resize-none"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Right column: Lyrics section - external label */}
+              <div className="col-span-7 space-y-2 flex flex-col">
+                <label className="text-sm font-medium text-white/80">Lyrics</label>
+                <div className="bg-[#2d2d2d] rounded-lg p-4 flex-1 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
+                  <Textarea
+                    value={details.lyrics || ""}
+                    onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
+                    placeholder="Enter your lyrics here..."
+                    className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 pr-3 resize-none w-full h-full lyrics-scrollbar"
+                  />
+                </div>
+              </div>
             </div>
+
+            {/* Progress bar inside the container */}
+            {busy && generationProgress > 0 && (
+              <div className="space-y-2 pt-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/60">Generating...</span>
+                  <span className="font-medium text-pink-400">{Math.round(generationProgress)}%</span>
+                </div>
+                <Progress 
+                  value={generationProgress} 
+                  className="h-2"
+                />
+              </div>
+            )}
+
+            {/* Generate Button - Styled like the reference */}
+            <div className="pt-2">
+              <CyberButton 
+                onClick={startGeneration} 
+                disabled={busy || !canGenerate}
+                className="w-full bg-[#f92c8f] hover:bg-[#e02681] text-white font-medium h-12 rounded-lg"
+              >
+                ✦ Generate
+              </CyberButton>
+            </div>
+          </div>
+
+          <div className="row-start-2 col-start-3 bg-[#151515] rounded-2xl flex items-center justify-center h-full">
+            <span className="text-text-secondary">TEMPLATE</span>
           </div>
         </div>
 
