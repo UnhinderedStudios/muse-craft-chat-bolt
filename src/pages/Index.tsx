@@ -895,7 +895,7 @@ async function startGeneration() {
       <CyberHeader />
 
       {/* Two Column Layout - Chat + Form Left, New Container Right */}
-      <main className="max-w-7xl mx-auto p-6">
+      <main className="max-w-7xl ml-[240px] mr-auto p-6">
         <div className="grid grid-cols-12 gap-5">
           {/* Left Column - Chat + Form (75% width) */}
           <div className="col-span-9 space-y-5">
@@ -1030,89 +1030,81 @@ async function startGeneration() {
             <div className="absolute bottom-1 right-1 w-1 h-1 bg-white/60 rounded-full"></div>
             <div className="absolute bottom-1 right-2.5 w-1 h-1 bg-white/40 rounded-full"></div>
             <div className="absolute bottom-2.5 right-1 w-1 h-1 bg-white/40 rounded-full"></div>
-            {/* Session Element + Form Container in horizontal layout */}
-            <div className="flex gap-4">
-              {/* Session Element */}
-              <div 
-                className="bg-[#151515] rounded-xl p-4 w-36 flex items-center justify-center flex-shrink-0"
-                style={{ height: `${formContainerHeight}px` }}
-              >
-                <span className="text-white/60 text-sm">Session</span>
-              </div>
+          </div>
+        </div>
 
-              {/* Form Container - maintaining exact same structure */}
-              <div ref={formContainerRef} className="bg-[#151515] rounded-xl p-4 space-y-4 flex-1">
-            {/* Two-column layout: Left (Title + Song Parameters stacked), Right (Lyrics tall) */}
-            <div className="grid grid-cols-12 gap-4 h-auto">
-              {/* Left column: Title and Song Parameters stacked */}
-              <div className="col-span-5 space-y-3">
-                {/* Title section - external label */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/80">Title</label>
-                  <div className="bg-[#2d2d2d] rounded-lg p-4 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
-                    <Input
-                      value={details.title || ""}
-                      onChange={(e) => setDetails({ ...details, title: e.target.value })}
-                      placeholder="Enter song title..."
-                      className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
-                    />
-                  </div>
-                </div>
-                
-                {/* Song Parameters section - external label */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/80">Song Parameters</label>
-                  <div className="bg-[#2d2d2d] rounded-lg p-4 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
-                    <TagInput
-                      tags={styleTags}
-                      onChange={handleStyleTagsChange}
-                      placeholder='Add song parameters such as "Pop", "128bpm", "female vocals" and separate them by comma'
-                      className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[120px] resize-none"
-                    />
-                  </div>
+        {/* Form Section - Main container matching chat interface */}
+        <div ref={formContainerRef} className="bg-[#151515] rounded-xl p-4 space-y-4 mt-5">
+          {/* Two-column layout: Left (Title + Song Parameters stacked), Right (Lyrics tall) */}
+          <div className="grid grid-cols-12 gap-4 h-auto">
+            {/* Left column: Title and Song Parameters stacked */}
+            <div className="col-span-5 space-y-3">
+              {/* Title section - external label */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/80">Title</label>
+                <div className="bg-[#2d2d2d] rounded-lg p-4 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
+                  <Input
+                    value={details.title || ""}
+                    onChange={(e) => setDetails({ ...details, title: e.target.value })}
+                    placeholder="Enter song title..."
+                    className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
+                  />
                 </div>
               </div>
               
-              {/* Right column: Lyrics section - external label */}
-              <div className="col-span-7 space-y-2 flex flex-col">
-                <label className="text-sm font-medium text-white/80">Lyrics</label>
-                <div className="bg-[#2d2d2d] rounded-lg p-4 flex-1 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
-                  <Textarea
-                    value={details.lyrics || ""}
-                    onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
-                    placeholder="Enter your lyrics here..."
-                    className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 pr-3 resize-none w-full h-full lyrics-scrollbar"
+              {/* Song Parameters section - external label */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/80">Song Parameters</label>
+                <div className="bg-[#2d2d2d] rounded-lg p-4 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
+                  <TagInput
+                    tags={styleTags}
+                    onChange={handleStyleTagsChange}
+                    placeholder='Add song parameters such as "Pop", "128bpm", "female vocals" and separate them by comma'
+                    className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[120px] resize-none"
                   />
                 </div>
               </div>
             </div>
-
-            {/* Progress bar inside the container */}
-            {busy && generationProgress > 0 && (
-              <div className="space-y-2 pt-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-white/60">Generating...</span>
-                  <span className="font-medium text-pink-400">{Math.round(generationProgress)}%</span>
-                </div>
-                <Progress 
-                  value={generationProgress} 
-                  className="h-2"
+            
+            {/* Right column: Lyrics section - external label */}
+            <div className="col-span-7 space-y-2 flex flex-col">
+              <label className="text-sm font-medium text-white/80">Lyrics</label>
+              <div className="bg-[#2d2d2d] rounded-lg p-4 flex-1 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
+                <Textarea
+                  value={details.lyrics || ""}
+                  onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
+                  placeholder="Enter your lyrics here..."
+                  className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 pr-3 resize-none w-full h-full lyrics-scrollbar"
                 />
               </div>
-            )}
+            </div>
+          </div>
 
-            {/* Generate Button - Styled like the reference */}
-            <div className="pt-2">
-              <CyberButton 
-                onClick={startGeneration} 
-                disabled={busy || !canGenerate}
-                className="w-full bg-[#f92c8f] hover:bg-[#e02681] text-white font-medium h-12 rounded-lg"
-              >
-                ✦ Generate
-              </CyberButton>
-            </div>
+          {/* Progress bar inside the container */}
+          {busy && generationProgress > 0 && (
+            <div className="space-y-2 pt-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-white/60">Generating...</span>
+                <span className="font-medium text-pink-400">{Math.round(generationProgress)}%</span>
               </div>
+              <Progress 
+                value={generationProgress} 
+                className="h-2"
+              />
             </div>
+          )}
+
+          {/* Generate Button - Styled like the reference */}
+          <div className="pt-2">
+            <CyberButton 
+              onClick={startGeneration} 
+              disabled={busy || !canGenerate}
+              className="w-full bg-[#f92c8f] hover:bg-[#e02681] text-white font-medium h-12 rounded-lg"
+            >
+              ✦ Generate
+            </CyberButton>
+          </div>
+        </div>
           </div>
 
           {/* Right Column - Karaoke Panel (25% width) */}
@@ -1322,8 +1314,6 @@ async function startGeneration() {
 
           </div>
         )}
-        </div>
-        </div>
       </main>
 
       {/* Full-screen Karaoke Overlay */}
