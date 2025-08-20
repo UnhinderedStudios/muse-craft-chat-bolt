@@ -869,18 +869,18 @@ async function startGeneration() {
       <CyberHeader />
 
       {/* Three Column Layout - Sessions, Chat + Form, Karaoke + Template */}
-      <main className="mx-auto max-w-[1583px] px-4 sm:px-6 lg:px-6 py-6">
+      <main className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-6">
         {/* 1 col on mobile, 8 cols on iPad, 12 cols on desktop */}
         <div className="grid items-start gap-5 grid-cols-1 md:grid-cols-8 lg:grid-cols-12">
 
           {/* Row 1 - Left: Sessions */}
-          <div className="order-1 md:col-span-2 lg:col-span-2 bg-[#151515] rounded-2xl p-6">
+          <div className="order-1 md:col-span-2 lg:col-span-2 bg-[#151515] rounded-2xl p-6 lg:-ml-8 xl:-ml-10 2xl:-ml-12">
             <h3 className="text-white font-semibold mb-4">Sessions</h3>
             <p className="text-gray-400 text-sm">Session management coming soon...</p>
           </div>
 
           {/* Row 1 - Center: Chat */}
-          <div className="order-2 md:col-span-6 lg:col-span-7 min-w-0 bg-[#151515] rounded-2xl relative overflow-hidden">
+          <div className="order-2 md:col-span-6 lg:col-span-7 xl:col-span-6 min-w-0 bg-[#151515] rounded-2xl relative overflow-hidden">
             {/* top fade */}
             {scrollTop > 0 && (
               <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none" />
@@ -1000,20 +1000,22 @@ async function startGeneration() {
             />
           </div>
 
-          {/* Far-right Track List: full height on desktop, stacks on smaller */}
-          <div className="order-4 lg:order-3 md:col-span-8 lg:col-span-1 lg:row-span-2 lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)] bg-[#151515] rounded-2xl p-6 flex flex-col items-center justify-center h-full">
-            <h3 className="text-white font-semibold mb-4">Track List</h3>
-            <p className="text-gray-400 text-sm text-center">Full height panel functionality...</p>
+          {/* Far-right Track List: spans both rows, bleeds to the right, sticky inner */}
+          <div className="order-4 lg:order-3 md:col-span-8 lg:col-span-1 xl:col-span-2 lg:row-span-2 lg:self-stretch lg:-mr-8 xl:-mr-10 2xl:-mr-12">
+            <div className="h-full lg:sticky lg:top-6 bg-[#151515] rounded-2xl p-6 flex flex-col items-center justify-center">
+              <h3 className="text-white font-semibold mb-4">Track List</h3>
+              <p className="text-gray-400 text-sm text-center">Full height panel functionality...</p>
+            </div>
           </div>
 
           {/* Row 2 - Left: Sessions 2 */}
-          <div className="order-5 md:col-span-2 lg:col-span-2 bg-[#151515] rounded-2xl p-6 h-full">
+          <div className="order-5 md:col-span-2 lg:col-span-2 bg-[#151515] rounded-2xl p-6 h-full lg:-ml-8 xl:-ml-10 2xl:-ml-12">
             <h3 className="text-white font-semibold mb-4">Session 2</h3>
             <p className="text-gray-400 text-sm">Additional session functionality...</p>
           </div>
 
           {/* Row 2 - Center: Form */}
-          <div className="order-6 md:col-span-6 lg:col-span-7 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 h-full">
+          <div className="order-6 md:col-span-6 lg:col-span-7 xl:col-span-6 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 h-full">
             {/* Two-column layout: Left (Title + Song Parameters stacked), Right (Lyrics tall) */}
             <div className="grid grid-cols-12 gap-4 h-auto">
               {/* Left column: Title and Song Parameters stacked */}
