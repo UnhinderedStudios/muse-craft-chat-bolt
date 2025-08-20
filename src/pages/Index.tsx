@@ -895,7 +895,7 @@ async function startGeneration() {
       <CyberHeader />
 
       {/* Two Column Layout - Chat + Form Left, New Container Right */}
-      <main className="max-w-7xl ml-[280px] mr-auto p-6">
+      <main className="max-w-7xl mx-auto p-6">
         <div className="grid grid-cols-12 gap-5">
           {/* Left Column - Chat + Form (75% width) */}
           <div className="col-span-9 space-y-5">
@@ -1034,10 +1034,10 @@ async function startGeneration() {
             <div className="flex gap-4">
               {/* Session Element */}
               <div 
-                className="bg-[#151515] rounded-xl p-4 w-48 flex items-center justify-center flex-shrink-0"
+                className="bg-[#151515] rounded-xl p-4 w-36 flex items-center justify-center flex-shrink-0"
                 style={{ height: `${formContainerHeight}px` }}
               >
-                <span className="text-white/60">Session Element</span>
+                <span className="text-white/60 text-sm">Session</span>
               </div>
 
               {/* Form Container - maintaining exact same structure */}
