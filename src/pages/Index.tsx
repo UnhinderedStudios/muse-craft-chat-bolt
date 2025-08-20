@@ -895,7 +895,7 @@ async function startGeneration() {
       <CyberHeader />
 
       {/* Three Column Layout - Sessions, Chat + Form, Karaoke + Template */}
-      <main className="max-w-[1583px] ml-[17px] mr-auto p-6">
+      <main className="max-w-[1583px] ml-[12px] mr-auto p-6">
         <div className="flex gap-5">
           {/* Sessions Column (263px width) */}
           <div className="w-[263px] space-y-5">
