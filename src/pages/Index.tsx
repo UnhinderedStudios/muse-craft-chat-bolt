@@ -1033,18 +1033,18 @@ async function startGeneration() {
           </div>
         </div>
 
-        {/* Form Section Area - Horizontal layout with Session Element and Form */}
-        <div className="flex gap-5 mt-5">
-          {/* Session Element */}
+        {/* Form Section Area with absolutely positioned Session Element */}
+        <div className="relative">
+          {/* Session Element - Absolutely positioned to not affect form layout */}
           <div 
-            className="bg-[#151515] rounded-xl p-4 w-64 flex items-center justify-center"
+            className="absolute left-0 top-0 bg-[#151515] rounded-xl p-4 w-64 flex items-center justify-center z-10"
             style={{ height: `${formContainerHeight}px` }}
           >
             <span className="text-white/60">Session Element</span>
           </div>
 
-          {/* Form Container - keeps original structure and width */}
-          <div ref={formContainerRef} className="bg-[#151515] rounded-xl p-4 space-y-4 flex-1">
+          {/* Form Container - back to original full width structure */}
+          <div ref={formContainerRef} className="bg-[#151515] rounded-xl p-4 space-y-4 ml-72">
             {/* Two-column layout: Left (Title + Song Parameters stacked), Right (Lyrics tall) */}
             <div className="grid grid-cols-12 gap-4 h-auto">
               {/* Left column: Title and Song Parameters stacked */}
