@@ -5,18 +5,18 @@
 @layer utilities {
   .app-grid {
     --left-col: 260px;
-    --chat-base: minmax(960px, 3fr);
-    --karaoke-base: 270px;
-    --track-base: minmax(400px, 2fr);
+    --chat-base: 2fr;
+    --karaoke-base: 260px;
+    --track-base: 1fr;
     --chat-bump: 0px;
     --karaoke-bump: 0px;
 
     display: grid;
     grid-template-columns:
       var(--left-col)
-      calc(var(--chat-base) + var(--chat-bump))
-      calc(var(--karaoke-base) + var(--karaoke-bump))
-      var(--track-base);
+      minmax(0, var(--chat-base))
+      var(--karaoke-base)
+      minmax(0, var(--track-base));
     gap: 20px;
     grid-auto-rows: minmax(0, auto);
   }

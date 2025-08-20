@@ -28,7 +28,7 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ role, content }) => {
     >
       <div
         className={cn(
-          "max-w-[85%] px-4 py-3 leading-relaxed",
+          "px-4 py-3 leading-relaxed",
           "rounded-[16px] bg-[#000000]",
           isUser
             ? "border border-white text-text-primary shadow-[0_0_20px_rgba(255,255,255,0.3)]"
