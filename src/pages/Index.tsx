@@ -867,17 +867,17 @@ async function startGeneration() {
       <CyberHeader />
 
       {/* Three Column Layout - Sessions, Chat + Form, Karaoke + Template */}
-      <main className="max-w-[1583px] mr-1 p-6">
+      <main className="w-full px-4 sm:px-6 pr-3 py-6">
         {/* 3 cols, 2 rows */}
-        <div className="grid grid-cols-12 gap-5 items-start">
+        <div className="app-grid app-grid--edge items-start">
 
           {/* Row 1 */}
-          <div className="col-span-2 bg-[#151515] rounded-2xl p-6">
+          <div className="app-col-left bg-[#151515] rounded-2xl p-6">
             <h3 className="text-white font-semibold mb-4">Sessions</h3>
             <p className="text-gray-400 text-sm">Session management coming soon...</p>
           </div>
 
-          <div className="col-span-7 min-w-0 bg-[#151515] rounded-2xl relative overflow-hidden">
+          <div className="app-col-chat min-w-0 bg-[#151515] rounded-2xl relative overflow-hidden">
             {/* Fade gradient overlay - only shows when scrolled */}
             {scrollTop > 0 && (
               <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none" />
@@ -1010,7 +1010,7 @@ async function startGeneration() {
             </div>
           </div>
 
-          <div className="col-span-2 min-w-0">
+          <div className="app-col-kara min-w-0">
             <KaraokeRightPanel
               versions={versions}
               currentAudioIndex={currentAudioIndex}
@@ -1027,12 +1027,12 @@ async function startGeneration() {
           </div>
 
           {/* Row 2 */}
-          <div className="col-span-2 bg-[#151515] rounded-2xl p-6 h-full">
+          <div className="app-col-left bg-[#151515] rounded-2xl p-6 h-full">
             <h3 className="text-white font-semibold mb-4">Session 2</h3>
             <p className="text-gray-400 text-sm">Additional session functionality...</p>
           </div>
 
-          <div className="col-span-7 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 h-full">
+          <div className="app-col-chat min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 h-full">
             {/* Two-column layout: Left (Title + Song Parameters stacked), Right (Lyrics tall) */}
             <div className="grid grid-cols-12 gap-4 h-auto">
               {/* Left column: Title and Song Parameters stacked */}
@@ -1105,12 +1105,12 @@ async function startGeneration() {
           </div>
 
 
-          <div className="col-span-2 bg-[#151515] rounded-2xl flex items-center justify-center h-full">
+          <div className="app-col-kara bg-[#151515] rounded-2xl flex items-center justify-center h-full">
             <span className="text-text-secondary">TEMPLATE</span>
           </div>
 
           {/* Track List - Full height spanning both rows on far right */}
-          <div className="row-start-1 col-start-12 col-span-1 row-span-2 bg-[#151515] rounded-2xl p-6 flex flex-col items-center justify-center h-full">
+          <div className="app-col-track bg-[#151515] rounded-2xl p-6 flex flex-col items-center justify-center h-full">
             <h3 className="text-white font-semibold mb-4">Track List</h3>
             <p className="text-gray-400 text-sm text-center">Full height panel functionality...</p>
           </div>
