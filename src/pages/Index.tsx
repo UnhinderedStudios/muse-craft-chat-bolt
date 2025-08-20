@@ -1104,12 +1104,9 @@ async function startGeneration() {
             </div>
           </div>
 
-          <div className="row-start-2 col-start-3 bg-[#151515] rounded-2xl flex items-center justify-center h-full">
-            <span className="text-text-secondary">TEMPLATE</span>
-          </div>
 
           {/* New Element - Full height spanning both rows on far right */}
-          <div className="row-span-2 col-start-4 bg-[#151515] rounded-2xl p-6 flex flex-col items-center justify-center h-full">
+          <div className="row-span-2 col-start-3 col-span-2 bg-[#151515] rounded-2xl p-6 flex flex-col items-center justify-center h-full ml-1">
             <h3 className="text-white font-semibold mb-4">Track List</h3>
             <p className="text-gray-400 text-sm text-center">Full height panel functionality...</p>
           </div>
