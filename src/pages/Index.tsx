@@ -1109,7 +1109,7 @@ async function startGeneration() {
           </div>
 
           {/* New Element - Full height spanning both rows on far right */}
-          <div className="row-start-1 row-end-3 col-start-4 bg-[#151515] rounded-2xl p-6 flex flex-col items-center justify-center">
+          <div className="row-span-2 col-start-4 bg-[#151515] rounded-2xl p-6 flex flex-col items-center justify-center h-full">
             <h3 className="text-white font-semibold mb-4">Session 3</h3>
             <p className="text-gray-400 text-sm text-center">Full height panel functionality...</p>
           </div>
