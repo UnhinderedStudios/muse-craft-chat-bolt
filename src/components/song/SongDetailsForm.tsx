@@ -11,24 +11,14 @@ interface SongDetailsFormProps {
   details: SongDetails;
   setDetails: (details: SongDetails) => void;
   styleTags: string[];
-  onStyleTagsChange: (tags: string[]) => void;
-  onRandomize: () => void;
-  onGenerate: () => void;
-  canGenerate: boolean;
-  busy: boolean;
-  generationProgress: number;
+  setStyleTags: (tags: string[]) => void;
 }
 
 export const SongDetailsForm: React.FC<SongDetailsFormProps> = ({
   details,
   setDetails,
   styleTags,
-  onStyleTagsChange,
-  onRandomize,
-  onGenerate,
-  canGenerate,
-  busy,
-  generationProgress
+  setStyleTags
 }) => {
   return (
     <div className="space-y-6">
@@ -52,7 +42,7 @@ export const SongDetailsForm: React.FC<SongDetailsFormProps> = ({
         </div>
         <TagInput
           tags={styleTags}
-          onChange={onStyleTagsChange}
+          onChange={setStyleTags}
           placeholder="Type style elements and press Enter..."
           className="bg-card-alt border-border-main"
         />
