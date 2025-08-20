@@ -92,34 +92,32 @@ export const TrackList: React.FC<TrackListProps> = ({
             )}
           </div>
           
-          <AudioPlayer
-            ref={(el) => {
-              if (el) audioRefs.current[index] = el;
-            }}
-            src={version.url}
-            onTimeUpdate={onTimeUpdate}
-            isActive={currentAudioIndex === index}
-            currentTime={currentAudioIndex === index ? currentTime : 0}
-            onSeek={onSeek}
-            className="mb-4"
-          />
-          
-          {version.hasTimestamps && version.words && (
-            <KaraokeLyrics
-              words={version.words}
-              currentTime={currentAudioIndex === index ? currentTime : 0}
-              onShowFullscreen={onShowFullscreen}
-            />
-          )}
-          
           <audio
             ref={(el) => {
               if (el) audioRefs.current[index] = el;
             }}
             src={version.url}
-            onTimeUpdate={() => onTimeUpdate(audioRefs.current[index])}
-            style={{ display: 'none' }}
+            onTimeUpdate={() => currentAudioIndex === index && onTimeUpdate(audioRefs.current[index])}
+            controls
+            className="w-full mb-4"
           />
+          
+          {version.hasTimestamps && version.words && (
+            <div className="space-y-2">
+              <KaraokeLyrics
+                words={version.words}
+                currentTime={currentAudioIndex === index ? currentTime : 0}
+                isPlaying={isPlaying && currentAudioIndex === index}
+                className="h-32"
+              />
+              <button
+                onClick={onShowFullscreen}
+                className="px-4 py-2 bg-purple-500 hover:bg-purple-600 rounded text-white text-sm"
+              >
+                Fullscreen Karaoke
+              </button>
+            </div>
+          )}
         </CyberCard>
       ))}
     </div>

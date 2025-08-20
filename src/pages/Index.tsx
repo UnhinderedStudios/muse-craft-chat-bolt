@@ -231,9 +231,8 @@ const Index = () => {
       
       <main className="container mx-auto px-4 py-8">
         <ResizableContainer
-          chatHeight={resize.chatHeight}
           isResizing={resize.isResizing}
-          onMouseDown={resize.handleMouseDown}
+          handleMouseDown={resize.handleMouseDown}
         >
           {/* Left: Form and Templates */}
           <div className="space-y-8">
@@ -290,13 +289,11 @@ const Index = () => {
               />
               
               <ChatInput
-                ref={chatInputRef}
                 input={chat.input}
                 setInput={chat.setInput}
                 onSend={onSend}
+                onRandomize={onRandomize}
                 disabled={generation.busy}
-                isAnalyzingImage={isAnalyzingImage}
-                isReadingText={isReadingText}
               />
             </CyberCard>
           </div>
@@ -343,27 +340,28 @@ const Index = () => {
       {/* Fullscreen Karaoke */}
       {showFullscreenKaraoke && generation.versions.length > 0 && (
         <FullscreenKaraoke
-          song={generation.versions[audioPlayer.currentAudioIndex]}
+          words={generation.versions[audioPlayer.currentAudioIndex]?.words || []}
           currentTime={audioPlayer.currentTime}
           isPlaying={audioPlayer.isPlaying}
           onClose={() => setShowFullscreenKaraoke(false)}
-          onPlayPause={() => 
-            audioPlayer.isPlaying 
-              ? audioPlayer.handleAudioPause() 
-              : audioPlayer.handleAudioPlay(audioPlayer.currentAudioIndex, generation.busy)
-          }
-          onSeek={audioPlayer.handleSeek}
-          albumCover={generation.albumCovers?.cover1}
-          songTitle={details.title}
+          albumCoverUrl={generation.albumCovers?.cover1}
         />
       )}
       
       {/* Karaoke Right Panel */}
       {generation.versions.length > 0 && generation.versions[audioPlayer.currentAudioIndex]?.hasTimestamps && (
         <KaraokeRightPanel
-          words={generation.versions[audioPlayer.currentAudioIndex].words}
+          versions={generation.versions}
+          currentAudioIndex={audioPlayer.currentAudioIndex}
           currentTime={audioPlayer.currentTime}
-          onShowFullscreen={() => setShowFullscreenKaraoke(true)}
+          isPlaying={audioPlayer.isPlaying}
+          albumCovers={generation.albumCovers}
+          isGeneratingCovers={generation.isGeneratingCovers}
+          audioRefs={audioPlayer.audioRefs}
+          onPlayPause={(index) => audioPlayer.handleAudioPlay(index, generation.busy)}
+          onAudioPause={audioPlayer.handleAudioPause}
+          onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
+          onSeek={audioPlayer.handleSeek}
         />
       )}
     </div>

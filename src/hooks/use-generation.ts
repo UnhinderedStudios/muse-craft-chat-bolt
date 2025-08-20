@@ -94,12 +94,7 @@ export const useGeneration = () => {
       console.log("[Generate] API result:", result);
       
       setJobId(result.jobId);
-      if (result.audioUrl) {
-        setAudioUrl(result.audioUrl);
-      }
-      if (result.audioUrls) {
-        setAudioUrls(result.audioUrls);
-      }
+      // Note: startSong API only returns jobId, not audioUrl/audioUrls
       
       setGenerationProgress(15);
       setLastProgressUpdate(Date.now());
@@ -142,13 +137,22 @@ export const useGeneration = () => {
                 const timestampResult = await api.getTimestampedLyrics({ taskId: url });
                 console.log(`[Poll] Timestamp result for audio ${index}:`, timestampResult);
                 
+                // Map API response format to TimestampedWord format
+                const words = timestampResult.alignedWords?.map(w => ({
+                  word: w.word,
+                  start: w.start_s,
+                  end: w.end_s,
+                  success: w.success,
+                  p_align: w.p_align
+                })) || [];
+                
                 return {
                   url,
                   audioId: `${jobId}-${index}`,
                   musicIndex: index,
-                  words: timestampResult.alignedWords || [],
-                  hasTimestamps: timestampResult.alignedWords && timestampResult.alignedWords.length > 0,
-                  timestampError: timestampResult.alignedWords ? undefined : "Failed to align words"
+                  words,
+                  hasTimestamps: words.length > 0,
+                  timestampError: words.length === 0 ? "Failed to align words" : undefined
                 };
               } catch (error) {
                 console.error(`[Poll] Error getting timestamps for audio ${index}:`, error);
@@ -220,16 +224,15 @@ export const useGeneration = () => {
     setIsGeneratingCovers(true);
     try {
       console.log("[AlbumCovers] Generating covers for audio URLs:", audioUrls);
-      const coverResult = await api.generateAlbumCovers(audioUrls[0]);
+      // Pass empty SongDetails as API doesn't use the audio URL directly
+      const coverResult = await api.generateAlbumCovers({});
       console.log("[AlbumCovers] Cover result:", coverResult);
       
-      if (coverResult.success) {
-        setAlbumCovers({
-          cover1: coverResult.cover1,
-          cover2: coverResult.cover2,
-          debug: coverResult.debug
-        });
-      }
+      setAlbumCovers({
+        cover1: coverResult.cover1,
+        cover2: coverResult.cover2,
+        debug: coverResult.debug
+      });
     } catch (error) {
       console.error("[AlbumCovers] Error generating covers:", error);
     } finally {
