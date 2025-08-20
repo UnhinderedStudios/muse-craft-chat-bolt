@@ -895,7 +895,7 @@ async function startGeneration() {
       <CyberHeader />
 
       {/* Two Column Layout - Chat + Form Left, New Container Right */}
-      <main className="max-w-7xl ml-[240px] mr-auto p-6">
+      <main className="max-w-7xl ml-[60px] mr-auto p-6 relative">
         <div className="grid grid-cols-12 gap-5">
           {/* Left Column - Chat + Form (75% width) */}
           <div className="col-span-9 space-y-5">
@@ -1033,18 +1033,16 @@ async function startGeneration() {
           </div>
         </div>
 
-        {/* Form Section Area with absolutely positioned Session Element */}
-        <div className="relative">
-          {/* Session Element - Absolutely positioned to not affect form layout */}
-          <div 
-            className="absolute left-0 top-0 bg-[#151515] rounded-xl p-4 w-64 flex items-center justify-center z-10"
-            style={{ height: `${formContainerHeight}px` }}
-          >
-            <span className="text-white/60">Session Element</span>
-          </div>
+        {/* Session Element - Positioned in the reclaimed margin space */}
+        <div 
+          className="absolute left-[-180px] top-0 bg-[#151515] rounded-xl p-4 w-40 flex items-center justify-center"
+          style={{ height: `${formContainerHeight}px` }}
+        >
+          <span className="text-white/60">Session Element</span>
+        </div>
 
-          {/* Form Container - back to original full width structure */}
-          <div ref={formContainerRef} className="bg-[#151515] rounded-xl p-4 space-y-4 ml-72">
+        {/* Form Container - back to original full width structure */}
+        <div ref={formContainerRef} className="bg-[#151515] rounded-xl p-4 space-y-4">
             {/* Two-column layout: Left (Title + Song Parameters stacked), Right (Lyrics tall) */}
             <div className="grid grid-cols-12 gap-4 h-auto">
               {/* Left column: Title and Song Parameters stacked */}
@@ -1116,7 +1114,6 @@ async function startGeneration() {
             </div>
           </div>
         </div>
-          </div>
 
           {/* Right Column - Karaoke Panel (25% width) */}
           <div className="col-span-3">
