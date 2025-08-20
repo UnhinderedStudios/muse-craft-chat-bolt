@@ -1,0 +1,39 @@
+/* === App layout grid utilities === */
+@layer utilities {
+  .app-grid {
+    /* Base track sizes */
+    --left-col: 260px;                     /* Sessions */
+    --chat-base: minmax(960px, 1.34fr);   /* Chat + Form (34% wider) */
+    --karaoke-base: 270px;                /* Karaoke + Template (25% slimmer) */
+    --track-base: minmax(400px, 1.25fr);  /* Track list (25% wider) */
+
+    /* "Bumps" to widen columns precisely */
+    --chat-bump: 0px;
+    --karaoke-bump: 0px;
+
+    display: grid;
+    grid-template-columns:
+      var(--left-col)
+      calc(var(--chat-base) + var(--chat-bump))
+      calc(var(--karaoke-base) + var(--karaoke-bump))
+      var(--track-base);
+    gap: 20px;
+    grid-auto-rows: minmax(0, auto); /* keep rows stable */
+  }
+
+  /* Apply your request: +40px chat/form, +20px karaoke/template */
+  .app-grid--edge {
+    --chat-bump: 40px;
+    --karaoke-bump: 20px;
+  }
+
+  /* Column placement helpers */
+  .app-col-left { grid-column: 1; }
+  .app-col-chat { grid-column: 2; min-width: 0; }
+  .app-col-kara { grid-column: 3; min-width: 0; }
+  .app-col-track {
+    grid-column: 4;
+    grid-row: 1 / span 2;   /* spans both rows */
+    align-self: stretch;
+  }
+}
