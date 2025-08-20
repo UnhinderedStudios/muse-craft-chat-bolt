@@ -5,9 +5,9 @@
 @layer utilities {
   .app-grid {
     --left-col: 260px;
-    --chat-base: minmax(960px, 1.34fr);
+    --chat-base: minmax(960px, 3fr);
     --karaoke-base: 270px;
-    --track-base: minmax(400px, 1.25fr);
+    --track-base: minmax(400px, 2fr);
     --chat-bump: 0px;
     --karaoke-bump: 0px;
 
