@@ -2,7 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+@layer utilities {
+  .app-grid {
+    --left-col: 260px;
+    --chat-base: minmax(960px, 1.34fr);
+    --karaoke-base: 270px;
+    --track-base: minmax(400px, 1.25fr);
+    --chat-bump: 0px;
+    --karaoke-bump: 0px;
+
+    display: grid;
+    grid-template-columns:
+      var(--left-col)
+      calc(var(--chat-base) + var(--chat-bump))
+      calc(var(--karaoke-base) + var(--karaoke-bump))
+      var(--track-base);
+    gap: 20px;
+    grid-auto-rows: minmax(0, auto);
+  }
+
+  .app-grid--edge {
+    --chat-bump: 40px;
+    --karaoke-bump: 20px;
+  }
+
+  .app-col-left { grid-column: 1; }
+  .app-col-chat { grid-column: 2; min-width: 0; }
+  .app-col-kara { grid-column: 3; min-width: 0; }
+  .app-col-track {
+    grid-column: 4;
+    grid-row: 1 / span 2;
+    align-self: stretch;
+  }
+}
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
 All colors MUST be HSL.
 */
 
