@@ -895,7 +895,7 @@ async function startGeneration() {
       <CyberHeader />
 
       {/* Two Column Layout - Chat + Form Left, New Container Right */}
-      <main className="max-w-7xl ml-[60px] mr-auto p-6 relative">
+      <main className="max-w-7xl ml-[280px] mr-auto p-6">
         <div className="grid grid-cols-12 gap-5">
           {/* Left Column - Chat + Form (75% width) */}
           <div className="col-span-9 space-y-5">
@@ -1030,19 +1030,18 @@ async function startGeneration() {
             <div className="absolute bottom-1 right-1 w-1 h-1 bg-white/60 rounded-full"></div>
             <div className="absolute bottom-1 right-2.5 w-1 h-1 bg-white/40 rounded-full"></div>
             <div className="absolute bottom-2.5 right-1 w-1 h-1 bg-white/40 rounded-full"></div>
-          </div>
-        </div>
+            {/* Session Element + Form Container in horizontal layout */}
+            <div className="flex gap-4">
+              {/* Session Element */}
+              <div 
+                className="bg-[#151515] rounded-xl p-4 w-48 flex items-center justify-center flex-shrink-0"
+                style={{ height: `${formContainerHeight}px` }}
+              >
+                <span className="text-white/60">Session Element</span>
+              </div>
 
-        {/* Session Element - Positioned in the reclaimed margin space */}
-        <div 
-          className="absolute left-[-180px] top-0 bg-[#151515] rounded-xl p-4 w-40 flex items-center justify-center"
-          style={{ height: `${formContainerHeight}px` }}
-        >
-          <span className="text-white/60">Session Element</span>
-        </div>
-
-        {/* Form Container - back to original full width structure */}
-        <div ref={formContainerRef} className="bg-[#151515] rounded-xl p-4 space-y-4">
+              {/* Form Container - maintaining exact same structure */}
+              <div ref={formContainerRef} className="bg-[#151515] rounded-xl p-4 space-y-4 flex-1">
             {/* Two-column layout: Left (Title + Song Parameters stacked), Right (Lyrics tall) */}
             <div className="grid grid-cols-12 gap-4 h-auto">
               {/* Left column: Title and Song Parameters stacked */}
@@ -1112,8 +1111,9 @@ async function startGeneration() {
                 ✦ Generate
               </CyberButton>
             </div>
+              </div>
+            </div>
           </div>
-        </div>
 
           {/* Right Column - Karaoke Panel (25% width) */}
           <div className="col-span-3">
@@ -1322,6 +1322,8 @@ async function startGeneration() {
 
           </div>
         )}
+        </div>
+        </div>
       </main>
 
       {/* Full-screen Karaoke Overlay */}
