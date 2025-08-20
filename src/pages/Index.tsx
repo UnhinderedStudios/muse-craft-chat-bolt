@@ -862,14 +862,14 @@ async function startGeneration() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0c0c0c] ml-[1px] mr-[1px]">
+    <div className="min-h-screen bg-[#0c0c0c]">
       {/* Cyber Header */}
       <CyberHeader />
 
       {/* Three Column Layout - Sessions, Chat + Form, Karaoke + Template */}
       <main className="max-w-[1583px] mr-auto p-6">
         {/* 3 cols, 2 rows */}
-        <div className="grid grid-cols-[263px,900px,320px,1fr] grid-rows-[auto,auto] gap-5 items-start">
+        <div className="grid grid-cols-[263px,900px,320px,263px] grid-rows-[auto,auto] gap-5 items-start">
 
           {/* Row 1 */}
           <div className="row-start-1 col-start-1 bg-[#151515] rounded-2xl p-6">
