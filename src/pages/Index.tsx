@@ -869,9 +869,9 @@ async function startGeneration() {
       <CyberHeader />
 
       {/* Three Column Layout - Sessions, Chat + Form, Karaoke + Template */}
-      <main className="w-full py-6 px-6 lg:px-6 xl:px-8 2xl:px-10">
+      <main className="w-full px-5 py-6">
         {/* 1 col on mobile, 8 cols on iPad, 12 cols on desktop */}
-        <div className="grid grid-cols-1 md:grid-cols-8 lg:grid-cols-12 lg:items-stretch gap-6 lg:gap-6 xl:gap-8 2xl:gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-8 lg:grid-cols-12 gap-5 lg:items-stretch">
 
           {/* Row 1 - Left: Sessions */}
           <div className="order-1 md:col-span-2 lg:col-span-2 bg-[#151515] rounded-2xl p-6">
