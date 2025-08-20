@@ -869,7 +869,7 @@ async function startGeneration() {
       {/* Three Column Layout - Sessions, Chat + Form, Karaoke + Template */}
       <main className="max-w-[1583px] mr-1 p-6">
         {/* 3 cols, 2 rows */}
-        <div className="grid grid-cols-[263px,900px,319px,1fr] grid-rows-[auto,auto] gap-5 items-start pr-1">
+        <div className="grid grid-cols-[263px,900px,320px,1fr] grid-rows-[auto,auto] gap-5 items-start" style={{ marginRight: '1px' }}>
 
           {/* Row 1 */}
           <div className="row-start-1 col-start-1 bg-[#151515] rounded-2xl p-6">
