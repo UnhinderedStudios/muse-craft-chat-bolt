@@ -869,34 +869,31 @@ async function startGeneration() {
       <CyberHeader />
 
       {/* Three Column Layout - Sessions, Chat + Form, Karaoke + Template */}
-      <main className="app-grid--edge p-6">
-        {/* 3 cols, 2 rows */}
-        <div className="app-grid items-start">
+      <main className="mx-auto max-w-[1583px] px-4 sm:px-6 lg:px-6 py-6">
+        {/* 1 col on mobile, 8 cols on iPad, 12 cols on desktop */}
+        <div className="grid items-start gap-5 grid-cols-1 md:grid-cols-8 lg:grid-cols-12">
 
-          {/* Row 1 */}
-          <div className="app-col-left-top bg-[#151515] rounded-2xl p-6">
+          {/* Row 1 - Left: Sessions */}
+          <div className="order-1 md:col-span-2 lg:col-span-2 bg-[#151515] rounded-2xl p-6">
             <h3 className="text-white font-semibold mb-4">Sessions</h3>
             <p className="text-gray-400 text-sm">Session management coming soon...</p>
           </div>
 
-          <div className="app-col-chat-top min-w-0 bg-[#151515] rounded-2xl relative overflow-hidden">
-            {/* Fade gradient overlay - only shows when scrolled */}
+          {/* Row 1 - Center: Chat */}
+          <div className="order-2 md:col-span-6 lg:col-span-7 min-w-0 bg-[#151515] rounded-2xl relative overflow-hidden">
+            {/* top fade */}
             {scrollTop > 0 && (
               <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none" />
             )}
-            
-            {/* Chat Conversation - dynamic height */}
+
+            {/* chat scroll area: fixed height on desktop, capped height on mobile/tablet */}
             <div
-              className="app-scroll custom-scrollbar pl-6 lg:pl-8 pr-4 lg:pr-6 pt-6 lg:pt-8"
               ref={scrollerRef}
+              className={`overflow-y-auto custom-scrollbar pl-6 lg:pl-8 pr-4 lg:pr-6 pt-6 lg:pt-8 ${isDesktop ? '' : 'max-h-[56vh]'}`}
               style={isDesktop ? { height: `${chatHeight}px` } : undefined}
-              onScroll={(e) => {
-                const target = e.target as HTMLDivElement;
-                setScrollTop(target.scrollTop);
-              }}
+              onScroll={(e) => setScrollTop((e.target as HTMLDivElement).scrollTop)}
             >
               <div className="space-y-4 pr-4 pl-4 pt-4 pb-4 lg:pb-32">
-                {/* Chat messages */}
                 {messages.map((m, i) => (
                   <ChatBubble key={i} role={m.role} content={m.content} />
                 ))}
@@ -910,10 +907,11 @@ async function startGeneration() {
               </div>
             </div>
 
-            {/* Tools Section - positioned absolute at bottom with fade background */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#151515] via-[#151515]/98 via-[#151515]/90 to-transparent pt-8 pb-8 px-8">
+            {/* tools footer: absolute on desktop, sticky on smaller screens */}
+            <div
+              className={`${isDesktop ? 'absolute bottom-0 pt-8 pb-8 px-8' : 'sticky bottom-0 pt-4 pb-4 px-4'} left-0 right-0 bg-gradient-to-t from-[#151515] via-[#151515]/98 via-[#151515]/90 to-transparent`}
+            >
               <div className="space-y-4">
-                {/* File Attachments Preview */}
                 {attachedFiles.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {attachedFiles.map((file, index) => (
@@ -921,90 +919,63 @@ async function startGeneration() {
                         <div className="flex items-center gap-2">
                           {file.type.startsWith('image/') ? (
                             <div className="w-6 h-6 bg-accent-primary/20 rounded flex items-center justify-center">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
-                              </svg>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
                             </div>
                           ) : (
                             <div className="w-6 h-6 bg-accent-primary/20 rounded flex items-center justify-center">
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-                              </svg>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>
                             </div>
                           )}
                           <span className="truncate max-w-[100px]">{file.name}</span>
                         </div>
-                        <button
-                          onClick={() => removeFile(index)}
-                          className="p-1 hover:bg-white/10 rounded text-white/60 hover:text-white"
-                        >
+                        <button onClick={() => removeFile(index)} className="p-1 hover:bg-white/10 rounded text-white/60 hover:text-white">
                           <X size={12} />
                         </button>
                       </div>
                     ))}
                   </div>
                 )}
-                
+
                 <div className="flex items-end gap-3">
-                {/* Chat Input - DEBUG: Should be 56px height (p-3 = 12px*2 + 32px icon height) */}
-                <div className="flex-1 relative bg-[#040404] rounded-xl p-3 min-h-[56px] flex items-center hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] focus-within:shadow-[0_0_5px_rgba(255,255,255,0.5)] focus-within:hover:shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-shadow duration-200">
-                <textarea
-                  ref={chatInputRef}
-                  value={input}
-                  onChange={(e) => {
-                    setInput(e.target.value);
-                    // Auto-resize functionality
-                    e.target.style.height = 'auto';
-                    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
-                  }}
-                  placeholder="Type out your question here..."
-                  className="w-full bg-transparent border-0 pr-2 text-white placeholder-gray-500 focus:outline-none resize-none min-h-[32px] max-h-[120px] overflow-y-auto chat-input-scrollbar"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      onSend();
-                    }
-                  }}
-                  disabled={busy}
-                  rows={1}
-                />
-                <button
-                  onClick={onSend}
-                  disabled={busy || !input.trim()}
-                  className="absolute right-1 top-1/2 transform -translate-y-1/2 p-1 text-white hover:text-accent-primary transition-colors disabled:opacity-50"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffffff" stroke="none">
-                    <path d="M12 19V5M5 12l7-7 7 7" stroke="#ffffff" strokeWidth="2" fill="none"/>
-                  </svg>
-                </button>
-              </div>
-                {/* Icons Container - DEBUG: Should be 56px height (p-3 = 12px*2 + p-2*2 = 8px*2 + 20px icon = 56px) */}
-                <div className="bg-[#040404] rounded-xl p-3 flex gap-2 min-h-[56px] items-center hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] transition-shadow duration-200">
-                  <button onClick={handleFileUpload} className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
-                    <Upload size={20} />
-                  </button>
-                <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
-                  <Grid3X3 size={20} />
-                </button>
-                <button className="p-2 text-white hover:text-accent-primary transition-colors" onClick={randomizeAll} disabled={busy}>
-                  <Dice5 size={20} />
-                </button>
-                  <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}>
-                    <List size={20} />
-                  </button>
-                </div>
+                  <div className="flex-1 relative bg-[#040404] rounded-xl p-3 min-h-[56px] flex items-center hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] focus-within:shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-shadow">
+                    <textarea
+                      ref={chatInputRef}
+                      value={input}
+                      onChange={(e) => {
+                        setInput(e.target.value);
+                        e.target.style.height = 'auto';
+                        e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                      }}
+                      placeholder="Type out your question here..."
+                      className="w-full bg-transparent border-0 pr-2 text-white placeholder-gray-500 focus:outline-none resize-none min-h-[32px] max-h-[120px] overflow-y-auto chat-input-scrollbar"
+                      onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSend(); } }}
+                      disabled={busy}
+                      rows={1}
+                    />
+                    <button
+                      onClick={onSend}
+                      disabled={busy || !input.trim()}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-white hover:text-accent-primary transition-colors disabled:opacity-50"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffffff"><path d="M12 19V5M5 12l7-7 7 7" stroke="#ffffff" strokeWidth="2" fill="none"/></svg>
+                    </button>
+                  </div>
+
+                  <div className="bg-[#040404] rounded-xl p-3 flex gap-2 min-h-[56px] items-center hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] transition-shadow">
+                    <button onClick={handleFileUpload} className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}><Upload size={20} /></button>
+                    <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}><Grid3X3 size={20} /></button>
+                    <button className="p-2 text-white hover:text-accent-primary transition-colors" onClick={randomizeAll} disabled={busy}><Dice5 size={20} /></button>
+                    <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}><List size={20} /></button>
+                  </div>
                 </div>
               </div>
             </div>
-            
-            {/* Resize Handle */}
-            <div 
-              className={`hidden lg:block absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize group ${isResizing ? 'bg-accent-primary/50' : 'bg-white/20 hover:bg-white/40'} transition-colors duration-200`}
+
+            {/* desktop-only resize handle */}
+            <div
+              className={`hidden lg:block absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize group ${isResizing ? 'bg-accent-primary/50' : 'bg-white/20 hover:bg-white/40'} transition-colors`}
               onMouseDown={handleMouseDown}
-              style={{ 
-                clipPath: 'polygon(100% 0%, 0% 100%, 100% 100%)',
-                borderBottomRightRadius: '16px' 
-              }}
+              style={{ clipPath: 'polygon(100% 0%, 0% 100%, 100% 100%)', borderBottomRightRadius: '16px' }}
             >
               <div className="absolute bottom-1 right-1 w-1 h-1 bg-white/60 rounded-full"></div>
               <div className="absolute bottom-1 right-2.5 w-1 h-1 bg-white/40 rounded-full"></div>
@@ -1012,7 +983,8 @@ async function startGeneration() {
             </div>
           </div>
 
-          <div className="app-col-kara min-w-0">
+          {/* Row 1 - Right: Karaoke panel (wraps under chat on iPad) */}
+          <div className="order-3 md:col-span-8 lg:col-span-2 min-w-0">
             <KaraokeRightPanel
               versions={versions}
               currentAudioIndex={currentAudioIndex}
@@ -1028,13 +1000,20 @@ async function startGeneration() {
             />
           </div>
 
-          {/* Row 2 */}
-          <div className="app-col-left-bottom bg-[#151515] rounded-2xl p-6 h-full">
+          {/* Far-right Track List: full height on desktop, stacks on smaller */}
+          <div className="order-4 lg:order-3 md:col-span-8 lg:col-span-1 lg:row-span-2 lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)] bg-[#151515] rounded-2xl p-6 flex flex-col items-center justify-center h-full">
+            <h3 className="text-white font-semibold mb-4">Track List</h3>
+            <p className="text-gray-400 text-sm text-center">Full height panel functionality...</p>
+          </div>
+
+          {/* Row 2 - Left: Sessions 2 */}
+          <div className="order-5 md:col-span-2 lg:col-span-2 bg-[#151515] rounded-2xl p-6 h-full">
             <h3 className="text-white font-semibold mb-4">Session 2</h3>
             <p className="text-gray-400 text-sm">Additional session functionality...</p>
           </div>
 
-          <div className="app-col-chat-bottom min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 h-full">
+          {/* Row 2 - Center: Form */}
+          <div className="order-6 md:col-span-6 lg:col-span-7 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 h-full">
             {/* Two-column layout: Left (Title + Song Parameters stacked), Right (Lyrics tall) */}
             <div className="grid grid-cols-12 gap-4 h-auto">
               {/* Left column: Title and Song Parameters stacked */}
@@ -1106,15 +1085,9 @@ async function startGeneration() {
             </div>
           </div>
 
-
-          <div className="app-col-template bg-[#151515] rounded-2xl flex items-center justify-center h-full">
+          {/* Row 2 - Right: Template */}
+          <div className="order-7 md:col-span-8 lg:col-span-2 bg-[#151515] rounded-2xl flex items-center justify-center h-full">
             <span className="text-text-secondary">TEMPLATE</span>
-          </div>
-
-          {/* Track List - Full height spanning both rows on far right */}
-          <div className="app-col-track bg-[#151515] rounded-2xl p-6 flex flex-col items-center justify-center h-full">
-            <h3 className="text-white font-semibold mb-4">Track List</h3>
-            <p className="text-gray-400 text-sm text-center">Full height panel functionality...</p>
           </div>
         </div>
 

@@ -3,37 +3,6 @@
 @tailwind utilities;
 
 @layer utilities {
-  .app-grid {
-    --left-col: 260px;
-    --chat-base: 2fr;
-    --karaoke-base: 260px;
-    --track-base: 1fr;
-    --chat-bump: 0px;
-    --karaoke-bump: 0px;
-
-    display: grid;
-    grid-template-columns:
-      var(--left-col)
-      minmax(0, var(--chat-base))
-      var(--karaoke-base)
-      minmax(0, var(--track-base));
-    gap: 20px;
-    grid-auto-rows: minmax(0, auto);
-  }
-
-  .app-grid--edge {
-    --chat-bump: 40px;
-    --karaoke-bump: 20px;
-  }
-
-  .app-col-left { grid-column: 1; }
-  .app-col-chat { grid-column: 2; min-width: 0; }
-  .app-col-kara { grid-column: 3; min-width: 0; }
-  .app-col-track {
-    grid-column: 4;
-    grid-row: 1 / span 2;
-    align-self: stretch;
-  }
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
@@ -144,36 +113,3 @@ All colors MUST be HSL.
   }
 }
 
-@layer components {
-  /* Outer grid: 1 col (mobile), 8 cols (iPad portrait), 12 cols (desktop) */
-  .app-grid { @apply grid grid-cols-1 md:grid-cols-8 lg:grid-cols-12 gap-5; }
-  .app-grid--edge { @apply max-w-[1583px] mx-auto w-full; }
-
-  /* Left (Sessions) — top card */
-  .app-col-left-top { @apply order-10 md:order-1 col-span-1 md:col-span-2 lg:col-span-2; }
-
-  /* Left (Sessions) — bottom card */
-  .app-col-left-bottom { @apply order-11 md:order-4 col-span-1 md:col-span-2 lg:col-span-2; }
-
-  /* Center — Chat (row 1) */
-  .app-col-chat-top { @apply order-1 md:order-2 col-span-1 md:col-span-6 lg:col-span-7 min-w-0; }
-
-  /* Center — Form (row 2) */
-  .app-col-chat-bottom { @apply order-2 md:order-5 col-span-1 md:col-span-6 lg:col-span-7 min-w-0; }
-
-  /* Right — Karaoke (row 1) */
-  .app-col-kara { @apply order-3 md:order-3 col-span-1 md:col-span-8 lg:col-span-2 min-w-0; }
-
-  /* Right — Template (row 2) */
-  .app-col-template { @apply order-12 md:order-6 col-span-1 md:col-span-8 lg:col-span-2; }
-
-  /* Far-right — Track List (stacks on mobile/tablet; pinned on desktop) */
-  .app-col-track {
-    @apply order-4 md:order-7 lg:order-none
-           col-span-1 md:col-span-8
-           lg:row-start-1 lg:col-start-12 lg:row-span-2 lg:col-span-1;
-  }
-
-  /* Scroll helpers for small screens */
-  .app-scroll { @apply max-h-[60vh] md:max-h-[55vh] lg:max-h-none overflow-y-auto; }
-}
