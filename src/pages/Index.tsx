@@ -868,8 +868,8 @@ async function startGeneration() {
 
       {/* Three Column Layout - Sessions, Chat + Form, Karaoke + Template */}
       <main className="max-w-[1583px] mr-1 p-6">
-        {/* 3 cols, 2 rows */}
-        <div className="grid grid-cols-[263px,900px,351px,264px] grid-rows-[auto,auto] gap-5 items-start">
+        {/* 4 cols, 3 rows */}
+        <div className="grid grid-cols-[263px,900px,351px,264px] grid-rows-[auto,auto,50px] gap-5 items-start">
 
           {/* Row 1 */}
           <div className="row-start-1 col-start-1 bg-[#151515] rounded-2xl p-6">
@@ -1297,7 +1297,54 @@ async function startGeneration() {
 
           </div>
         )}
+
+        </div>
       </main>
+
+      {/* Global Audio Player */}
+      {(audioUrl || (audioUrls && audioUrls.length > 0)) && (
+        <div className="max-w-[1583px] mr-1 px-6 pb-6">
+          <div className="h-[50px] ml-[283px] w-[1184px]">
+            <AudioPlayer
+              audioUrl={versions[currentAudioIndex]?.url || audioUrl || (audioUrls && audioUrls[currentAudioIndex]) || null}
+              isPlaying={isPlaying}
+              currentTime={currentTime}
+              onPlayPause={() => {
+                if (isPlaying) {
+                  handleAudioPause();
+                } else {
+                  handleAudioPlay(currentAudioIndex);
+                }
+              }}
+              onPrevious={() => {
+                if (versions.length > 1) {
+                  const newIndex = currentAudioIndex > 0 ? currentAudioIndex - 1 : versions.length - 1;
+                  handleAudioPlay(newIndex);
+                } else if (audioUrls && audioUrls.length > 1) {
+                  const newIndex = currentAudioIndex > 0 ? currentAudioIndex - 1 : audioUrls.length - 1;
+                  handleAudioPlay(newIndex);
+                }
+              }}
+              onNext={() => {
+                if (versions.length > 1) {
+                  const newIndex = currentAudioIndex < versions.length - 1 ? currentAudioIndex + 1 : 0;
+                  handleAudioPlay(newIndex);
+                } else if (audioUrls && audioUrls.length > 1) {
+                  const newIndex = currentAudioIndex < audioUrls.length - 1 ? currentAudioIndex + 1 : 0;
+                  handleAudioPlay(newIndex);
+                }
+              }}
+              onSeek={handleSeek}
+              trackInfo={{
+                title: details.title || `Track ${currentAudioIndex + 1}`,
+                artist: "AI Generated"
+              }}
+              timestampedLyrics={versions[currentAudioIndex]?.words}
+              onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Full-screen Karaoke Overlay */}
       {showFullscreenKaraoke && versions[currentAudioIndex]?.words?.length > 0 && (
