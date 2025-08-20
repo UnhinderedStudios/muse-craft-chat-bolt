@@ -903,18 +903,15 @@ async function startGeneration() {
               <h3 className="text-white font-semibold mb-4">Sessions</h3>
               <p className="text-gray-400 text-sm">Session management coming soon...</p>
             </div>
-            
-            {/* Session 2 - positioned to align with form section */}
-            <div 
-              className="bg-[#151515] rounded-2xl p-6 w-[263px]"
-              style={{ 
-                height: formContainerHeight > 0 ? `${formContainerHeight}px` : '400px',
-                marginTop: `${chatHeight + 20}px` // chatHeight + mt-5 (20px) to align with form
-              }}
-            >
-              <h3 className="text-white font-semibold mb-4">Session 2</h3>
-              <p className="text-gray-400 text-sm">Additional session functionality...</p>
-            </div>
+          </div>
+          
+          {/* Session 2 - positioned independently to align with form section */}
+          <div 
+            className="bg-[#151515] rounded-2xl p-6 w-[263px] mt-5"
+            style={{ height: formContainerHeight > 0 ? `${formContainerHeight}px` : '400px' }}
+          >
+            <h3 className="text-white font-semibold mb-4">Session 2</h3>
+            <p className="text-gray-400 text-sm">Additional session functionality...</p>
           </div>
           {/* Chat + Form Column (960px width) */}
           <div className="w-[960px] space-y-5">
