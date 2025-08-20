@@ -984,7 +984,7 @@ async function startGeneration() {
           </div>
 
           {/* Row 1 - Right: Karaoke panel (wraps under chat on iPad) */}
-          <div className="order-3 md:col-span-8 lg:col-span-2 min-w-0">
+          <div className="order-3 md:col-span-8 lg:col-span-1 xl:col-span-1 min-w-0">
             <KaraokeRightPanel
               versions={versions}
               currentAudioIndex={currentAudioIndex}
@@ -1001,7 +1001,7 @@ async function startGeneration() {
           </div>
 
           {/* Far-right Track List: spans both rows, bleeds to the right, sticky inner */}
-          <div className="order-4 lg:order-3 md:col-span-8 lg:col-span-1 xl:col-span-2 lg:row-span-2 lg:self-stretch">
+          <div className="order-4 lg:order-3 md:col-span-8 lg:col-span-2 xl:col-span-3 lg:row-span-2 lg:self-stretch">
             <div className="h-full lg:sticky lg:top-6 bg-[#151515] rounded-2xl p-6 flex flex-col items-center justify-center">
               <h3 className="text-white font-semibold mb-4">Track List</h3>
               <p className="text-gray-400 text-sm text-center">Full height panel functionality...</p>
@@ -1088,7 +1088,7 @@ async function startGeneration() {
           </div>
 
           {/* Row 2 - Right: Template */}
-          <div className="order-7 md:col-span-8 lg:col-span-2 bg-[#151515] rounded-2xl flex items-center justify-center h-full">
+          <div className="order-7 md:col-span-8 lg:col-span-1 xl:col-span-1 bg-[#151515] rounded-2xl flex items-center justify-center h-full">
             <span className="text-text-secondary">TEMPLATE</span>
           </div>
         </div>
