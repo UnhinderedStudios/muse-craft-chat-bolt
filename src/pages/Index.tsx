@@ -877,7 +877,7 @@ async function startGeneration() {
             <p className="text-gray-400 text-sm">Session management coming soon...</p>
           </div>
 
-          <div className="row-start-1 col-start-2 bg-[#151515] rounded-2xl relative overflow-hidden">
+          <div className="row-start-1 col-start-2 w-[960px] bg-[#151515] rounded-2xl relative overflow-hidden">
             {/* Fade gradient overlay - only shows when scrolled */}
             {scrollTop > 0 && (
               <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none" />
@@ -1032,7 +1032,7 @@ async function startGeneration() {
             <p className="text-gray-400 text-sm">Additional session functionality...</p>
           </div>
 
-          <div className="row-start-2 col-start-2 bg-[#151515] rounded-xl p-4 space-y-4 h-full">
+          <div className="row-start-2 col-start-2 w-[960px] bg-[#151515] rounded-xl p-4 space-y-4 h-full">
             {/* Two-column layout: Left (Title + Song Parameters stacked), Right (Lyrics tall) */}
             <div className="grid grid-cols-12 gap-4 h-auto">
               {/* Left column: Title and Song Parameters stacked */}
