@@ -864,17 +864,17 @@ async function startGeneration() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0c0c0c]">
+    <div className="min-h-screen bg-[#0c0c0c] overflow-x-hidden">
       {/* Cyber Header */}
       <CyberHeader />
 
       {/* Three Column Layout - Sessions, Chat + Form, Karaoke + Template */}
-      <main className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 py-6">
+      <main className="w-full py-6 px-6 lg:px-6 xl:px-8 2xl:px-10">
         {/* 1 col on mobile, 8 cols on iPad, 12 cols on desktop */}
-        <div className="grid items-start gap-5 grid-cols-1 md:grid-cols-8 lg:grid-cols-12">
+        <div className="grid grid-cols-1 md:grid-cols-8 lg:grid-cols-12 lg:items-stretch gap-6 lg:gap-6 xl:gap-8 2xl:gap-10">
 
           {/* Row 1 - Left: Sessions */}
-          <div className="order-1 md:col-span-2 lg:col-span-2 bg-[#151515] rounded-2xl p-6 lg:-ml-8 xl:-ml-10 2xl:-ml-12">
+          <div className="order-1 md:col-span-2 lg:col-span-2 bg-[#151515] rounded-2xl p-6">
             <h3 className="text-white font-semibold mb-4">Sessions</h3>
             <p className="text-gray-400 text-sm">Session management coming soon...</p>
           </div>
@@ -1001,7 +1001,7 @@ async function startGeneration() {
           </div>
 
           {/* Far-right Track List: spans both rows, bleeds to the right, sticky inner */}
-          <div className="order-4 lg:order-3 md:col-span-8 lg:col-span-1 xl:col-span-2 lg:row-span-2 lg:self-stretch lg:-mr-8 xl:-mr-10 2xl:-mr-12">
+          <div className="order-4 lg:order-3 md:col-span-8 lg:col-span-1 xl:col-span-2 lg:row-span-2 lg:self-stretch">
             <div className="h-full lg:sticky lg:top-6 bg-[#151515] rounded-2xl p-6 flex flex-col items-center justify-center">
               <h3 className="text-white font-semibold mb-4">Track List</h3>
               <p className="text-gray-400 text-sm text-center">Full height panel functionality...</p>
@@ -1009,7 +1009,7 @@ async function startGeneration() {
           </div>
 
           {/* Row 2 - Left: Sessions 2 */}
-          <div className="order-5 md:col-span-2 lg:col-span-2 bg-[#151515] rounded-2xl p-6 h-full lg:-ml-8 xl:-ml-10 2xl:-ml-12">
+          <div className="order-5 md:col-span-2 lg:col-span-2 bg-[#151515] rounded-2xl p-6 h-full">
             <h3 className="text-white font-semibold mb-4">Session 2</h3>
             <p className="text-gray-400 text-sm">Additional session functionality...</p>
           </div>
