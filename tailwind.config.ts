@@ -62,7 +62,7 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Cyber theme colors - mapped from theme.css variables
+				// Cyber theme colors
 				canvas: 'hsl(var(--bg-canvas))',
 				'card-alt': 'hsl(var(--bg-card-alt))',
 				'border-main': 'hsl(var(--border-main))',
