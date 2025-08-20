@@ -862,7 +862,7 @@ async function startGeneration() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0c0c0c]">
+    <div className="min-h-screen bg-[#0c0c0c] ml-[1px] mr-[1px]">
       {/* Cyber Header */}
       <CyberHeader />
 
