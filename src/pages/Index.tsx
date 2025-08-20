@@ -894,11 +894,18 @@ async function startGeneration() {
       {/* Cyber Header */}
       <CyberHeader />
 
-      {/* Two Column Layout - Chat + Form Left, New Container Right */}
-      <main className="max-w-7xl ml-[17px] mr-auto p-6">
-        <div className="grid grid-cols-12 gap-5">
-          {/* Left Column - Chat + Form (75% width) */}
-          <div className="col-span-9 space-y-5">
+      {/* Three Column Layout - Sessions, Chat + Form, Karaoke + Template */}
+      <main className="max-w-[1583px] ml-[17px] mr-auto p-6">
+        <div className="flex gap-5">
+          {/* Sessions Column (263px width) */}
+          <div className="w-[263px] space-y-5">
+            <div className="bg-[#151515] rounded-2xl p-6">
+              <h3 className="text-white font-semibold mb-4">Sessions</h3>
+              <p className="text-gray-400 text-sm">Session management coming soon...</p>
+            </div>
+          </div>
+          {/* Chat + Form Column (960px width) */}
+          <div className="w-[960px] space-y-5">
         {/* Chat Container with #151515 background - extended to bottom */}
         <div className="bg-[#151515] rounded-2xl relative overflow-hidden">
           {/* Fade gradient overlay - only shows when scrolled */}
@@ -1107,8 +1114,8 @@ async function startGeneration() {
         </div>
           </div>
 
-          {/* Right Column - Karaoke Panel (25% width) */}
-          <div className="col-span-3">
+          {/* Karaoke + Template Column (320px width) */}
+          <div className="w-[320px]">
             <KaraokeRightPanel
               versions={versions}
               currentAudioIndex={currentAudioIndex}
