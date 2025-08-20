@@ -10,7 +10,7 @@ import { ChatContainer } from "@/components/chat/ChatContainer";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { FullscreenKaraoke } from "@/components/karaoke/FullscreenKaraoke";
 import { KaraokeRightPanel } from "@/components/karaoke/KaraokeRightPanel";
-import { ResizableContainer } from "@/components/layout/ResizableContainer";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { FormSection } from "@/components/main/FormSection";
 import { TemplateSection } from "@/components/main/TemplateSection";
 import { GenerationProgress } from "@/components/main/GenerationProgress";
@@ -226,115 +226,134 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-canvas text-primary" style={{ backgroundColor: "hsl(var(--bg-canvas))", color: "hsl(var(--text-primary))" }}>
       <CyberHeader />
       
-      <main className="container mx-auto px-4 py-8">
-        <ResizableContainer
-          isResizing={resize.isResizing}
-          handleMouseDown={resize.handleMouseDown}
-        >
-          {/* Left: Form and Templates */}
-          <div className="space-y-8">
-            <FormSection
-              details={details}
-              setDetails={setDetails}
-              styleTags={styleTags}
-              onStyleTagsChange={handleStyleTagsChange}
-              onRandomize={onRandomize}
-              onGenerate={onGenerate}
-              canGenerate={canGenerate}
-              busy={generation.busy}
-            />
-            
-            <TemplateSection
-              onApplyTemplate={onApplyTemplate}
-              lastDiceAt={lastDiceAt}
-            />
-            
-            {/* Chat Section */}
-            <CyberCard className="relative">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-white">AI Assistant</h2>
-                <div className="flex gap-2">
-                  <CyberButton variant="icon" onClick={handleFileUpload}>
-                    <Upload className="w-4 h-4" />
-                  </CyberButton>
-                  <CyberButton variant="icon">
-                    <Mic className="w-4 h-4" />
-                  </CyberButton>
+      <main className="h-[calc(100vh-80px)]">
+        <ResizablePanelGroup direction="horizontal" className="h-full">
+          {/* Left Panel: Form, Templates, and Chat */}
+          <ResizablePanel defaultSize={65} minSize={40}>
+            <div className="h-full overflow-y-auto custom-scrollbar">
+              <div className="p-6">
+                {/* Form and Templates Grid */}
+                <div className="grid grid-cols-3 gap-6 mb-6">
+                  {/* Form Section */}
+                  <div className="col-span-2">
+                    <FormSection
+                      details={details}
+                      setDetails={setDetails}
+                      styleTags={styleTags}
+                      onStyleTagsChange={handleStyleTagsChange}
+                      onRandomize={onRandomize}
+                      onGenerate={onGenerate}
+                      canGenerate={canGenerate}
+                      busy={generation.busy}
+                    />
+                  </div>
+                  
+                  {/* Templates Section */}
+                  <div className="col-span-1">
+                    <TemplateSection
+                      onApplyTemplate={onApplyTemplate}
+                      lastDiceAt={lastDiceAt}
+                    />
+                  </div>
+                  
+                  {/* Generation Progress */}
+                  {generation.busy && (
+                    <GenerationProgress
+                      busy={generation.busy}
+                      generationProgress={generation.generationProgress}
+                    />
+                  )}
                 </div>
-              </div>
-              
-              {/* File attachments */}
-              {attachedFiles.length > 0 && (
-                <div className="mb-4 flex flex-wrap gap-2">
-                  {attachedFiles.map((file, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-white/10 rounded px-2 py-1">
-                      <span className="text-sm">{file.name}</span>
-                      <button onClick={() => removeFile(index)}>
-                        <X className="w-3 h-3" />
-                      </button>
+                
+                {/* Chat Section */}
+                <CyberCard className="relative">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h2 className="text-xl font-semibold text-white">AI Assistant</h2>
+                    <div className="flex gap-2">
+                      <CyberButton variant="icon" onClick={handleFileUpload}>
+                        <Upload className="w-4 h-4" />
+                      </CyberButton>
+                      <CyberButton variant="icon">
+                        <Mic className="w-4 h-4" />
+                      </CyberButton>
                     </div>
-                  ))}
-                </div>
-              )}
-              
-              <ChatContainer
-                chatHeight={resize.chatHeight}
-                scrollTop={chat.scrollTop}
-                setScrollTop={chat.setScrollTop}
-                messages={chat.messages}
-                scrollerRef={chat.scrollerRef}
-              />
-              
-              <ChatInput
-                input={chat.input}
-                setInput={chat.setInput}
-                onSend={onSend}
-                onRandomize={onRandomize}
-                disabled={generation.busy}
-              />
-            </CyberCard>
-          </div>
+                  </div>
+                  
+                  {/* File attachments */}
+                  {attachedFiles.length > 0 && (
+                    <div className="mb-4 flex flex-wrap gap-2">
+                      {attachedFiles.map((file, index) => (
+                        <div key={index} className="flex items-center gap-2 bg-white/10 rounded px-2 py-1">
+                          <span className="text-sm">{file.name}</span>
+                          <button onClick={() => removeFile(index)}>
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  <ChatContainer
+                    chatHeight={resize.chatHeight}
+                    scrollTop={chat.scrollTop}
+                    setScrollTop={chat.setScrollTop}
+                    messages={chat.messages}
+                    scrollerRef={chat.scrollerRef}
+                  />
+                  
+                  <ChatInput
+                    input={chat.input}
+                    setInput={chat.setInput}
+                    onSend={onSend}
+                    onRandomize={onRandomize}
+                    disabled={generation.busy}
+                  />
+                </CyberCard>
+              </div>
+            </div>
+          </ResizablePanel>
           
-          {/* Right: Results */}
-          <div className="space-y-6">
-            {generation.busy ? (
-              <GenerationProgress
-                busy={generation.busy}
-                generationProgress={generation.generationProgress}
-              />
-            ) : generation.versions.length > 0 ? (
-              <TrackList
-                versions={generation.versions}
-                currentAudioIndex={audioPlayer.currentAudioIndex}
-                isPlaying={audioPlayer.isPlaying}
-                currentTime={audioPlayer.currentTime}
-                details={details}
-                albumCovers={generation.albumCovers}
-                onAudioPlay={(index) => audioPlayer.handleAudioPlay(index, generation.busy)}
-                onAudioPause={audioPlayer.handleAudioPause}
-                onTimeUpdate={audioPlayer.handleTimeUpdate}
-                onSeek={audioPlayer.handleSeek}
-                onShowFullscreen={() => setShowFullscreenKaraoke(true)}
-                audioRefs={audioPlayer.audioRefs}
-              />
-            ) : (
-              <CyberCard className="p-8 text-center">
-                <h3 className="text-xl font-semibold text-white mb-4">Ready to Create</h3>
-                <p className="text-gray-400 mb-6">
-                  Add lyrics and style details, then click Generate Song to create your music.
-                </p>
-                <div className="flex justify-center">
-                  <CyberButton onClick={onGenerate} disabled={!canGenerate}>
-                    Generate Song
-                  </CyberButton>
-                </div>
-              </CyberCard>
-            )}
-          </div>
-        </ResizableContainer>
+          <ResizableHandle withHandle />
+          
+          {/* Right Panel: Results */}
+          <ResizablePanel defaultSize={35} minSize={25}>
+            <div className="h-full overflow-y-auto custom-scrollbar">
+              <div className="p-6">
+                {generation.versions.length > 0 ? (
+                  <TrackList
+                    versions={generation.versions}
+                    currentAudioIndex={audioPlayer.currentAudioIndex}
+                    isPlaying={audioPlayer.isPlaying}
+                    currentTime={audioPlayer.currentTime}
+                    details={details}
+                    albumCovers={generation.albumCovers}
+                    onAudioPlay={(index) => audioPlayer.handleAudioPlay(index, generation.busy)}
+                    onAudioPause={audioPlayer.handleAudioPause}
+                    onTimeUpdate={audioPlayer.handleTimeUpdate}
+                    onSeek={audioPlayer.handleSeek}
+                    onShowFullscreen={() => setShowFullscreenKaraoke(true)}
+                    audioRefs={audioPlayer.audioRefs}
+                  />
+                ) : (
+                  <CyberCard className="p-8 text-center">
+                    <h3 className="text-xl font-semibold text-white mb-4">Ready to Create</h3>
+                    <p className="text-gray-400 mb-6">
+                      Add lyrics and style details, then click Generate Song to create your music.
+                    </p>
+                    <div className="flex justify-center">
+                      <CyberButton onClick={onGenerate} disabled={!canGenerate}>
+                        Generate Song
+                      </CyberButton>
+                    </div>
+                  </CyberCard>
+                )}
+              </div>
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </main>
       
       {/* Fullscreen Karaoke */}

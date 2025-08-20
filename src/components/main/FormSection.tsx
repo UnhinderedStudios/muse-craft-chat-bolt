@@ -1,4 +1,7 @@
 import React from "react";
+import { Dice5 } from "lucide-react";
+import { CyberCard } from "@/components/cyber/CyberCard";
+import { CyberButton } from "@/components/cyber/CyberButton";
 import { SongDetailsForm } from "@/components/song/SongDetailsForm";
 import { TagInput } from "@/components/song/TagInput";
 import { type SongDetails } from "@/lib/api";
@@ -25,30 +28,40 @@ export const FormSection: React.FC<FormSectionProps> = ({
   busy
 }) => {
   return (
-    <div className="bg-transparent">
-      <SongDetailsForm
-        details={details}
-        setDetails={setDetails}
-        styleTags={styleTags}
-        setStyleTags={onStyleTagsChange}
-      />
+    <CyberCard>
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold text-white mb-4">Song Details</h2>
+        <SongDetailsForm
+          details={details}
+          setDetails={setDetails}
+          styleTags={styleTags}
+          setStyleTags={onStyleTagsChange}
+        />
+        
+        <TagInput
+          tags={styleTags}
+          onChange={onStyleTagsChange}
+          placeholder="Add style tags..."
+        />
+      </div>
       
-      <TagInput
-        tags={styleTags}
-        onChange={onStyleTagsChange}
-        placeholder="Add style tags..."
-      />
-      
-      <div className="flex justify-center">
-        <button
-          type="button"
+      <div className="flex gap-4 justify-center">
+        <CyberButton
+          onClick={onRandomize}
+          variant="secondary"
+          className="gap-2"
+        >
+          <Dice5 className="w-4 h-4" />
+          Random
+        </CyberButton>
+        <CyberButton
           onClick={onGenerate}
           disabled={!canGenerate || busy}
-          className="mt-6 px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 disabled:from-gray-400 disabled:to-gray-400 text-white rounded-lg font-medium transition-all duration-200 disabled:cursor-not-allowed"
+          className="px-8"
         >
           {busy ? "Generating..." : "Generate Song"}
-        </button>
+        </CyberButton>
       </div>
-    </div>
+    </CyberCard>
   );
 };

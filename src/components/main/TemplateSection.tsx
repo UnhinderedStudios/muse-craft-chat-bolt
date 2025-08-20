@@ -181,7 +181,7 @@ export const TemplateSection: React.FC<TemplateSectionProps> = ({ onApplyTemplat
   };
 
   return (
-    <div className="bg-transparent">
+    <CyberCard>
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-xl font-semibold text-white">Templates</h2>
         <CyberButton 
@@ -196,7 +196,7 @@ export const TemplateSection: React.FC<TemplateSectionProps> = ({ onApplyTemplat
       
       <div className="space-y-4">
         {templates.map((template, index) => (
-          <CyberCard key={index} className="p-4 cursor-pointer hover:bg-white/5 transition-colors" onClick={() => handleApplyTemplate(template)}>
+          <CyberCard key={index} variant="alt" className="p-4 cursor-pointer hover:bg-white/5 transition-colors" onClick={() => handleApplyTemplate(template)}>
             <h3 className="font-medium text-white mb-2">{template.title}</h3>
             <p className="text-sm text-gray-400 mb-3 line-clamp-2">{template.style}</p>
             <div className="text-xs text-gray-500 line-clamp-3">
@@ -205,6 +205,6 @@ export const TemplateSection: React.FC<TemplateSectionProps> = ({ onApplyTemplat
           </CyberCard>
         ))}
       </div>
-    </div>
+    </CyberCard>
   );
 };
