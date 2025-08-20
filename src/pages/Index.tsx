@@ -29,6 +29,7 @@ import { TagInput } from "@/components/song/TagInput";
 // Hooks
 import { useChat } from "@/hooks/use-chat";
 import { useResize } from "@/hooks/use-resize";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { useSongGeneration } from "@/hooks/use-song-generation";
 
 // Types
@@ -113,6 +114,7 @@ function sanitizeStyleSafe(input?: string): string | undefined {
 
 
 const Index = () => {
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "assistant", content: "Hey! I can help write and generate a song. What vibe are you going for?" },
   ]);
@@ -867,33 +869,33 @@ async function startGeneration() {
       <CyberHeader />
 
       {/* Three Column Layout - Sessions, Chat + Form, Karaoke + Template */}
-      <main className="w-full px-4 sm:px-6 pr-3 py-6">
+      <main className="app-grid--edge p-6">
         {/* 3 cols, 2 rows */}
-        <div className="app-grid app-grid--edge items-start">
+        <div className="app-grid items-start">
 
           {/* Row 1 */}
-          <div className="app-col-left bg-[#151515] rounded-2xl p-6">
+          <div className="app-col-left-top bg-[#151515] rounded-2xl p-6">
             <h3 className="text-white font-semibold mb-4">Sessions</h3>
             <p className="text-gray-400 text-sm">Session management coming soon...</p>
           </div>
 
-          <div className="app-col-chat min-w-0 bg-[#151515] rounded-2xl relative overflow-hidden">
+          <div className="app-col-chat-top min-w-0 bg-[#151515] rounded-2xl relative overflow-hidden">
             {/* Fade gradient overlay - only shows when scrolled */}
             {scrollTop > 0 && (
               <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none" />
             )}
             
             {/* Chat Conversation - dynamic height */}
-            <div 
-              className="overflow-y-auto custom-scrollbar pl-8 pr-6 pt-8"
+            <div
+              className="app-scroll custom-scrollbar pl-6 lg:pl-8 pr-4 lg:pr-6 pt-6 lg:pt-8"
               ref={scrollerRef}
-              style={{ height: `${chatHeight}px` }}
+              style={isDesktop ? { height: `${chatHeight}px` } : undefined}
               onScroll={(e) => {
                 const target = e.target as HTMLDivElement;
                 setScrollTop(target.scrollTop);
               }}
             >
-              <div className="space-y-4 pr-4 pl-4 pt-4 pb-32">
+              <div className="space-y-4 pr-4 pl-4 pt-4 pb-4 lg:pb-32">
                 {/* Chat messages */}
                 {messages.map((m, i) => (
                   <ChatBubble key={i} role={m.role} content={m.content} />
@@ -997,7 +999,7 @@ async function startGeneration() {
             
             {/* Resize Handle */}
             <div 
-              className={`absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize group ${isResizing ? 'bg-accent-primary/50' : 'bg-white/20 hover:bg-white/40'} transition-colors duration-200`}
+              className={`hidden lg:block absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize group ${isResizing ? 'bg-accent-primary/50' : 'bg-white/20 hover:bg-white/40'} transition-colors duration-200`}
               onMouseDown={handleMouseDown}
               style={{ 
                 clipPath: 'polygon(100% 0%, 0% 100%, 100% 100%)',
@@ -1027,12 +1029,12 @@ async function startGeneration() {
           </div>
 
           {/* Row 2 */}
-          <div className="app-col-left bg-[#151515] rounded-2xl p-6 h-full">
+          <div className="app-col-left-bottom bg-[#151515] rounded-2xl p-6 h-full">
             <h3 className="text-white font-semibold mb-4">Session 2</h3>
             <p className="text-gray-400 text-sm">Additional session functionality...</p>
           </div>
 
-          <div className="app-col-chat min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 h-full">
+          <div className="app-col-chat-bottom min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 h-full">
             {/* Two-column layout: Left (Title + Song Parameters stacked), Right (Lyrics tall) */}
             <div className="grid grid-cols-12 gap-4 h-auto">
               {/* Left column: Title and Song Parameters stacked */}
@@ -1105,7 +1107,7 @@ async function startGeneration() {
           </div>
 
 
-          <div className="app-col-kara bg-[#151515] rounded-2xl flex items-center justify-center h-full">
+          <div className="app-col-template bg-[#151515] rounded-2xl flex items-center justify-center h-full">
             <span className="text-text-secondary">TEMPLATE</span>
           </div>
 
