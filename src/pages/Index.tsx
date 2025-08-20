@@ -869,7 +869,7 @@ async function startGeneration() {
       {/* Three Column Layout - Sessions, Chat + Form, Karaoke + Template */}
       <main className="max-w-[1583px] mr-1 p-6">
         {/* 3 cols, 2 rows */}
-        <div className="grid grid-cols-[263px,900px,320px,263px] grid-rows-[auto,auto] gap-5 items-start">
+        <div className="grid grid-cols-[263px,900px,319px,264px] grid-rows-[auto,auto] gap-5 items-start">
 
           {/* Row 1 */}
           <div className="row-start-1 col-start-1 bg-[#151515] rounded-2xl p-6">
@@ -1105,8 +1105,12 @@ async function startGeneration() {
           </div>
 
 
-          {/* New Element - Full height spanning both rows on far right */}
-          <div className="row-span-2 col-start-3 col-span-2 bg-[#151515] rounded-2xl p-6 flex flex-col items-center justify-center h-full ml-1">
+          <div className="row-start-2 col-start-3 bg-[#151515] rounded-2xl flex items-center justify-center h-full">
+            <span className="text-text-secondary">TEMPLATE</span>
+          </div>
+
+          {/* Track List - Full height spanning both rows on far right */}
+          <div className="row-span-2 col-start-4 bg-[#151515] rounded-2xl p-6 flex flex-col items-center justify-center h-full">
             <h3 className="text-white font-semibold mb-4">Track List</h3>
             <p className="text-gray-400 text-sm text-center">Full height panel functionality...</p>
           </div>
