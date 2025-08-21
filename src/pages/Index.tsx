@@ -1111,41 +1111,32 @@ async function startGeneration() {
               </div>
             )}
 
-            {/* Docked Global Player */}
-            <div className="pt-2">
-              {(() => {
-                const hasAudio = (audioUrls?.length ?? 0) > 0 && !!audioRefs.current[currentAudioIndex];
-                return (
-                  <GlobalPlayerBar
-                    title={details.title || (hasAudio ? `Version ${currentAudioIndex + 1}` : "No track yet")}
-                    audioRefs={audioRefs}
-                    currentAudioIndex={currentAudioIndex}
-                    isPlaying={isPlaying}
-                    currentTime={currentTime}
-                    onPrev={() => {
-                      if (!hasAudio) return;
-                      const idx = Math.max(0, currentAudioIndex - 1);
-                      handleAudioPlay(idx);
-                    }}
-                    onNext={() => {
-                      if (!hasAudio) return;
-                      const idx = Math.min((audioUrls?.length ?? 1) - 1, currentAudioIndex + 1);
-                      handleAudioPlay(idx);
-                    }}
-                    onPlay={() => {
-                      if (!hasAudio) return;
-                      handleAudioPlay(currentAudioIndex);
-                    }}
-                    onPause={handleAudioPause}
-                    onSeek={(t) => {
-                      if (!hasAudio) return;
-                      handleSeek(t);
-                    }}
-                    accent="#f92c8f"
-                    disabled={!hasAudio}
-                  />
-                );
-              })()}
+            {/* Docked Global Player — always visible */}
+            <div className="pt-2 -mx-4">
+              <GlobalPlayerBar
+                title={details.title || (audioRefs.current[currentAudioIndex] ? `Version ${currentAudioIndex + 1}` : "No track yet")}
+                audioRefs={audioRefs}
+                currentAudioIndex={currentAudioIndex}
+                isPlaying={isPlaying}
+                currentTime={currentTime}
+                onPrev={() => {
+                  const len = audioRefs.current.length;
+                  if (!len) return;
+                  const idx = Math.max(0, currentAudioIndex - 1);
+                  handleAudioPlay(idx);
+                }}
+                onNext={() => {
+                  const len = audioRefs.current.length;
+                  if (!len) return;
+                  const idx = Math.min(len - 1, currentAudioIndex + 1);
+                  handleAudioPlay(idx);
+                }}
+                onPlay={() => handleAudioPlay(currentAudioIndex)}
+                onPause={handleAudioPause}
+                onSeek={(t) => handleSeek(t)}
+                accent="#f92c8f"
+                disabled={!audioRefs.current[currentAudioIndex]}
+              />
             </div>
           </div>
 

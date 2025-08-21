@@ -1,12 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
-import WaveSurfer from "wavesurfer.js";
-import {
-  SkipBack, SkipForward, Play, Pause, Shuffle, Repeat,
-  Volume2, VolumeX, Plus, Heart, Share2, MoreHorizontal
-} from "lucide-react";
+import { useEffect, useMemo, useRef } from "react";
+import { SkipBack, SkipForward, Play, Pause, Shuffle, Repeat, Volume2, VolumeX } from "lucide-react";
 
 type Props = {
-  title: string;
+  title?: string;
   audioRefs: React.MutableRefObject<HTMLAudioElement[]>;
   currentAudioIndex: number;
   isPlaying: boolean;
@@ -15,19 +11,13 @@ type Props = {
   onNext: () => void;
   onPlay: () => void;
   onPause: () => void;
-  onSeek: (time: number) => void;
-  accent?: string;
-  disabled?: boolean; // NEW
+  onSeek: (t: number) => void;
+  accent?: string;    // default #f92c8f
+  disabled?: boolean; // render but disable controls
 };
 
-const fmt = (s?: number) => {
-  if (!s || !isFinite(s)) return "0:00";
-  const t = Math.floor(s);
-  return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
-};
-
-export const GlobalPlayerBar: React.FC<Props> = ({
-  title,
+export const GlobalPlayerBar = ({
+  title = "—",
   audioRefs,
   currentAudioIndex,
   isPlaying,
@@ -39,155 +29,131 @@ export const GlobalPlayerBar: React.FC<Props> = ({
   onSeek,
   accent = "#f92c8f",
   disabled = false,
-}) => {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const wsRef = useRef<WaveSurfer | null>(null);
+}: Props) => {
+  const waveRef = useRef<HTMLDivElement>(null);
+  const wavesurferRef = useRef<any>(null);
 
-  const audioEl = audioRefs.current[currentAudioIndex] ?? null;
+  const audioEl = audioRefs.current[currentAudioIndex];
   const duration = audioEl?.duration ?? 0;
-  const reallyDisabled = disabled || !audioEl;
 
-  // Build/Bind wavesurfer only when we actually have an <audio>
+  const fmt = (sec: number) => {
+    if (!isFinite(sec) || sec <= 0) return "0:00";
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  };
+
   useEffect(() => {
-    if (!containerRef.current || !audioEl) return;
+    let cancelled = false;
 
-    if (wsRef.current) {
-      try { wsRef.current.destroy(); } catch {}
-      wsRef.current = null;
-    }
+    async function boot() {
+      if (!waveRef.current) return;
 
-    const ws = WaveSurfer.create({
-      container: containerRef.current,
-      height: 48,
-      waveColor: "#2a2a2a",
-      progressColor: accent,
-      cursorColor: "transparent",
-      barWidth: 2,
-      barGap: 1,
-      barRadius: 2,
-      normalize: true,
-      minPxPerSec: 40,
-      interact: true,
-    });
-
-    // Load the existing audio element by URL
-    if (audioEl.src) {
-      ws.load(audioEl.src);
-    }
-
-    // Seek from waveform -> parent handler
-    ws.on("click", (progress: number) => {
-      const dur = audioEl?.duration ?? 0;
-      if (dur > 0) onSeek(progress * dur);
-    });
-
-    wsRef.current = ws;
-    return () => {
-      try { ws.destroy(); } catch {}
-      wsRef.current = null;
-    };
-  }, [audioEl, accent]);
-
-  // Keep ws in sync with time
-  useEffect(() => {
-    if (!wsRef.current) return;
-    try {
-      // @ts-ignore
-      if (typeof wsRef.current.setTime === "function") {
-        // @ts-ignore
-        wsRef.current.setTime(currentTime || 0);
-      } else if (duration > 0) {
-        wsRef.current.seekTo((currentTime || 0) / duration);
+      // destroy any previous instance
+      if (wavesurferRef.current) {
+        try { wavesurferRef.current.destroy(); } catch {}
+        wavesurferRef.current = null;
       }
-    } catch {}
+
+      if (!audioEl) {
+        waveRef.current.innerHTML = "";
+        return;
+      }
+
+      const { default: WaveSurfer } = await import("wavesurfer.js");
+      if (cancelled) return;
+
+      const ws = WaveSurfer.create({
+        container: waveRef.current!,
+        media: audioEl,                // bind to existing <audio>
+        height: 56,
+        barWidth: 2,
+        barGap: 1,
+        barRadius: 2,
+        waveColor: "#2a2a2a",
+        progressColor: accent,
+        cursorWidth: 0,
+        interact: true,
+        dragToSeek: true,
+        fillParent: true,
+        autoCenter: false,
+        normalize: true,
+        
+      });
+
+      wavesurferRef.current = ws;
+    }
+
+    boot();
+    return () => {
+      cancelled = true;
+      if (wavesurferRef.current) {
+        try { wavesurferRef.current.destroy(); } catch {}
+        wavesurferRef.current = null;
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioEl, currentAudioIndex]);
+
+  const handleWavePointer = (e: React.PointerEvent) => {
+    if (!audioEl || disabled) return;
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const pct = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    onSeek(pct * (audioEl.duration || 0));
+  };
+
+  const pct = useMemo(() => {
+    if (!duration) return 0;
+    return Math.min(100, Math.max(0, (currentTime / duration) * 100));
   }, [currentTime, duration]);
 
-  const left = (
-    <div className="shrink-0 w-[220px] flex flex-col">
-      <div className="text-white/90 truncate text-sm sm:text-[15px] leading-tight">
-        {title || (reallyDisabled ? "No track yet" : "Untitled")}
-      </div>
-      <div className="text-white/50 text-xs">
-        {fmt(currentTime)} • {fmt(duration)}
-      </div>
-    </div>
-  );
-
-  const right = (
-    <div className="shrink-0 w-[220px] flex items-center justify-end gap-3">
-      {[Plus, Heart, Share2, MoreHorizontal].map((Icon, i) => (
-        <button
-          key={i}
-          className={`p-2 rounded text-white/80 hover:bg-white/5 ${reallyDisabled ? "opacity-40 pointer-events-none" : ""}`}
-          aria-disabled={reallyDisabled}
-        >
-          <Icon size={16} />
-        </button>
-      ))}
-    </div>
-  );
-
   return (
-    <div className="w-full rounded-xl bg-[#101010] border border-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.02)_inset,0_10px_30px_rgba(0,0,0,0.35)] px-3 sm:px-4 py-3">
-      {/* Top row */}
-      <div className="flex items-center gap-3 sm:gap-4">
-        {left}
-        <div className="min-w-0 flex-1">
-          {/* Real waveform or placeholder */}
-          {reallyDisabled ? (
-            <div className="w-full h-[48px] rounded-md bg-[#1f1f1f]">
-              {/* subtle stripes to hint waveform */}
-              <div className="h-full w-full opacity-30 bg-[linear-gradient(90deg,transparent_0_2px,#2a2a2a_2px_4px)] bg-[length:4px_100%] rounded-md" />
-            </div>
-          ) : (
-            <div ref={containerRef} className="w-full h-[48px]" />
-          )}
-        </div>
-        {right}
+    <div className="rounded-xl bg-[#101010] shadow-sm w-full overflow-hidden select-none">
+      {/* Waveform — edge to edge */}
+      <div className="relative w-full overflow-hidden" onPointerDown={handleWavePointer}>
+        <div ref={waveRef} className="w-full h-[56px]" />
+        {/* Slim progress line for crisp visibility */}
+        <div className="absolute bottom-0 left-0 h-[3px]" style={{ width: `${pct}%`, backgroundColor: accent }} />
       </div>
 
-      {/* Transport */}
-      <div className="flex items-center justify-center gap-3 sm:gap-4 mt-3">
-        <button
-          onClick={() => !reallyDisabled && onPrev()}
-          className={`h-9 w-9 grid place-items-center rounded-md bg-white/5 text-white hover:bg-white/10 ${reallyDisabled ? "opacity-40 pointer-events-none" : ""}`}
-          aria-disabled={reallyDisabled}
-        >
-          <SkipBack size={16} />
-        </button>
+      {/* Under-wave controls row */}
+      <div className="grid grid-cols-[220px_1fr_220px] items-center gap-4 px-4 py-3">
+        {/* Left: title + time */}
+        <div className="min-w-0">
+          <div className="text-[15px] text-white truncate">{title}</div>
+          <div className="text-xs text-white/60">{fmt(currentTime)} • {fmt(duration)}</div>
+        </div>
 
-        <button
-          onClick={() => !reallyDisabled && (isPlaying ? onPause() : onPlay())}
-          className={`h-9 px-4 grid place-items-center rounded-md text-white ${reallyDisabled ? "opacity-40 pointer-events-none" : ""}`}
-          style={{ backgroundColor: reallyDisabled ? "rgba(249,44,143,.6)" : accent }}
-          aria-disabled={reallyDisabled}
-        >
-          {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-        </button>
+        {/* Center: transport */}
+        <div className="flex items-center justify-center gap-3">
+          <button className="h-9 w-9 grid place-items-center rounded-lg bg-[#1e1e1e] text-white/90 disabled:opacity-40"
+                  onClick={onPrev} disabled={disabled} aria-label="Previous">
+            <SkipBack size={18} />
+          </button>
+          <button className={`h-9 w-9 grid place-items-center rounded-lg text-white ${disabled ? "opacity-40" : ""}`}
+                  onClick={isPlaying ? onPause : onPlay} disabled={disabled}
+                  aria-label={isPlaying ? "Pause" : "Play"}
+                  style={{ backgroundColor: isPlaying ? "#e02681" : accent }}>
+            {isPlaying ? <Pause size={18} /> : <Play size={18} />}
+          </button>
+          <button className="h-9 w-9 grid place-items-center rounded-lg bg-[#1e1e1e] text-white/90 disabled:opacity-40"
+                  onClick={onNext} disabled={disabled} aria-label="Next">
+            <SkipForward size={18} />
+          </button>
+        </div>
 
-        <button
-          onClick={() => !reallyDisabled && onNext()}
-          className={`h-9 w-9 grid place-items-center rounded-md bg-white/5 text-white hover:bg-white/10 ${reallyDisabled ? "opacity-40 pointer-events-none" : ""}`}
-          aria-disabled={reallyDisabled}
-        >
-          <SkipForward size={16} />
-        </button>
-
-        <div className="mx-1 sm:mx-2" />
-
-        <button className={`h-9 w-9 grid place-items-center rounded-md bg-white/5 text-white hover:bg-white/10 ${reallyDisabled ? "opacity-40 pointer-events-none" : ""}`} aria-disabled={reallyDisabled}>
-          <Shuffle size={16} />
-        </button>
-        <button className={`h-9 w-9 grid place-items-center rounded-md bg-white/5 text-white hover:bg-white/10 ${reallyDisabled ? "opacity-40 pointer-events-none" : ""}`} aria-disabled={reallyDisabled}>
-          <Repeat size={16} />
-        </button>
-
-        <div className="mx-1 sm:mx-2" />
-
-        <button className={`h-9 w-9 grid place-items-center rounded-md bg-white/5 text-white hover:bg-white/10 ${reallyDisabled ? "opacity-40 pointer-events-none" : ""}`} aria-disabled={reallyDisabled}>
-          {/* icon only; keep simple for now */}
-          <Volume2 size={16} />
-        </button>
+        {/* Right: extra controls (placeholders) */}
+        <div className="flex items-center justify-end gap-3 text-white/80">
+          <button className="h-9 px-3 rounded-lg bg-[#1e1e1e] disabled:opacity-40" disabled={disabled} aria-label="Shuffle">
+            <Shuffle size={16} />
+          </button>
+          <button className="h-9 px-3 rounded-lg bg-[#1e1e1e] disabled:opacity-40" disabled={disabled} aria-label="Repeat">
+            <Repeat size={16} />
+          </button>
+          <button className="h-9 px-3 rounded-lg bg-[#1e1e1e] disabled:opacity-40" disabled={disabled} aria-label="Volume">
+            {audioEl && audioEl.muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+          </button>
+        </div>
       </div>
     </div>
   );
