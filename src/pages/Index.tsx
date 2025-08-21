@@ -9,7 +9,7 @@ import { sanitizeStyle } from "@/lib/styleSanitizer";
 import { Spinner } from "@/components/ui/spinner";
 import { ImageAnalysisLoader } from "@/components/ui/image-analysis-loader";
 import { toast } from "sonner";
-import { Dice5, Mic, Upload, Grid3X3, Plus, List, Play, Pause, X } from "lucide-react";
+import { Dice5, Mic, Upload, Grid3X3, Plus, List, Play, Pause, X, SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX } from "lucide-react";
 
 // Components
 import { CyberHeader } from "@/components/cyber/CyberHeader";
@@ -25,6 +25,7 @@ import { FullscreenKaraoke } from "@/components/karaoke/FullscreenKaraoke";
 import { KaraokeRightPanel } from "@/components/karaoke/KaraokeRightPanel";
 import { ResizableContainer } from "@/components/layout/ResizableContainer";
 import { TagInput } from "@/components/song/TagInput";
+import { GlobalPlayerBar } from "@/components/audio/GlobalPlayerBar";
 
 // Hooks
 import { useChat } from "@/hooks/use-chat";
@@ -434,6 +435,20 @@ const Index = () => {
 
   const removeFile = (index: number) => {
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Helper functions for global player
+  const playCurrent = () => handleAudioPlay(currentAudioIndex);
+  const togglePlayPause = () => (isPlaying ? handleAudioPause() : handleAudioPlay(currentAudioIndex));
+  const playPrev = () => {
+    if (!audioUrls?.length) return;
+    const idx = Math.max(0, currentAudioIndex - 1);
+    handleAudioPlay(idx);
+  };
+  const playNext = () => {
+    if (!audioUrls?.length) return;
+    const idx = Math.min(audioUrls.length - 1, currentAudioIndex + 1);
+    handleAudioPlay(idx);
   };
 
   async function onSend() {
@@ -1033,78 +1048,94 @@ async function startGeneration() {
             </div>
           </div>
 
-          {/* Row 2 - Left: Sessions 2 */}
-          <div className="order-5 md:col-span-2 lg:col-span-1 xl:col-span-1 bg-[#151515] rounded-2xl p-6 h-full">
-            <h3 className="text-white font-semibold mb-4">Session 2</h3>
-            <p className="text-gray-400 text-sm">Additional session functionality...</p>
-          </div>
-
-          {/* Row 2 - Center: Form */}
-          <div className="order-6 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 h-full">
-            {/* Two-column layout: Left (Title + Song Parameters stacked), Right (Lyrics tall) */}
-            <div className="grid grid-cols-12 gap-4 h-auto">
-              {/* Left column: Title and Song Parameters stacked */}
-              <div className="col-span-5 space-y-3">
-                {/* Title section - external label */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/80">Title</label>
-                  <div className="bg-[#2d2d2d] rounded-lg p-4 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
-                    <Input
-                      value={details.title || ""}
-                      onChange={(e) => setDetails({ ...details, title: e.target.value })}
-                      placeholder="Enter song title..."
-                      className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
-                    />
-                  </div>
-                </div>
-                
-                {/* Song Parameters section - external label */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/80">Song Parameters</label>
-                  <div className="bg-[#2d2d2d] rounded-lg p-4 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
-                    <TagInput
-                      tags={styleTags}
-                      onChange={handleStyleTagsChange}
-                      placeholder='Add song parameters such as "Pop", "128bpm", "female vocals" and separate them by comma'
-                      className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[120px] resize-none"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              {/* Right column: Lyrics section - external label */}
-              <div className="col-span-7 space-y-2 flex flex-col">
-                <label className="text-sm font-medium text-white/80">Lyrics</label>
-                <div className="bg-[#2d2d2d] rounded-lg p-4 flex-1 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
-                  <Textarea
-                    value={details.lyrics || ""}
-                    onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
-                    placeholder="Enter your lyrics here..."
-                    className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 pr-3 resize-none w-full h-full lyrics-scrollbar"
-                  />
-                </div>
-              </div>
+          {/* Row 2 — wrapper with docked player under the Form */}
+          <div className="order-5 md:col-span-8 lg:col-span-1 xl:col-span-1 grid grid-cols-12 gap-5 items-stretch">
+            {/* Left: Session 2 (spans both rows so it hugs the player) */}
+            <div className="col-span-3 bg-[#151515] rounded-2xl p-6 h-full row-span-2">
+              <h3 className="text-white font-semibold mb-4">Session 2</h3>
+              <p className="text-gray-400 text-sm">Additional session functionality...</p>
             </div>
 
-            {/* Progress bar inside the container */}
-            {busy && generationProgress > 0 && (
-              <div className="space-y-2 pt-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-white/60">Generating...</span>
-                  <span className="font-medium text-pink-400">{Math.round(generationProgress)}%</span>
+            {/* Center: Form (keeps your existing form content) */}
+            <div className="col-span-6 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 h-full">
+              {/* Two-column layout: Left (Title + Song Parameters), Right (Lyrics) */}
+              <div className="grid grid-cols-12 gap-4 h-auto">
+                {/* Left column */}
+                <div className="col-span-5 space-y-3">
+                  {/* Title */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-white/80">Title</label>
+                    <div className="bg-[#2d2d2d] rounded-lg p-4 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
+                      <Input
+                        value={details.title || ""}
+                        onChange={(e) => setDetails({ ...details, title: e.target.value })}
+                        placeholder="Enter song title..."
+                        className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 h-auto"
+                      />
+                    </div>
+                  </div>
+                  {/* Song Parameters */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-white/80">Song Parameters</label>
+                    <div className="bg-[#2d2d2d] rounded-lg p-4 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
+                      <TagInput
+                        tags={styleTags}
+                        onChange={handleStyleTagsChange}
+                        placeholder='Add song parameters such as "Pop", "128bpm", "female vocals" and separate them by comma'
+                        className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[120px] resize-none"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <Progress 
-                  value={generationProgress} 
-                  className="h-2"
-                />
+
+                {/* Right column: Lyrics */}
+                <div className="col-span-7 space-y-2 flex flex-col">
+                  <label className="text-sm font-medium text-white/80">Lyrics</label>
+                  <div className="bg-[#2d2d2d] rounded-lg p-4 flex-1 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
+                    <Textarea
+                      value={details.lyrics || ""}
+                      onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
+                      placeholder="Enter your lyrics here..."
+                      className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 pr-3 resize-none w-full h-full lyrics-scrollbar"
+                    />
+                  </div>
+                </div>
               </div>
-            )}
 
-          </div>
+              {/* Progress bar stays */}
+              {busy && generationProgress > 0 && (
+                <div className="space-y-2 pt-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-white/60">Generating...</span>
+                    <span className="font-medium text-pink-400">{Math.round(generationProgress)}%</span>
+                  </div>
+                  <Progress value={generationProgress} className="h-2" />
+                </div>
+              )}
+            </div>
 
-          {/* Row 2 - Right: Template */}
-          <div className="order-7 md:col-span-8 lg:col-span-1 xl:col-span-1 bg-[#151515] rounded-2xl flex items-center justify-center h-full">
-            <span className="text-text-secondary">TEMPLATE</span>
+            {/* Right: Template (spans both rows so it hugs the player) */}
+            <div className="col-span-3 bg-[#151515] rounded-2xl flex items-center justify-center h-full row-span-2">
+              <span className="text-text-secondary">TEMPLATE</span>
+            </div>
+
+            {/* Row 2.5 — Docked Global Player directly under the Form (center col) */}
+            <div className="col-span-6 col-start-4">
+              <GlobalPlayerBar
+                title={details.title || `Version ${currentAudioIndex + 1}`}
+                audioUrls={audioUrls}
+                audioRefs={audioRefs}
+                currentAudioIndex={currentAudioIndex}
+                isPlaying={isPlaying}
+                currentTime={currentTime}
+                onPlay={() => handleAudioPlay(currentAudioIndex)}
+                onPause={handleAudioPause}
+                onSeek={handleSeek}
+                onPrev={playPrev}
+                onNext={playNext}
+                accent="#f92c8f"
+              />
+            </div>
           </div>
         </div>
 
