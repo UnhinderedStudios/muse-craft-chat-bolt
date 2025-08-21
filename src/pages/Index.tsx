@@ -115,7 +115,7 @@ function sanitizeStyleSafe(input?: string): string | undefined {
 
 
 const Index = () => {
-  const DOCK_H = 80; // px — keep dock tall enough for controls
+  const DOCK_H = 100; // px — increased height to prevent icon overflow
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "assistant", content: "Hey! I can help write and generate a song. What vibe are you going for?" },

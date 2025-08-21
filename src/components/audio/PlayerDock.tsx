@@ -44,13 +44,13 @@ export default function PlayerDock({
           currentTime={currentTime}
           onSeek={onSeek}
           accent={accent}
-          height={56}        // taller, modern
+          height={48}        // optimized height to leave more room for controls
           barWidth={3}       // chunky sticks
           barGap={1}
         />
 
         {/* Controls row */}
-        <div className="flex items-center gap-4 px-3 py-2 md:px-4">
+        <div className="flex items-center gap-2 md:gap-3 px-3 py-3 md:px-4">
             {/* Left: title + time */}
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm text-white/90">{title || "No track yet"}</div>
@@ -70,10 +70,10 @@ export default function PlayerDock({
               <IconBtn onClick={onNext} disabled={disabled}><SkipForward size={16} /></IconBtn>
             </div>
 
-            {/* Right: actions */}
-            <div className="flex items-center gap-3 text-white/70">
-              <IconBtn disabled={disabled}><Plus size={16} /></IconBtn>
-              <IconBtn disabled={disabled}><Heart size={16} /></IconBtn>
+            {/* Right: actions - responsive */}
+            <div className="flex items-center gap-2 text-white/70">
+              <IconBtn disabled={disabled} className="hidden sm:flex"><Plus size={16} /></IconBtn>
+              <IconBtn disabled={disabled} className="hidden sm:flex"><Heart size={16} /></IconBtn>
               <IconBtn disabled={disabled}><Share2 size={16} /></IconBtn>
               <IconBtn disabled={disabled}><Volume2 size={16} /></IconBtn>
           </div>
@@ -88,11 +88,13 @@ function IconBtn({
   onClick,
   disabled,
   primary,
+  className,
 }: {
   children: React.ReactNode;
   onClick?: () => void;
   disabled?: boolean;
   primary?: boolean;
+  className?: string;
 }) {
   return (
     <button
@@ -103,7 +105,8 @@ function IconBtn({
         "grid h-8 w-8 place-items-center rounded-md",
         primary ? "bg-[#f92c8f] text-white" : "bg-white/5 text-white",
         disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-white/10",
-      ].join(" ")}
+        className,
+      ].filter(Boolean).join(" ")}
     >
       {children}
     </button>
