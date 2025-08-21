@@ -901,7 +901,7 @@ async function startGeneration() {
           </div>
 
           {/* Row 1 - Center: Chat */}
-          <div className="order-2 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-2xl relative overflow-hidden">
+          <div className="order-2 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-2xl relative overflow-hidden flex flex-col">
             {/* top fade */}
             {scrollTop > 0 && (
               <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none" />
@@ -910,7 +910,7 @@ async function startGeneration() {
             {/* chat scroll area: fixed height on desktop, capped height on mobile/tablet */}
             <div
               ref={scrollerRef}
-              className={`overflow-y-auto custom-scrollbar pl-6 lg:pl-8 pr-4 lg:pr-6 pt-6 lg:pt-8 ${isDesktop ? '' : 'max-h-[56vh]'}`}
+              className={`overflow-y-auto custom-scrollbar pl-6 lg:pl-8 pr-4 lg:pr-6 pt-6 lg:pt-8 ${isDesktop ? '' : 'max-h-[56vh]'} ${isDesktop ? '' : 'flex-1 min-h-0'}`}
               style={isDesktop ? { height: `${chatHeight}px` } : undefined}
               onScroll={(e) => setScrollTop((e.target as HTMLDivElement).scrollTop)}
             >
@@ -930,7 +930,7 @@ async function startGeneration() {
 
             {/* tools footer: absolute on desktop, sticky on smaller screens */}
             <div
-              className={`${isDesktop ? 'pt-6 pb-6 px-8' : 'pt-4 pb-4 px-4'} bg-gradient-to-t from-[#151515] via-[#151515]/98 via-[#151515]/90 to-transparent`}
+              className={`mt-auto ${isDesktop ? 'pt-6 pb-6 px-8' : 'pt-4 pb-4 px-4'} bg-gradient-to-t from-[#151515] via-[#151515]/98 via-[#151515]/90 to-transparent`}
             >
               <div className="space-y-4">
                 {attachedFiles.length > 0 && (
@@ -1020,7 +1020,7 @@ async function startGeneration() {
           </div>
 
           {/* Row 1 - Right: Karaoke column (Karaoke + Template stacked) */}
-          <div className="order-3 md:col-span-8 lg:col-span-1 xl:col-span-1 min-w-0 flex flex-col gap-5">
+          <div className="order-3 md:col-span-8 lg:col-span-1 xl:col-span-1 min-w-0 min-h-0 flex flex-col gap-5">
             <KaraokeRightPanel
               versions={versions}
               currentAudioIndex={currentAudioIndex}
@@ -1036,13 +1036,13 @@ async function startGeneration() {
             />
 
             {/* TEMPLATE lives in the SAME column as Karaoke */}
-            <div className="min-w-0 bg-[#151515] rounded-2xl p-6 flex items-center justify-center self-start min-h-[320px]">
+            <div className="min-w-0 w-full bg-[#151515] rounded-2xl p-6 flex items-center justify-center min-h-[320px]">
               <span className="text-text-secondary">TEMPLATE</span>
             </div>
           </div>
 
           {/* Far-right Track List: spans both rows, bleeds to the right, sticky inner */}
-          <div className="order-4 lg:order-3 md:col-span-8 lg:col-span-1 xl:col-span-1 lg:row-span-2 lg:self-stretch">
+          <div className="order-4 lg:order-4 md:col-span-8 lg:col-span-1 xl:col-span-1 lg:row-span-2 lg:self-stretch">
             <div className="h-full lg:sticky lg:top-6 bg-[#151515] rounded-2xl p-6 flex flex-col items-center justify-center">
               <h3 className="text-white font-semibold mb-4">Track List</h3>
               <p className="text-gray-400 text-sm text-center">Full height panel functionality...</p>
@@ -1112,7 +1112,7 @@ async function startGeneration() {
 
           {/* Row 3 — Player Dock spanning columns 2–3 */}
           <div className="order-7 md:col-span-8 lg:col-start-2 lg:col-end-4 xl:col-start-2 xl:col-end-4">
-            <div className="bg-transparent rounded-none px-0">
+            <div className="relative w-full bg-transparent rounded-none px-0">
               <PlayerDock
                 title={
                   details.title ||
