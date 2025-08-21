@@ -25,7 +25,7 @@ import { FullscreenKaraoke } from "@/components/karaoke/FullscreenKaraoke";
 import { KaraokeRightPanel } from "@/components/karaoke/KaraokeRightPanel";
 import { ResizableContainer } from "@/components/layout/ResizableContainer";
 import { TagInput } from "@/components/song/TagInput";
-import { GlobalPlayerBar } from "@/components/audio/GlobalPlayerBar";
+import PlayerDock from "@/components/audio/PlayerDock";
 
 // Hooks
 import { useChat } from "@/hooks/use-chat";
@@ -1111,33 +1111,6 @@ async function startGeneration() {
               </div>
             )}
 
-            {/* Docked Global Player — always visible */}
-            <div className="pt-2 -mx-4">
-              <GlobalPlayerBar
-                title={details.title || (audioRefs.current[currentAudioIndex] ? `Version ${currentAudioIndex + 1}` : "No track yet")}
-                audioRefs={audioRefs}
-                currentAudioIndex={currentAudioIndex}
-                isPlaying={isPlaying}
-                currentTime={currentTime}
-                onPrev={() => {
-                  const len = audioRefs.current.length;
-                  if (!len) return;
-                  const idx = Math.max(0, currentAudioIndex - 1);
-                  handleAudioPlay(idx);
-                }}
-                onNext={() => {
-                  const len = audioRefs.current.length;
-                  if (!len) return;
-                  const idx = Math.min(len - 1, currentAudioIndex + 1);
-                  handleAudioPlay(idx);
-                }}
-                onPlay={() => handleAudioPlay(currentAudioIndex)}
-                onPause={handleAudioPause}
-                onSeek={(t) => handleSeek(t)}
-                accent="#f92c8f"
-                disabled={!audioRefs.current[currentAudioIndex]}
-              />
-            </div>
           </div>
 
           {/* Row 2 - Right: Template */}
@@ -1353,6 +1326,32 @@ async function startGeneration() {
             operatingSystem: "Web",
           }),
         }}
+      />
+
+      {/* Fixed bottom Player Dock (standalone, not inside any card) */}
+      <PlayerDock
+        title={details.title || (audioRefs.current[currentAudioIndex] ? `Version ${currentAudioIndex + 1}` : "No track yet")}
+        audioRefs={audioRefs}
+        currentAudioIndex={currentAudioIndex}
+        isPlaying={isPlaying}
+        currentTime={currentTime}
+        onPrev={() => {
+          const len = audioRefs.current.length;
+          if (!len) return;
+          const idx = Math.max(0, currentAudioIndex - 1);
+          handleAudioPlay(idx);
+        }}
+        onNext={() => {
+          const len = audioRefs.current.length;
+          if (!len) return;
+          const idx = Math.min(len - 1, currentAudioIndex + 1);
+          handleAudioPlay(idx);
+        }}
+        onPlay={() => handleAudioPlay(currentAudioIndex)}
+        onPause={handleAudioPause}
+        onSeek={(t) => handleSeek(t)}
+        accent="#f92c8f"
+        disabled={!audioRefs.current[currentAudioIndex]}
       />
     </div>
   );
