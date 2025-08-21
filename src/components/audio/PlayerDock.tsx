@@ -46,7 +46,7 @@ export default function PlayerDock({
       <div className="flex-1 bg-transparent">
         {/* Waveform (edge-to-edge, condensed, no scroll) */}
         <div
-          className="h-6 w-full overflow-hidden cursor-pointer"
+          className="h-6 w-full overflow-hidden cursor-pointer bg-black relative z-10"
             style={barStyle}
             onClick={(e) => {
               if (disabled) return;

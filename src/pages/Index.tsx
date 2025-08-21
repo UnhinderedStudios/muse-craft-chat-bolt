@@ -1354,8 +1354,8 @@ async function startGeneration() {
         <div
           className="
             w-full h-full relative
-            bg-black/70
-            shadow-[inset_0_2px_12px_rgba(255,255,255,0.04),inset_0_-8px_24px_rgba(0,0,0,0.35)]
+            bg-black/70 border-t border-white/10
+            shadow-[inset_0_2px_12px_rgba(255,255,255,0.06),inset_0_-10px_28px_rgba(0,0,0,0.45)]
           "
           style={{ paddingBottom: `env(safe-area-inset-bottom, 0px)` }}
         >
@@ -1364,8 +1364,8 @@ async function startGeneration() {
             aria-hidden
             className="
               pointer-events-none absolute inset-0 z-0
-              bg-[radial-gradient(120%_60%_at_50%_-20%,rgba(255,255,255,0.09),transparent_60%),
-                  linear-gradient(to_bottom,rgba(255,255,255,0.05),rgba(255,255,255,0.02),transparent)]
+              bg-[radial-gradient(120%_60%_at_50%_-20%,rgba(255,255,255,0.14),transparent_60%),
+                  linear-gradient(to_bottom,rgba(255,255,255,0.08),rgba(255,255,255,0.03),transparent)]
             "
           />
           <PlayerDock
