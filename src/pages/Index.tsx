@@ -942,57 +942,57 @@ async function startGeneration() {
                   </div>
                 )}
 
-            <div className="flex items-end gap-3">
-              {/* Chat input — LEFT (taller + wider) */}
-              <div className="relative bg-[#040404] rounded-xl p-4 min-h-[84px] flex-1 flex items-center hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] focus-within:shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-shadow">
-                <textarea
-                  ref={chatInputRef}
-                  value={input}
-                  onChange={(e) => {
-                    setInput(e.target.value);
-                    e.target.style.height = "auto";
-                    e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px";
-                  }}
-                  placeholder="Type out your question here..."
-                  className="w-full bg-transparent border-0 pr-10 text-white placeholder-gray-500 focus:outline-none resize-none min-h-[48px] max-h-[200px] overflow-y-auto chat-input-scrollbar text-[15px] leading-6"
-                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); } }}
-                  disabled={busy}
-                  rows={1}
-                />
-                <button
-                  onClick={onSend}
-                  disabled={busy || !input.trim()}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-white hover:text-accent-primary transition-colors disabled:opacity-50"
-                  aria-label="Send message"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffffff">
-                    <path d="M12 19V5M5 12l7-7 7 7" stroke="#ffffff" strokeWidth="2" fill="none"/>
-                  </svg>
-                </button>
-              </div>
+<div className="flex items-end gap-2">
+  {/* Chat input — LEFT (taller + wider) */}
+  <div className="relative bg-[#040404] rounded-xl p-4 min-h-[84px] flex-1 flex items-center hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] focus-within:shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-shadow">
+    <textarea
+      ref={chatInputRef}
+      value={input}
+      onChange={(e) => {
+        setInput(e.target.value);
+        e.target.style.height = "auto";
+        e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px";
+      }}
+      placeholder="Type out your question here..."
+      className="w-full bg-transparent border-0 pr-10 text-white placeholder-gray-500 focus:outline-none resize-none min-h-[48px] max-h-[200px] overflow-y-auto chat-input-scrollbar text-[15px] leading-6"
+      onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); } }}
+      disabled={busy}
+      rows={1}
+    />
+    <button
+      onClick={onSend}
+      disabled={busy || !input.trim()}
+      className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-white hover:text-accent-primary transition-colors disabled:opacity-50"
+      aria-label="Send message"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffffff">
+        <path d="M12 19V5M5 12l7-7 7 7" stroke="#ffffff" strokeWidth="2" fill="none"/>
+      </svg>
+    </button>
+  </div>
 
-              {/* Right column — Generate on top, Icon tray below */}
-              <div className="shrink-0 w-[180px] flex flex-col gap-2">
-                {/* Generate — thinner + shorter */}
-                <button
-                  onClick={startGeneration}
-                  disabled={busy || !canGenerate}
-                  className="h-10 w-full rounded-lg text-sm font-medium text-white bg-[#f92c8f] hover:bg-[#e02681] disabled:opacity-50 disabled:saturate-75 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
-                  aria-disabled={busy || !canGenerate}
-                >
-                  <span className="text-base leading-none">✦</span>
-                  <span>Generate</span>
-                </button>
+  {/* Right column — Generate on top, Icon tray below */}
+  <div className="shrink-0 w-[180px] flex flex-col gap-2">
+    {/* Generate — same height as tray */}
+    <button
+      onClick={startGeneration}
+      disabled={busy || !canGenerate}
+      className="h-9 w-full rounded-lg text-[13px] font-medium text-white bg-[#f92c8f] hover:bg-[#e02681] disabled:opacity-50 disabled:saturate-75 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+      aria-disabled={busy || !canGenerate}
+    >
+      <span className="text-sm leading-none">✦</span>
+      <span>Generate</span>
+    </button>
 
-                {/* Icon tray — shorter with perfectly centered icons */}
-                <div className="bg-[#040404] rounded-lg h-9 w-full grid grid-cols-4 place-items-center px-2 hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] transition-shadow">
-                  <button onClick={handleFileUpload} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Upload"><Upload size={18} /></button>
-                  <button className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Grid"><Grid3X3 size={18} /></button>
-                  <button onClick={randomizeAll} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Randomize"><Dice5 size={18} /></button>
-                  <button className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="List"><List size={18} /></button>
-                </div>
-              </div>
-            </div>
+    {/* Icon tray — perfectly centered icons */}
+    <div className="bg-[#040404] rounded-lg h-9 w-full grid grid-cols-4 place-items-center px-2 hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] transition-shadow">
+      <button onClick={handleFileUpload} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Upload"><Upload size={18} /></button>
+      <button className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Grid"><Grid3X3 size={18} /></button>
+      <button onClick={randomizeAll} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Randomize"><Dice5 size={18} /></button>
+      <button className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="List"><List size={18} /></button>
+    </div>
+  </div>
+</div>
               </div>
             </div>
 
