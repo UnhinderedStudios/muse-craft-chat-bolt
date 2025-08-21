@@ -882,7 +882,11 @@ async function startGeneration() {
   return (
     <div
       className="min-h-screen bg-[#0c0c0c] overflow-x-hidden"
-      style={{ ["--dock-h" as any]: `${DOCK_H}px` }}
+      style={{
+        ["--dock-h" as any]: `${DOCK_H}px`,
+        // match Tailwind gap-5 (1.25rem) so spacing is seamless when docked
+        ["--page-gap" as any]: "1.25rem",
+      }}
     >
       {/* Cyber Header */}
       <CyberHeader />
@@ -1310,7 +1314,10 @@ async function startGeneration() {
       <div
         aria-hidden
         className="w-full"
-        style={{ height: `calc(var(--dock-h) + env(safe-area-inset-bottom, 0px))` }}
+        style={{
+          // add one page gap on top of the dock height for perfect vertical rhythm
+          height: `calc(var(--dock-h) + var(--page-gap) + env(safe-area-inset-bottom, 0px))`,
+        }}
       />
 
       {/* Full-screen Karaoke Overlay */}
@@ -1345,9 +1352,7 @@ async function startGeneration() {
         style={{ height: `calc(var(--dock-h) + env(safe-area-inset-bottom, 0px))` }}
       >
         <div
-          className="w-full h-full border-t border-white/10 bg-[#0c0c0c]/95
-                     backdrop-blur supports-[backdrop-filter]:bg-[#0c0c0c]/85
-                     px-3 md:px-5"
+          className="w-full h-full bg-[#0c0c0c]"  /* no border, no blur, no side padding */
           style={{ paddingBottom: `env(safe-area-inset-bottom, 0px)` }}
         >
           <PlayerDock
