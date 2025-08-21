@@ -1,5 +1,5 @@
 import { Play, Pause, SkipBack, SkipForward, Heart, Share2, Plus, Volume2 } from "lucide-react";
-import { useMemo } from "react";
+import TrueWaveform from "@/components/audio/TrueWaveform";
 
 type Props = {
   title: string;
@@ -34,38 +34,18 @@ export default function PlayerDock({
   const duration = audio?.duration ?? 0;
   const progress = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
 
-  // A condensed "template waveform" (no real samples) that matches the ref look.
-  // It's just repeating bars with an accent overlay for progress.
-  const barStyle = useMemo(() => ({
-    backgroundImage:
-      "repeating-linear-gradient(90deg, rgba(255,255,255,0.16) 0, rgba(255,255,255,0.16) 2px, transparent 2px, transparent 6px)",
-  }), []);
 
   return (
     <div className="w-full h-full flex flex-col relative z-10">
       <div className="flex-1 bg-transparent">
-        {/* Waveform (edge-to-edge, condensed, no scroll) */}
-        <div
-          className="h-6 w-full overflow-hidden cursor-pointer bg-black relative z-10"
-            style={barStyle}
-            onClick={(e) => {
-              if (disabled) return;
-              const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-              const ratio = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
-              if (duration > 0) onSeek(ratio * duration);
-            }}
-          >
-            {/* progress overlay */}
-            <div
-              className="h-full"
-              style={{
-                width: `${progress}%`,
-                background:
-                  `repeating-linear-gradient(90deg, ${accent} 0, ${accent} 2px, transparent 2px, transparent 6px)`,
-                mixBlendMode: "normal",
-              }}
-            />
-        </div>
+        {/* Real Waveform */}
+        <TrueWaveform
+          audio={audioRefs.current[currentAudioIndex] || null}
+          progress={currentTime / (audioRefs.current[currentAudioIndex]?.duration || 1)}
+          onSeek={onSeek}
+          accent={accent}
+          height={24}
+        />
 
         {/* Controls row */}
         <div className="flex items-center gap-4 px-3 py-2 md:px-4">

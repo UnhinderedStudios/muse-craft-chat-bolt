@@ -1203,6 +1203,7 @@ async function startGeneration() {
                         src={url}
                         className="hidden"
                         preload="auto"
+                        crossOrigin="anonymous"
                         onPlay={(e) => {
                           // Prevent onPlay from triggering handleAudioPlay when user clicks play button
                           // The button click already handles this
@@ -1286,6 +1287,7 @@ async function startGeneration() {
                     src={audioUrl}
                     className="hidden"
                     preload="none"
+                    crossOrigin="anonymous"
                     onPlay={(e) => {
                       // Prevent onPlay from triggering handleAudioPlay when user clicks play button
                       console.log(`[Audio Event] onPlay triggered for single audio, currentIndex: ${currentAudioIndex}`);
