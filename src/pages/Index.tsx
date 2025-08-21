@@ -1356,20 +1356,10 @@ async function startGeneration() {
         <div
           className="
             w-full h-full relative
-            bg-black/30 backdrop-blur-lg border-t border-white/10
-            shadow-[inset_0_2px_12px_rgba(255,255,255,0.06),inset_0_-10px_28px_rgba(0,0,0,0.45)]
+            bg-black/50 backdrop-blur-md
           "
           style={{ paddingBottom: `env(safe-area-inset-bottom, 0px)` }}
         >
-          {/* Glass sheen overlay (no blur) */}
-          <div
-            aria-hidden
-            className="
-              pointer-events-none absolute inset-0 z-0
-              bg-[radial-gradient(120%_60%_at_50%_-20%,rgba(255,255,255,0.14),transparent_60%),
-                  linear-gradient(to_bottom,rgba(255,255,255,0.08),rgba(255,255,255,0.03),transparent)]
-            "
-          />
           <PlayerDock
             title={
               details.title ||

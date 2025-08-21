@@ -1,5 +1,5 @@
 import { Play, Pause, SkipBack, SkipForward, Heart, Share2, Plus, Volume2 } from "lucide-react";
-import TrueWaveform from "@/components/audio/TrueWaveform";
+import BarWaveform from "@/components/audio/BarWaveform";
 
 type Props = {
   title: string;
@@ -38,13 +38,15 @@ export default function PlayerDock({
   return (
     <div className="w-full h-full flex flex-col relative z-10">
       <div className="flex-1 bg-transparent">
-        {/* Real Waveform */}
-        <TrueWaveform
+        {/* Bar Waveform - tall sticks, edge to edge */}
+        <BarWaveform
           audio={audioRefs.current[currentAudioIndex] || null}
-          progress={currentTime / (audioRefs.current[currentAudioIndex]?.duration || 1)}
+          currentTime={currentTime}
           onSeek={onSeek}
           accent={accent}
-          height={24}
+          height={56}        // taller, modern
+          barWidth={3}       // chunky sticks
+          barGap={1}
         />
 
         {/* Controls row */}
