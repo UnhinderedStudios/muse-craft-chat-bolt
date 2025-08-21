@@ -115,6 +115,7 @@ function sanitizeStyleSafe(input?: string): string | undefined {
 
 
 const Index = () => {
+  const DOCK_H = 80; // px — keep dock tall enough for controls
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "assistant", content: "Hey! I can help write and generate a song. What vibe are you going for?" },
@@ -879,7 +880,10 @@ async function startGeneration() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0c0c0c] overflow-x-hidden">
+    <div
+      className="min-h-screen bg-[#0c0c0c] overflow-x-hidden"
+      style={{ ["--dock-h" as any]: `${DOCK_H}px` }}
+    >
       {/* Cyber Header */}
       <CyberHeader />
 
@@ -1302,6 +1306,13 @@ async function startGeneration() {
         )}
       </main>
 
+      {/* Spacer so the fixed PlayerDock never covers content */}
+      <div
+        aria-hidden
+        className="w-full"
+        style={{ height: `calc(var(--dock-h) + env(safe-area-inset-bottom, 0px))` }}
+      />
+
       {/* Full-screen Karaoke Overlay */}
       {showFullscreenKaraoke && versions[currentAudioIndex]?.words?.length > 0 && (
         <FullscreenKaraoke
@@ -1328,31 +1339,48 @@ async function startGeneration() {
         }}
       />
 
-      {/* Fixed bottom Player Dock (standalone, not inside any card) */}
-      <PlayerDock
-        title={details.title || (audioRefs.current[currentAudioIndex] ? `Version ${currentAudioIndex + 1}` : "No track yet")}
-        audioRefs={audioRefs}
-        currentAudioIndex={currentAudioIndex}
-        isPlaying={isPlaying}
-        currentTime={currentTime}
-        onPrev={() => {
-          const len = audioRefs.current.length;
-          if (!len) return;
-          const idx = Math.max(0, currentAudioIndex - 1);
-          handleAudioPlay(idx);
-        }}
-        onNext={() => {
-          const len = audioRefs.current.length;
-          if (!len) return;
-          const idx = Math.min(len - 1, currentAudioIndex + 1);
-          handleAudioPlay(idx);
-        }}
-        onPlay={() => handleAudioPlay(currentAudioIndex)}
-        onPause={handleAudioPause}
-        onSeek={(t) => handleSeek(t)}
-        accent="#f92c8f"
-        disabled={!audioRefs.current[currentAudioIndex]}
-      />
+      {/* Full-width fixed footer wrapper for PlayerDock */}
+      <footer
+        className="fixed inset-x-0 bottom-0 z-50"
+        style={{ height: `calc(var(--dock-h) + env(safe-area-inset-bottom, 0px))` }}
+      >
+        <div
+          className="w-full h-full border-t border-white/10 bg-[#0c0c0c]/95
+                     backdrop-blur supports-[backdrop-filter]:bg-[#0c0c0c]/85
+                     px-3 md:px-5"
+          style={{ paddingBottom: `env(safe-area-inset-bottom, 0px)` }}
+        >
+          <PlayerDock
+            title={
+              details.title ||
+              (audioRefs.current[currentAudioIndex]
+                ? `Version ${currentAudioIndex + 1}`
+                : "No track yet")
+            }
+            audioRefs={audioRefs}
+            currentAudioIndex={currentAudioIndex}
+            isPlaying={isPlaying}
+            currentTime={currentTime}
+            onPrev={() => {
+              const len = audioRefs.current.length;
+              if (!len) return;
+              const idx = Math.max(0, currentAudioIndex - 1);
+              handleAudioPlay(idx);
+            }}
+            onNext={() => {
+              const len = audioRefs.current.length;
+              if (!len) return;
+              const idx = Math.min(len - 1, currentAudioIndex + 1);
+              handleAudioPlay(idx);
+            }}
+            onPlay={() => handleAudioPlay(currentAudioIndex)}
+            onPause={handleAudioPause}
+            onSeek={(t) => handleSeek(t)}
+            accent="#f92c8f"
+            disabled={!audioRefs.current[currentAudioIndex]}
+          />
+        </div>
+      </footer>
     </div>
   );
 };

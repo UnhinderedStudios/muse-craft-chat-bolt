@@ -42,12 +42,11 @@ export default function PlayerDock({
   }), []);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none">
-      <div className="mx-auto w-full max-w-[1400px] px-5 md:px-6 lg:px-8">
-        <div className="pointer-events-auto mb-0 rounded-t-xl bg-[#0f0f0f] shadow-[0_-6px_20px_rgba(0,0,0,0.45)]">
-          {/* Waveform (edge-to-edge, condensed, no scroll) */}
-          <div
-            className="h-6 w-full overflow-hidden rounded-t-xl cursor-pointer"
+    <div className="w-full h-full flex flex-col">
+      <div className="flex-1 bg-[#0f0f0f] border-t border-white/5">
+        {/* Waveform (edge-to-edge, condensed, no scroll) */}
+        <div
+          className="h-6 w-full overflow-hidden cursor-pointer"
             style={barStyle}
             onClick={(e) => {
               if (disabled) return;
@@ -66,10 +65,10 @@ export default function PlayerDock({
                 mixBlendMode: "normal",
               }}
             />
-          </div>
+        </div>
 
-          {/* Controls row */}
-          <div className="flex items-center gap-4 px-3 py-2 md:px-4">
+        {/* Controls row */}
+        <div className="flex items-center gap-4 px-3 py-2 md:px-4">
             {/* Left: title + time */}
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm text-white/90">{title || "No track yet"}</div>
@@ -95,7 +94,6 @@ export default function PlayerDock({
               <IconBtn disabled={disabled}><Heart size={16} /></IconBtn>
               <IconBtn disabled={disabled}><Share2 size={16} /></IconBtn>
               <IconBtn disabled={disabled}><Volume2 size={16} /></IconBtn>
-            </div>
           </div>
         </div>
       </div>
