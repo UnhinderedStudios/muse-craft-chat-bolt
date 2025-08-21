@@ -1,165 +1,212 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import WaveSurfer from "wavesurfer.js";
-import { Play, Pause, SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX, List } from "lucide-react";
+import {
+  SkipBack,
+  SkipForward,
+  Play,
+  Pause,
+  Shuffle,
+  Repeat,
+  Volume2,
+  VolumeX,
+  Plus,
+  Heart,
+  Share2,
+  MoreHorizontal,
+} from "lucide-react";
 
 type Props = {
-  title?: string;
-  audioUrls: string[] | null;
+  title: string;
   audioRefs: React.MutableRefObject<HTMLAudioElement[]>;
   currentAudioIndex: number;
   isPlaying: boolean;
   currentTime: number;
-  onPlay: (index?: number) => void;
-  onPause: () => void;
-  onSeek: (time: number) => void;
   onPrev: () => void;
   onNext: () => void;
+  onPlay: () => void;
+  onPause: () => void;
+  onSeek: (time: number) => void;
   accent?: string; // default #f92c8f
 };
 
+const fmt = (sec: number | undefined) => {
+  if (!sec || !isFinite(sec)) return "0:00";
+  const s = Math.floor(sec);
+  const m = Math.floor(s / 60);
+  const r = (s % 60).toString().padStart(2, "0");
+  return `${m}:${r}`;
+};
+
 export const GlobalPlayerBar: React.FC<Props> = ({
-  title = "Untitled",
-  audioUrls,
+  title,
   audioRefs,
   currentAudioIndex,
   isPlaying,
   currentTime,
+  onPrev,
+  onNext,
   onPlay,
   onPause,
   onSeek,
-  onPrev,
-  onNext,
   accent = "#f92c8f",
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wsRef = useRef<WaveSurfer | null>(null);
+  const [muted, setMuted] = useState(false);
 
-  const audioEl = audioRefs.current[currentAudioIndex] || null;
+  const audioEl = audioRefs.current[currentAudioIndex] ?? null;
+  const duration = audioEl?.duration ?? 0;
 
-  const duration = audioEl?.duration || 0;
-  const formatted = (sec: number) => {
-    const s = Math.max(0, Math.floor(sec));
-    const m = Math.floor(s / 60);
-    const r = (s % 60).toString().padStart(2, "0");
-    return `${m}:${r}`;
-  };
-
-  // (Re)create WaveSurfer binding to the CURRENT audio element
+  // Build / bind WaveSurfer to the existing <audio> element
   useEffect(() => {
     if (!containerRef.current || !audioEl) return;
 
-    // destroy old
+    // Destroy old instance
     if (wsRef.current) {
       try { wsRef.current.destroy(); } catch {}
       wsRef.current = null;
     }
 
-    wsRef.current = WaveSurfer.create({
+    const ws = WaveSurfer.create({
       container: containerRef.current,
-      media: audioEl, // bind to our existing <audio>
-      height: 56,
+      height: 48,
       waveColor: "#2a2a2a",
       progressColor: accent,
-      cursorColor: "#999",
-      cursorWidth: 1,
+      cursorColor: "transparent",
       barWidth: 2,
       barGap: 1,
       barRadius: 2,
       normalize: true,
+      minPxPerSec: 40,
       interact: true,
     });
 
-    const ws = wsRef.current;
+    // Load the existing audio element by URL
+    if (audioEl.src) {
+      ws.load(audioEl.src);
+    }
 
-    // Seek via waveform
+    // Seek from waveform -> parent handler
     ws.on("click", (progress: number) => {
-      const newTime = (audioEl.duration || 0) * progress;
-      onSeek(newTime);
+      const dur = audioEl?.duration ?? 0;
+      if (dur > 0) onSeek(progress * dur);
     });
 
+    wsRef.current = ws;
     return () => {
       try { ws.destroy(); } catch {}
       wsRef.current = null;
     };
-  }, [audioEl, currentAudioIndex, audioUrls?.join("|")]);
+  }, [audioEl, accent]);
 
-  // Keep waveform cursor in sync with time
+  // Keep waveform position in sync with parent time
   useEffect(() => {
-    const ws = wsRef.current;
-    if (!ws || !audioEl || !duration) return;
-    const progress = currentTime / duration;
-    // avoid setting NaN
-    if (Number.isFinite(progress)) {
-      try { ws.setTime(currentTime); } catch {}
-    }
+    if (!wsRef.current) return;
+    try {
+      // setTime avoids emitting another "seek"
+      // (if not available, fallback to seekTo)
+      // @ts-ignore - types may not include setTime in some builds
+      if (typeof wsRef.current.setTime === "function") {
+        // @ts-ignore
+        wsRef.current.setTime(currentTime || 0);
+      } else if (duration > 0) {
+        wsRef.current.seekTo((currentTime || 0) / duration);
+      }
+    } catch {}
   }, [currentTime, duration]);
 
-  const canControl = !!audioUrls?.length;
+  // Sync mute UI with audio element
+  useEffect(() => {
+    if (!audioEl) return;
+    setMuted(!!audioEl.muted);
+  }, [audioEl]);
+
+  const togglePlay = () => (isPlaying ? onPause() : onPlay());
+  const toggleMute = () => {
+    if (!audioEl) return;
+    audioEl.muted = !audioEl.muted;
+    setMuted(!!audioEl.muted);
+  };
 
   return (
-    <div className="w-full bg-[#101010] border border-white/10 rounded-xl px-4 py-3 shadow-[0_0_20px_rgba(0,0,0,0.35)]">
-      <div className="flex items-center gap-4">
-        {/* Left — title + time */}
-        <div className="min-w-[220px] pr-2">
-          <div className="text-white/90 font-medium truncate">{title}</div>
-          <div className="text-xs text-white/50">
-            {formatted(currentTime)} <span className="text-white/30">/</span> {duration ? formatted(duration) : "0:00"}
+    <div className="w-full rounded-xl bg-[#101010] border border-white/10 shadow-[0_0_0_1px_rgba(255,255,255,0.02)_inset,0_10px_30px_rgba(0,0,0,0.35)] px-3 sm:px-4 py-3">
+      {/* Top row: left (title/time) • center (waveform) • right (misc icons) */}
+      <div className="flex items-center gap-3 sm:gap-4">
+        {/* LEFT — fixed width */}
+        <div className="shrink-0 w-[220px] flex flex-col">
+          <div className="text-white/90 truncate text-sm sm:text-[15px] leading-tight">
+            {title || "Untitled"}
           </div>
+          <div className="text-white/50 text-xs">{fmt(currentTime)} • {fmt(duration)}</div>
         </div>
 
-        {/* Center — waveform + main transport under */}
-        <div className="flex-1">
-          <div ref={containerRef} className="w-full select-none" />
-          <div className="mt-2 flex items-center justify-center gap-3">
-            <button
-              className="w-8 h-8 grid place-items-center rounded hover:bg-white/10 text-white/90 disabled:opacity-40"
-              onClick={onPrev}
-              disabled={!canControl}
-              aria-label="Previous"
-            >
-              <SkipBack size={16} />
-            </button>
-
-            {isPlaying ? (
-              <button
-                className="h-9 px-4 rounded-lg bg-[#f92c8f] text-white font-medium hover:brightness-110 disabled:opacity-50"
-                onClick={() => onPause()}
-                disabled={!canControl}
-                aria-label="Pause"
-              >
-                <div className="flex items-center gap-2"><Pause size={16} /> Pause</div>
-              </button>
-            ) : (
-              <button
-                className="h-9 px-4 rounded-lg bg-[#f92c8f] text-white font-medium hover:brightness-110 disabled:opacity-50"
-                onClick={() => onPlay()}
-                disabled={!canControl}
-                aria-label="Play"
-              >
-                <div className="flex items-center gap-2"><Play size={16} /> Play</div>
-              </button>
-            )}
-
-            <button
-              className="w-8 h-8 grid place-items-center rounded hover:bg-white/10 text-white/90 disabled:opacity-40"
-              onClick={onNext}
-              disabled={!canControl}
-              aria-label="Next"
-            >
-              <SkipForward size={16} />
-            </button>
-          </div>
+        {/* CENTER — waveform */}
+        <div className="min-w-0 flex-1">
+          <div ref={containerRef} className="w-full h-[48px]" />
         </div>
 
-        {/* Right — extra controls */}
-        <div className="min-w-[220px] flex items-center justify-end gap-2 text-white/80">
-          <button className="w-8 h-8 grid place-items-center rounded hover:bg-white/10" aria-label="Shuffle"><Shuffle size={16} /></button>
-          <button className="w-8 h-8 grid place-items-center rounded hover:bg-white/10" aria-label="Repeat"><Repeat size={16} /></button>
-          <button className="w-8 h-8 grid place-items-center rounded hover:bg-white/10" aria-label="Mute/Volume">
-            {audioEl && audioEl.muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+        {/* RIGHT — fixed width */}
+        <div className="shrink-0 w-[220px] flex items-center justify-end gap-3">
+          <button className="p-2 rounded hover:bg-white/5 text-white/80" aria-label="Add">
+            <Plus size={16} />
           </button>
-          <button className="w-8 h-8 grid place-items-center rounded hover:bg-white/10" aria-label="Queue"><List size={16} /></button>
+          <button className="p-2 rounded hover:bg-white/5 text-white/80" aria-label="Like">
+            <Heart size={16} />
+          </button>
+          <button className="p-2 rounded hover:bg-white/5 text-white/80" aria-label="Share">
+            <Share2 size={16} />
+          </button>
+          <button className="p-2 rounded hover:bg-white/5 text-white/80" aria-label="More">
+            <MoreHorizontal size={16} />
+          </button>
         </div>
+      </div>
+
+      {/* Bottom row: main transport centered under the track */}
+      <div className="flex items-center justify-center gap-3 sm:gap-4 mt-3">
+        <button
+          onClick={onPrev}
+          className="h-9 w-9 grid place-items-center rounded-md bg-white/5 hover:bg-white/10 text-white"
+          aria-label="Previous"
+        >
+          <SkipBack size={16} />
+        </button>
+
+        <button
+          onClick={togglePlay}
+          className="h-9 px-4 grid place-items-center rounded-md text-white"
+          style={{ backgroundColor: accent }}
+          aria-label={isPlaying ? "Pause" : "Play"}
+        >
+          {isPlaying ? <Pause size={16} /> : <Play size={16} />}
+        </button>
+
+        <button
+          onClick={onNext}
+          className="h-9 w-9 grid place-items-center rounded-md bg-white/5 hover:bg-white/10 text-white"
+          aria-label="Next"
+        >
+          <SkipForward size={16} />
+        </button>
+
+        <div className="mx-1 sm:mx-2" />
+
+        <button className="h-9 w-9 grid place-items-center rounded-md bg-white/5 hover:bg-white/10 text-white" aria-label="Shuffle">
+          <Shuffle size={16} />
+        </button>
+        <button className="h-9 w-9 grid place-items-center rounded-md bg-white/5 hover:bg-white/10 text-white" aria-label="Repeat">
+          <Repeat size={16} />
+        </button>
+
+        <div className="mx-1 sm:mx-2" />
+
+        <button
+          onClick={toggleMute}
+          className="h-9 w-9 grid place-items-center rounded-md bg-white/5 hover:bg-white/10 text-white"
+          aria-label="Mute"
+        >
+          {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+        </button>
       </div>
     </div>
   );
