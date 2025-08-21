@@ -1114,8 +1114,8 @@ async function startGeneration() {
             <span className="text-text-secondary">TEMPLATE</span>
           </div>
 
-          {/* Row 3 — Player Dock (spans first 3 columns, aligns with Session 2 + Form + Template) */}
-          <div className="order-[8] md:col-span-8 lg:col-start-1 lg:col-end-4 xl:col-start-1 xl:col-end-4">
+          {/* Row 3 — Player Dock: ONLY under Form + Template (cols 2–3) */}
+          <div className="order-[8] md:col-span-8 lg:col-start-2 lg:col-end-4 xl:col-start-2 xl:col-end-4">
             <div className="bg-transparent rounded-none px-0">
               <PlayerDock
                 title={
