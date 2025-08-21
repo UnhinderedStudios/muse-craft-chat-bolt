@@ -1117,6 +1117,39 @@ async function startGeneration() {
           <div className="order-7 md:col-span-8 lg:col-span-1 xl:col-span-1 bg-[#151515] rounded-2xl flex items-center justify-center h-full">
             <span className="text-text-secondary">TEMPLATE</span>
           </div>
+
+          {/* Row 3 — Player Dock (spans first 3 columns, aligns with Session 2 + Form + Template) */}
+          <div className="order-[8] md:col-span-8 lg:col-start-1 lg:col-end-4 xl:col-start-1 xl:col-end-4">
+            <div className="bg-transparent rounded-none px-0">
+              <PlayerDock
+                title={
+                  details.title ||
+                  (audioRefs.current[currentAudioIndex] ? `Version ${currentAudioIndex + 1}` : "No track yet")
+                }
+                audioRefs={audioRefs}
+                currentAudioIndex={currentAudioIndex}
+                isPlaying={isPlaying}
+                currentTime={currentTime}
+                onPrev={() => {
+                  const len = audioRefs.current.length;
+                  if (!len) return;
+                  const idx = Math.max(0, currentAudioIndex - 1);
+                  handleAudioPlay(idx);
+                }}
+                onNext={() => {
+                  const len = audioRefs.current.length;
+                  if (!len) return;
+                  const idx = Math.min(len - 1, currentAudioIndex + 1);
+                  handleAudioPlay(idx);
+                }}
+                onPlay={() => handleAudioPlay(currentAudioIndex)}
+                onPause={handleAudioPause}
+                onSeek={(t) => handleSeek(t)}
+                accent="#f92c8f"
+                disabled={!audioRefs.current[currentAudioIndex]}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Output Sections */}
@@ -1328,31 +1361,6 @@ async function startGeneration() {
         }}
       />
 
-      {/* Fixed bottom Player Dock (standalone, not inside any card) */}
-      <PlayerDock
-        title={details.title || (audioRefs.current[currentAudioIndex] ? `Version ${currentAudioIndex + 1}` : "No track yet")}
-        audioRefs={audioRefs}
-        currentAudioIndex={currentAudioIndex}
-        isPlaying={isPlaying}
-        currentTime={currentTime}
-        onPrev={() => {
-          const len = audioRefs.current.length;
-          if (!len) return;
-          const idx = Math.max(0, currentAudioIndex - 1);
-          handleAudioPlay(idx);
-        }}
-        onNext={() => {
-          const len = audioRefs.current.length;
-          if (!len) return;
-          const idx = Math.min(len - 1, currentAudioIndex + 1);
-          handleAudioPlay(idx);
-        }}
-        onPlay={() => handleAudioPlay(currentAudioIndex)}
-        onPause={handleAudioPause}
-        onSeek={(t) => handleSeek(t)}
-        accent="#f92c8f"
-        disabled={!audioRefs.current[currentAudioIndex]}
-      />
     </div>
   );
 };
