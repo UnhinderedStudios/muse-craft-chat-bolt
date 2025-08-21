@@ -942,52 +942,57 @@ async function startGeneration() {
                   </div>
                 )}
 
-                <div className="flex items-end gap-3">
-                  {/* Icon tray — LEFT (unchanged size, fixed height) */}
-                  <div className="bg-[#040404] rounded-xl px-3 h-[56px] flex items-center gap-2 shrink-0 hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] transition-shadow">
-                    <button onClick={handleFileUpload} className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}><Upload size={20} /></button>
-                    <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}><Grid3X3 size={20} /></button>
-                    <button className="p-2 text-white hover:text-accent-primary transition-colors" onClick={randomizeAll} disabled={busy}><Dice5 size={20} /></button>
-                    <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}><List size={20} /></button>
-                  </div>
+            <div className="flex items-end gap-3">
+              {/* Chat input — LEFT (taller + wider) */}
+              <div className="relative bg-[#040404] rounded-xl p-4 min-h-[72px] flex-1 flex items-center hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] focus-within:shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-shadow">
+                <textarea
+                  ref={chatInputRef}
+                  value={input}
+                  onChange={(e) => {
+                    setInput(e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = Math.min(e.target.scrollHeight, 160) + 'px';
+                  }}
+                  placeholder="Type out your question here..."
+                  className="w-full bg-transparent border-0 pr-10 text-white placeholder-gray-500 focus:outline-none resize-none min-h-[40px] max-h-[160px] overflow-y-auto chat-input-scrollbar"
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSend(); } }}
+                  disabled={busy}
+                  rows={1}
+                />
+                <button
+                  onClick={onSend}
+                  disabled={busy || !input.trim()}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-white hover:text-accent-primary transition-colors disabled:opacity-50"
+                  aria-label="Send message"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffffff">
+                    <path d="M12 19V5M5 12l7-7 7 7" stroke="#ffffff" strokeWidth="2" fill="none"/>
+                  </svg>
+                </button>
+              </div>
 
-                  {/* Chat input — MIDDLE (slightly smaller now; leaves room for the button on the right) */}
-                  <div className="relative bg-[#040404] rounded-xl p-3 min-h-[56px] flex-1 flex items-center hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] focus-within:shadow-[0_0_5px_rgba(255,255,255,0.5)] transition-shadow">
-                    <textarea
-                      ref={chatInputRef}
-                      value={input}
-                      onChange={(e) => {
-                        setInput(e.target.value);
-                        e.target.style.height = 'auto';
-                        e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
-                      }}
-                      placeholder="Type out your question here..."
-                      className="w-full bg-transparent border-0 pr-10 text-white placeholder-gray-500 focus:outline-none resize-none min-h-[32px] max-h-[120px] overflow-y-auto chat-input-scrollbar"
-                      onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSend(); } }}
-                      disabled={busy}
-                      rows={1}
-                    />
-                    <button
-                      onClick={onSend}
-                      disabled={busy || !input.trim()}
-                      className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-white hover:text-accent-primary transition-colors disabled:opacity-50"
-                      aria-label="Send message"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffffff"><path d="M12 19V5M5 12l7-7 7 7" stroke="#ffffff" strokeWidth="2" fill="none"/></svg>
-                    </button>
-                  </div>
+              {/* Right column — Generate on top, Icon tray below (same size) */}
+              <div className="shrink-0 w-[220px] flex flex-col gap-3">
+                {/* Generate (pink) */}
+                <button
+                  onClick={startGeneration}
+                  disabled={busy || !canGenerate}
+                  className="h-[56px] w-full rounded-xl font-medium text-white bg-[#f92c8f] hover:bg-[#e02681] disabled:opacity-50 disabled:saturate-75 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  aria-disabled={busy || !canGenerate}
+                >
+                  <span className="text-lg leading-none">✦</span>
+                  <span>Generate</span>
+                </button>
 
-                  {/* Generate — RIGHT (pink, same height as icon tray, keeps the ✦, darkens when disabled) */}
-                  <button
-                    onClick={startGeneration}
-                    disabled={busy || !canGenerate}
-                    className="shrink-0 h-[56px] px-5 rounded-xl font-medium text-white bg-[#f92c8f] hover:bg-[#e02681] disabled:opacity-50 disabled:saturate-75 disabled:cursor-not-allowed flex items-center gap-2"
-                    aria-disabled={busy || !canGenerate}
-                  >
-                    <span className="text-lg leading-none">✦</span>
-                    <span>Generate</span>
-                  </button>
+                {/* Icon tray */}
+                <div className="bg-[#040404] rounded-xl h-[56px] w-full flex items-center gap-2 px-3 hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] transition-shadow">
+                  <button onClick={handleFileUpload} className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}><Upload size={20} /></button>
+                  <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}><Grid3X3 size={20} /></button>
+                  <button className="p-2 text-white hover:text-accent-primary transition-colors" onClick={randomizeAll} disabled={busy}><Dice5 size={20} /></button>
+                  <button className="p-2 text-white hover:text-accent-primary transition-colors" disabled={busy}><List size={20} /></button>
                 </div>
+              </div>
+            </div>
               </div>
             </div>
 
