@@ -42,8 +42,8 @@ export default function PlayerDock({
   }), []);
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <div className="flex-1 bg-[#0f0f0f] border-t border-white/5">
+    <div className="w-full h-full flex flex-col relative z-10">
+      <div className="flex-1 bg-transparent">
         {/* Waveform (edge-to-edge, condensed, no scroll) */}
         <div
           className="h-6 w-full overflow-hidden cursor-pointer"

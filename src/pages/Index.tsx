@@ -1363,7 +1363,7 @@ async function startGeneration() {
           <div
             aria-hidden
             className="
-              pointer-events-none absolute inset-0
+              pointer-events-none absolute inset-0 z-0
               bg-[radial-gradient(120%_60%_at_50%_-20%,rgba(255,255,255,0.09),transparent_60%),
                   linear-gradient(to_bottom,rgba(255,255,255,0.05),rgba(255,255,255,0.02),transparent)]
             "
