@@ -1112,33 +1112,41 @@ async function startGeneration() {
             )}
 
             {/* Docked Global Player */}
-            {(audioUrls?.length || audioUrl) ? (
-              <div className="pt-2">
-                <GlobalPlayerBar
-                  title={details.title || `Version ${currentAudioIndex + 1}`}
-                  audioRefs={audioRefs}
-                  currentAudioIndex={currentAudioIndex}
-                  isPlaying={isPlaying}
-                  currentTime={currentTime}
-                  onPrev={() => {
-                    if (!audioUrls?.length) return;
-                    const idx = Math.max(0, currentAudioIndex - 1);
-                    handleAudioPlay(idx);
-                  }}
-                  onNext={() => {
-                    if (!audioUrls?.length) return;
-                    const idx = Math.min(audioUrls.length - 1, currentAudioIndex + 1);
-                    handleAudioPlay(idx);
-                  }}
-                  onPlay={() => {
-                    handleAudioPlay(currentAudioIndex);
-                  }}
-                  onPause={handleAudioPause}
-                  onSeek={handleSeek}
-                  accent="#f92c8f"
-                />
-              </div>
-            ) : null}
+            <div className="pt-2">
+              {(() => {
+                const hasAudio = (audioUrls?.length ?? 0) > 0 && !!audioRefs.current[currentAudioIndex];
+                return (
+                  <GlobalPlayerBar
+                    title={details.title || (hasAudio ? `Version ${currentAudioIndex + 1}` : "No track yet")}
+                    audioRefs={audioRefs}
+                    currentAudioIndex={currentAudioIndex}
+                    isPlaying={isPlaying}
+                    currentTime={currentTime}
+                    onPrev={() => {
+                      if (!hasAudio) return;
+                      const idx = Math.max(0, currentAudioIndex - 1);
+                      handleAudioPlay(idx);
+                    }}
+                    onNext={() => {
+                      if (!hasAudio) return;
+                      const idx = Math.min((audioUrls?.length ?? 1) - 1, currentAudioIndex + 1);
+                      handleAudioPlay(idx);
+                    }}
+                    onPlay={() => {
+                      if (!hasAudio) return;
+                      handleAudioPlay(currentAudioIndex);
+                    }}
+                    onPause={handleAudioPause}
+                    onSeek={(t) => {
+                      if (!hasAudio) return;
+                      handleSeek(t);
+                    }}
+                    accent="#f92c8f"
+                    disabled={!hasAudio}
+                  />
+                );
+              })()}
+            </div>
           </div>
 
           {/* Row 2 - Right: Template */}
