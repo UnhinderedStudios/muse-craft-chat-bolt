@@ -55,49 +55,47 @@ export default function PlayerDock({
       </div>
 
       {/* Controls row - centered in remaining space */}
-      <div className="flex items-center justify-center pt-1 pb-0">
-        <div className="flex items-center gap-2 md:gap-3 px-3 w-full max-w-full">
-          {/* Left: album art + title + time */}
-          <div className="min-w-0 flex-1 flex items-center gap-2">
-            {albumCoverUrl && (
-              <button
-                onClick={onFullscreenKaraoke}
-                className="w-8 h-8 aspect-square rounded overflow-hidden border border-white/20 hover:border-white/40 transition-colors flex-shrink-0"
-                disabled={disabled || !onFullscreenKaraoke}
-              >
-                <img 
-                  src={albumCoverUrl} 
-                  alt="Album cover"
-                  className="w-full h-full object-cover"
-                />
-              </button>
-            )}
-            <div className="min-w-0">
-              <div className="truncate text-sm text-white/90">{title || "No track yet"}</div>
-              <div className="text-[11px] text-white/50">
-                {formatTime(currentTime)} • {formatTime(duration)}
-              </div>
+      <div className="flex items-center justify-between pt-1 pb-0 px-3">
+        {/* Left: album art + title + time - compact */}
+        <div className="flex items-center gap-2 min-w-0 w-48">
+          {albumCoverUrl && (
+            <button
+              onClick={onFullscreenKaraoke}
+              className="w-8 h-8 aspect-square rounded overflow-hidden border border-white/20 hover:border-white/40 transition-colors flex-shrink-0"
+              disabled={disabled || !onFullscreenKaraoke}
+            >
+              <img 
+                src={albumCoverUrl} 
+                alt="Album cover"
+                className="w-full h-full object-cover"
+              />
+            </button>
+          )}
+          <div className="min-w-0">
+            <div className="truncate text-sm text-white/90">{title || "No track yet"}</div>
+            <div className="text-[11px] text-white/50">
+              {formatTime(currentTime)} • {formatTime(duration)}
             </div>
           </div>
+        </div>
 
-          {/* Center: transport */}
-          <div className="flex items-center gap-2">
-            <IconBtn onClick={onPrev} disabled={disabled}><SkipBack size={14} /></IconBtn>
-            {isPlaying ? (
-              <IconBtn onClick={onPause} primary disabled={disabled}><Pause size={14} /></IconBtn>
-            ) : (
-              <IconBtn onClick={onPlay} primary disabled={disabled}><Play size={14} /></IconBtn>
-            )}
-            <IconBtn onClick={onNext} disabled={disabled}><SkipForward size={14} /></IconBtn>
-          </div>
+        {/* Center: transport - prominent */}
+        <div className="flex items-center gap-3">
+          <IconBtn onClick={onPrev} disabled={disabled} className="h-8 w-8"><SkipBack size={16} /></IconBtn>
+          {isPlaying ? (
+            <IconBtn onClick={onPause} primary disabled={disabled} className="h-10 w-10"><Pause size={18} /></IconBtn>
+          ) : (
+            <IconBtn onClick={onPlay} primary disabled={disabled} className="h-10 w-10"><Play size={18} /></IconBtn>
+          )}
+          <IconBtn onClick={onNext} disabled={disabled} className="h-8 w-8"><SkipForward size={16} /></IconBtn>
+        </div>
 
-          {/* Right: actions - responsive */}
-          <div className="flex items-center gap-2 text-white/70">
-            <IconBtn disabled={disabled} className="hidden sm:flex"><Plus size={14} /></IconBtn>
-            <IconBtn disabled={disabled} className="hidden sm:flex"><Heart size={14} /></IconBtn>
-            <IconBtn disabled={disabled}><Share2 size={14} /></IconBtn>
-            <IconBtn disabled={disabled}><Volume2 size={14} /></IconBtn>
-          </div>
+        {/* Right: actions - compact */}
+        <div className="flex items-center gap-2 text-white/70 w-48 justify-end">
+          <IconBtn disabled={disabled} className="hidden sm:flex"><Plus size={14} /></IconBtn>
+          <IconBtn disabled={disabled} className="hidden sm:flex"><Heart size={14} /></IconBtn>
+          <IconBtn disabled={disabled}><Share2 size={14} /></IconBtn>
+          <IconBtn disabled={disabled}><Volume2 size={14} /></IconBtn>
         </div>
       </div>
     </div>
