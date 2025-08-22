@@ -36,7 +36,7 @@ export default function PlayerDock({
 
 
   return (
-    <div className="w-full h-full flex flex-col relative z-10">
+    <div className="w-full h-full flex flex-col relative z-10 pt-2">
       <div className="h-[28px] bg-transparent">
         {/* Bar Waveform - tall sticks, edge to edge */}
         <BarWaveform
@@ -51,7 +51,7 @@ export default function PlayerDock({
       </div>
 
       {/* Controls row - centered in remaining space */}
-      <div className="flex items-center justify-center py-1">
+      <div className="flex items-center justify-center pt-1 pb-0">
         <div className="flex items-center gap-2 md:gap-3 px-3 w-full max-w-full">
           {/* Left: title + time */}
           <div className="min-w-0 flex-1">
