@@ -37,7 +37,7 @@ export default function PlayerDock({
 
   return (
     <div className="w-full h-full flex flex-col relative z-10">
-      <div className="flex-1 bg-transparent pb-1">
+      <div className="flex-1 bg-transparent">
         {/* Bar Waveform - tall sticks, edge to edge */}
         <BarWaveform
           audio={audioRefs.current[currentAudioIndex] || null}
@@ -50,8 +50,9 @@ export default function PlayerDock({
         />
       </div>
 
-      {/* Controls row */}
-      <div className="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-4">
+      {/* Controls row - centered in remaining space */}
+      <div className="flex items-center justify-center py-3">
+        <div className="flex items-center gap-2 md:gap-3 px-3 w-full max-w-full">
           {/* Left: title + time */}
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm text-white/90">{title || "No track yet"}</div>
@@ -62,21 +63,22 @@ export default function PlayerDock({
 
           {/* Center: transport */}
           <div className="flex items-center gap-2">
-            <IconBtn onClick={onPrev} disabled={disabled}><SkipBack size={16} /></IconBtn>
+            <IconBtn onClick={onPrev} disabled={disabled}><SkipBack size={14} /></IconBtn>
             {isPlaying ? (
-              <IconBtn onClick={onPause} primary disabled={disabled}><Pause size={16} /></IconBtn>
+              <IconBtn onClick={onPause} primary disabled={disabled}><Pause size={14} /></IconBtn>
             ) : (
-              <IconBtn onClick={onPlay} primary disabled={disabled}><Play size={16} /></IconBtn>
+              <IconBtn onClick={onPlay} primary disabled={disabled}><Play size={14} /></IconBtn>
             )}
-            <IconBtn onClick={onNext} disabled={disabled}><SkipForward size={16} /></IconBtn>
+            <IconBtn onClick={onNext} disabled={disabled}><SkipForward size={14} /></IconBtn>
           </div>
 
           {/* Right: actions - responsive */}
           <div className="flex items-center gap-2 text-white/70">
-            <IconBtn disabled={disabled} className="hidden sm:flex"><Plus size={16} /></IconBtn>
-            <IconBtn disabled={disabled} className="hidden sm:flex"><Heart size={16} /></IconBtn>
-            <IconBtn disabled={disabled}><Share2 size={16} /></IconBtn>
-            <IconBtn disabled={disabled}><Volume2 size={16} /></IconBtn>
+            <IconBtn disabled={disabled} className="hidden sm:flex"><Plus size={14} /></IconBtn>
+            <IconBtn disabled={disabled} className="hidden sm:flex"><Heart size={14} /></IconBtn>
+            <IconBtn disabled={disabled}><Share2 size={14} /></IconBtn>
+            <IconBtn disabled={disabled}><Volume2 size={14} /></IconBtn>
+          </div>
         </div>
       </div>
     </div>
@@ -102,7 +104,7 @@ function IconBtn({
       onClick={disabled ? undefined : onClick}
       aria-disabled={disabled}
       className={[
-        "grid h-8 w-8 place-items-center rounded-md",
+        "grid h-7 w-7 place-items-center rounded-md",
         primary ? "bg-[#f92c8f] text-white" : "bg-white/5 text-white",
         disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-white/10",
         className,
