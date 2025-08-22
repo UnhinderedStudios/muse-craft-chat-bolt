@@ -37,7 +37,7 @@ export default function PlayerDock({
 
   return (
     <div className="w-full h-full flex flex-col relative z-10">
-      <div className="flex-1 bg-transparent">
+      <div className="flex-1 bg-transparent pb-1">
         {/* Bar Waveform - tall sticks, edge to edge */}
         <BarWaveform
           audio={audioRefs.current[currentAudioIndex] || null}
@@ -48,35 +48,35 @@ export default function PlayerDock({
           barWidth={3}       // chunky sticks
           barGap={1}
         />
+      </div>
 
-        {/* Controls row */}
-        <div className="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-4 -mt-2">
-            {/* Left: title + time */}
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-sm text-white/90">{title || "No track yet"}</div>
-              <div className="text-[11px] text-white/50">
-                {formatTime(currentTime)} • {formatTime(duration)}
-              </div>
+      {/* Controls row */}
+      <div className="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-4">
+          {/* Left: title + time */}
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm text-white/90">{title || "No track yet"}</div>
+            <div className="text-[11px] text-white/50">
+              {formatTime(currentTime)} • {formatTime(duration)}
             </div>
-
-            {/* Center: transport */}
-            <div className="flex items-center gap-2">
-              <IconBtn onClick={onPrev} disabled={disabled}><SkipBack size={16} /></IconBtn>
-              {isPlaying ? (
-                <IconBtn onClick={onPause} primary disabled={disabled}><Pause size={16} /></IconBtn>
-              ) : (
-                <IconBtn onClick={onPlay} primary disabled={disabled}><Play size={16} /></IconBtn>
-              )}
-              <IconBtn onClick={onNext} disabled={disabled}><SkipForward size={16} /></IconBtn>
-            </div>
-
-            {/* Right: actions - responsive */}
-            <div className="flex items-center gap-2 text-white/70">
-              <IconBtn disabled={disabled} className="hidden sm:flex"><Plus size={16} /></IconBtn>
-              <IconBtn disabled={disabled} className="hidden sm:flex"><Heart size={16} /></IconBtn>
-              <IconBtn disabled={disabled}><Share2 size={16} /></IconBtn>
-              <IconBtn disabled={disabled}><Volume2 size={16} /></IconBtn>
           </div>
+
+          {/* Center: transport */}
+          <div className="flex items-center gap-2">
+            <IconBtn onClick={onPrev} disabled={disabled}><SkipBack size={16} /></IconBtn>
+            {isPlaying ? (
+              <IconBtn onClick={onPause} primary disabled={disabled}><Pause size={16} /></IconBtn>
+            ) : (
+              <IconBtn onClick={onPlay} primary disabled={disabled}><Play size={16} /></IconBtn>
+            )}
+            <IconBtn onClick={onNext} disabled={disabled}><SkipForward size={16} /></IconBtn>
+          </div>
+
+          {/* Right: actions - responsive */}
+          <div className="flex items-center gap-2 text-white/70">
+            <IconBtn disabled={disabled} className="hidden sm:flex"><Plus size={16} /></IconBtn>
+            <IconBtn disabled={disabled} className="hidden sm:flex"><Heart size={16} /></IconBtn>
+            <IconBtn disabled={disabled}><Share2 size={16} /></IconBtn>
+            <IconBtn disabled={disabled}><Volume2 size={16} /></IconBtn>
         </div>
       </div>
     </div>
