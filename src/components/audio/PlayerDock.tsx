@@ -44,7 +44,7 @@ export default function PlayerDock({
           currentTime={currentTime}
           onSeek={onSeek}
           accent={accent}
-          height={36}        // 25% shorter height
+          height={28}        // proportionally reduced with container
           barWidth={3}       // chunky sticks
           barGap={1}
         />
