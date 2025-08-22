@@ -19,6 +19,18 @@ export const FullscreenKaraoke: React.FC<FullscreenKaraokeProps> = ({
 }) => {
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
 
+  // Handle escape key to exit fullscreen
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   // Function to detect if a word is metadata/action rather than actual lyrics
   const isNonSungWord = (word: string): boolean => {
     const cleanWord = word.toLowerCase().trim();
