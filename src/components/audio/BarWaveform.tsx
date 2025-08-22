@@ -45,6 +45,8 @@ export default function BarWaveform({
     canvas.width = Math.floor(rect.width * dpr);
     canvas.height = Math.floor(height * dpr);
     canvas.style.height = `${height}px`;
+    // Trigger redraw after canvas resize
+    draw();
   };
 
   useLayoutEffect(() => {
@@ -119,6 +121,22 @@ export default function BarWaveform({
     draw();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [peaks, currentTime, height, barWidth, barGap, accent]);
+
+  // Add canvas width to dependencies for redraw on resize
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ro = new ResizeObserver(() => {
+      // Only redraw if we have peaks or are in placeholder mode
+      if (peaks || !srcKey) {
+        draw();
+      }
+    });
+    
+    ro.observe(canvas);
+    return () => ro.disconnect();
+  }, [peaks, srcKey]);
 
   const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!duration) return;

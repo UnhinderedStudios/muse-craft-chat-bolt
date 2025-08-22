@@ -182,6 +182,38 @@ const Index = () => {
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [attachedFiles, setAttachedFiles] = useState<FileAttachment[]>([]);
 
+  // Global spacebar controls for play/pause
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if spacebar was pressed
+      if (e.code === 'Space' || e.key === ' ') {
+        // Don't interfere if user is typing in an input field
+        const activeElement = document.activeElement;
+        if (activeElement instanceof HTMLInputElement || 
+            activeElement instanceof HTMLTextAreaElement || 
+            activeElement?.hasAttribute('contenteditable')) {
+          return;
+        }
+        
+        // Prevent default behavior (page scrolling)
+        e.preventDefault();
+        
+        // Toggle play/pause for current audio
+        const currentAudio = audioRefs.current[currentAudioIndex];
+        if (currentAudio) {
+          if (isPlaying) {
+            handleAudioPause();
+          } else {
+            handleAudioPlay(currentAudioIndex);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPlaying, currentAudioIndex]);
+
   // Handle chat resize functionality
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
