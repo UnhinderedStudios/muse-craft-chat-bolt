@@ -80,7 +80,7 @@ export default function PlayerDock({
             </div>
           </div>
 
-          {/* Center: transport */}
+          {/* Center: transport + actions */}
           <div className="flex items-center gap-2">
             <IconBtn onClick={onPrev} disabled={disabled}><SkipBack size={14} /></IconBtn>
             {isPlaying ? (
@@ -89,13 +89,13 @@ export default function PlayerDock({
               <IconBtn onClick={onPlay} primary disabled={disabled}><Play size={14} /></IconBtn>
             )}
             <IconBtn onClick={onNext} disabled={disabled}><SkipForward size={14} /></IconBtn>
-          </div>
-
-          {/* Right: actions - responsive */}
-          <div className="flex items-center gap-2 text-white/70">
             <IconBtn disabled={disabled} className="hidden sm:flex"><Plus size={14} /></IconBtn>
             <IconBtn disabled={disabled} className="hidden sm:flex"><Heart size={14} /></IconBtn>
             <IconBtn disabled={disabled}><Share2 size={14} /></IconBtn>
+          </div>
+
+          {/* Right: volume only */}
+          <div className="flex items-center gap-2 text-white/70">
             <IconBtn disabled={disabled}><Volume2 size={14} /></IconBtn>
           </div>
         </div>
