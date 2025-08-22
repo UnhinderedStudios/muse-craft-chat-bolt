@@ -50,7 +50,7 @@ export default function PlayerDock({
         />
 
         {/* Controls row */}
-        <div className="flex items-center gap-2 md:gap-3 px-3 py-3 md:px-4">
+        <div className="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-4">
             {/* Left: title + time */}
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm text-white/90">{title || "No track yet"}</div>
