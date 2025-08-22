@@ -14,6 +14,8 @@ type Props = {
   onSeek: (t: number) => void;
   accent?: string;
   disabled?: boolean;
+  albumCoverUrl?: string;
+  onFullscreenKaraoke?: () => void;
 };
 
 export default function PlayerDock({
@@ -29,6 +31,8 @@ export default function PlayerDock({
   onSeek,
   accent = "#f92c8f",
   disabled = false,
+  albumCoverUrl,
+  onFullscreenKaraoke,
 }: Props) {
   const audio = audioRefs.current[currentAudioIndex];
   const duration = audio?.duration ?? 0;
@@ -53,11 +57,26 @@ export default function PlayerDock({
       {/* Controls row - centered in remaining space */}
       <div className="flex items-center justify-center pt-1 pb-0">
         <div className="flex items-center gap-2 md:gap-3 px-3 w-full max-w-full">
-          {/* Left: title + time */}
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm text-white/90">{title || "No track yet"}</div>
-            <div className="text-[11px] text-white/50">
-              {formatTime(currentTime)} • {formatTime(duration)}
+          {/* Left: album art + title + time */}
+          <div className="min-w-0 flex-1 flex items-center gap-2">
+            {albumCoverUrl && (
+              <button
+                onClick={onFullscreenKaraoke}
+                className="w-8 h-8 aspect-square rounded overflow-hidden border border-white/20 hover:border-white/40 transition-colors flex-shrink-0"
+                disabled={disabled || !onFullscreenKaraoke}
+              >
+                <img 
+                  src={albumCoverUrl} 
+                  alt="Album cover"
+                  className="w-full h-full object-cover"
+                />
+              </button>
+            )}
+            <div className="min-w-0">
+              <div className="truncate text-sm text-white/90">{title || "No track yet"}</div>
+              <div className="text-[11px] text-white/50">
+                {formatTime(currentTime)} • {formatTime(duration)}
+              </div>
             </div>
           </div>
 

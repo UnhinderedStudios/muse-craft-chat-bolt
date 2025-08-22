@@ -1388,6 +1388,8 @@ async function startGeneration() {
             onSeek={(t) => handleSeek(t)}
             accent="#f92c8f"
             disabled={!audioRefs.current[currentAudioIndex]}
+            albumCoverUrl={albumCovers ? (currentAudioIndex === 1 ? albumCovers.cover2 : albumCovers.cover1) : undefined}
+            onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
           />
         </div>
       </footer>
