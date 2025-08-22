@@ -44,13 +44,13 @@ export default function PlayerDock({
           currentTime={currentTime}
           onSeek={onSeek}
           accent={accent}
-          height={48}        // optimized height to leave more room for controls
+          height={36}        // 25% shorter height
           barWidth={3}       // chunky sticks
           barGap={1}
         />
 
         {/* Controls row */}
-        <div className="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-4">
+        <div className="flex items-center gap-2 md:gap-3 px-3 py-3 md:px-4">
             {/* Left: title + time */}
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm text-white/90">{title || "No track yet"}</div>
