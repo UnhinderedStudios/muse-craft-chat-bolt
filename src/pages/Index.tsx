@@ -1077,6 +1077,7 @@ async function startGeneration() {
               onAudioPause={handleAudioPause}
               onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
               onSeek={handleSeek}
+              panelHeight={isDesktop ? chatHeight : undefined}
             />
           </div>
 
