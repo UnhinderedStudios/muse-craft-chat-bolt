@@ -1136,12 +1136,21 @@ async function startGeneration() {
                 {/* Song Parameters */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-white/80">Song Parameters</label>
-                  <div className="bg-[#2d2d2d] rounded-lg p-4 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
+
+                  {/* scrollable like Lyrics */}
+                  <div
+                    className="
+                      bg-[#2d2d2d] rounded-lg p-4
+                      border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white
+                      transition-colors duration-200
+                      min-h-[120px] max-h-[260px] overflow-y-auto lyrics-scrollbar
+                    "
+                  >
                     <TagInput
                       tags={styleTags}
                       onChange={handleStyleTagsChange}
                       placeholder='Add song parameters such as "Pop", "128bpm", "female vocals" and separate them by comma'
-                      className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[120px] resize-none"
+                      className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 w-full"
                     />
                   </div>
                 </div>
