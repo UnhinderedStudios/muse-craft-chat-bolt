@@ -22,6 +22,7 @@ interface KaraokeRightPanelProps {
   onAudioPause: () => void;
   onFullscreenKaraoke: () => void;
   onSeek?: (time: number) => void;
+  panelHeight?: number;
 }
 
 export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
@@ -36,6 +37,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   onAudioPause,
   onFullscreenKaraoke,
   onSeek,
+  panelHeight,
 }) => {
   const hasContent = versions.length > 0;
   const currentVersion = hasContent ? versions[currentAudioIndex] : null;
@@ -73,7 +75,10 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="bg-[#151515] rounded-2xl h-[500px] flex flex-col overflow-hidden">
+    <div 
+      className="bg-[#151515] rounded-2xl flex flex-col min-h-0 overflow-hidden"
+      style={panelHeight ? { height: `${panelHeight}px` } : { height: '500px' }}
+    >
       {/* Album Art Section - Made 10% taller (115px -> 127px) */}
       <div className="relative h-[127px] bg-muted/10 rounded-t-2xl overflow-hidden flex-shrink-0">
         {currentAlbumCover ? (
@@ -135,8 +140,8 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
         </div>
       </div>
 
-      {/* Karaoke Lyrics Section - Adjusted for new album art height (373px) */}
-      <div className="flex flex-col p-4" style={{ height: 'calc(500px - 127px)' }}>
+      {/* Karaoke Lyrics Section - Flexible height */}
+      <div className="flex flex-col p-4 flex-1 min-h-0">
         {/* Lyrics Container - Give KaraokeLyrics a fixed height to scroll within */}
         <div className="flex-1 mb-4 min-h-0">
           {hasContent ? (
