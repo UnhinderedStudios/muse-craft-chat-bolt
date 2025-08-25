@@ -75,16 +75,19 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="bg-[#151515] rounded-2xl h-full flex flex-col min-h-0">
+    <div
+      className="bg-[#151515] rounded-2xl h-full flex flex-col min-h-0 overflow-hidden relative z-0"
+      style={panelHeight ? { height: panelHeight } : undefined}
+    >
       {/* Album Art Section - Made 10% taller (115px -> 127px) */}
       <div className="relative h-[127px] bg-muted/10 rounded-t-2xl overflow-hidden flex-shrink-0">
         {currentAlbumCover ? (
           <div
-            className="absolute inset-0 bg-cover bg-center opacity-50"
+            className="absolute inset-0 bg-cover bg-center opacity-50 pointer-events-none"
             style={{ backgroundImage: `url(${currentAlbumCover})` }}
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-muted/10" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-muted/10 pointer-events-none" />
         )}
         
         {/* Audio Controls Overlay - Made 10% smaller */}
@@ -138,10 +141,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
       </div>
 
       {/* Karaoke Lyrics Section - Dynamic height */}
-      <div 
-        className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-4"
-        style={panelHeight ? { height: panelHeight - 127 } : undefined}
-      >
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-4">
         {hasContent ? (
           <KaraokeLyrics
             words={currentVersion?.words || []}

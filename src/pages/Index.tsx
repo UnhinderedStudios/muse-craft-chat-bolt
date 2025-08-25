@@ -941,7 +941,7 @@ async function startGeneration() {
           </div>
 
           {/* Row 1 - Center: Chat */}
-          <div className="order-2 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-2xl relative overflow-hidden">
+          <div className="order-2 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-2xl relative overflow-hidden isolate z-20">
             {/* top fade */}
             {scrollTop > 0 && (
               <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none" />
@@ -1053,10 +1053,12 @@ async function startGeneration() {
 
             {/* desktop-only resize handle */}
             <div
-              className={`hidden lg:block absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize group ${isResizing ? 'bg-accent-primary/50' : 'bg-white/20 hover:bg-white/40'} transition-colors`}
+              className={`hidden lg:block absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize group ${isResizing ? 'bg-accent-primary/50' : 'bg-white/20 hover:bg-white/40'} transition-colors z-[60] pointer-events-auto`}
               onMouseDown={handleMouseDown}
               style={{ clipPath: 'polygon(100% 0%, 0% 100%, 100% 100%)', borderBottomRightRadius: '16px' }}
             >
+              {/* enlarge hit area without changing visuals */}
+              <div className="absolute -inset-2" />
               <div className="absolute bottom-1 right-1 w-1 h-1 bg-white/60 rounded-full"></div>
               <div className="absolute bottom-1 right-2.5 w-1 h-1 bg-white/40 rounded-full"></div>
               <div className="absolute bottom-2.5 right-1 w-1 h-1 bg-white/40 rounded-full"></div>
@@ -1064,7 +1066,7 @@ async function startGeneration() {
           </div>
 
           {/* Row 1 - Right: Karaoke panel (wraps under chat on iPad) */}
-          <div className="order-3 md:col-span-8 lg:col-span-1 xl:col-span-1 min-w-0">
+          <div className="order-3 md:col-span-8 lg:col-span-1 xl:col-span-1 min-w-0 relative z-10 overflow-hidden">
             <KaraokeRightPanel
               versions={versions}
               currentAudioIndex={currentAudioIndex}
@@ -1079,6 +1081,24 @@ async function startGeneration() {
               onSeek={handleSeek}
               panelHeight={isDesktop ? chatHeight : undefined}
             />
+
+            {/* Karaoke resize handle — mirrors chat handle (bottom-left) */}
+            <div
+              className={`hidden lg:block absolute bottom-0 left-0 w-4 h-4 cursor-ne-resize group ${
+                isResizing ? 'bg-accent-primary/50' : 'bg-white/20 hover:bg-white/40'
+              } transition-colors z-[60] pointer-events-auto`}
+              onMouseDown={handleMouseDown}
+              style={{
+                clipPath: 'polygon(0% 0%, 0% 100%, 100% 100%)',
+                borderBottomLeftRadius: '16px',
+              }}
+            >
+              {/* enlarge hit area without changing visuals */}
+              <div className="absolute -inset-2" />
+              <div className="absolute bottom-1 left-1 w-1 h-1 bg-white/60 rounded-full"></div>
+              <div className="absolute bottom-1 left-2.5 w-1 h-1 bg-white/40 rounded-full"></div>
+              <div className="absolute bottom-2.5 left-1 w-1 h-1 bg-white/40 rounded-full"></div>
+            </div>
           </div>
 
           {/* Far-right Track List: spans both rows, bleeds to the right, sticky inner */}
