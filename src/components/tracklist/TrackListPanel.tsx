@@ -81,7 +81,7 @@ export default function TrackListPanel({
                         setShowQuickAlbumGenerator(true);
                       }}
                     >
-                      <RotateCw className="w-4 h-4 text-white group-hover:animate-[spin_0.3s_ease-in-out] transition-transform" />
+                      <RotateCw className="w-4 h-4 text-white group-hover:animate-[spin_0.36s_ease-in-out] transition-transform" />
                     </div>
                   )}
                 </div>
@@ -187,7 +187,7 @@ export default function TrackListPanel({
 
       {/* Quick Album Cover Generator Overlay */}
       <Dialog open={showQuickAlbumGenerator} onOpenChange={setShowQuickAlbumGenerator}>
-        <DialogContent className="max-w-none w-full h-full bg-black/50 backdrop-blur border-0 p-0 flex flex-col">
+        <DialogContent className="max-w-none w-full h-full bg-black/10 backdrop-blur border-0 p-0 flex flex-col">
           <div className="relative w-full h-full flex flex-col">
             {/* Custom X button */}
             <button
