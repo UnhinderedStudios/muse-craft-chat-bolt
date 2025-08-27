@@ -55,8 +55,7 @@ export default function TrackListPanel({
           return (
             <div
               key={t.id}
-              className={`rounded-xl bg-[#1e1e1e] ${active ? "p-4" : "p-3"} cursor-pointer hover:bg-[#252525] transition-colors`}
-              onClick={() => setCurrentIndex(i)}
+              className={`rounded-xl bg-[#1e1e1e] ${active ? "p-4" : "p-3"} hover:bg-[#252525] transition-colors`}
             >
               {/* Row: cover + title + mini controls */}
               <div className="flex items-center gap-3">
