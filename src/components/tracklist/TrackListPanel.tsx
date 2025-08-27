@@ -120,10 +120,10 @@ export default function TrackListPanel({
                   </button>
                 </div>
               ) : (
-                /* Active track - album art hugs left edge with rounded right side */
-                <div className="bg-[#1e1e1e] rounded-xl pr-4 py-4 flex">
-                  {/* Album art - hugs left edge with rounded right side only */}
-                  <div className="shrink-0 w-16 h-16 bg-black/30 overflow-hidden rounded-r-lg relative group">
+                /* Active track - album art hugs left edge */
+                <div className="bg-[#1e1e1e] rounded-xl py-4 flex">
+                  {/* Album art - flush with container left edge, inherits left corners */}
+                  <div className="shrink-0 w-16 h-16 bg-black/30 overflow-hidden rounded-l-xl relative group">
                     {t.coverUrl ? (
                       <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
                     ) : (
