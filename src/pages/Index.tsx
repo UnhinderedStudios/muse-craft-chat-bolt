@@ -1185,7 +1185,13 @@ async function startGeneration() {
           </div>
 
           {/* Row 2 - Right: Template */}
-          <div className="order-7 md:col-span-8 lg:col-span-1 xl:col-span-1 bg-[#151515] rounded-2xl flex items-center justify-center h-full">
+          <div 
+            className="order-7 md:col-span-8 lg:col-span-1 xl:col-span-1 bg-[#151515] rounded-2xl flex items-center justify-center"
+            style={{ 
+              height: `calc(100vh - ${karaokeHeight}px - 200px)`,
+              minHeight: '200px'
+            }}
+          >
             <span className="text-text-secondary">TEMPLATE</span>
           </div>
         </div>
