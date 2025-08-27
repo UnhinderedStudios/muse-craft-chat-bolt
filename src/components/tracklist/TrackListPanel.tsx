@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Play, Pause, RotateCw, X } from "lucide-react";
+import { Play, Pause, RotateCw, X, Heart, Shuffle, Repeat, MoreHorizontal } from "lucide-react";
 import { TrackItem } from "@/types";
-import { CyberButton } from "@/components/cyber/CyberButton";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 type Props = {
@@ -58,62 +57,143 @@ export default function TrackListPanel({
           return (
             <div
               key={t.id}
-              className={`rounded-xl bg-[#1e1e1e] ${active ? "p-4" : "p-3"} ${!active ? "cursor-pointer" : ""} hover:bg-[#252525] transition-colors`}
+              className={`${active ? "" : "rounded-xl bg-[#1e1e1e] p-3 cursor-pointer hover:bg-[#252525] transition-colors"}`}
               onClick={!active ? () => {
                 setCurrentIndex(i);
                 onPlayPause(i);
               } : undefined}
             >
-              {/* Row: cover + title + mini controls */}
-              <div className="flex items-center gap-3">
-                <div className={`shrink-0 ${active ? "w-12 h-12" : "w-10 h-10"} rounded-md bg-black/30 overflow-hidden ${active ? "relative group" : ""}`}>
-                  {t.coverUrl ? (
-                    <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20" />
-                  )}
-                  {active && (
-                    <div 
-                      className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
+              {!active ? (
+                /* Regular track row */
+                <div className="flex items-center gap-3">
+                  <div className="shrink-0 w-10 h-10 rounded-md bg-black/30 overflow-hidden">
+                    {t.coverUrl ? (
+                      <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20" />
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs text-white/60 truncate">No Artist – {t.title || "Song Title"}</div>
+                    <div
+                      className="mt-1 h-1.5 bg-white/10 rounded cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setSelectedTrackForRegen(t);
-                        setShowQuickAlbumGenerator(true);
+                        
+                        const audio = audioRefs.current[i];
+                        if (!audio || !audio.duration) return;
+                        const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                        const pct = (e.clientX - rect.left) / rect.width;
+                        const seek = pct * audio.duration;
+                        
+                        if (i !== currentIndex) {
+                          setCurrentIndex(i);
+                          onPlayPause(i);
+                        }
+                        
+                        onSeek(seek);
                       }}
                     >
-                      <RotateCw className="w-4 h-4 text-white group-hover:animate-[spin_0.36s_ease-in-out] transition-transform" />
+                       <div
+                         className="h-full bg-white/70 rounded"
+                         style={{
+                           width: (() => {
+                             const a = audioRefs.current[i];
+                             if (!a || !a.duration) return "0%";
+                             const time = audioCurrentTimes[i] || 0;
+                             return `${(time / a.duration) * 100}%`;
+                           })(),
+                         }}
+                       />
                     </div>
-                  )}
+                  </div>
+
+                  <button
+                    className="w-8 h-8 shrink-0 flex items-center justify-center text-white/60 hover:text-white transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPlayPause(i);
+                    }}
+                  >
+                    <Play className="w-4 h-4" />
+                  </button>
                 </div>
+              ) : (
+                /* Active track with new design */
+                <div className="bg-[#1e1e1e]">
+                  {/* Main control row */}
+                  <div className="flex items-center">
+                    {/* Edge-to-edge album art */}
+                    <div className="shrink-0 w-16 h-16 bg-black/30 overflow-hidden relative group">
+                      {t.coverUrl ? (
+                        <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20" />
+                      )}
+                      <div 
+                        className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedTrackForRegen(t);
+                          setShowQuickAlbumGenerator(true);
+                        }}
+                      >
+                        <RotateCw className="w-4 h-4 text-white group-hover:animate-[spin_0.36s_ease-in-out] transition-transform" />
+                      </div>
+                    </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs text-white/60 truncate">No Artist – {t.title || "Song Title"}</div>
+                    {/* Play button */}
+                    <button
+                      className="ml-4 w-8 h-8 flex items-center justify-center text-white hover:text-white/80 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onPlayPause(i);
+                      }}
+                    >
+                      {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                    </button>
 
-                  {/* progress bar */}
-                  <div
-                    className="mt-1 h-1.5 bg-white/10 rounded cursor-pointer"
+                    {/* Title and artist */}
+                    <div className="flex-1 ml-4 min-w-0">
+                      <div className="text-sm text-white font-medium truncate">{t.title || "Song Title"}</div>
+                      <div className="text-xs text-white/60 truncate">No Artist</div>
+                    </div>
+
+                    {/* 4 control icons */}
+                    <div className="flex items-center gap-3 mr-4">
+                      <button className="w-4 h-4 text-white/60 hover:text-white transition-colors">
+                        <Heart className="w-4 h-4" />
+                      </button>
+                      <button className="w-4 h-4 text-white/60 hover:text-white transition-colors">
+                        <Shuffle className="w-4 h-4" />
+                      </button>
+                      <button className="w-4 h-4 text-white/60 hover:text-white transition-colors">
+                        <Repeat className="w-4 h-4" />
+                      </button>
+                      <button className="w-4 h-4 text-white/60 hover:text-white transition-colors">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Full-width progress bar */}
+                  <div 
+                    className="mt-3 h-1.5 bg-white/10 cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
                       
-                      // Calculate seek position first
                       const audio = audioRefs.current[i];
                       if (!audio || !audio.duration) return;
                       const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
                       const pct = (e.clientX - rect.left) / rect.width;
                       const seek = pct * audio.duration;
                       
-                      if (i !== currentIndex) {
-                        // Different track: switch to it and start playing
-                        setCurrentIndex(i);
-                        onPlayPause(i);
-                      }
-                      
-                      // Always seek to the clicked position
                       onSeek(seek);
                     }}
                   >
                      <div
-                       className="h-full bg-white/70 rounded"
+                       className="h-full bg-white/70"
                        style={{
                          width: (() => {
                            const a = audioRefs.current[i];
@@ -124,30 +204,16 @@ export default function TrackListPanel({
                        }}
                      />
                   </div>
-                </div>
 
-                <CyberButton
-                  variant="icon"
-                  className="w-8 h-8 shrink-0"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onPlayPause(i);
-                  }}
-                >
-                  {active && isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                </CyberButton>
-              </div>
-
-              {/* Expanded panel for active track */}
-              {active && (
-                <div className="mt-3 rounded-lg bg-black/20 p-3">
-                  <div className="text-sm font-semibold text-white/80 mb-2">Parameters:</div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {(t.params?.length ? t.params : ["Text","Text","Text","Text","Text","Text"]).slice(0,6).map((p, idx) => (
-                      <div key={idx} className="px-3 py-1.5 rounded-full bg-white/25 text-[12px] text-black font-semibold text-center truncate">
-                        {p || "Text"}
-                      </div>
-                    ))}
+                  {/* Edge-to-edge parameters */}
+                  <div className="mt-3">
+                    <div className="grid grid-cols-3 gap-2">
+                      {(t.params?.length ? t.params : ["Text","Text","Text","Text","Text","Text"]).slice(0,6).map((p, idx) => (
+                        <div key={idx} className="px-3 py-1.5 rounded-full bg-white/25 text-[12px] text-black font-semibold text-center truncate">
+                          {p || "Text"}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
