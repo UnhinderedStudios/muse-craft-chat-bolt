@@ -120,102 +120,102 @@ export default function TrackListPanel({
                   </button>
                 </div>
               ) : (
-                /* Active track with new design - rounded container with padding */
-                <div className="bg-[#1e1e1e] rounded-xl p-4">
-                  {/* Top row: Album art with title/artist and control icons */}
-                  <div className="flex items-start gap-4">
-                    {/* Album art - edge aligned within padded container */}
-                    <div className="shrink-0 w-16 h-16 bg-black/30 overflow-hidden rounded-lg relative group">
-                      {t.coverUrl ? (
-                        <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20" />
-                      )}
-                      <div 
-                        className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedTrackForRegen(t);
-                          setShowQuickAlbumGenerator(true);
-                        }}
-                      >
-                        <RotateCw className="w-4 h-4 text-white group-hover:animate-[spin_0.36s_ease-in-out] transition-transform" />
-                      </div>
+                /* Active track - album art hugs left edge with rounded right side */
+                <div className="bg-[#1e1e1e] rounded-xl pr-4 py-4 flex">
+                  {/* Album art - hugs left edge with rounded right side only */}
+                  <div className="shrink-0 w-16 h-16 bg-black/30 overflow-hidden rounded-r-lg relative group">
+                    {t.coverUrl ? (
+                      <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20" />
+                    )}
+                    <div 
+                      className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedTrackForRegen(t);
+                        setShowQuickAlbumGenerator(true);
+                      }}
+                    >
+                      <RotateCw className="w-4 h-4 text-white group-hover:animate-[spin_0.36s_ease-in-out] transition-transform" />
                     </div>
+                  </div>
 
-                    {/* Title and artist - positioned above play button area */}
-                    <div className="flex-1 min-w-0">
+                  {/* Content area next to album art */}
+                  <div className="flex-1 ml-4 flex flex-col">
+                    {/* Title above controls */}
+                    <div className="mb-2">
                       <div className="text-sm text-white font-medium truncate">{t.title || "Song Title"}</div>
                       <div className="text-xs text-white/60 truncate">No Artist</div>
                     </div>
 
-                    {/* 4 control icons - top right */}
+                    {/* Controls line: Play button + Progress bar + 4 icons */}
                     <div className="flex items-center gap-3">
-                      <button className="w-4 h-4 text-white/60 hover:text-white transition-colors">
-                        <Heart className="w-4 h-4" />
+                      {/* Play button */}
+                      <button
+                        className="w-6 h-6 flex items-center justify-center text-white hover:text-white/80 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onPlayPause(i);
+                        }}
+                      >
+                        {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                       </button>
-                      <button className="w-4 h-4 text-white/60 hover:text-white transition-colors">
-                        <Shuffle className="w-4 h-4" />
-                      </button>
-                      <button className="w-4 h-4 text-white/60 hover:text-white transition-colors">
-                        <Repeat className="w-4 h-4" />
-                      </button>
-                      <button className="w-4 h-4 text-white/60 hover:text-white transition-colors">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
+
+                      {/* Progress bar */}
+                      <div 
+                        className="flex-1 h-1.5 bg-white/10 rounded cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          
+                          const audio = audioRefs.current[i];
+                          if (!audio || !audio.duration) return;
+                          const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                          const pct = (e.clientX - rect.left) / rect.width;
+                          const seek = pct * audio.duration;
+                          
+                          onSeek(seek);
+                        }}
+                      >
+                         <div
+                           className="h-full bg-white/70 rounded"
+                           style={{
+                             width: (() => {
+                               const a = audioRefs.current[i];
+                               if (!a || !a.duration) return "0%";
+                               const time = audioCurrentTimes[i] || 0;
+                               return `${(time / a.duration) * 100}%`;
+                             })(),
+                           }}
+                         />
+                      </div>
+
+                      {/* 4 control icons */}
+                      <div className="flex items-center gap-2">
+                        <button className="text-white/60 hover:text-white transition-colors">
+                          <Heart className="w-4 h-4" />
+                        </button>
+                        <button className="text-white/60 hover:text-white transition-colors">
+                          <Shuffle className="w-4 h-4" />
+                        </button>
+                        <button className="text-white/60 hover:text-white transition-colors">
+                          <Repeat className="w-4 h-4" />
+                        </button>
+                        <button className="text-white/60 hover:text-white transition-colors">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Play button and progress bar row */}
-                  <div className="flex items-center gap-4 mt-3 ml-20">
-                    {/* Play button - aligned with progress bar */}
-                    <button
-                      className="w-8 h-8 flex items-center justify-center text-white hover:text-white/80 transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onPlayPause(i);
-                      }}
-                    >
-                      {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                    </button>
-
-                    {/* Progress bar */}
-                    <div 
-                      className="flex-1 h-1.5 bg-white/10 cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        
-                        const audio = audioRefs.current[i];
-                        if (!audio || !audio.duration) return;
-                        const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-                        const pct = (e.clientX - rect.left) / rect.width;
-                        const seek = pct * audio.duration;
-                        
-                        onSeek(seek);
-                      }}
-                    >
-                       <div
-                         className="h-full bg-white/70"
-                         style={{
-                           width: (() => {
-                             const a = audioRefs.current[i];
-                             if (!a || !a.duration) return "0%";
-                             const time = audioCurrentTimes[i] || 0;
-                             return `${(time / a.duration) * 100}%`;
-                           })(),
-                         }}
-                       />
-                    </div>
-                  </div>
-
-                  {/* Parameters - edge to edge within container */}
-                  <div className="mt-4 -mx-4 px-4">
-                    <div className="grid grid-cols-3 gap-2">
-                      {(t.params?.length ? t.params : ["Text","Text","Text","Text","Text","Text"]).slice(0,6).map((p, idx) => (
-                        <div key={idx} className="px-3 py-1.5 rounded-full bg-white/25 text-[12px] text-black font-semibold text-center truncate">
-                          {p || "Text"}
-                        </div>
-                      ))}
+                    {/* Parameters below */}
+                    <div className="mt-3">
+                      <div className="grid grid-cols-3 gap-2">
+                        {(t.params?.length ? t.params : ["Text","Text","Text","Text","Text","Text"]).slice(0,6).map((p, idx) => (
+                          <div key={idx} className="px-3 py-1.5 rounded-full bg-white/25 text-[12px] text-black font-semibold text-center truncate">
+                            {p || "Text"}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
