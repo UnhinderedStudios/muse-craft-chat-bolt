@@ -22,9 +22,7 @@ interface KaraokeRightPanelProps {
   onAudioPause: () => void;
   onFullscreenKaraoke: () => void;
   onSeek?: (time: number) => void;
-  karaokeHeight?: number;
-  isKaraokeResizing?: boolean;
-  handleKaraokeMouseDown?: (e: React.MouseEvent) => void;
+  panelHeight?: number;
 }
 
 export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
@@ -39,9 +37,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   onAudioPause,
   onFullscreenKaraoke,
   onSeek,
-  karaokeHeight,
-  isKaraokeResizing,
-  handleKaraokeMouseDown,
+  panelHeight,
 }) => {
   const hasContent = versions.length > 0;
   const currentVersion = hasContent ? versions[currentAudioIndex] : null;
@@ -79,11 +75,10 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="relative">
-      <div 
-        className="bg-[#151515] rounded-2xl flex flex-col min-h-0 overflow-hidden"
-        style={{ height: `${karaokeHeight || 500}px` }}
-      >
+    <div 
+      className="bg-[#151515] rounded-2xl flex flex-col min-h-0 overflow-hidden"
+      style={panelHeight ? { height: `${panelHeight}px` } : { height: '500px' }}
+    >
       {/* Album Art Section - Made 10% taller (115px -> 127px) */}
       <div className="relative h-[127px] bg-muted/10 rounded-t-2xl overflow-hidden flex-shrink-0">
         {currentAlbumCover ? (
@@ -181,20 +176,6 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
           </div>
         )}
       </div>
-      </div>
-      
-      {/* desktop-only resize handle */}
-      {handleKaraokeMouseDown && (
-        <div
-          className={`hidden lg:block absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize group ${isKaraokeResizing ? 'bg-accent-primary/50' : 'bg-white/20 hover:bg-white/40'} transition-colors`}
-          onMouseDown={handleKaraokeMouseDown}
-          style={{ clipPath: 'polygon(100% 0%, 0% 100%, 100% 100%)', borderBottomRightRadius: '16px' }}
-        >
-          <div className="absolute bottom-1 right-1 w-1 h-1 bg-white/60 rounded-full"></div>
-          <div className="absolute bottom-1 right-2.5 w-1 h-1 bg-white/40 rounded-full"></div>
-          <div className="absolute bottom-2.5 right-1 w-1 h-1 bg-white/40 rounded-full"></div>
-        </div>
-      )}
     </div>
   );
 };

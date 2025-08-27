@@ -30,6 +30,7 @@ import PlayerDock from "@/components/audio/PlayerDock";
 // Hooks
 import { useChat } from "@/hooks/use-chat";
 import { useResize } from "@/hooks/use-resize";
+import { useWidthResize } from "@/hooks/use-width-resize";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useSongGeneration } from "@/hooks/use-song-generation";
 
@@ -126,10 +127,8 @@ const Index = () => {
   const [isReadingText, setIsReadingText] = useState(false);
   const [details, setDetails] = useState<SongDetails>({});
   const [styleTags, setStyleTags] = useState<string[]>([]);
-  const [chatHeight, setChatHeight] = useState(500);
-  const [isResizing, setIsResizing] = useState(false);
-  const [karaokeHeight, setKaraokeHeight] = useState(500);
-  const [isKaraokeResizing, setIsKaraokeResizing] = useState(false);
+  const { chatHeight, isResizing, handleMouseDown } = useResize();
+  const { panelWidth, isResizing: isKaraokeResizing, handleMouseDown: handleKaraokeMouseDown } = useWidthResize();
   
   // Ref for chat input to maintain focus
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
@@ -216,53 +215,6 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isPlaying, currentAudioIndex]);
 
-  // Handle chat resize functionality
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsResizing(true);
-    
-    const startY = e.clientY;
-    const startHeight = chatHeight;
-    
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaY = e.clientY - startY;
-      const newHeight = Math.max(300, Math.min(800, startHeight + deltaY)); // Min 300px, Max 800px
-      setChatHeight(newHeight);
-    };
-    
-    const handleMouseUp = () => {
-      setIsResizing(false);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-    
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
-  // Handle karaoke resize functionality
-  const handleKaraokeMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsKaraokeResizing(true);
-    
-    const startY = e.clientY;
-    const startHeight = karaokeHeight;
-    
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaY = e.clientY - startY;
-      const newHeight = Math.max(300, Math.min(800, startHeight + deltaY)); // Min 300px, Max 800px
-      setKaraokeHeight(newHeight);
-    };
-    
-    const handleMouseUp = () => {
-      setIsKaraokeResizing(false);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-    
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
 
   useEffect(() => {
     scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
@@ -1091,22 +1043,27 @@ async function startGeneration() {
 
           {/* Row 1 - Right: Karaoke panel (wraps under chat on iPad) */}
           <div className="order-3 md:col-span-8 lg:col-span-1 xl:col-span-1 min-w-0">
-            <KaraokeRightPanel
-              versions={versions}
-              currentAudioIndex={currentAudioIndex}
-              currentTime={currentTime}
-              isPlaying={isPlaying}
-              albumCovers={albumCovers}
-              isGeneratingCovers={isGeneratingCovers}
-              audioRefs={audioRefs}
-              onPlayPause={handleAudioPlay}
-              onAudioPause={handleAudioPause}
-              karaokeHeight={karaokeHeight}
-              isKaraokeResizing={isKaraokeResizing}
-              handleKaraokeMouseDown={handleKaraokeMouseDown}
-              onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
-              onSeek={handleSeek}
-            />
+            <ResizableContainer
+              isResizing={isKaraokeResizing}
+              handleMouseDown={handleKaraokeMouseDown}
+              className="relative"
+              style={{ width: isDesktop ? `${panelWidth}px` : 'auto' }}
+            >
+              <KaraokeRightPanel
+                versions={versions}
+                currentAudioIndex={currentAudioIndex}
+                currentTime={currentTime}
+                isPlaying={isPlaying}
+                albumCovers={albumCovers}
+                isGeneratingCovers={isGeneratingCovers}
+                audioRefs={audioRefs}
+                onPlayPause={handleAudioPlay}
+                onAudioPause={handleAudioPause}
+                panelHeight={isDesktop ? chatHeight : undefined}
+                onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
+                onSeek={handleSeek}
+              />
+            </ResizableContainer>
           </div>
 
           {/* Far-right Track List: spans both rows, bleeds to the right, sticky inner */}
@@ -1185,13 +1142,7 @@ async function startGeneration() {
           </div>
 
           {/* Row 2 - Right: Template */}
-          <div 
-            className="order-7 md:col-span-8 lg:col-span-1 xl:col-span-1 bg-[#151515] rounded-2xl flex items-center justify-center"
-            style={{ 
-              height: `calc(100vh - ${karaokeHeight}px - 200px)`,
-              minHeight: '200px'
-            }}
-          >
+          <div className="order-7 md:col-span-8 lg:col-span-1 xl:col-span-1 bg-[#151515] rounded-2xl flex items-center justify-center h-full">
             <span className="text-text-secondary">TEMPLATE</span>
           </div>
         </div>
