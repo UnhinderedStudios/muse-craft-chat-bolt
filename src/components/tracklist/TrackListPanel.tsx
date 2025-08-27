@@ -11,6 +11,7 @@ type Props = {
   onPlayPause: (index: number) => void;
   onSeek: (t: number) => void;
   setCurrentIndex: (index: number) => void;
+  onTimeUpdate: (audio: HTMLAudioElement) => void;
 };
 
 export default function TrackListPanel({
@@ -21,6 +22,7 @@ export default function TrackListPanel({
   onPlayPause,
   onSeek,
   setCurrentIndex,
+  onTimeUpdate,
 }: Props) {
   return (
     <div className="h-full lg:sticky lg:top-6 bg-[#151515] rounded-2xl p-6 flex flex-col">
@@ -110,11 +112,7 @@ export default function TrackListPanel({
                 crossOrigin="anonymous"
                 ref={(el) => { if (el) audioRefs.current[i] = el; }}
                 onTimeUpdate={(e) => {
-                  const audio = e.currentTarget;
-                  const activeIndex = audioRefs.current.findIndex(ref => ref === audio);
-                  if (activeIndex === currentIndex) {
-                    // This will be handled by the parent's time update logic
-                  }
+                  onTimeUpdate(e.currentTarget);
                 }}
               />
             </div>

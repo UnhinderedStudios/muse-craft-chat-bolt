@@ -435,6 +435,22 @@ const Index = () => {
   const playPrev = () => tracks.length && handleAudioPlay(Math.max(0, currentTrackIndex - 1));
   const playNext = () => tracks.length && handleAudioPlay(Math.min(tracks.length - 1, currentTrackIndex + 1));
 
+  // Update track cover URLs when album covers are generated
+  useEffect(() => {
+    if (albumCovers && tracks.length > 0) {
+      setTracks(prev => prev.map((track, index) => {
+        // Only update if the track doesn't already have a cover URL
+        if (!track.coverUrl) {
+          return {
+            ...track,
+            coverUrl: index % 2 === 1 ? albumCovers.cover2 : albumCovers.cover1
+          };
+        }
+        return track;
+      }));
+    }
+  }, [albumCovers, tracks.length]);
+
   const handleFileUpload = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -881,9 +897,9 @@ async function startGeneration() {
             return [...fresh, ...prev]; // newest first
           });
           
-          // CRITICAL: Reset audio state when new songs are loaded
-          setCurrentTime(0);
+          // Set active track to first of new batch
           setCurrentTrackIndex(0);
+          setCurrentTime(0);
           setIsPlaying(false);
           
           // Reset all audio elements to start position
@@ -1116,6 +1132,7 @@ async function startGeneration() {
                   setCurrentTime(0);
                 }
               }}
+              onTimeUpdate={handleTimeUpdate}
             />
           </div>
 
