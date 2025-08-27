@@ -55,13 +55,22 @@ export default function TrackListPanel({
                     className="mt-1 h-1.5 bg-white/10 rounded cursor-pointer"
                     onClick={(e) => {
                       e.stopPropagation();
+                      
+                      // First, switch to this track if it's not already active
+                      if (i !== currentIndex) {
+                        setCurrentIndex(i);
+                      }
+                      
+                      // Start playing this track
+                      onPlayPause(i);
+                      
+                      // Then seek to the clicked position
                       const audio = audioRefs.current[i];
                       if (!audio || !audio.duration) return;
                       const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
                       const pct = (e.clientX - rect.left) / rect.width;
                       const seek = pct * audio.duration;
                       onSeek(seek);
-                      audio.currentTime = seek;
                     }}
                   >
                     <div
