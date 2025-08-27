@@ -128,6 +128,8 @@ const Index = () => {
   const [styleTags, setStyleTags] = useState<string[]>([]);
   const [chatHeight, setChatHeight] = useState(500);
   const [isResizing, setIsResizing] = useState(false);
+  const [karaokeHeight, setKaraokeHeight] = useState(500);
+  const [isKaraokeResizing, setIsKaraokeResizing] = useState(false);
   
   // Ref for chat input to maintain focus
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
@@ -230,6 +232,30 @@ const Index = () => {
     
     const handleMouseUp = () => {
       setIsResizing(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  // Handle karaoke resize functionality
+  const handleKaraokeMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsKaraokeResizing(true);
+    
+    const startY = e.clientY;
+    const startHeight = karaokeHeight;
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaY = e.clientY - startY;
+      const newHeight = Math.max(300, Math.min(800, startHeight + deltaY)); // Min 300px, Max 800px
+      setKaraokeHeight(newHeight);
+    };
+    
+    const handleMouseUp = () => {
+      setIsKaraokeResizing(false);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
@@ -1075,7 +1101,9 @@ async function startGeneration() {
               audioRefs={audioRefs}
               onPlayPause={handleAudioPlay}
               onAudioPause={handleAudioPause}
-              panelHeight={isDesktop ? chatHeight : undefined}
+              karaokeHeight={karaokeHeight}
+              isKaraokeResizing={isKaraokeResizing}
+              handleKaraokeMouseDown={handleKaraokeMouseDown}
               onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
               onSeek={handleSeek}
             />
