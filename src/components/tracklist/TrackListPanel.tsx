@@ -120,12 +120,12 @@ export default function TrackListPanel({
                   </button>
                 </div>
               ) : (
-                /* Active track with new design */
-                <div className="bg-[#1e1e1e]">
-                  {/* Main control row */}
-                  <div className="flex items-center">
-                    {/* Edge-to-edge album art */}
-                    <div className="shrink-0 w-16 h-16 bg-black/30 overflow-hidden relative group">
+                /* Active track with new design - rounded container with padding */
+                <div className="bg-[#1e1e1e] rounded-xl p-4">
+                  {/* Top row: Album art with title/artist and control icons */}
+                  <div className="flex items-start gap-4">
+                    {/* Album art - edge aligned within padded container */}
+                    <div className="shrink-0 w-16 h-16 bg-black/30 overflow-hidden rounded-lg relative group">
                       {t.coverUrl ? (
                         <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
                       ) : (
@@ -143,25 +143,14 @@ export default function TrackListPanel({
                       </div>
                     </div>
 
-                    {/* Play button */}
-                    <button
-                      className="ml-4 w-8 h-8 flex items-center justify-center text-white hover:text-white/80 transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onPlayPause(i);
-                      }}
-                    >
-                      {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                    </button>
-
-                    {/* Title and artist */}
-                    <div className="flex-1 ml-4 min-w-0">
+                    {/* Title and artist - positioned above play button area */}
+                    <div className="flex-1 min-w-0">
                       <div className="text-sm text-white font-medium truncate">{t.title || "Song Title"}</div>
                       <div className="text-xs text-white/60 truncate">No Artist</div>
                     </div>
 
-                    {/* 4 control icons */}
-                    <div className="flex items-center gap-3 mr-4">
+                    {/* 4 control icons - top right */}
+                    <div className="flex items-center gap-3">
                       <button className="w-4 h-4 text-white/60 hover:text-white transition-colors">
                         <Heart className="w-4 h-4" />
                       </button>
@@ -177,36 +166,50 @@ export default function TrackListPanel({
                     </div>
                   </div>
 
-                  {/* Full-width progress bar */}
-                  <div 
-                    className="mt-3 h-1.5 bg-white/10 cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      
-                      const audio = audioRefs.current[i];
-                      if (!audio || !audio.duration) return;
-                      const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-                      const pct = (e.clientX - rect.left) / rect.width;
-                      const seek = pct * audio.duration;
-                      
-                      onSeek(seek);
-                    }}
-                  >
-                     <div
-                       className="h-full bg-white/70"
-                       style={{
-                         width: (() => {
-                           const a = audioRefs.current[i];
-                           if (!a || !a.duration) return "0%";
-                           const time = audioCurrentTimes[i] || 0;
-                           return `${(time / a.duration) * 100}%`;
-                         })(),
-                       }}
-                     />
+                  {/* Play button and progress bar row */}
+                  <div className="flex items-center gap-4 mt-3 ml-20">
+                    {/* Play button - aligned with progress bar */}
+                    <button
+                      className="w-8 h-8 flex items-center justify-center text-white hover:text-white/80 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onPlayPause(i);
+                      }}
+                    >
+                      {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                    </button>
+
+                    {/* Progress bar */}
+                    <div 
+                      className="flex-1 h-1.5 bg-white/10 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        
+                        const audio = audioRefs.current[i];
+                        if (!audio || !audio.duration) return;
+                        const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                        const pct = (e.clientX - rect.left) / rect.width;
+                        const seek = pct * audio.duration;
+                        
+                        onSeek(seek);
+                      }}
+                    >
+                       <div
+                         className="h-full bg-white/70"
+                         style={{
+                           width: (() => {
+                             const a = audioRefs.current[i];
+                             if (!a || !a.duration) return "0%";
+                             const time = audioCurrentTimes[i] || 0;
+                             return `${(time / a.duration) * 100}%`;
+                           })(),
+                         }}
+                       />
+                    </div>
                   </div>
 
-                  {/* Edge-to-edge parameters */}
-                  <div className="mt-3">
+                  {/* Parameters - edge to edge within container */}
+                  <div className="mt-4 -mx-4 px-4">
                     <div className="grid grid-cols-3 gap-2">
                       {(t.params?.length ? t.params : ["Text","Text","Text","Text","Text","Text"]).slice(0,6).map((p, idx) => (
                         <div key={idx} className="px-3 py-1.5 rounded-full bg-white/25 text-[12px] text-black font-semibold text-center truncate">
