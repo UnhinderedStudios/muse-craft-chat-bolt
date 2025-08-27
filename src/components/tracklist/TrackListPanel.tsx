@@ -143,12 +143,14 @@ export default function TrackListPanel({
                  ref={(el) => { if (el) audioRefs.current[i] = el; }}
                  onTimeUpdate={(e) => {
                    const audio = e.currentTarget;
-                   // Update our state with current time for this track
-                   setAudioCurrentTimes(prev => {
-                     const newTimes = [...prev];
-                     newTimes[i] = audio.currentTime;
-                     return newTimes;
-                   });
+                   // Only update progress for the currently active track
+                   if (i === currentIndex) {
+                     setAudioCurrentTimes(prev => {
+                       const newTimes = [...prev];
+                       newTimes[i] = audio.currentTime;
+                       return newTimes;
+                     });
+                   }
                    // Call the original onTimeUpdate
                    onTimeUpdate(audio);
                  }}
