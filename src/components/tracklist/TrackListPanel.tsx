@@ -208,13 +208,15 @@ export default function TrackListPanel({
                     </div>
 
                     {/* Parameters below */}
-                    <div className="mt-3">
-                      <div className="grid grid-cols-3 gap-2">
-                        {(t.params?.length ? t.params : ["Text","Text","Text","Text","Text","Text"]).slice(0,6).map((p, idx) => (
-                          <div key={idx} className="px-3 py-1.5 rounded-full bg-white/25 text-[12px] text-black font-semibold text-center truncate">
-                            {p || "Text"}
-                          </div>
-                        ))}
+                    <div className="mt-3 pl-3 pb-2">
+                      <div className="max-h-[120px] overflow-y-auto lyrics-scrollbar">
+                        <div className="flex flex-wrap gap-1.5">
+                          {(t.params?.length ? t.params : ["Text","Text","Text","Text","Text","Text"]).map((p, idx) => (
+                            <div key={idx} className="px-3 py-1.5 rounded-full bg-white/25 text-[12px] text-black font-semibold text-center truncate">
+                              {p || "Text"}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
