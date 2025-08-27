@@ -84,6 +84,8 @@ export default function TrackListPanel({
                       className="h-full bg-white/70 rounded"
                       style={{
                         width: (() => {
+                          // Include forceUpdate to ensure React recalculates this when tracks switch
+                          const _ = forceUpdate;
                           const a = audioRefs.current[i];
                           if (!a || !a.duration) return "0%";
                           const time = a.currentTime || 0;
