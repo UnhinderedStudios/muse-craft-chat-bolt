@@ -142,15 +142,15 @@ export default function TrackListPanel({
                   </div>
 
                   {/* Content area next to album art */}
-                  <div className="flex-1 ml-3 h-16 flex flex-col justify-between">
+                  <div className="flex-1 ml-3 flex flex-col justify-start">
                     {/* Title above controls */}
-                    <div>
+                    <div className="mb-2">
                       <div className="text-sm text-white font-medium truncate">{t.title || "Song Title"}</div>
                       <div className="text-xs text-white/60 truncate">No Artist</div>
                     </div>
 
                     {/* Controls line: Play button + Progress bar + 4 icons */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 mb-3">
                       {/* Play button */}
                       <button
                         className="w-6 h-6 flex items-center justify-center text-white hover:text-white/80 transition-colors"
