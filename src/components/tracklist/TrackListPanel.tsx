@@ -74,14 +74,14 @@ export default function TrackListPanel({
                   )}
                   {active && (
                     <div 
-                      className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
+                      className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer rounded-md"
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedTrackForRegen(t);
                         setShowQuickAlbumGenerator(true);
                       }}
                     >
-                      <RotateCw className="w-4 h-4 text-white hover:animate-spin transition-transform duration-300" />
+                      <RotateCw className="w-4 h-4 text-white group-hover:animate-[spin_0.3s_ease-in-out] transition-transform" />
                     </div>
                   )}
                 </div>
@@ -187,7 +187,7 @@ export default function TrackListPanel({
 
       {/* Quick Album Cover Generator Overlay */}
       <Dialog open={showQuickAlbumGenerator} onOpenChange={setShowQuickAlbumGenerator}>
-        <DialogContent className="max-w-none w-full h-full bg-black/70 backdrop-blur border-0 p-0 flex flex-col">
+        <DialogContent className="max-w-none w-full h-full bg-black/50 backdrop-blur border-0 p-0 flex flex-col">
           <div className="relative w-full h-full flex flex-col">
             {/* Custom X button */}
             <button
