@@ -121,9 +121,9 @@ export default function TrackListPanel({
                 </div>
               ) : (
                 /* Active track - album art hugs left edge */
-                <div className="bg-[#1e1e1e] rounded-xl py-4 flex">
-                  {/* Album art - flush with container left edge, inherits left corners */}
-                  <div className="shrink-0 w-16 h-16 bg-black/30 overflow-hidden rounded-l-xl relative group">
+                <div className="bg-[#1e1e1e] rounded-xl flex">
+                  {/* Album art - flush with container left edge, only top-left corner rounded */}
+                  <div className="shrink-0 w-16 h-16 bg-black/30 overflow-hidden rounded-tl-xl relative group">
                     {t.coverUrl ? (
                       <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
                     ) : (
@@ -142,7 +142,7 @@ export default function TrackListPanel({
                   </div>
 
                   {/* Content area next to album art */}
-                  <div className="flex-1 ml-4 flex flex-col">
+                  <div className="flex-1 ml-4 py-4 flex flex-col">
                     {/* Title above controls */}
                     <div className="mb-2">
                       <div className="text-sm text-white font-medium truncate">{t.title || "Song Title"}</div>
