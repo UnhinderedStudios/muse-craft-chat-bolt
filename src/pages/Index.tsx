@@ -117,6 +117,7 @@ function sanitizeStyleSafe(input?: string): string | undefined {
 const Index = () => {
   const DOCK_H = 80; // px — reduced height to make container more compact
   const isDesktop = useMediaQuery("(min-width: 1024px)");
+  const isMobile = useMediaQuery("(max-width: 767px)");
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "assistant", content: "Hey! I can help write and generate a song. What vibe are you going for?" },
   ]);
@@ -1185,7 +1186,12 @@ async function startGeneration() {
           </div>
 
           {/* Row 2 - Right: Template */}
-          <div className="order-7 md:col-span-8 lg:col-span-1 xl:col-span-1 bg-[#151515] rounded-2xl flex items-center justify-center h-full">
+          <div 
+            className="order-7 md:col-span-8 lg:col-span-1 xl:col-span-1 bg-[#151515] rounded-2xl flex items-center justify-center" 
+            style={{ 
+              height: isMobile ? '100%' : `${Math.max(200, (window.innerHeight - 200 - karaokeHeight - 40))}px` 
+            }}
+          >
             <span className="text-text-secondary">TEMPLATE</span>
           </div>
         </div>
