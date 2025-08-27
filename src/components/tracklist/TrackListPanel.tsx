@@ -56,20 +56,20 @@ export default function TrackListPanel({
                     onClick={(e) => {
                       e.stopPropagation();
                       
-                      // First, switch to this track if it's not already active
-                      if (i !== currentIndex) {
-                        setCurrentIndex(i);
-                      }
-                      
-                      // Start playing this track
-                      onPlayPause(i);
-                      
-                      // Then seek to the clicked position
+                      // Calculate seek position first
                       const audio = audioRefs.current[i];
                       if (!audio || !audio.duration) return;
                       const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
                       const pct = (e.clientX - rect.left) / rect.width;
                       const seek = pct * audio.duration;
+                      
+                      if (i !== currentIndex) {
+                        // Different track: switch to it and start playing
+                        setCurrentIndex(i);
+                        onPlayPause(i);
+                      }
+                      
+                      // Always seek to the clicked position
                       onSeek(seek);
                     }}
                   >
