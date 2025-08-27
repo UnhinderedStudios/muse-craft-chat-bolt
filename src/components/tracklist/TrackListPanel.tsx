@@ -74,7 +74,7 @@ export default function TrackListPanel({
                   )}
                   {active && (
                     <div 
-                      className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer rounded-md"
+                      className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedTrackForRegen(t);
