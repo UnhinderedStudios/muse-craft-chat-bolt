@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Play, Pause } from "lucide-react";
+import { Play, Pause, RotateCw, X } from "lucide-react";
 import { TrackItem } from "@/types";
 import { CyberButton } from "@/components/cyber/CyberButton";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 type Props = {
   tracks: TrackItem[];
@@ -25,6 +26,8 @@ export default function TrackListPanel({
   onTimeUpdate,
 }: Props) {
   const [audioCurrentTimes, setAudioCurrentTimes] = useState<number[]>([]);
+  const [showQuickAlbumGenerator, setShowQuickAlbumGenerator] = useState(false);
+  const [selectedTrackForRegen, setSelectedTrackForRegen] = useState<TrackItem | null>(null);
 
   // Initialize audio times array when tracks change
   useEffect(() => {
@@ -63,11 +66,23 @@ export default function TrackListPanel({
             >
               {/* Row: cover + title + mini controls */}
               <div className="flex items-center gap-3">
-                <div className={`shrink-0 ${active ? "w-12 h-12" : "w-10 h-10"} rounded-md bg-black/30 overflow-hidden`}>
+                <div className={`shrink-0 ${active ? "w-12 h-12" : "w-10 h-10"} rounded-md bg-black/30 overflow-hidden ${active ? "relative group" : ""}`}>
                   {t.coverUrl ? (
                     <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20" />
+                  )}
+                  {active && (
+                    <div 
+                      className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedTrackForRegen(t);
+                        setShowQuickAlbumGenerator(true);
+                      }}
+                    >
+                      <RotateCw className="w-4 h-4 text-white hover:animate-spin transition-transform duration-300" />
+                    </div>
                   )}
                 </div>
 
@@ -169,6 +184,37 @@ export default function TrackListPanel({
           </div>
         )}
       </div>
+
+      {/* Quick Album Cover Generator Overlay */}
+      <Dialog open={showQuickAlbumGenerator} onOpenChange={setShowQuickAlbumGenerator}>
+        <DialogContent className="max-w-none w-full h-full bg-black/70 backdrop-blur border-0 p-0 flex flex-col">
+          <div className="relative w-full h-full flex flex-col">
+            {/* Custom X button */}
+            <button
+              className="absolute top-6 right-6 z-10 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+              onClick={() => setShowQuickAlbumGenerator(false)}
+            >
+              <X className="w-6 h-6" />
+            </button>
+            
+            {/* Title */}
+            <div className="flex-shrink-0 pt-12 pb-8 text-center">
+              <h2 className="text-2xl font-semibold text-white">Quick Album Cover Generator</h2>
+              {selectedTrackForRegen && (
+                <p className="text-white/60 mt-2">Regenerating cover for "{selectedTrackForRegen.title}"</p>
+              )}
+            </div>
+            
+            {/* Content area for future implementation */}
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-white/40 text-center">
+                <div className="text-lg mb-2">Album cover generation coming soon...</div>
+                <div className="text-sm">This feature will allow you to regenerate album covers</div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
