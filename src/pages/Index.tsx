@@ -160,7 +160,29 @@ const Index = () => {
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentAudioIndex, setCurrentAudioIndex] = useState<number>(0);
-  const [tracks, setTracks] = useState<TrackItem[]>([]);
+  // Placeholder tracks for design development - remove when ready for production
+  const [tracks, setTracks] = useState<TrackItem[]>([
+    {
+      id: "placeholder-track-1",
+      url: "",
+      title: "Neon Dreams",
+      coverUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300",
+      createdAt: Date.now() - 3600000, // 1 hour ago
+      params: ["synthpop", "uplifting", "120 BPM", "English", "female vocals", "bright synths"],
+      words: [],
+      hasTimestamps: false
+    },
+    {
+      id: "placeholder-track-2",
+      url: "",
+      title: "Coffee Shop Moments", 
+      coverUrl: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=300",
+      createdAt: Date.now() - 7200000, // 2 hours ago
+      params: ["indie folk", "mellow", "95 BPM", "English", "male vocals", "acoustic guitar"],
+      words: [],
+      hasTimestamps: false
+    }
+  ]);
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
   const [showFullscreenKaraoke, setShowFullscreenKaraoke] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<number>(0);
