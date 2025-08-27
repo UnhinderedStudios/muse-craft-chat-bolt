@@ -24,11 +24,25 @@ export default function TrackListPanel({
   setCurrentIndex,
   onTimeUpdate,
 }: Props) {
-  const [forceUpdate, setForceUpdate] = useState(0);
+  const [audioCurrentTimes, setAudioCurrentTimes] = useState<number[]>([]);
 
-  // Force visual update when currentIndex changes to refresh all progress bars
+  // Initialize audio times array when tracks change
   useEffect(() => {
-    setForceUpdate(prev => prev + 1);
+    setAudioCurrentTimes(new Array(tracks.length).fill(0));
+  }, [tracks.length]);
+
+  // Reset previous track's time when currentIndex changes
+  useEffect(() => {
+    setAudioCurrentTimes(prev => {
+      const newTimes = [...prev];
+      // Reset all other tracks to 0 except current
+      for (let i = 0; i < newTimes.length; i++) {
+        if (i !== currentIndex) {
+          newTimes[i] = 0;
+        }
+      }
+      return newTimes;
+    });
   }, [currentIndex]);
 
   return (
@@ -80,19 +94,17 @@ export default function TrackListPanel({
                       onSeek(seek);
                     }}
                   >
-                    <div
-                      className="h-full bg-white/70 rounded"
-                      style={{
-                        width: (() => {
-                          // Include forceUpdate to ensure React recalculates this when tracks switch
-                          const _ = forceUpdate;
-                          const a = audioRefs.current[i];
-                          if (!a || !a.duration) return "0%";
-                          const time = a.currentTime || 0;
-                          return `${(time / a.duration) * 100}%`;
-                        })(),
-                      }}
-                    />
+                     <div
+                       className="h-full bg-white/70 rounded"
+                       style={{
+                         width: (() => {
+                           const a = audioRefs.current[i];
+                           if (!a || !a.duration) return "0%";
+                           const time = audioCurrentTimes[i] || 0;
+                           return `${(time / a.duration) * 100}%`;
+                         })(),
+                       }}
+                     />
                   </div>
                 </div>
 
@@ -123,16 +135,24 @@ export default function TrackListPanel({
               )}
 
               {/* Hidden audio element per track */}
-              <audio
-                src={t.url}
-                preload="auto"
-                className="hidden"
-                crossOrigin="anonymous"
-                ref={(el) => { if (el) audioRefs.current[i] = el; }}
-                onTimeUpdate={(e) => {
-                  onTimeUpdate(e.currentTarget);
-                }}
-              />
+               <audio
+                 src={t.url}
+                 preload="auto"
+                 className="hidden"
+                 crossOrigin="anonymous"
+                 ref={(el) => { if (el) audioRefs.current[i] = el; }}
+                 onTimeUpdate={(e) => {
+                   const audio = e.currentTarget;
+                   // Update our state with current time for this track
+                   setAudioCurrentTimes(prev => {
+                     const newTimes = [...prev];
+                     newTimes[i] = audio.currentTime;
+                     return newTimes;
+                   });
+                   // Call the original onTimeUpdate
+                   onTimeUpdate(audio);
+                 }}
+               />
             </div>
           );
         })}
