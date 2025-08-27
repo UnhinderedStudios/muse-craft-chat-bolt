@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Play, Pause } from "lucide-react";
 import { TrackItem } from "@/types";
 import { CyberButton } from "@/components/cyber/CyberButton";
@@ -24,6 +24,13 @@ export default function TrackListPanel({
   setCurrentIndex,
   onTimeUpdate,
 }: Props) {
+  const [forceUpdate, setForceUpdate] = useState(0);
+
+  // Force visual update when currentIndex changes to refresh all progress bars
+  useEffect(() => {
+    setForceUpdate(prev => prev + 1);
+  }, [currentIndex]);
+
   return (
     <div className="h-full lg:sticky lg:top-6 bg-[#151515] rounded-2xl p-6 flex flex-col">
       <h3 className="text-white font-semibold mb-4">Track List</h3>
