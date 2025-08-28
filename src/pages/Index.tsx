@@ -26,7 +26,6 @@ import { KaraokeRightPanel } from "@/components/karaoke/KaraokeRightPanel";
 import { ResizableContainer } from "@/components/layout/ResizableContainer";
 import { TagInput } from "@/components/song/TagInput";
 import PlayerDock from "@/components/audio/PlayerDock";
-import TrackListPanel from "@/components/tracklist/TrackListPanel";
 
 // Hooks
 import { useChat } from "@/hooks/use-chat";
@@ -35,7 +34,7 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { useSongGeneration } from "@/hooks/use-song-generation";
 
 // Types
-import { type TimestampedWord, type ChatMessage, type TrackItem } from "@/types";
+import { type TimestampedWord, type ChatMessage } from "@/types";
 
 import { parseSongRequest, convertToSongDetails } from "@/lib/parseSongRequest";
 
@@ -160,8 +159,6 @@ const Index = () => {
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentAudioIndex, setCurrentAudioIndex] = useState<number>(0);
-  const [tracks, setTracks] = useState<TrackItem[]>([]);
-  const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
   const [showFullscreenKaraoke, setShowFullscreenKaraoke] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<number>(0);
   const [lastProgressUpdate, setLastProgressUpdate] = useState<number>(Date.now());
@@ -188,33 +185,34 @@ const Index = () => {
   // Global spacebar controls for play/pause
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-        // Check if spacebar was pressed
-        if (e.code === 'Space' || e.key === ' ') {
-          // Don't interfere if user is typing in an input field
-          const activeElement = document.activeElement;
-          if (activeElement instanceof HTMLInputElement || 
-              activeElement instanceof HTMLTextAreaElement || 
-              activeElement?.hasAttribute('contenteditable')) {
-            return;
-          }
-          
-          // Prevent default behavior (page scrolling)
-          e.preventDefault();
-          
-          // Toggle play/pause for current track
-          if (tracks.length > 0) {
-            if (isPlaying) {
-              handleAudioPause();
-            } else {
-              handleAudioPlay(currentTrackIndex);
-            }
+      // Check if spacebar was pressed
+      if (e.code === 'Space' || e.key === ' ') {
+        // Don't interfere if user is typing in an input field
+        const activeElement = document.activeElement;
+        if (activeElement instanceof HTMLInputElement || 
+            activeElement instanceof HTMLTextAreaElement || 
+            activeElement?.hasAttribute('contenteditable')) {
+          return;
+        }
+        
+        // Prevent default behavior (page scrolling)
+        e.preventDefault();
+        
+        // Toggle play/pause for current audio
+        const currentAudio = audioRefs.current[currentAudioIndex];
+        if (currentAudio) {
+          if (isPlaying) {
+            handleAudioPause();
+          } else {
+            handleAudioPlay(currentAudioIndex);
           }
         }
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isPlaying, currentTrackIndex, tracks.length]);
+  }, [isPlaying, currentAudioIndex]);
 
   // Handle chat resize functionality
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -317,8 +315,7 @@ const Index = () => {
   const canGenerate = useMemo(() => !!details.lyrics, [details]);
 
   function handleAudioPlay(index: number) {
-    if (!tracks.length) return;
-    console.log(`[AudioPlay] Attempting to play track ${index}, current index: ${currentTrackIndex}, isPlaying: ${isPlaying}`);
+    console.log(`[AudioPlay] Attempting to play audio ${index}, current index: ${currentAudioIndex}, isPlaying: ${isPlaying}`);
     
     // Prevent multiple rapid calls
     if (busy) {
@@ -326,14 +323,14 @@ const Index = () => {
       return;
     }
     
-    // If same track is already playing, just toggle pause/play
-    if (currentTrackIndex === index && isPlaying) {
-      console.log(`[AudioPlay] Track ${index} is already playing, pausing`);
+    // If same audio is already playing, just toggle pause/play
+    if (currentAudioIndex === index && isPlaying) {
+      console.log(`[AudioPlay] Audio ${index} is already playing, pausing`);
       handleAudioPause();
       return;
     }
 
-    const isSwitchingTracks = currentTrackIndex !== index;
+    const isSwitchingTracks = currentAudioIndex !== index;
 
     // STEP 1: Immediately pause ALL audio elements
     console.log(`[AudioPlay] Stopping all audio and switching to ${index}, isSwitchingTracks: ${isSwitchingTracks}`);
@@ -345,7 +342,7 @@ const Index = () => {
             console.log(`[AudioPlay] Paused audio ${i}`);
           }
           // Only reset time when switching tracks, not when resuming the same track
-          if (isSwitchingTracks && i !== index) {
+          if (isSwitchingTracks) {
             audio.currentTime = 0;
           }
         } catch (e) {
@@ -360,7 +357,7 @@ const Index = () => {
     if (isSwitchingTracks) {
       setCurrentTime(0);
     }
-    setCurrentTrackIndex(index);
+    setCurrentAudioIndex(index);
     
     // STEP 3: Small delay to ensure state has updated before playing new audio
     setTimeout(() => {
@@ -371,23 +368,23 @@ const Index = () => {
           if (isSwitchingTracks || audioElement.ended) {
             audioElement.currentTime = 0;
           }
-          console.log(`[AudioPlay] Starting playback for track ${index}`);
+          console.log(`[AudioPlay] Starting playback for audio ${index}`);
           // Start playing the new audio
           const playPromise = audioElement.play();
           if (playPromise) {
             playPromise.then(() => {
-              console.log(`[AudioPlay] Successfully started track ${index}`);
+              console.log(`[AudioPlay] Successfully started audio ${index}`);
               setIsPlaying(true);
             }).catch(error => {
               // Only log non-AbortError errors
               if (error.name !== 'AbortError') {
-                console.error(`[AudioPlay] Error playing track ${index}:`, error);
+                console.error(`[AudioPlay] Error playing audio ${index}:`, error);
               }
               setIsPlaying(false);
             });
           }
         } catch (error) {
-          console.error(`[AudioPlay] Sync error playing track ${index}:`, error);
+          console.error(`[AudioPlay] Sync error playing audio ${index}:`, error);
           setIsPlaying(false);
         }
       } else {
@@ -399,7 +396,7 @@ const Index = () => {
 
   const handleAudioPause = () => {
     // Actually pause the current audio
-    const audioElement = audioRefs.current[currentTrackIndex];
+    const audioElement = audioRefs.current[currentAudioIndex];
     if (audioElement && !audioElement.paused) {
       try {
         audioElement.pause();
@@ -411,17 +408,17 @@ const Index = () => {
   };
 
   const handleTimeUpdate = (audio: HTMLAudioElement) => {
-    // Only update time for the currently active track
+    // Only update time for the currently active audio
     const activeIndex = audioRefs.current.findIndex(ref => ref === audio);
-    if (activeIndex === currentTrackIndex) {
+    if (activeIndex === currentAudioIndex) {
       const newTime = audio.currentTime;
       setCurrentTime(newTime);
-      console.log('[Audio Debug] Time update:', newTime.toFixed(2), 'for track', activeIndex);
+      console.log('[Audio Debug] Time update:', newTime.toFixed(2), 'for audio', activeIndex);
     }
   };
 
   const handleSeek = (time: number) => {
-    const audioElement = audioRefs.current[currentTrackIndex];
+    const audioElement = audioRefs.current[currentAudioIndex];
     if (audioElement) {
       try {
         audioElement.currentTime = time;
@@ -431,25 +428,6 @@ const Index = () => {
       }
     }
   };
-
-  const playPrev = () => tracks.length && handleAudioPlay(Math.max(0, currentTrackIndex - 1));
-  const playNext = () => tracks.length && handleAudioPlay(Math.min(tracks.length - 1, currentTrackIndex + 1));
-
-  // Update track cover URLs when album covers are generated
-  useEffect(() => {
-    if (albumCovers && tracks.length > 0) {
-      setTracks(prev => prev.map((track, index) => {
-        // Only update if the track doesn't already have a cover URL
-        if (!track.coverUrl) {
-          return {
-            ...track,
-            coverUrl: index % 2 === 1 ? albumCovers.cover2 : albumCovers.cover1
-          };
-        }
-        return track;
-      }));
-    }
-  }, [albumCovers, tracks.length]);
 
   const handleFileUpload = () => {
     const input = document.createElement('input');
@@ -493,8 +471,18 @@ const Index = () => {
   };
 
   // Helper functions for global player
-  const playCurrent = () => handleAudioPlay(currentTrackIndex);
-  const togglePlayPause = () => (isPlaying ? handleAudioPause() : handleAudioPlay(currentTrackIndex));
+  const playCurrent = () => handleAudioPlay(currentAudioIndex);
+  const togglePlayPause = () => (isPlaying ? handleAudioPause() : handleAudioPlay(currentAudioIndex));
+  const playPrev = () => {
+    if (!audioUrls?.length) return;
+    const idx = Math.max(0, currentAudioIndex - 1);
+    handleAudioPlay(idx);
+  };
+  const playNext = () => {
+    if (!audioUrls?.length) return;
+    const idx = Math.min(audioUrls.length - 1, currentAudioIndex + 1);
+    handleAudioPlay(idx);
+  };
 
   async function onSend() {
     const content = input.trim();
@@ -879,27 +867,9 @@ async function startGeneration() {
           console.log("[Generation] Final versions with timestamps:", updatedVersions);
           setVersions(updatedVersions);
           
-          // Add tracks to the track list (newest first)
-          const batchCreatedAt = Date.now();
-          setTracks(prev => {
-            const existing = new Set(prev.map(t => t.id));
-            const fresh = updatedVersions.map((v, i) => ({
-              id: v.audioId || `${jobId}-${i}`,
-              url: v.url,
-              title: details.title || "Song Title",
-              coverUrl: albumCovers ? (i === 1 ? albumCovers.cover2 : albumCovers.cover1) : undefined,
-              createdAt: batchCreatedAt,
-              params: styleTags,
-              words: v.words,
-              hasTimestamps: v.hasTimestamps,
-            })).filter(t => !existing.has(t.id));
-            
-            return [...fresh, ...prev]; // newest first
-          });
-          
-          // Set active track to first of new batch
-          setCurrentTrackIndex(0);
+          // CRITICAL: Reset audio state when new songs are loaded
           setCurrentTime(0);
+          setCurrentAudioIndex(0);
           setIsPlaying(false);
           
           // Reset all audio elements to start position
@@ -1113,27 +1083,10 @@ async function startGeneration() {
 
           {/* Far-right Track List: spans both rows, bleeds to the right, sticky inner */}
           <div className="order-4 lg:order-3 md:col-span-8 lg:col-span-1 xl:col-span-1 lg:row-span-2 lg:self-stretch">
-            <TrackListPanel
-              tracks={tracks}
-              currentIndex={currentTrackIndex}
-              isPlaying={isPlaying}
-              audioRefs={audioRefs}
-              onPlayPause={(idx) => {
-                if (currentTrackIndex === idx && isPlaying) {
-                  handleAudioPause();
-                } else {
-                  handleAudioPlay(idx);
-                }
-              }}
-              onSeek={handleSeek}
-              setCurrentIndex={(idx) => {
-                if (idx !== currentTrackIndex) {
-                  setCurrentTrackIndex(idx);
-                  setCurrentTime(0);
-                }
-              }}
-              onTimeUpdate={handleTimeUpdate}
-            />
+            <div className="h-full lg:sticky lg:top-6 bg-[#151515] rounded-2xl p-6 flex flex-col items-center justify-center">
+              <h3 className="text-white font-semibold mb-4">Track List</h3>
+              <p className="text-gray-400 text-sm text-center">Full height panel functionality...</p>
+            </div>
           </div>
 
           {/* Row 2 - Left: Sessions 2 */}
@@ -1164,14 +1117,12 @@ async function startGeneration() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-white/80">Song Parameters</label>
                   <div className="bg-[#2d2d2d] rounded-lg p-4 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
-                    <div className="max-h-[260px] overflow-y-auto lyrics-scrollbar">
-                      <TagInput
-                        tags={styleTags}
-                        onChange={handleStyleTagsChange}
-                        placeholder='Add song parameters such as "Pop", "128bpm", "female vocals" and separate them by comma'
-                        className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[120px] resize-none"
-                      />
-                    </div>
+                    <TagInput
+                      tags={styleTags}
+                      onChange={handleStyleTagsChange}
+                      placeholder='Add song parameters such as "Pop", "128bpm", "female vocals" and separate them by comma'
+                      className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[120px] resize-none"
+                    />
                   </div>
                 </div>
               </div>
@@ -1209,6 +1160,189 @@ async function startGeneration() {
           </div>
         </div>
 
+        {/* Output Sections */}
+        {(audioUrls?.length || audioUrl || versions.length > 0) && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+            {/* Audio Output */}
+            <CyberCard className="space-y-3">
+              <h2 className="text-lg font-medium text-text-primary">Output</h2>
+              {audioUrls && audioUrls.length > 0 ? (
+                <div className="space-y-4">
+                  {audioUrls.map((url, idx) => (
+                    <div key={`${url}-${idx}`} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-text-secondary">Version {idx + 1}</p>
+                        <CyberButton
+                          variant="icon"
+                          onClick={() => {
+                            const audio = audioRefs.current[idx];
+                            if (audio) {
+                              if (currentAudioIndex === idx && isPlaying) {
+                                audio.pause();
+                                setIsPlaying(false);
+                              } else {
+                                handleAudioPlay(idx);
+                              }
+                            }
+                          }}
+                          className="w-8 h-8"
+                        >
+                          {currentAudioIndex === idx && isPlaying ? (
+                            <Pause className="w-4 h-4" />
+                          ) : (
+                            <Play className="w-4 h-4" />
+                          )}
+                        </CyberButton>
+                      </div>
+                      
+                      {/* Custom Progress Bar */}
+                      <div className="space-y-2">
+                        <div 
+                          className="h-2 bg-border-main rounded-full cursor-pointer"
+                          onClick={(e) => {
+                            const audio = audioRefs.current[idx];
+                            if (audio && audio.duration) {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              const clickX = e.clientX - rect.left;
+                              const percentage = clickX / rect.width;
+                              const seekTime = percentage * audio.duration;
+                              audio.currentTime = seekTime;
+                              if (idx === currentAudioIndex) {
+                                setCurrentTime(seekTime);
+                              }
+                            }
+                          }}
+                        >
+                          <div 
+                            className="h-full bg-accent rounded-full transition-all duration-300"
+                            style={{ 
+                              width: `${audioRefs.current[idx]?.duration > 0 ? 
+                                ((idx === currentAudioIndex ? currentTime : audioRefs.current[idx]?.currentTime || 0) / audioRefs.current[idx].duration) * 100 : 0}%` 
+                            }}
+                          />
+                        </div>
+                        <div className="flex justify-between text-xs text-text-secondary">
+                          <span>
+                            {idx === currentAudioIndex ? 
+                              `${Math.floor(currentTime / 60)}:${(Math.floor(currentTime % 60)).toString().padStart(2, '0')}` :
+                              `${Math.floor((audioRefs.current[idx]?.currentTime || 0) / 60)}:${(Math.floor((audioRefs.current[idx]?.currentTime || 0) % 60)).toString().padStart(2, '0')}`
+                            }
+                          </span>
+                          <span>{audioRefs.current[idx]?.duration ? `${Math.floor(audioRefs.current[idx].duration / 60)}:${(Math.floor(audioRefs.current[idx].duration % 60)).toString().padStart(2, '0')}` : '0:00'}</span>
+                        </div>
+                      </div>
+                      
+                      <audio
+                        src={url}
+                        className="hidden"
+                        preload="auto"
+                        crossOrigin="anonymous"
+                        onPlay={(e) => {
+                          // Prevent onPlay from triggering handleAudioPlay when user clicks play button
+                          // The button click already handles this
+                          console.log(`[Audio Event] onPlay triggered for audio ${idx}, currentIndex: ${currentAudioIndex}`);
+                        }}
+                        onPause={handleAudioPause}
+                        onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
+                        onEnded={handleAudioPause}
+                        onLoadedMetadata={(e) => {
+                          // Reset audio to beginning when metadata loads
+                          const audio = e.currentTarget;
+                          console.log(`[Audio Metadata] Audio ${idx} loaded, resetting to 0. Duration:`, audio.duration);
+                          audio.currentTime = 0;
+                          // If this is the current audio, update the state
+                          if (idx === currentAudioIndex) {
+                            setCurrentTime(0);
+                          }
+                        }}
+                        ref={(el) => { if (el) audioRefs.current[idx] = el; }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : audioUrl ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-text-secondary">Single Version</p>
+                    <CyberButton
+                      variant="icon"
+                      onClick={() => {
+                        const audio = audioRefs.current[0];
+                        if (audio) {
+                          if (currentAudioIndex === 0 && isPlaying) {
+                            audio.pause();
+                            setIsPlaying(false);
+                          } else {
+                            handleAudioPlay(0);
+                          }
+                        }
+                      }}
+                      className="w-8 h-8"
+                    >
+                      {currentAudioIndex === 0 && isPlaying ? (
+                        <Pause className="w-4 h-4" />
+                      ) : (
+                        <Play className="w-4 h-4" />
+                      )}
+                    </CyberButton>
+                  </div>
+                  
+                  {/* Custom Progress Bar */}
+                  <div className="space-y-2">
+                    <div 
+                      className="h-2 bg-border-main rounded-full cursor-pointer"
+                      onClick={(e) => {
+                        const audio = audioRefs.current[0];
+                        if (audio && audio.duration) {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const clickX = e.clientX - rect.left;
+                          const percentage = clickX / rect.width;
+                          const seekTime = percentage * audio.duration;
+                          audio.currentTime = seekTime;
+                          setCurrentTime(seekTime);
+                        }
+                      }}
+                    >
+                      <div 
+                        className="h-full bg-accent rounded-full transition-all duration-300"
+                        style={{ 
+                          width: `${audioRefs.current[0]?.duration > 0 ? (currentTime / audioRefs.current[0].duration) * 100 : 0}%` 
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs text-text-secondary">
+                      <span>{Math.floor(currentTime / 60)}:{(Math.floor(currentTime % 60)).toString().padStart(2, '0')}</span>
+                      <span>{audioRefs.current[0]?.duration ? `${Math.floor(audioRefs.current[0].duration / 60)}:${(Math.floor(audioRefs.current[0].duration % 60)).toString().padStart(2, '0')}` : '0:00'}</span>
+                    </div>
+                  </div>
+                  
+                  <audio
+                    src={audioUrl}
+                    className="hidden"
+                    preload="none"
+                    crossOrigin="anonymous"
+                    onPlay={(e) => {
+                      // Prevent onPlay from triggering handleAudioPlay when user clicks play button
+                      console.log(`[Audio Event] onPlay triggered for single audio, currentIndex: ${currentAudioIndex}`);
+                    }}
+                    onPause={handleAudioPause}
+                    onTimeUpdate={(e) => handleTimeUpdate(e.currentTarget)}
+                    onEnded={handleAudioPause}
+                    onLoadedMetadata={(e) => {
+                      // Reset audio to beginning when metadata loads
+                      const audio = e.currentTarget;
+                      console.log(`[Audio Metadata] Single audio loaded, resetting to 0. Duration:`, audio.duration);
+                      audio.currentTime = 0;
+                      setCurrentTime(0);
+                    }}
+                    ref={(el) => { if (el) audioRefs.current[0] = el; }}
+                  />
+                </div>
+              ) : null}
+            </CyberCard>
+
+          </div>
+        )}
       </main>
 
       {/* Spacer so the fixed PlayerDock never covers content */}
@@ -1222,12 +1356,12 @@ async function startGeneration() {
       />
 
       {/* Full-screen Karaoke Overlay */}
-      {showFullscreenKaraoke && tracks[currentTrackIndex]?.words?.length > 0 && (
+      {showFullscreenKaraoke && versions[currentAudioIndex]?.words?.length > 0 && (
         <FullscreenKaraoke
-          words={tracks[currentTrackIndex].words}
+          words={versions[currentAudioIndex].words}
           currentTime={currentTime}
           isPlaying={isPlaying}
-          albumCoverUrl={tracks[currentTrackIndex]?.coverUrl}
+          albumCoverUrl={albumCovers ? (currentAudioIndex === 1 ? albumCovers.cover2 : albumCovers.cover1) : undefined}
           onClose={() => setShowFullscreenKaraoke(false)}
         />
       )}
@@ -1260,19 +1394,34 @@ async function startGeneration() {
           style={{ paddingBottom: `env(safe-area-inset-bottom, 0px)` }}
         >
           <PlayerDock
-            title={tracks[currentTrackIndex]?.title || "No track yet"}
+            title={
+              details.title ||
+              (audioRefs.current[currentAudioIndex]
+                ? `Version ${currentAudioIndex + 1}`
+                : "No track yet")
+            }
             audioRefs={audioRefs}
-            currentAudioIndex={currentTrackIndex}
+            currentAudioIndex={currentAudioIndex}
             isPlaying={isPlaying}
             currentTime={currentTime}
-            onPrev={playPrev}
-            onNext={playNext}
-            onPlay={() => handleAudioPlay(currentTrackIndex)}
+            onPrev={() => {
+              const len = audioRefs.current.length;
+              if (!len) return;
+              const idx = Math.max(0, currentAudioIndex - 1);
+              handleAudioPlay(idx);
+            }}
+            onNext={() => {
+              const len = audioRefs.current.length;
+              if (!len) return;
+              const idx = Math.min(len - 1, currentAudioIndex + 1);
+              handleAudioPlay(idx);
+            }}
+            onPlay={() => handleAudioPlay(currentAudioIndex)}
             onPause={handleAudioPause}
             onSeek={(t) => handleSeek(t)}
             accent="#f92c8f"
-            disabled={!tracks[currentTrackIndex]}
-            albumCoverUrl={tracks[currentTrackIndex]?.coverUrl}
+            disabled={!audioRefs.current[currentAudioIndex]}
+            albumCoverUrl={albumCovers ? (currentAudioIndex === 1 ? albumCovers.cover2 : albumCovers.cover1) : undefined}
             onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
           />
         </div>
