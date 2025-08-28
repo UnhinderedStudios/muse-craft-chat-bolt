@@ -107,9 +107,9 @@ export default function TrackListPanel({
   }, [currentIndex]);
 
   return (
-    <div className="h-full flex flex-col bg-[#151515] rounded-2xl">
+    <aside className="h-full min-h-0 bg-[#151515] rounded-2xl flex flex-col">
       {/* Search Bar */}
-      <div className="relative px-4 pt-6 mb-4">
+      <div className="relative px-4 pt-6 mb-4 shrink-0">
         <div className="relative">
           <Input
             value={searchQuery}
@@ -135,8 +135,10 @@ export default function TrackListPanel({
         )}
       </div>
 
-      <div className="min-h-0 flex-1 flex flex-col overflow-hidden">
-        <div className="min-h-0 max-h-full overflow-y-auto flex flex-col justify-end gap-3 p-4 lyrics-scrollbar">
+      {/* Scrollable area */}
+      <div className="min-h-0 flex-1 overflow-hidden">
+        <div className="h-full overflow-y-auto lyrics-scrollbar">
+          <div className="min-h-full flex flex-col justify-end gap-3 p-4">
         {filteredTracks.map((t, i) => {
           const active = i === currentIndex;
           return (
@@ -336,21 +338,22 @@ export default function TrackListPanel({
           );
         })}
         
-          {filteredTracks.length === 0 && (
-            <div className="text-center text-white/40 py-8">
-              {isSearchMode ? (
-                <>
-                  <div className="text-sm">No matching tracks found</div>
-                  <div className="text-xs mt-1">Try different keywords</div>
-                </>
-              ) : (
-                <>
-                  <div className="text-sm">No tracks yet</div>
-                  <div className="text-xs mt-1">Generate a song to see it here</div>
-                </>
-              )}
-            </div>
-          )}
+           {filteredTracks.length === 0 && (
+             <div className="text-center text-white/40 py-8">
+               {isSearchMode ? (
+                 <>
+                   <div className="text-sm">No matching tracks found</div>
+                   <div className="text-xs mt-1">Try different keywords</div>
+                 </>
+               ) : (
+                 <>
+                   <div className="text-sm">No tracks yet</div>
+                   <div className="text-xs mt-1">Generate a song to see it here</div>
+                 </>
+               )}
+             </div>
+           )}
+          </div>
         </div>
       </div>
 
@@ -384,6 +387,6 @@ export default function TrackListPanel({
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </aside>
   );
 }
