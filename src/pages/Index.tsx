@@ -976,7 +976,7 @@ async function startGeneration() {
       <CyberHeader />
 
       {/* Three Column Layout - Sessions, Chat + Form, Karaoke + Template */}
-      <main className="w-full px-5 pt-6 pb-0">
+      <main className="w-full px-5 pt-6 pb-0 min-h-0">
         {/* 1 col on mobile, 8 cols on iPad, 12 cols on desktop */}
         <div
           className="
@@ -984,6 +984,10 @@ async function startGeneration() {
             lg:grid-cols-[minmax(0,1.62fr)_minmax(0,6.93fr)_minmax(0,1.98fr)_minmax(0,2.42fr)]
             xl:grid-cols-[minmax(0,1.62fr)_minmax(0,5.94fr)_minmax(0,1.98fr)_minmax(0,2.42fr)]
             gap-5 lg:items-stretch
+            lg:grid-rows-[auto_1fr]
+            lg:max-h-[calc(100vh-var(--dock-h)-var(--page-gap))]
+            lg:min-h-0
+            lg:overflow-hidden
           ">
 
           {/* Row 1 - Left: Sessions */}
