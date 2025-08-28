@@ -107,7 +107,7 @@ export default function TrackListPanel({
   }, [currentIndex]);
 
   return (
-    <div className="h-full lg:sticky lg:top-6 bg-[#151515] rounded-2xl pt-6 pb-0 pl-3 pr-0 flex flex-col">
+    <div className="h-full lg:sticky lg:top-6 bg-[#151515] rounded-2xl py-6 pl-3 pr-0 flex flex-col">
       {/* Search Bar */}
       <div className="relative mb-4">
         <div className="relative">
