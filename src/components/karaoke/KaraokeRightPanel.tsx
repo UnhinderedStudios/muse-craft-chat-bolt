@@ -136,7 +136,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
       </div>
 
       {/* Karaoke Lyrics Section - Flexible height */}
-      <div className="flex flex-col p-4 flex-1 min-h-0 pb-[calc(var(--dock-h)+2rem)]">
+      <div className="flex flex-col p-4 flex-1 min-h-0">
         {/* Lyrics Container - Give KaraokeLyrics a fixed height to scroll within */}
         <div className="flex-1 mb-4 min-h-0">
           {hasContent ? (
