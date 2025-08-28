@@ -141,7 +141,7 @@ export default function TrackListPanel({
   return (
     <aside className="h-full min-h-0 bg-[#151515] rounded-2xl flex flex-col">
       {/* Search Bar */}
-      <div className="relative pl-4 pr-6 pt-4 mb-3 shrink-0">
+      <div className="relative pl-4 pr-6 pt-4 mb-1 shrink-0">
         <div className="relative">
           <Input
             value={searchQuery}
@@ -170,7 +170,7 @@ export default function TrackListPanel({
       {/* Scrollable area */}
       <div className="min-h-0 flex-1 overflow-hidden">
         <div ref={scrollRef} className="h-full overflow-y-auto lyrics-scrollbar">
-          <div className="min-h-full flex flex-col justify-end gap-3 p-4">
+          <div className="min-h-full flex flex-col justify-end gap-3 px-4 pt-2 pb-4">
         {paginatedTracks.map((t, pageIndex) => {
           // Calculate the actual index in the full filtered tracks array
           const actualIndex = filteredTracks.indexOf(t);
