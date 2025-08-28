@@ -212,7 +212,7 @@ export default function TrackListPanel({
                   </div>
 
                   {/* Second row: Parameters - full width from album art left edge */}
-                  <div className="mt-1 pb-2 pr-1">
+                  <div className="mt-0.5 pb-2 pr-1">
                     <div className="max-h-[120px] overflow-y-auto lyrics-scrollbar">
                       <div className="flex flex-wrap gap-x-1.5 gap-y-1.5 pl-2">
                         {["Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text"].map((p, idx) => (
