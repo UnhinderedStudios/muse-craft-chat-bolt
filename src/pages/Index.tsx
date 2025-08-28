@@ -981,8 +981,8 @@ async function startGeneration() {
         <div
           className="
             grid grid-cols-1 md:grid-cols-8
-            lg:grid-cols-[minmax(0,1.62fr)_minmax(0,4.5fr)_minmax(0,3.0fr)_minmax(0,2.42fr)]
-            xl:grid-cols-[minmax(0,1.62fr)_minmax(0,4.0fr)_minmax(0,3.2fr)_minmax(0,2.42fr)]
+            lg:grid-cols-[minmax(0,1.62fr)_minmax(0,6.93fr)_minmax(0,1.98fr)_minmax(0,2.42fr)]
+            xl:grid-cols-[minmax(0,1.62fr)_minmax(0,5.94fr)_minmax(0,1.98fr)_minmax(0,2.42fr)]
             gap-5 lg:items-stretch
             lg:grid-rows-[1fr_320px]
             lg:h-[calc(100%-var(--dock-h)-var(--page-gap))]
