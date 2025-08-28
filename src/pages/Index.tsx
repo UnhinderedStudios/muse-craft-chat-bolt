@@ -993,7 +993,7 @@ async function startGeneration() {
           </div>
 
           {/* Row 1 - Center: Chat */}
-          <div className="order-2 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-2xl relative overflow-hidden">
+          <div className="order-2 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 min-h-0 bg-[#151515] rounded-2xl relative overflow-hidden">
             {/* top fade */}
             {scrollTop > 0 && (
               <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none" />
@@ -1116,7 +1116,7 @@ async function startGeneration() {
           </div>
 
           {/* Row 1 - Right: Karaoke panel (wraps under chat on iPad) */}
-          <div className="order-3 md:col-span-8 lg:col-span-1 xl:col-span-1 min-w-0">
+          <div className="order-3 md:col-span-8 lg:col-span-1 xl:col-span-1 min-w-0 min-h-0">
             <KaraokeRightPanel
               versions={versions}
               currentAudioIndex={currentAudioIndex}
@@ -1134,7 +1134,7 @@ async function startGeneration() {
           </div>
 
           {/* Far-right Track List: spans both rows, bleeds to the right, sticky inner */}
-          <div className="order-4 lg:order-3 md:col-span-8 lg:col-span-1 xl:col-span-1 lg:row-span-2 lg:self-stretch">
+          <div className="order-4 lg:order-3 md:col-span-8 lg:col-span-1 xl:col-span-1 lg:row-span-2 lg:self-stretch min-h-0 overflow-hidden">
             <TrackListPanel
               tracks={tracks}
               currentIndex={currentTrackIndex}
