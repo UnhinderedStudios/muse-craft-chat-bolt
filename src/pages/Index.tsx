@@ -1168,7 +1168,7 @@ async function startGeneration() {
           </div>
 
           {/* Row 2 - Center: Form */}
-          <div className="order-6 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 h-full lg:max-h-[400px] lg:overflow-y-auto">
+          <div className="order-6 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 h-full">
             {/* Two-column layout: Left (Title + Song Parameters), Right (Lyrics) */}
             <div className="grid grid-cols-12 gap-4 h-auto">
               {/* Left column */}
@@ -1202,9 +1202,9 @@ async function startGeneration() {
               </div>
 
               {/* Right column: Lyrics */}
-              <div className="col-span-7 space-y-2 flex flex-col">
+              <div className="col-span-7 space-y-2 flex flex-col max-h-[320px]">
                 <label className="text-sm font-medium text-white/80">Lyrics</label>
-                <div className="bg-[#2d2d2d] rounded-lg p-4 flex-1 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
+                <div className="bg-[#2d2d2d] rounded-lg p-4 flex-1 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200 overflow-hidden">
                   <Textarea
                     value={details.lyrics || ""}
                     onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
