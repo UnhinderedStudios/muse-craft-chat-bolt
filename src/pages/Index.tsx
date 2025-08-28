@@ -981,7 +981,7 @@ async function startGeneration() {
             xl:grid-cols-[minmax(0,1.62fr)_minmax(0,5.94fr)_minmax(0,1.98fr)_minmax(0,2.42fr)]
             gap-5 lg:items-stretch
             lg:grid-rows-[auto_1fr]
-            lg:max-h-[calc(100vh-var(--dock-h)-var(--page-gap))]
+            lg:h-[calc(100vh-var(--dock-h)-var(--page-gap))]
             lg:min-h-0
             lg:overflow-hidden
           ">
@@ -1158,15 +1158,15 @@ async function startGeneration() {
           </div>
 
           {/* Row 2 - Left: Sessions 2 */}
-          <div className="order-5 md:col-span-2 lg:col-span-1 xl:col-span-1 bg-[#151515] rounded-2xl p-6 h-full">
+          <div className="order-5 md:col-span-2 lg:col-span-1 xl:col-span-1 bg-[#151515] rounded-2xl p-6 h-full min-h-0">
             <h3 className="text-white font-semibold mb-4">Session 2</h3>
             <p className="text-gray-400 text-sm">Additional session functionality...</p>
           </div>
 
           {/* Row 2 - Center: Form */}
-          <div className="order-6 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 h-full">
+          <div className="order-6 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 h-full min-h-0">
             {/* Two-column layout: Left (Title + Song Parameters), Right (Lyrics) */}
-            <div className="grid grid-cols-12 gap-4 h-auto">
+            <div className="grid grid-cols-12 gap-4 h-full min-h-0">
               {/* Left column */}
               <div className="col-span-5 space-y-3">
                 {/* Title */}
@@ -1198,14 +1198,14 @@ async function startGeneration() {
               </div>
 
               {/* Right column: Lyrics */}
-              <div className="col-span-7 space-y-2 flex flex-col">
+              <div className="col-span-7 space-y-2 flex flex-col min-h-0">
                 <label className="text-sm font-medium text-white/80">Lyrics</label>
-                <div className="bg-[#2d2d2d] rounded-lg p-4 flex-1 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
+                <div className="bg-[#2d2d2d] rounded-lg p-4 flex-1 min-h-0 overflow-hidden border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
                   <Textarea
                     value={details.lyrics || ""}
                     onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
                     placeholder="Enter your lyrics here..."
-                    className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 pr-3 resize-none w-full h-full lyrics-scrollbar"
+                    className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 pr-3 resize-none w-full h-full min-h-0 overflow-y-auto lyrics-scrollbar"
                   />
                 </div>
               </div>
@@ -1225,7 +1225,7 @@ async function startGeneration() {
           </div>
 
           {/* Row 2 - Right: Template */}
-          <div className="order-7 md:col-span-8 lg:col-span-1 xl:col-span-1 bg-[#151515] rounded-2xl flex items-center justify-center h-full">
+          <div className="order-7 md:col-span-8 lg:col-span-1 xl:col-span-1 bg-[#151515] rounded-2xl flex items-center justify-center h-full min-h-0">
             <span className="text-text-secondary">TEMPLATE</span>
           </div>
         </div>
