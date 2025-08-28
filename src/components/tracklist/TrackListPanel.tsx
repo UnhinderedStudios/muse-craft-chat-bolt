@@ -109,7 +109,7 @@ export default function TrackListPanel({
   return (
     <div className="h-full lg:sticky lg:top-6 bg-[#151515] rounded-2xl pt-6 pb-0 pl-3 pr-0 flex flex-col">
       {/* Search Bar */}
-      <div className="relative mb-4">
+      <div className="relative mb-2">
         <div className="relative">
           <Input
             value={searchQuery}
@@ -135,7 +135,7 @@ export default function TrackListPanel({
         )}
       </div>
 
-      <div className="flex-1 min-h-0 max-h-[calc(100%-6rem)] overflow-y-auto lyrics-scrollbar space-y-3 pr-3">
+      <div className="flex-1 min-h-0 overflow-y-auto lyrics-scrollbar space-y-2 pr-3">
         {filteredTracks.map((t, i) => {
           const active = i === currentIndex;
           return (
