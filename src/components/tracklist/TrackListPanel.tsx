@@ -3,6 +3,14 @@ import { Play, Pause, RotateCw, X, Heart, Shuffle, Repeat, MoreHorizontal, Searc
 import { TrackItem } from "@/types";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 type Props = {
   tracks: TrackItem[];
@@ -60,6 +68,10 @@ export default function TrackListPanel({
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchMode, setIsSearchMode] = useState(false);
   
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const tracksPerPage = 15;
+  
   // Combine original tracks with test tracks for demo
   const allTracks = [...tracks, ...generateTestTracks()];
   
@@ -75,16 +87,31 @@ export default function TrackListPanel({
         return titleMatch || paramsMatch;
       });
 
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredTracks.length / tracksPerPage);
+  const startIndex = (currentPage - 1) * tracksPerPage;
+  const endIndex = startIndex + tracksPerPage;
+  const paginatedTracks = filteredTracks.slice(startIndex, endIndex);
+
   // Handle search input changes
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
     setIsSearchMode(value.trim() !== "");
+    setCurrentPage(1); // Reset to first page when searching
   };
 
   // Clear search and restore original order
   const clearSearch = () => {
     setSearchQuery("");
     setIsSearchMode(false);
+    setCurrentPage(1);
+  };
+
+  // Handle page changes
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
   };
 
   // Initialize audio times array when tracks change
@@ -139,15 +166,17 @@ export default function TrackListPanel({
       <div className="min-h-0 flex-1 overflow-hidden">
         <div className="h-full overflow-y-auto lyrics-scrollbar">
           <div className="min-h-full flex flex-col justify-end gap-3 p-4">
-        {filteredTracks.map((t, i) => {
-          const active = i === currentIndex;
+        {paginatedTracks.map((t, pageIndex) => {
+          // Calculate the actual index in the full filtered tracks array
+          const actualIndex = filteredTracks.indexOf(t);
+          const active = actualIndex === currentIndex;
           return (
             <div
               key={t.id}
               className={`${active ? "" : "rounded-xl bg-[#1e1e1e] p-3 cursor-pointer hover:bg-[#252525] transition-colors"}`}
               onClick={!active ? () => {
-                setCurrentIndex(i);
-                onPlayPause(i);
+                setCurrentIndex(actualIndex);
+                onPlayPause(actualIndex);
               } : undefined}
             >
               {!active ? (
@@ -168,15 +197,15 @@ export default function TrackListPanel({
                       onClick={(e) => {
                         e.stopPropagation();
                         
-                        const audio = audioRefs.current[i];
+                        const audio = audioRefs.current[actualIndex];
                         if (!audio || !audio.duration) return;
                         const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
                         const pct = (e.clientX - rect.left) / rect.width;
                         const seek = pct * audio.duration;
                         
-                        if (i !== currentIndex) {
-                          setCurrentIndex(i);
-                          onPlayPause(i);
+                        if (actualIndex !== currentIndex) {
+                          setCurrentIndex(actualIndex);
+                          onPlayPause(actualIndex);
                         }
                         
                         onSeek(seek);
@@ -185,12 +214,12 @@ export default function TrackListPanel({
                        <div
                          className="h-full bg-white/70 rounded"
                          style={{
-                           width: (() => {
-                             const a = audioRefs.current[i];
-                             if (!a || !a.duration) return "0%";
-                             const time = audioCurrentTimes[i] || 0;
-                             return `${(time / a.duration) * 100}%`;
-                           })(),
+                            width: (() => {
+                              const a = audioRefs.current[actualIndex];
+                              if (!a || !a.duration) return "0%";
+                              const time = audioCurrentTimes[actualIndex] || 0;
+                              return `${(time / a.duration) * 100}%`;
+                            })(),
                          }}
                        />
                     </div>
@@ -200,7 +229,7 @@ export default function TrackListPanel({
                     className="w-8 h-8 shrink-0 flex items-center justify-center text-white/60 hover:text-white transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onPlayPause(i);
+                      onPlayPause(actualIndex);
                     }}
                   >
                     <Play className="w-4 h-4" />
@@ -245,7 +274,7 @@ export default function TrackListPanel({
                           className="w-6 h-6 flex items-center justify-center text-white hover:text-white/80 transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onPlayPause(i);
+                            onPlayPause(actualIndex);
                           }}
                         >
                           {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
@@ -257,7 +286,7 @@ export default function TrackListPanel({
                           onClick={(e) => {
                             e.stopPropagation();
                             
-                            const audio = audioRefs.current[i];
+                            const audio = audioRefs.current[actualIndex];
                             if (!audio || !audio.duration) return;
                             const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
                             const pct = (e.clientX - rect.left) / rect.width;
@@ -270,10 +299,10 @@ export default function TrackListPanel({
                              className="h-full bg-white/70 rounded"
                              style={{
                                width: (() => {
-                                 const a = audioRefs.current[i];
-                                 if (!a || !a.duration) return "0%";
-                                 const time = audioCurrentTimes[i] || 0;
-                                 return `${(time / a.duration) * 100}%`;
+                              const a = audioRefs.current[actualIndex];
+                              if (!a || !a.duration) return "0%";
+                              const time = audioCurrentTimes[actualIndex] || 0;
+                              return `${(time / a.duration) * 100}%`;
                                })(),
                              }}
                            />
@@ -319,20 +348,20 @@ export default function TrackListPanel({
                  preload="auto"
                  className="hidden"
                  crossOrigin="anonymous"
-                 ref={(el) => { if (el) audioRefs.current[i] = el; }}
-                 onTimeUpdate={(e) => {
-                   const audio = e.currentTarget;
-                   // Only update progress for the currently active track
-                   if (i === currentIndex) {
-                     setAudioCurrentTimes(prev => {
-                       const newTimes = [...prev];
-                       newTimes[i] = audio.currentTime;
-                       return newTimes;
-                     });
-                   }
-                   // Call the original onTimeUpdate
-                   onTimeUpdate(audio);
-                 }}
+                  ref={(el) => { if (el) audioRefs.current[actualIndex] = el; }}
+                  onTimeUpdate={(e) => {
+                    const audio = e.currentTarget;
+                    // Only update progress for the currently active track
+                    if (actualIndex === currentIndex) {
+                      setAudioCurrentTimes(prev => {
+                        const newTimes = [...prev];
+                        newTimes[actualIndex] = audio.currentTime;
+                        return newTimes;
+                      });
+                    }
+                    // Call the original onTimeUpdate
+                    onTimeUpdate(audio);
+                  }}
                />
             </div>
           );
@@ -353,7 +382,57 @@ export default function TrackListPanel({
                )}
              </div>
            )}
-          </div>
+           
+           {/* Pagination */}
+           {filteredTracks.length > tracksPerPage && (
+             <div className="mt-3 flex justify-center">
+               <Pagination>
+                 <PaginationContent className="gap-1">
+                   <PaginationItem>
+                     <PaginationPrevious
+                       href="#"
+                       onClick={(e) => {
+                         e.preventDefault();
+                         handlePageChange(currentPage - 1);
+                       }}
+                       className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                     />
+                   </PaginationItem>
+                   
+                   {Array.from({ length: totalPages }, (_, index) => {
+                     const page = index + 1;
+                     return (
+                       <PaginationItem key={page}>
+                         <PaginationLink
+                           href="#"
+                           onClick={(e) => {
+                             e.preventDefault();
+                             handlePageChange(page);
+                           }}
+                           isActive={page === currentPage}
+                           className="text-white/60 hover:text-white border-white/20 hover:border-white/40"
+                         >
+                           {page}
+                         </PaginationLink>
+                       </PaginationItem>
+                     );
+                   })}
+                   
+                   <PaginationItem>
+                     <PaginationNext
+                       href="#"
+                       onClick={(e) => {
+                         e.preventDefault();
+                         handlePageChange(currentPage + 1);
+                       }}
+                       className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                     />
+                   </PaginationItem>
+                 </PaginationContent>
+               </Pagination>
+             </div>
+           )}
+           </div>
         </div>
       </div>
 
