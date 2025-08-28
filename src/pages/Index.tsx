@@ -972,14 +972,14 @@ async function startGeneration() {
       }}
     >
       {/* Three Column Layout - Sessions, Chat + Form, Karaoke + Template */}
-      <main className="w-full px-5 pt-3 pb-0 min-h-0">
+      <main className="w-full px-5 pt-4 pb-0 min-h-0">
         {/* 1 col on mobile, 8 cols on iPad, 12 cols on desktop */}
         <div
           className="
             grid grid-cols-1 md:grid-cols-8
             lg:grid-cols-[minmax(0,1.62fr)_minmax(0,6.93fr)_minmax(0,1.98fr)_minmax(0,2.42fr)]
             xl:grid-cols-[minmax(0,1.62fr)_minmax(0,5.94fr)_minmax(0,1.98fr)_minmax(0,2.42fr)]
-            gap-2.5 lg:items-stretch
+            gap-3 lg:items-stretch
             lg:grid-rows-[20px_auto_1fr]
             lg:max-h-[calc(100vh-var(--dock-h)-var(--page-gap))]
             lg:min-h-0
