@@ -972,7 +972,7 @@ async function startGeneration() {
       }}
     >
       {/* Three Column Layout - Sessions, Chat + Form, Karaoke + Template */}
-      <main className="w-full px-5 pt-6 pb-0 min-h-0">
+      <main className="w-full px-5 pt-3 pb-0 min-h-0">
         {/* 1 col on mobile, 8 cols on iPad, 12 cols on desktop */}
         <div
           className="
