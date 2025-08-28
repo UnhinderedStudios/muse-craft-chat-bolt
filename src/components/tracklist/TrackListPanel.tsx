@@ -146,7 +146,7 @@ export default function TrackListPanel({
                     {/* Content area next to album art */}
                     <div className="flex-1 ml-3 flex flex-col justify-start">
                       {/* Title above controls */}
-                      <div className="mb-2 mt-1">
+                      <div className="mb-1 mt-1">
                         <div className="text-sm text-white font-medium truncate">{t.title || "Song Title"}</div>
                         <div className="text-xs text-white/60 truncate">No Artist</div>
                       </div>
