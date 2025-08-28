@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Play, Pause, RotateCw, X, Heart, Shuffle, Repeat, MoreHorizontal } from "lucide-react";
+import { Play, Pause, RotateCw, X, Heart, Shuffle, Repeat, MoreHorizontal, Search } from "lucide-react";
 import { TrackItem } from "@/types";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 type Props = {
   tracks: TrackItem[];
@@ -12,6 +13,33 @@ type Props = {
   onSeek: (t: number) => void;
   setCurrentIndex: (index: number) => void;
   onTimeUpdate: (audio: HTMLAudioElement) => void;
+};
+
+// Generate 20 test tracks for testing search functionality
+const generateTestTracks = (): TrackItem[] => {
+  const testTracks: TrackItem[] = [
+    { id: "test-1", title: "Midnight Dreams", url: "", coverUrl: "", createdAt: Date.now() - 86400000, params: ["electronic", "ambient", "chill", "night"] },
+    { id: "test-2", title: "Summer Vibes", url: "", coverUrl: "", createdAt: Date.now() - 86300000, params: ["pop", "upbeat", "sunny", "dance"] },
+    { id: "test-3", title: "Rainy Day Blues", url: "", coverUrl: "", createdAt: Date.now() - 86200000, params: ["blues", "melancholy", "rain", "guitar"] },
+    { id: "test-4", title: "Mountain High", url: "", coverUrl: "", createdAt: Date.now() - 86100000, params: ["rock", "epic", "adventure", "powerful"] },
+    { id: "test-5", title: "Ocean Waves", url: "", coverUrl: "", createdAt: Date.now() - 86000000, params: ["ambient", "relaxing", "nature", "peaceful"] },
+    { id: "test-6", title: "Neon Lights", url: "", coverUrl: "", createdAt: Date.now() - 85900000, params: ["synthwave", "retro", "80s", "neon"] },
+    { id: "test-7", title: "Forest Walk", url: "", coverUrl: "", createdAt: Date.now() - 85800000, params: ["acoustic", "folk", "nature", "calm"] },
+    { id: "test-8", title: "City Rush", url: "", coverUrl: "", createdAt: Date.now() - 85700000, params: ["urban", "fast", "energy", "modern"] },
+    { id: "test-9", title: "Starlight Serenade", url: "", coverUrl: "", createdAt: Date.now() - 85600000, params: ["romantic", "jazz", "smooth", "night"] },
+    { id: "test-10", title: "Thunder Storm", url: "", coverUrl: "", createdAt: Date.now() - 85500000, params: ["dramatic", "orchestral", "intense", "storm"] },
+    { id: "test-11", title: "Sunrise Hope", url: "", coverUrl: "", createdAt: Date.now() - 85400000, params: ["inspiring", "orchestral", "morning", "hope"] },
+    { id: "test-12", title: "Digital Dreams", url: "", coverUrl: "", createdAt: Date.now() - 85300000, params: ["electronic", "futuristic", "cyber", "digital"] },
+    { id: "test-13", title: "Desert Wind", url: "", coverUrl: "", createdAt: Date.now() - 85200000, params: ["world", "ethnic", "mystical", "desert"] },
+    { id: "test-14", title: "Jazz Cafe", url: "", coverUrl: "", createdAt: Date.now() - 85100000, params: ["jazz", "coffee", "smooth", "relaxing"] },
+    { id: "test-15", title: "Rock Anthem", url: "", coverUrl: "", createdAt: Date.now() - 85000000, params: ["rock", "anthem", "powerful", "guitar"] },
+    { id: "test-16", title: "Moonlight Waltz", url: "", coverUrl: "", createdAt: Date.now() - 84900000, params: ["classical", "waltz", "elegant", "moonlight"] },
+    { id: "test-17", title: "Hip Hop Beats", url: "", coverUrl: "", createdAt: Date.now() - 84800000, params: ["hip-hop", "beats", "rhythm", "urban"] },
+    { id: "test-18", title: "Country Road", url: "", coverUrl: "", createdAt: Date.now() - 84700000, params: ["country", "road", "guitar", "storytelling"] },
+    { id: "test-19", title: "Electric Pulse", url: "", coverUrl: "", createdAt: Date.now() - 84600000, params: ["edm", "pulse", "electronic", "dance"] },
+    { id: "test-20", title: "Peaceful Mind", url: "", coverUrl: "", createdAt: Date.now() - 84500000, params: ["meditation", "peaceful", "zen", "mindful"] }
+  ];
+  return testTracks;
 };
 
 export default function TrackListPanel({
@@ -27,11 +55,42 @@ export default function TrackListPanel({
   const [audioCurrentTimes, setAudioCurrentTimes] = useState<number[]>([]);
   const [showQuickAlbumGenerator, setShowQuickAlbumGenerator] = useState(false);
   const [selectedTrackForRegen, setSelectedTrackForRegen] = useState<TrackItem | null>(null);
+  
+  // Search functionality state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchMode, setIsSearchMode] = useState(false);
+  
+  // Combine original tracks with test tracks for demo
+  const allTracks = [...tracks, ...generateTestTracks()];
+  
+  // Filter tracks based on search query
+  const filteredTracks = searchQuery.trim() === "" 
+    ? allTracks 
+    : allTracks.filter(track => {
+        const query = searchQuery.toLowerCase();
+        const titleMatch = track.title?.toLowerCase().includes(query);
+        const paramsMatch = track.params?.some(param => 
+          param.toLowerCase().includes(query)
+        );
+        return titleMatch || paramsMatch;
+      });
+
+  // Handle search input changes
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setIsSearchMode(value.trim() !== "");
+  };
+
+  // Clear search and restore original order
+  const clearSearch = () => {
+    setSearchQuery("");
+    setIsSearchMode(false);
+  };
 
   // Initialize audio times array when tracks change
   useEffect(() => {
-    setAudioCurrentTimes(new Array(tracks.length).fill(0));
-  }, [tracks.length]);
+    setAudioCurrentTimes(new Array(allTracks.length).fill(0));
+  }, [allTracks.length]);
 
   // Reset previous track's time when currentIndex changes
   useEffect(() => {
@@ -49,10 +108,35 @@ export default function TrackListPanel({
 
   return (
     <div className="h-full lg:sticky lg:top-6 bg-[#151515] rounded-2xl py-6 px-3 flex flex-col">
-      <h3 className="text-white font-semibold mb-4">Track List</h3>
+      {/* Search Bar */}
+      <div className="relative mb-4">
+        <div className="relative">
+          <Input
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="Search tracks, genres, keywords..."
+            className="w-full bg-[#1e1e1e] border-0 text-white placeholder:text-white/40 focus-visible:ring-1 focus-visible:ring-white/20 pr-10"
+          />
+          <button
+            onClick={isSearchMode ? clearSearch : undefined}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
+          >
+            {isSearchMode ? (
+              <X className="w-4 h-4" />
+            ) : (
+              <Search className="w-4 h-4" />
+            )}
+          </button>
+        </div>
+        {isSearchMode && (
+          <div className="text-xs text-white/40 mt-2">
+            {filteredTracks.length} track{filteredTracks.length !== 1 ? 's' : ''} found
+          </div>
+        )}
+      </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar space-y-3">
-        {tracks.map((t, i) => {
+        {filteredTracks.map((t, i) => {
           const active = i === currentIndex;
           return (
             <div
@@ -215,9 +299,9 @@ export default function TrackListPanel({
                   <div className="-mt-0.5 pr-1">
                     <div className="max-h-[120px] overflow-y-auto lyrics-scrollbar">
                       <div className="flex flex-wrap gap-x-1.5 gap-y-1.5 px-2 pb-2">
-                        {["Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text"].map((p, idx) => (
+                        {(t.params || ["ambient", "chill", "electronic"]).map((p, idx) => (
                           <div key={idx} className="px-3 py-1.5 rounded-full bg-white/25 text-[12px] text-black font-semibold text-center whitespace-nowrap">
-                            {p || "Text"}
+                            {p}
                           </div>
                         ))}
                       </div>
@@ -251,10 +335,19 @@ export default function TrackListPanel({
           );
         })}
         
-        {tracks.length === 0 && (
+        {filteredTracks.length === 0 && (
           <div className="text-center text-white/40 py-8">
-            <div className="text-sm">No tracks yet</div>
-            <div className="text-xs mt-1">Generate a song to see it here</div>
+            {isSearchMode ? (
+              <>
+                <div className="text-sm">No matching tracks found</div>
+                <div className="text-xs mt-1">Try different keywords</div>
+              </>
+            ) : (
+              <>
+                <div className="text-sm">No tracks yet</div>
+                <div className="text-xs mt-1">Generate a song to see it here</div>
+              </>
+            )}
           </div>
         )}
       </div>
