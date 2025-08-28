@@ -60,11 +60,19 @@ export const useScrollDelegation = (containerRef: React.RefObject<HTMLElement>) 
 };
 
 /**
- * Hook version for React components - DISABLED
- * This hook is currently disabled to prevent interference with independent scroll bars
+ * Hook version for React components
  */
 export const useScrollDelegationHook = (containerRef: React.RefObject<HTMLElement>) => {
-  // No-op: Scroll delegation is disabled
-  // Hook calls remain in components to avoid breaking changes
-  return;
+  const { handleWheel } = useScrollDelegation(containerRef);
+
+  React.useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+    };
+  }, [handleWheel, containerRef]);
 };

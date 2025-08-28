@@ -965,7 +965,7 @@ async function startGeneration() {
 
   return (
     <div
-      className="h-screen bg-[#0c0c0c] overflow-hidden"
+      className="min-h-screen bg-[#0c0c0c] overflow-x-hidden"
       style={{
         ["--dock-h" as any]: `${DOCK_H}px`,
         // match Tailwind gap-5 (1.25rem) so spacing is seamless when docked
@@ -976,7 +976,7 @@ async function startGeneration() {
       <CyberHeader />
 
       {/* Three Column Layout - Sessions, Chat + Form, Karaoke + Template */}
-      <main className="w-full px-5 pt-6 pb-0 min-h-0 h-[calc(100vh-80px)]">
+      <main className="w-full px-5 pt-6 pb-0 min-h-0">
         {/* 1 col on mobile, 8 cols on iPad, 12 cols on desktop */}
         <div
           className="
@@ -984,8 +984,8 @@ async function startGeneration() {
             lg:grid-cols-[minmax(0,1.62fr)_minmax(0,6.93fr)_minmax(0,1.98fr)_minmax(0,2.42fr)]
             xl:grid-cols-[minmax(0,1.62fr)_minmax(0,5.94fr)_minmax(0,1.98fr)_minmax(0,2.42fr)]
             gap-5 lg:items-stretch
-            lg:grid-rows-[1fr_320px]
-            lg:h-[calc(100%-var(--dock-h)-var(--page-gap))]
+            lg:grid-rows-[auto_1fr]
+            lg:max-h-[calc(100vh-var(--dock-h)-var(--page-gap))]
             lg:min-h-0
             lg:overflow-hidden
           ">
@@ -997,16 +997,17 @@ async function startGeneration() {
           </div>
 
           {/* Row 1 - Center: Chat */}
-          <div className="order-2 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 min-h-0 bg-[#151515] rounded-2xl relative overflow-hidden flex flex-col">
+          <div className="order-2 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 min-h-0 bg-[#151515] rounded-2xl relative overflow-hidden">
             {/* top fade */}
             {scrollTop > 0 && (
               <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none" />
             )}
 
-            {/* chat scroll area: flexible height on desktop, capped height on mobile/tablet */}
+            {/* chat scroll area: fixed height on desktop, capped height on mobile/tablet */}
             <div
               ref={scrollerRef}
-              className={`overflow-y-auto custom-scrollbar pl-6 lg:pl-8 pr-4 lg:pr-6 pt-6 lg:pt-8 ${isDesktop ? 'flex-1' : 'max-h-[56vh]'}`}
+              className={`overflow-y-auto custom-scrollbar pl-6 lg:pl-8 pr-4 lg:pr-6 pt-6 lg:pt-8 ${isDesktop ? '' : 'max-h-[56vh]'}`}
+              style={isDesktop ? { height: `${chatHeight}px` } : undefined}
               onScroll={(e) => setScrollTop((e.target as HTMLDivElement).scrollTop)}
             >
               <div className="space-y-4 pr-4 pl-4 pt-4 pb-4 lg:pb-32">
@@ -1023,8 +1024,10 @@ async function startGeneration() {
               </div>
             </div>
 
-            {/* tools footer: flex-shrink-0 to stay at bottom */}
-            <div className="flex-shrink-0 pt-4 pb-4 px-4 lg:px-8 bg-gradient-to-t from-[#151515] via-[#151515]/98 via-[#151515]/90 to-transparent">
+            {/* tools footer: absolute on desktop, sticky on smaller screens */}
+            <div
+              className={`${isDesktop ? 'absolute bottom-0 pt-8 pb-8 px-8' : 'sticky bottom-0 pt-4 pb-4 px-4'} left-0 right-0 bg-gradient-to-t from-[#151515] via-[#151515]/98 via-[#151515]/90 to-transparent`}
+            >
               <div className="space-y-4">
                 {attachedFiles.length > 0 && (
                   <div className="flex flex-wrap gap-2">
@@ -1103,6 +1106,17 @@ async function startGeneration() {
 </div>
               </div>
             </div>
+
+            {/* desktop-only resize handle */}
+            <div
+              className={`hidden lg:block absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize group ${isResizing ? 'bg-accent-primary/50' : 'bg-white/20 hover:bg-white/40'} transition-colors`}
+              onMouseDown={handleMouseDown}
+              style={{ clipPath: 'polygon(100% 0%, 0% 100%, 100% 100%)', borderBottomRightRadius: '16px' }}
+            >
+              <div className="absolute bottom-1 right-1 w-1 h-1 bg-white/60 rounded-full"></div>
+              <div className="absolute bottom-1 right-2.5 w-1 h-1 bg-white/40 rounded-full"></div>
+              <div className="absolute bottom-2.5 right-1 w-1 h-1 bg-white/40 rounded-full"></div>
+            </div>
           </div>
 
           {/* Row 1 - Right: Karaoke panel (wraps under chat on iPad) */}
@@ -1156,7 +1170,7 @@ async function startGeneration() {
           {/* Row 2 - Center: Form */}
           <div className="order-6 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 h-full">
             {/* Two-column layout: Left (Title + Song Parameters), Right (Lyrics) */}
-            <div className="grid grid-cols-12 gap-4 h-full max-h-[280px]">
+            <div className="grid grid-cols-12 gap-4 h-auto">
               {/* Left column */}
               <div className="col-span-5 space-y-3">
                 {/* Title */}
@@ -1188,9 +1202,9 @@ async function startGeneration() {
               </div>
 
               {/* Right column: Lyrics */}
-              <div className="col-span-7 space-y-2 flex flex-col h-full">
+              <div className="col-span-7 space-y-2 flex flex-col">
                 <label className="text-sm font-medium text-white/80">Lyrics</label>
-                <div className="bg-[#2d2d2d] rounded-lg p-4 flex-1 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200 overflow-hidden">
+                <div className="bg-[#2d2d2d] rounded-lg p-4 flex-1 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
                   <Textarea
                     value={details.lyrics || ""}
                     onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
