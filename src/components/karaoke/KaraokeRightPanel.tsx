@@ -22,7 +22,6 @@ interface KaraokeRightPanelProps {
   onAudioPause: () => void;
   onFullscreenKaraoke: () => void;
   onSeek?: (time: number) => void;
-  panelHeight?: number;
 }
 
 export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
@@ -37,7 +36,6 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   onAudioPause,
   onFullscreenKaraoke,
   onSeek,
-  panelHeight,
 }) => {
   const hasContent = versions.length > 0;
   const currentVersion = hasContent ? versions[currentAudioIndex] : null;
@@ -75,10 +73,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div 
-      className="bg-[#151515] rounded-2xl flex flex-col min-h-0 overflow-hidden"
-      style={panelHeight ? { height: `${panelHeight}px` } : { height: '500px' }}
-    >
+    <div className="h-full min-h-0 bg-[#151515] rounded-2xl flex flex-col overflow-hidden">
       {/* Album Art Section - Made 10% taller (115px -> 127px) */}
       <div className="relative h-[127px] bg-muted/10 rounded-t-2xl overflow-hidden flex-shrink-0">
         {currentAlbumCover ? (
