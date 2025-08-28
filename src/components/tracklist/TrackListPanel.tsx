@@ -208,7 +208,7 @@ export default function TrackListPanel({
                     </div>
 
                     {/* Parameters below */}
-                    <div className="mt-3 pl-1 pb-2">
+                    <div className="mt-3 pb-2">
                       <div className="max-h-[120px] overflow-y-auto lyrics-scrollbar">
                         <div className="flex flex-wrap gap-x-1.5 gap-y-1.5">
                           {(t.params?.length ? t.params : ["Text","Text","Text","Text","Text","Text"]).map((p, idx) => (
