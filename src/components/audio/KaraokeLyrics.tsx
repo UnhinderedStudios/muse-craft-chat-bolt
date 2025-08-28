@@ -158,7 +158,7 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
       onScroll={handleScroll}
       tabIndex={-1}
       className={cn(
-        "overflow-y-auto pr-2 pl-4 pt-2 pb-4 rounded-md border bg-muted/20",
+        "overflow-y-auto pr-2 pl-4 pt-2 pb-[calc(var(--dock-h)+2rem)] rounded-md border bg-muted/20",
         "leading-relaxed text-sm lyrics-scrollbar relative",
         className
       )}
