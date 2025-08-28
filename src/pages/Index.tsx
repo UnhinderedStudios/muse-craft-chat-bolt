@@ -965,7 +965,7 @@ async function startGeneration() {
 
   return (
     <div
-      className="min-h-screen bg-[#0c0c0c] overflow-x-hidden"
+      className="h-screen bg-[#0c0c0c] overflow-hidden"
       style={{
         ["--dock-h" as any]: `${DOCK_H}px`,
         // match Tailwind gap-5 (1.25rem) so spacing is seamless when docked
@@ -976,7 +976,7 @@ async function startGeneration() {
       <CyberHeader />
 
       {/* Three Column Layout - Sessions, Chat + Form, Karaoke + Template */}
-      <main className="w-full px-5 pt-6 pb-0 min-h-0">
+      <main className="w-full px-5 pt-6 pb-0 min-h-0 h-[calc(100vh-80px)]">
         {/* 1 col on mobile, 8 cols on iPad, 12 cols on desktop */}
         <div
           className="
@@ -985,7 +985,7 @@ async function startGeneration() {
             xl:grid-cols-[minmax(0,1.62fr)_minmax(0,5.94fr)_minmax(0,1.98fr)_minmax(0,2.42fr)]
             gap-5 lg:items-stretch
             lg:grid-rows-[1fr_320px]
-            lg:max-h-[calc(100vh-var(--dock-h)-var(--page-gap))]
+            lg:h-[calc(100%-var(--dock-h)-var(--page-gap))]
             lg:min-h-0
             lg:overflow-hidden
           ">
