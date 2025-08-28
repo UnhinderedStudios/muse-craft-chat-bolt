@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Play, Pause, Mic } from "lucide-react";
 import { KaraokeLyrics } from "@/components/audio/KaraokeLyrics";
 import { TimestampedWord } from "@/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useScrollDelegationHook } from "@/utils/scrollDelegation";
 
 interface KaraokeRightPanelProps {
   versions: Array<{
@@ -43,6 +44,10 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   const audioElement = hasContent ? audioRefs.current[currentAudioIndex] : null;
   const duration = audioElement?.duration || 0;
 
+  // Scroll delegation for the main panel
+  const panelRef = useRef<HTMLDivElement>(null);
+  useScrollDelegationHook(panelRef);
+
   const handlePlayPause = () => {
     if (!hasContent) return;
     
@@ -73,7 +78,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="h-full min-h-0 bg-[#151515] rounded-2xl flex flex-col overflow-hidden">
+    <div ref={panelRef} className="h-full min-h-0 bg-[#151515] rounded-2xl flex flex-col overflow-hidden">
       {/* Album Art Section - Made 10% taller (115px -> 127px) */}
       <div className="relative h-[127px] bg-muted/10 rounded-t-2xl overflow-hidden flex-shrink-0">
         {currentAlbumCover ? (

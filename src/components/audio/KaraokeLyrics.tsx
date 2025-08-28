@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { TimestampedWord } from "@/types";
+import { useScrollDelegationHook } from "@/utils/scrollDelegation";
 
 interface KaraokeLyricsProps {
   words: TimestampedWord[];
@@ -19,6 +20,9 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Add scroll delegation
+  useScrollDelegationHook(containerRef);
 
   // Function to detect if a word is metadata/action rather than actual lyrics
   const isNonSungWord = (word: string): boolean => {

@@ -2,6 +2,7 @@ import React from "react";
 import { ChatBubble } from "./ChatBubble";
 import { useChat } from "@/hooks/use-chat";
 import { cn } from "@/lib/utils";
+import { useScrollDelegationHook } from "@/utils/scrollDelegation";
 
 interface ChatContainerProps {
   chatHeight: number;
@@ -18,6 +19,8 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
   messages,
   scrollerRef
 }) => {
+  // Add scroll delegation
+  useScrollDelegationHook(scrollerRef);
   return (
     <>
       {/* Gradient overlay at top when scrolled */}

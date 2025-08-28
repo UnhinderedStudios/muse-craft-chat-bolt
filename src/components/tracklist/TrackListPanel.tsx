@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Play, Pause, RotateCw, X, Heart, Shuffle, Repeat, MoreHorizontal, Search } from "lucide-react";
 import { TrackItem } from "@/types";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useScrollDelegationHook } from "@/utils/scrollDelegation";
 import {
   Pagination,
   PaginationContent,
@@ -71,6 +72,10 @@ export default function TrackListPanel({
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const tracksPerPage = 15;
+  
+  // Scroll delegation
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useScrollDelegationHook(scrollRef);
   
   // Combine original tracks with test tracks for demo
   const allTracks = [...tracks, ...generateTestTracks()];
@@ -164,7 +169,7 @@ export default function TrackListPanel({
 
       {/* Scrollable area */}
       <div className="min-h-0 flex-1 overflow-hidden">
-        <div className="h-full overflow-y-auto lyrics-scrollbar">
+        <div ref={scrollRef} className="h-full overflow-y-auto lyrics-scrollbar">
           <div className="min-h-full flex flex-col justify-end gap-3 p-4">
         {paginatedTracks.map((t, pageIndex) => {
           // Calculate the actual index in the full filtered tracks array
