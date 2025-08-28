@@ -215,7 +215,7 @@ export default function TrackListPanel({
                   <div className="mt-3 pb-2 pr-1">
                     <div className="max-h-[120px] overflow-y-auto lyrics-scrollbar">
                       <div className="flex flex-wrap gap-x-1.5 gap-y-1.5">
-                        {(t.params?.length ? t.params : ["Text","Text","Text","Text","Text","Text"]).map((p, idx) => (
+                        {(t.params?.length ? t.params : ["Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text","Text"]).map((p, idx) => (
                           <div key={idx} className="px-3 py-1.5 rounded-full bg-white/25 text-[12px] text-black font-semibold text-center whitespace-nowrap">
                             {p || "Text"}
                           </div>
