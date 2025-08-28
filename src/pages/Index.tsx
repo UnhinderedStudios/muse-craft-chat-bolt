@@ -997,17 +997,16 @@ async function startGeneration() {
           </div>
 
           {/* Row 1 - Center: Chat */}
-          <div className="order-2 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 min-h-0 bg-[#151515] rounded-2xl relative overflow-hidden">
+          <div className="order-2 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 min-h-0 bg-[#151515] rounded-2xl relative overflow-hidden flex flex-col">
             {/* top fade */}
             {scrollTop > 0 && (
               <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none" />
             )}
 
-            {/* chat scroll area: fixed height on desktop, capped height on mobile/tablet */}
+            {/* chat scroll area: flexible height on desktop, capped height on mobile/tablet */}
             <div
               ref={scrollerRef}
-              className={`overflow-y-auto custom-scrollbar pl-6 lg:pl-8 pr-4 lg:pr-6 pt-6 lg:pt-8 ${isDesktop ? '' : 'max-h-[56vh]'}`}
-              style={isDesktop ? { height: `${chatHeight}px` } : undefined}
+              className={`overflow-y-auto custom-scrollbar pl-6 lg:pl-8 pr-4 lg:pr-6 pt-6 lg:pt-8 ${isDesktop ? 'flex-1' : 'max-h-[56vh]'}`}
               onScroll={(e) => setScrollTop((e.target as HTMLDivElement).scrollTop)}
             >
               <div className="space-y-4 pr-4 pl-4 pt-4 pb-4 lg:pb-32">
@@ -1024,10 +1023,8 @@ async function startGeneration() {
               </div>
             </div>
 
-            {/* tools footer: absolute on desktop, sticky on smaller screens */}
-            <div
-              className={`${isDesktop ? 'absolute bottom-0 pt-8 pb-8 px-8' : 'sticky bottom-0 pt-4 pb-4 px-4'} left-0 right-0 bg-gradient-to-t from-[#151515] via-[#151515]/98 via-[#151515]/90 to-transparent`}
-            >
+            {/* tools footer: flex-shrink-0 to stay at bottom */}
+            <div className="flex-shrink-0 pt-4 pb-4 px-4 lg:px-8 bg-gradient-to-t from-[#151515] via-[#151515]/98 via-[#151515]/90 to-transparent">
               <div className="space-y-4">
                 {attachedFiles.length > 0 && (
                   <div className="flex flex-wrap gap-2">
@@ -1105,17 +1102,6 @@ async function startGeneration() {
   </div>
 </div>
               </div>
-            </div>
-
-            {/* desktop-only resize handle */}
-            <div
-              className={`hidden lg:block absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize group ${isResizing ? 'bg-accent-primary/50' : 'bg-white/20 hover:bg-white/40'} transition-colors`}
-              onMouseDown={handleMouseDown}
-              style={{ clipPath: 'polygon(100% 0%, 0% 100%, 100% 100%)', borderBottomRightRadius: '16px' }}
-            >
-              <div className="absolute bottom-1 right-1 w-1 h-1 bg-white/60 rounded-full"></div>
-              <div className="absolute bottom-1 right-2.5 w-1 h-1 bg-white/40 rounded-full"></div>
-              <div className="absolute bottom-2.5 right-1 w-1 h-1 bg-white/40 rounded-full"></div>
             </div>
           </div>
 
