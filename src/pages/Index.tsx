@@ -12,7 +12,6 @@ import { toast } from "sonner";
 import { Dice5, Mic, Upload, Grid3X3, Plus, List, Play, Pause, X, SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX } from "lucide-react";
 
 // Components
-import { CyberHeader } from "@/components/cyber/CyberHeader";
 import { CyberCard } from "@/components/cyber/CyberCard";
 import { CyberButton } from "@/components/cyber/CyberButton";
 import { ChatBubble } from "@/components/chat/ChatBubble";
@@ -972,9 +971,6 @@ async function startGeneration() {
         ["--page-gap" as any]: "1.25rem",
       }}
     >
-      {/* Cyber Header */}
-      <CyberHeader />
-
       {/* Three Column Layout - Sessions, Chat + Form, Karaoke + Template */}
       <main className="w-full px-5 pt-6 pb-0 min-h-0">
         {/* 1 col on mobile, 8 cols on iPad, 12 cols on desktop */}
