@@ -980,14 +980,14 @@ async function startGeneration() {
             lg:grid-cols-[minmax(0,1.62fr)_minmax(0,6.93fr)_minmax(0,1.98fr)_minmax(0,2.42fr)]
             xl:grid-cols-[minmax(0,1.62fr)_minmax(0,5.94fr)_minmax(0,1.98fr)_minmax(0,2.42fr)]
             gap-5 lg:items-stretch
-            lg:grid-rows-[10px_auto_1fr]
+            lg:grid-rows-[20px_auto_1fr]
             lg:max-h-[calc(100vh-var(--dock-h)-var(--page-gap))]
             lg:min-h-0
             lg:overflow-hidden
           ">
 
           {/* Header Bar */}
-          <div className="order-0 lg:col-span-4 h-2.5 bg-[#151515] rounded-2xl" />
+          <div className="order-0 lg:col-span-4 h-5 bg-[#151515] rounded-2xl" />
 
           {/* Row 1 - Left: Sessions */}
           <div className="order-2 md:col-span-2 lg:col-span-1 xl:col-span-1 bg-[#151515] rounded-2xl p-6">
