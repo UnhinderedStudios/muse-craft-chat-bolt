@@ -121,95 +121,98 @@ export default function TrackListPanel({
                 </div>
               ) : (
                 /* Active track - album art hugs left edge */
-                <div className="bg-[#1e1e1e] rounded-xl flex">
-                  {/* Album art - flush with container left edge, only top-left corner rounded */}
-                  <div className="shrink-0 w-16 h-16 bg-black/30 overflow-hidden rounded-tl-xl relative group">
-                    {t.coverUrl ? (
-                      <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20" />
-                    )}
-                    <div 
-                      className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedTrackForRegen(t);
-                        setShowQuickAlbumGenerator(true);
-                      }}
-                    >
-                      <RotateCw className="w-4 h-4 text-white group-hover:animate-[spin_0.36s_ease-in-out] transition-transform" />
-                    </div>
-                  </div>
-
-                  {/* Content area next to album art */}
-                  <div className="flex-1 ml-3 flex flex-col justify-start">
-                    {/* Title above controls */}
-                    <div className="mb-2">
-                      <div className="text-sm text-white font-medium truncate">{t.title || "Song Title"}</div>
-                      <div className="text-xs text-white/60 truncate">No Artist</div>
-                    </div>
-
-                    {/* Controls line: Play button + Progress bar + 4 icons */}
-                    <div className="flex items-center gap-3 mb-3">
-                      {/* Play button */}
-                      <button
-                        className="w-6 h-6 flex items-center justify-center text-white hover:text-white/80 transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onPlayPause(i);
-                        }}
-                      >
-                        {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                      </button>
-
-                      {/* Progress bar */}
+                <div className="bg-[#1e1e1e] rounded-xl flex flex-col">
+                  {/* First row: Album art + Content */}
+                  <div className="flex">
+                    {/* Album art - flush with container left edge, only top-left corner rounded */}
+                    <div className="shrink-0 w-16 h-16 bg-black/30 overflow-hidden rounded-tl-xl relative group">
+                      {t.coverUrl ? (
+                        <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20" />
+                      )}
                       <div 
-                        className="flex-1 h-1.5 bg-white/10 rounded cursor-pointer"
+                        className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation();
-                          
-                          const audio = audioRefs.current[i];
-                          if (!audio || !audio.duration) return;
-                          const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-                          const pct = (e.clientX - rect.left) / rect.width;
-                          const seek = pct * audio.duration;
-                          
-                          onSeek(seek);
+                          setSelectedTrackForRegen(t);
+                          setShowQuickAlbumGenerator(true);
                         }}
                       >
-                         <div
-                           className="h-full bg-white/70 rounded"
-                           style={{
-                             width: (() => {
-                               const a = audioRefs.current[i];
-                               if (!a || !a.duration) return "0%";
-                               const time = audioCurrentTimes[i] || 0;
-                               return `${(time / a.duration) * 100}%`;
-                             })(),
-                           }}
-                         />
+                        <RotateCw className="w-4 h-4 text-white group-hover:animate-[spin_0.36s_ease-in-out] transition-transform" />
+                      </div>
+                    </div>
+
+                    {/* Content area next to album art */}
+                    <div className="flex-1 ml-3 flex flex-col justify-start">
+                      {/* Title above controls */}
+                      <div className="mb-2">
+                        <div className="text-sm text-white font-medium truncate">{t.title || "Song Title"}</div>
+                        <div className="text-xs text-white/60 truncate">No Artist</div>
                       </div>
 
-                      {/* 4 control icons */}
-                      <div className="flex items-center gap-2">
-                        <button className="text-white/60 hover:text-white transition-colors">
-                          <Heart className="w-4 h-4" />
+                      {/* Controls line: Play button + Progress bar + 4 icons */}
+                      <div className="flex items-center gap-3 mb-3">
+                        {/* Play button */}
+                        <button
+                          className="w-6 h-6 flex items-center justify-center text-white hover:text-white/80 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onPlayPause(i);
+                          }}
+                        >
+                          {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                         </button>
-                        <button className="text-white/60 hover:text-white transition-colors">
-                          <Shuffle className="w-4 h-4" />
-                        </button>
-                        <button className="text-white/60 hover:text-white transition-colors">
-                          <Repeat className="w-4 h-4" />
-                        </button>
-                        <button className="text-white/60 hover:text-white transition-colors">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </button>
+
+                        {/* Progress bar */}
+                        <div 
+                          className="flex-1 h-1.5 bg-white/10 rounded cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            
+                            const audio = audioRefs.current[i];
+                            if (!audio || !audio.duration) return;
+                            const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                            const pct = (e.clientX - rect.left) / rect.width;
+                            const seek = pct * audio.duration;
+                            
+                            onSeek(seek);
+                          }}
+                        >
+                           <div
+                             className="h-full bg-white/70 rounded"
+                             style={{
+                               width: (() => {
+                                 const a = audioRefs.current[i];
+                                 if (!a || !a.duration) return "0%";
+                                 const time = audioCurrentTimes[i] || 0;
+                                 return `${(time / a.duration) * 100}%`;
+                               })(),
+                             }}
+                           />
+                        </div>
+
+                        {/* 4 control icons */}
+                        <div className="flex items-center gap-2">
+                          <button className="text-white/60 hover:text-white transition-colors">
+                            <Heart className="w-4 h-4" />
+                          </button>
+                          <button className="text-white/60 hover:text-white transition-colors">
+                            <Shuffle className="w-4 h-4" />
+                          </button>
+                          <button className="text-white/60 hover:text-white transition-colors">
+                            <Repeat className="w-4 h-4" />
+                          </button>
+                          <button className="text-white/60 hover:text-white transition-colors">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Parameters below - full width from album art edge */}
-                  <div className="mt-3 pb-2 w-full pr-1">
+                  {/* Second row: Parameters - full width from album art left edge */}
+                  <div className="mt-3 pb-2 pr-1">
                     <div className="max-h-[120px] overflow-y-auto lyrics-scrollbar">
                       <div className="flex flex-wrap gap-x-1.5 gap-y-1.5">
                         {(t.params?.length ? t.params : ["Text","Text","Text","Text","Text","Text"]).map((p, idx) => (
