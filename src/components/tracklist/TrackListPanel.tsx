@@ -135,7 +135,7 @@ export default function TrackListPanel({
         )}
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto lyrics-scrollbar space-y-3">
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar space-y-3">
         {filteredTracks.map((t, i) => {
           const active = i === currentIndex;
           return (
