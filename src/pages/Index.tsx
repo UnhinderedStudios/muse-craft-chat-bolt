@@ -1168,7 +1168,7 @@ async function startGeneration() {
           </div>
 
           {/* Row 2 - Center: Form */}
-          <div className="order-6 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 h-full">
+          <div className="order-6 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 h-full lg:max-h-[400px] lg:overflow-y-auto">
             {/* Two-column layout: Left (Title + Song Parameters), Right (Lyrics) */}
             <div className="grid grid-cols-12 gap-4 h-auto">
               {/* Left column */}
