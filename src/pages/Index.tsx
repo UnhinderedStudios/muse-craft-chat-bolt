@@ -984,7 +984,7 @@ async function startGeneration() {
             lg:grid-cols-[minmax(0,1.62fr)_minmax(0,6.93fr)_minmax(0,1.98fr)_minmax(0,2.42fr)]
             xl:grid-cols-[minmax(0,1.62fr)_minmax(0,5.94fr)_minmax(0,1.98fr)_minmax(0,2.42fr)]
             gap-5 lg:items-stretch
-            lg:grid-rows-[auto_1fr]
+            lg:grid-rows-[1fr_auto]
             lg:max-h-[calc(100vh-var(--dock-h)-var(--page-gap))]
             lg:min-h-0
             lg:overflow-hidden
@@ -1202,7 +1202,7 @@ async function startGeneration() {
               </div>
 
               {/* Right column: Lyrics */}
-              <div className="col-span-7 space-y-2 flex flex-col max-h-[320px]">
+              <div className="col-span-7 space-y-2 flex flex-col">
                 <label className="text-sm font-medium text-white/80">Lyrics</label>
                 <div className="bg-[#2d2d2d] rounded-lg p-4 flex-1 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200 overflow-hidden">
                   <Textarea
