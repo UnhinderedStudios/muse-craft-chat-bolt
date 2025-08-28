@@ -984,7 +984,7 @@ async function startGeneration() {
             lg:grid-cols-[minmax(0,1.62fr)_minmax(0,6.93fr)_minmax(0,1.98fr)_minmax(0,2.42fr)]
             xl:grid-cols-[minmax(0,1.62fr)_minmax(0,5.94fr)_minmax(0,1.98fr)_minmax(0,2.42fr)]
             gap-5 lg:items-stretch
-            lg:grid-rows-[1fr_auto]
+            lg:grid-rows-[1fr_320px]
             lg:max-h-[calc(100vh-var(--dock-h)-var(--page-gap))]
             lg:min-h-0
             lg:overflow-hidden
@@ -1170,7 +1170,7 @@ async function startGeneration() {
           {/* Row 2 - Center: Form */}
           <div className="order-6 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 h-full">
             {/* Two-column layout: Left (Title + Song Parameters), Right (Lyrics) */}
-            <div className="grid grid-cols-12 gap-4 h-auto">
+            <div className="grid grid-cols-12 gap-4 h-full max-h-[280px]">
               {/* Left column */}
               <div className="col-span-5 space-y-3">
                 {/* Title */}
@@ -1202,7 +1202,7 @@ async function startGeneration() {
               </div>
 
               {/* Right column: Lyrics */}
-              <div className="col-span-7 space-y-2 flex flex-col">
+              <div className="col-span-7 space-y-2 flex flex-col h-full">
                 <label className="text-sm font-medium text-white/80">Lyrics</label>
                 <div className="bg-[#2d2d2d] rounded-lg p-4 flex-1 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200 overflow-hidden">
                   <Textarea
