@@ -141,7 +141,7 @@ export default function TrackListPanel({
   return (
     <aside className="h-full min-h-0 bg-[#151515] rounded-2xl flex flex-col">
       {/* Search Bar */}
-      <div className="relative pl-4 pr-6 pt-4 mb-1 shrink-0">
+      <div className="relative pl-4 pr-6 pt-4 mb-2 shrink-0">
         <div className="relative">
           <Input
             value={searchQuery}
