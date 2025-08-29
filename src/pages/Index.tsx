@@ -244,12 +244,6 @@ const Index = () => {
     scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  // When the user resizes, ensure the bottom stays in view
-  useEffect(() => {
-    if (!scrollerRef.current) return;
-    scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight;
-  }, [chatHeight]);
-
 
   useEffect(() => {
     // reset audio refs when result list changes
@@ -980,22 +974,20 @@ async function startGeneration() {
           </div>
 
           {/* Row 1 - Center: Chat */}
-          <div
-            className="order-3 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 min-h-0 bg-[#151515] rounded-2xl overflow-hidden flex flex-col"
-            style={isDesktop ? { height: `${chatHeight}px` } : undefined}
-          >
+          <div className="order-3 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 min-h-0 bg-[#151515] rounded-2xl relative overflow-hidden">
             {/* top fade */}
             {scrollTop > 0 && (
               <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none" />
             )}
 
-            {/* chat scroller takes remaining space; no magic subtraction */}
+            {/* chat scroll area: fixed height on desktop, capped height on mobile/tablet */}
             <div
               ref={scrollerRef}
-              className={`flex-1 min-h-0 overflow-y-auto custom-scrollbar pl-6 lg:pl-8 pr-4 lg:pr-6 pt-6 lg:pt-8 ${isDesktop ? '' : 'max-h-[50vh]'}`}
+              className={`overflow-y-auto custom-scrollbar pl-6 lg:pl-8 pr-4 lg:pr-6 pt-6 lg:pt-8 ${isDesktop ? '' : 'max-h-[50vh]'}`}
+              style={isDesktop ? { height: `${chatHeight - 140}px` } : undefined}
               onScroll={(e) => setScrollTop((e.target as HTMLDivElement).scrollTop)}
             >
-              <div className="space-y-4 pr-4 pl-4 pt-4 pb-4">
+              <div className="space-y-4 pr-4 pl-4 pt-4 pb-52">
                 {messages.map((m, i) => (
                   <ChatBubble key={i} role={m.role} content={m.content} />
                 ))}
@@ -1009,9 +1001,9 @@ async function startGeneration() {
               </div>
             </div>
 
-            {/* tools footer: normal flow (shrink-0), no absolute positioning */}
+            {/* tools footer: absolute on desktop, sticky on smaller screens */}
             <div
-              className={`${isDesktop ? 'pt-6 pb-6 px-8' : 'sticky bottom-0 pt-4 pb-4 px-4'} bg-gradient-to-t from-[#151515] via-[#151515]/98 via-[#151515]/90 to-transparent shrink-0`}
+              className={`${isDesktop ? 'absolute bottom-0 pt-8 pb-8 px-8' : 'sticky bottom-0 pt-4 pb-4 px-4'} left-0 right-0 bg-gradient-to-t from-[#151515] via-[#151515]/98 via-[#151515]/90 to-transparent`}
             >
               <div className="space-y-4">
                 {attachedFiles.length > 0 && (
