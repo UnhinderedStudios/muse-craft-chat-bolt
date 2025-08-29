@@ -118,11 +118,15 @@ function sanitizeStyleSafe(input?: string): string | undefined {
 
 
 // VirtualizedChat component for performance with large message lists
-const VirtualizedChat: React.FC<{
+type VirtualizedChatProps = {
   chatFeed: any[];
   scrollerRef: React.RefObject<HTMLDivElement>;
   bottomPad: number;
-}> = ({ chatFeed, scrollerRef, bottomPad }) => {
+};
+
+const GAP_PX = 16; // tailwind space-y-4
+
+const VirtualizedChat = ({ chatFeed, scrollerRef, bottomPad }: VirtualizedChatProps) => {
   try {
     const virtualizer = useVirtualizer({
       count: chatFeed.length,
@@ -145,6 +149,7 @@ const VirtualizedChat: React.FC<{
           return (
             <div
               key={virtualItem.key}
+              ref={virtualizer.measureElement}
               style={{
                 position: 'absolute',
                 top: 0,
@@ -162,6 +167,8 @@ const VirtualizedChat: React.FC<{
               ) : (
                 <ChatBubble role={m.role} content={m.content} />
               )}
+              {/* spacer to mimic space-y-4 */}
+              <div style={{ height: GAP_PX }} />
             </div>
           );
         })}
@@ -262,10 +269,15 @@ const Index = () => {
     return [...messages, statusRow as any];
   }, [messages, busy, isAnalyzingImage, isReadingText]);
 
+  // Consolidate scroll-to-bottom behavior
   useEffect(() => {
-    if (!scrollerRef.current) return;
-    scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight;
-  }, [messages, chatHeight, footerH, busy, isAnalyzingImage, isReadingText]);
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollTo({
+      top: el.scrollHeight,
+      behavior: (!busy && messages.length > 0) ? "smooth" : "auto",
+    });
+  }, [chatFeed.length, chatHeight, footerH, busy, isAnalyzingImage, isReadingText]);
 
   // MAX the chat scroller can take while guaranteeing the form keeps MIN_FORM
   const MAX_SCROLLER = clamp(vh - MIN_FORM - RESERVED, MIN_SCROLLER, vh);
@@ -414,9 +426,6 @@ const Index = () => {
   }, [isPlaying, currentTrackIndex, tracks.length]);
 
 
-  useEffect(() => {
-    scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
 
 
   useEffect(() => {
@@ -611,49 +620,35 @@ const Index = () => {
 
   // Handle retry timestamps for karaoke
   const handleRetryTimestamps = async (versionIndex: number) => {
-    if (!jobId || versionIndex >= tracks.length) return;
-    
+    if (!jobId || !versions[versionIndex]) return;
     try {
-      const track = tracks[versionIndex];
       setBusy(true);
-      
-      // Convert alignedWords to TimestampedWord format
-      const response = await api.getTimestampedLyrics({
+      const { audioId, musicIndex } = versions[versionIndex];
+
+      const res = await api.getTimestampedLyrics({
         taskId: jobId,
-        audioId: track.id,
-        musicIndex: versionIndex,
+        audioId,
+        musicIndex,
       });
-      
-      if (response.alignedWords && response.alignedWords.length > 0) {
-        const convertedWords = response.alignedWords.map(word => ({
-          word: word.word,
-          start: word.start_s,
-          end: word.end_s,
-          confidence: word.p_align,
-          success: word.success
-        }));
-        
-        setTracks(prev => prev.map((t, idx) => 
-          idx === versionIndex 
-            ? { ...t, words: convertedWords, hasTimestamps: true, timestampError: undefined }
-            : t
-        ));
+
+      const words = (res.alignedWords ?? []).map((w: any) => ({
+        word: w.word,
+        start: w.startS ?? w.start_s ?? w.start ?? 0,
+        end:   w.endS   ?? w.end_s   ?? w.end   ?? 0,
+        success: !!w.success,
+        p_align: w.p_align ?? w.palign ?? 0,
+      }));
+
+      if (words.length) {
+        setVersions(vs => vs.map((v, i) => i === versionIndex ? { ...v, words, hasTimestamps: true, timestampError: undefined } : v));
+        setTracks(ts => ts.map(t => t.id === audioId ? { ...t, words, hasTimestamps: true, timestampError: undefined } : t));
         toast.success("Karaoke timestamps loaded!");
       } else {
-        setTracks(prev => prev.map((t, idx) => 
-          idx === versionIndex 
-            ? { ...t, timestampError: "No timestamps available" }
-            : t
-        ));
-        toast.error("No timestamps available for this track");
+        setVersions(vs => vs.map((v, i) => i === versionIndex ? { ...v, timestampError: "No timestamps available" } : v));
+        toast.error("No timestamps available for this version");
       }
-    } catch (error) {
-      console.error('Error retrying timestamps:', error);
-      setTracks(prev => prev.map((t, idx) => 
-        idx === versionIndex 
-          ? { ...t, timestampError: "Failed to load timestamps" }
-          : t
-      ));
+    } catch (e) {
+      setVersions(vs => vs.map((v, i) => i === versionIndex ? { ...v, timestampError: "Failed to load timestamps" } : v));
       toast.error("Failed to load karaoke timestamps");
     } finally {
       setBusy(false);
@@ -769,11 +764,11 @@ const Index = () => {
     setIsReadingText(hasTextAttachments || false);
     
     try {
-      const systemPrompt = "You are a helpful assistant that helps users create and generate songs. Be creative, engaging, and provide detailed suggestions.";
-      console.debug("[Chat] Using systemPrompt (first 160 chars):", systemPrompt.slice(0, 160));
+      const chatSystemPrompt = "You are a helpful assistant that helps users create and generate songs. Be creative, engaging, and provide detailed suggestions.";
+      console.debug("[Chat] Using systemPrompt (first 160 chars):", chatSystemPrompt.slice(0, 160));
       
       // Use the shared sendMessage function
-      const assistantMessage = await sendMessage(apiContent, systemPrompt, fileAttachments);
+      const assistantMessage = await sendMessage(apiContent, chatSystemPrompt, fileAttachments);
       
       if (assistantMessage) {
         const assistantMsg = assistantMessage.content;
@@ -1212,7 +1207,7 @@ async function startGeneration() {
               style={isDesktop ? { height: `${scrollerHeight}px`, maxHeight: `${MAX_SCROLLER}px` } : undefined}
               onScroll={(e) => setScrollTop((e.target as HTMLDivElement).scrollTop)}
             >
-              <div className="space-y-4 pr-4 pl-4 pt-4" style={{ paddingBottom: bottomPad }}>
+              <div className="space-y-4 pr-4 pl-4 pt-4" style={{ paddingBottom: chatFeed.length > 80 ? 0 : bottomPad }}>
                 {chatFeed.length > 80 ? (
                   <VirtualizedChat 
                     chatFeed={chatFeed}
