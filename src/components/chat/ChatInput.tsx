@@ -1,29 +1,33 @@
-import React from "react";
+import React, { forwardRef } from "react";
 import { CyberButton } from "@/components/cyber/CyberButton";
 import { Textarea } from "@/components/ui/textarea";
 import { Dice5, Mic, Upload, Plus, List } from "lucide-react";
 
 interface ChatInputProps {
-  input: string;
-  setInput: (input: string) => void;
-  onSend: () => void;
-  onRandomize: () => void;
-  onMelodySpeech: () => void;
+  value: string;
+  onChange: (value: string) => void;
+  onSend: (message: string) => void;
+  onFileAttach: () => void;
   disabled?: boolean;
+  attachedFiles: any[];
+  onRemoveAttachment: (index: number) => void;
 }
 
-export const ChatInput: React.FC<ChatInputProps> = ({
-  input,
-  setInput,
+export const ChatInput = forwardRef<HTMLTextAreaElement, ChatInputProps>(({
+  value,
+  onChange,
   onSend,
-  onRandomize,
-  onMelodySpeech,
-  disabled = false
-}) => {
+  onFileAttach,
+  disabled = false,
+  attachedFiles,
+  onRemoveAttachment
+}, ref) => {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      onSend();
+      if (value.trim()) {
+        onSend(value);
+      }
     }
   };
 
@@ -34,8 +38,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           {/* Chat Input */}
           <div className="relative">
             <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
+              ref={ref}
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Describe the song you want to create..."
               className="min-h-[60px] max-h-[120px] bg-card-alt border-border-main text-text-primary placeholder:text-text-secondary pr-16 py-4 pl-4 rounded-input resize-none chat-input-scrollbar"
@@ -43,8 +48,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             />
             <CyberButton
               variant="icon"
-              onClick={onSend}
-              disabled={!input.trim() || disabled}
+              onClick={() => value.trim() && onSend(value)}
+              disabled={!value.trim() || disabled}
               className="absolute bottom-2 right-2"
             >
               <Plus className="w-4 h-4" />
@@ -53,32 +58,18 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
-            <CyberButton variant="icon" disabled={disabled}>
+            <CyberButton 
+              variant="icon" 
+              onClick={onFileAttach}
+              disabled={disabled}
+            >
               <Upload className="w-4 h-4" />
-            </CyberButton>
-            <CyberButton variant="icon" disabled={disabled}>
-              <Mic className="w-4 h-4" />
-            </CyberButton>
-            <CyberButton 
-              variant="icon" 
-              onClick={onRandomize}
-              disabled={disabled}
-            >
-              <Dice5 className="w-4 h-4" />
-            </CyberButton>
-            <CyberButton 
-              variant="icon" 
-              onClick={onMelodySpeech}
-              disabled={disabled}
-            >
-              <Mic className="w-4 h-4" />
-            </CyberButton>
-            <CyberButton variant="icon" disabled={disabled}>
-              <List className="w-4 h-4" />
             </CyberButton>
           </div>
         </div>
       </div>
     </div>
   );
-};
+});
+
+ChatInput.displayName = "ChatInput";

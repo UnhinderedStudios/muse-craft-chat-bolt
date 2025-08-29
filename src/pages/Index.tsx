@@ -28,6 +28,7 @@ import PlayerDock from "@/components/audio/PlayerDock";
 import TrackListPanel from "@/components/tracklist/TrackListPanel";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { VoiceInterface } from "@/components/voice/VoiceInterface";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 // Hooks
 import { useChat } from "@/hooks/use-chat";
@@ -116,6 +117,78 @@ function sanitizeStyleSafe(input?: string): string | undefined {
 
 
 
+// VirtualizedChat component for performance with large message lists
+const VirtualizedChat: React.FC<{
+  chatFeed: any[];
+  scrollerRef: React.RefObject<HTMLDivElement>;
+  bottomPad: number;
+}> = ({ chatFeed, scrollerRef, bottomPad }) => {
+  try {
+    const virtualizer = useVirtualizer({
+      count: chatFeed.length,
+      getScrollElement: () => scrollerRef.current,
+      estimateSize: () => 100,
+      overscan: 5,
+    });
+
+    return (
+      <div
+        style={{
+          height: `${virtualizer.getTotalSize()}px`,
+          width: '100%',
+          position: 'relative',
+          paddingBottom: bottomPad,
+        }}
+      >
+        {virtualizer.getVirtualItems().map((virtualItem) => {
+          const m = chatFeed[virtualItem.index];
+          return (
+            <div
+              key={virtualItem.key}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${virtualItem.start}px)`,
+              }}
+            >
+              {m?.type === "status" && m?.id === "__status__" ? (
+                <div className="space-y-3" role="status" aria-live="polite">
+                  {m.isAnalyzingImage && <ImageAnalysisLoader text="Analyzing Image..." />}
+                  {m.isReadingText && <ImageAnalysisLoader text="Reading Document..." />}
+                  {!m.isAnalyzingImage && !m.isReadingText && <Spinner />}
+                </div>
+              ) : (
+                <ChatBubble role={m.role} content={m.content} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  } catch (error) {
+    // Fallback to non-virtualized rendering on any error
+    console.warn('Virtualization failed, falling back to regular rendering:', error);
+    return (
+      <>
+        {chatFeed.map((m: any, i: number) => {
+          if (m?.type === "status" && m?.id === "__status__") {
+            return (
+              <div key="__status__" className="space-y-3" role="status" aria-live="polite">
+                {m.isAnalyzingImage && <ImageAnalysisLoader text="Analyzing Image..." />}
+                {m.isReadingText && <ImageAnalysisLoader text="Reading Document..." />}
+                {!m.isAnalyzingImage && !m.isReadingText && <Spinner />}
+              </div>
+            );
+          }
+          return <ChatBubble key={i} role={m.role} content={m.content} />;
+        })}
+      </>
+    );
+  }
+};
+
 const Index = () => {
   const DOCK_H = 80; // px — reduced height to make container more compact
   const isDesktop = useMediaQuery("(min-width: 1024px)");
@@ -169,6 +242,26 @@ const Index = () => {
   }, [isDesktop]);
 
   // always keep the bottom in view when things change
+  // Type for synthetic status row
+  type StatusRow = {
+    id: "__status__";
+    type: "status";
+    isAnalyzingImage: boolean;
+    isReadingText: boolean;
+  };
+
+  // Build chat feed with synthetic status row when busy
+  const chatFeed = useMemo(() => {
+    if (!busy) return messages;
+    const statusRow: StatusRow = {
+      id: "__status__",
+      type: "status",
+      isAnalyzingImage,
+      isReadingText,
+    };
+    return [...messages, statusRow as any];
+  }, [messages, busy, isAnalyzingImage, isReadingText]);
+
   useEffect(() => {
     if (!scrollerRef.current) return;
     scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight;
@@ -176,6 +269,31 @@ const Index = () => {
 
   // MAX the chat scroller can take while guaranteeing the form keeps MIN_FORM
   const MAX_SCROLLER = clamp(vh - MIN_FORM - RESERVED, MIN_SCROLLER, vh);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const onShortcut = (e: KeyboardEvent) => {
+      const meta = e.ctrlKey || e.metaKey;
+
+      // Focus chat with '/'
+      if (e.key === '/') {
+        const ae = document.activeElement as HTMLElement | null;
+        if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.getAttribute('contenteditable') === 'true')) return;
+        e.preventDefault();
+        chatInputRef.current?.focus();
+        return;
+      }
+
+      // Cmd/Ctrl+K -> toggle Melody Speech
+      if (meta && (e.key.toLowerCase() === 'k')) {
+        e.preventDefault();
+        setShowMelodySpeech((v) => !v);
+      }
+    };
+
+    window.addEventListener('keydown', onShortcut);
+    return () => window.removeEventListener('keydown', onShortcut);
+  }, [setShowMelodySpeech]);
 
   // height actually used by the chat scroller (clamped on both ends)
   const scrollerHeight = isDesktop
@@ -490,6 +608,57 @@ const Index = () => {
 
   const playPrev = () => tracks.length && handleAudioPlay(Math.max(0, currentTrackIndex - 1));
   const playNext = () => tracks.length && handleAudioPlay(Math.min(tracks.length - 1, currentTrackIndex + 1));
+
+  // Handle retry timestamps for karaoke
+  const handleRetryTimestamps = async (versionIndex: number) => {
+    if (!jobId || versionIndex >= tracks.length) return;
+    
+    try {
+      const track = tracks[versionIndex];
+      setBusy(true);
+      
+      // Convert alignedWords to TimestampedWord format
+      const response = await api.getTimestampedLyrics({
+        taskId: jobId,
+        audioId: track.id,
+        musicIndex: versionIndex,
+      });
+      
+      if (response.alignedWords && response.alignedWords.length > 0) {
+        const convertedWords = response.alignedWords.map(word => ({
+          word: word.word,
+          start: word.start_s,
+          end: word.end_s,
+          confidence: word.p_align,
+          success: word.success
+        }));
+        
+        setTracks(prev => prev.map((t, idx) => 
+          idx === versionIndex 
+            ? { ...t, words: convertedWords, hasTimestamps: true, timestampError: undefined }
+            : t
+        ));
+        toast.success("Karaoke timestamps loaded!");
+      } else {
+        setTracks(prev => prev.map((t, idx) => 
+          idx === versionIndex 
+            ? { ...t, timestampError: "No timestamps available" }
+            : t
+        ));
+        toast.error("No timestamps available for this track");
+      }
+    } catch (error) {
+      console.error('Error retrying timestamps:', error);
+      setTracks(prev => prev.map((t, idx) => 
+        idx === versionIndex 
+          ? { ...t, timestampError: "Failed to load timestamps" }
+          : t
+      ));
+      toast.error("Failed to load karaoke timestamps");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   // Update track cover URLs when album covers are generated
   useEffect(() => {
@@ -1044,15 +1213,30 @@ async function startGeneration() {
               onScroll={(e) => setScrollTop((e.target as HTMLDivElement).scrollTop)}
             >
               <div className="space-y-4 pr-4 pl-4 pt-4" style={{ paddingBottom: bottomPad }}>
-                {messages.map((m, i) => (
-                  <ChatBubble key={i} role={m.role} content={m.content} />
-                ))}
-                {busy && (
-                  <div className="space-y-3">
-                    {isAnalyzingImage && <ImageAnalysisLoader text="Analyzing Image..." />}
-                    {isReadingText && <ImageAnalysisLoader text="Reading Document..." />}
-                    {!isAnalyzingImage && !isReadingText && <Spinner />}
-                  </div>
+                {chatFeed.length > 80 ? (
+                  <VirtualizedChat 
+                    chatFeed={chatFeed}
+                    scrollerRef={scrollerRef}
+                    bottomPad={bottomPad}
+                  />
+                ) : (
+                  chatFeed.map((m: any, i: number) => {
+                    if (m?.type === "status" && m?.id === "__status__") {
+                      return (
+                        <div
+                          key="__status__"
+                          className="space-y-3"
+                          role="status"
+                          aria-live="polite"
+                        >
+                          {m.isAnalyzingImage && <ImageAnalysisLoader text="Analyzing Image..." />}
+                          {m.isReadingText && <ImageAnalysisLoader text="Reading Document..." />}
+                          {!m.isAnalyzingImage && !m.isReadingText && <Spinner />}
+                        </div>
+                      );
+                    }
+                    return <ChatBubble key={i} role={m.role} content={m.content} />;
+                  })
                 )}
               </div>
             </div>
@@ -1165,9 +1349,10 @@ async function startGeneration() {
               audioRefs={audioRefs}
               onPlayPause={handleAudioPlay}
               onAudioPause={handleAudioPause}
-              onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
-              onSeek={handleSeek}
-            />
+                    onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
+                    onSeek={handleSeek}
+                    onRetryTimestamps={handleRetryTimestamps}
+                  />
           </div>
 
           {/* Far-right Track List: spans both rows, bleeds to the right, sticky inner */}

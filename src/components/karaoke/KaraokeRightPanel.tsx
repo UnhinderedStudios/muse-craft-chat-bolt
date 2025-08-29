@@ -12,6 +12,7 @@ interface KaraokeRightPanelProps {
     audioId: string;
     words: TimestampedWord[];
     hasTimestamps?: boolean;
+    timestampError?: string;
   }>;
   currentAudioIndex: number;
   currentTime: number;
@@ -23,6 +24,7 @@ interface KaraokeRightPanelProps {
   onAudioPause: () => void;
   onFullscreenKaraoke: () => void;
   onSeek?: (time: number) => void;
+  onRetryTimestamps?: (index: number) => void;
 }
 
 export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
@@ -37,6 +39,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   onAudioPause,
   onFullscreenKaraoke,
   onSeek,
+  onRetryTimestamps,
 }) => {
   const hasContent = versions.length > 0;
   const currentVersion = hasContent ? versions[currentAudioIndex] : null;
@@ -145,12 +148,34 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
         {/* Lyrics Container - Give KaraokeLyrics a fixed height to scroll within */}
         <div className="flex-1 mb-4 min-h-0">
           {hasContent ? (
-            <KaraokeLyrics
-              words={currentVersion?.words || []}
-              currentTime={currentTime}
-              isPlaying={isPlaying}
-              className="h-full border-0 bg-transparent"
-            />
+            <>
+              <KaraokeLyrics
+                words={currentVersion?.words || []}
+                currentTime={currentTime}
+                isPlaying={isPlaying}
+                className="h-full border-0 bg-transparent"
+              />
+              {/* Retry timestamps for versions without karaoke */}
+              {hasContent && currentVersion && !currentVersion.hasTimestamps && (
+                <div className="mt-2 p-2 rounded-lg bg-muted/10 border border-muted/20">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      {currentVersion.timestampError || "No karaoke yet"}
+                    </span>
+                    {onRetryTimestamps && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onRetryTimestamps(currentAudioIndex)}
+                        className="h-6 px-2 text-xs"
+                      >
+                        Retry
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="h-full flex items-center justify-center text-muted-foreground text-center">
               <div>
