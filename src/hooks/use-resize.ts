@@ -18,7 +18,7 @@ export function useResize() {
       
       // Enforce strict boundaries with additional validation
       const newHeight = Math.max(
-        CHAT_HEIGHT_LIMITS.MIN, 
+        CHAT_HEIGHT_LIMITS.DEFAULT, 
         Math.min(CHAT_HEIGHT_LIMITS.MAX, proposedHeight)
       );
       
