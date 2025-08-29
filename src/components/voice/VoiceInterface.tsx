@@ -19,6 +19,7 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
     isProcessing,
     startRecording,
     stopRecording,
+    stopConversation,
     toggleMute,
     isMuted,
     volume,
@@ -44,7 +45,7 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
         size="icon"
         onClick={() => {
           // Stop conversation immediately before closing - this will stop all TTS and speech recognition
-          stopRecording();
+          stopConversation();
           onClose();
         }}
         className="absolute top-4 right-4 z-50 text-text-secondary hover:text-text-primary"
