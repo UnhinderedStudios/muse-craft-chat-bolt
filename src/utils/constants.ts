@@ -68,7 +68,7 @@ export const RANDOM_TITLES = [
 ];
 
 export const CHAT_HEIGHT_LIMITS = {
-  MIN: 440,
+  MIN: 500,
   MAX: 940, 
   DEFAULT: 640
 };

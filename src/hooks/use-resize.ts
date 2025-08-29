@@ -22,14 +22,9 @@ export function useResize() {
         Math.min(CHAT_HEIGHT_LIMITS.MAX, proposedHeight)
       );
       
-      // Only update if the new height is actually different and within practical bounds
-      // Ensure we don't exceed limits that would break scrolling (account for the 140px offset)
-      const maxPracticalHeight = Math.min(CHAT_HEIGHT_LIMITS.MAX, window.innerHeight - 200);
-      const clampedHeight = Math.min(newHeight, maxPracticalHeight);
-      
       // Only update if height actually changed
-      if (clampedHeight !== chatHeight) {
-        setChatHeight(clampedHeight);
+      if (newHeight !== chatHeight) {
+        setChatHeight(newHeight);
       }
     };
     
