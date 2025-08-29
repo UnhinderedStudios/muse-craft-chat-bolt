@@ -172,7 +172,7 @@ const Index = () => {
   useEffect(() => {
     if (!scrollerRef.current) return;
     scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight;
-  }, [messages, chatHeight, footerH]);
+  }, [messages, chatHeight, footerH, busy, isAnalyzingImage, isReadingText]);
 
   // MAX the chat scroller can take while guaranteeing the form keeps MIN_FORM
   const MAX_SCROLLER = clamp(vh - MIN_FORM - RESERVED, MIN_SCROLLER, vh);
