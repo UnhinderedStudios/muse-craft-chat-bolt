@@ -92,12 +92,12 @@
 }
 
 .lyrics-scrollbar::-webkit-scrollbar-thumb {
-  background: #464646;
+  background: #282828;
   border-radius: 4px;
 }
 
 .lyrics-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #464646;
+  background: #383838;
 }
 
 /* Chat Input Scrollbar - Positioned at far right edge */
