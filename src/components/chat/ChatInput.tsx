@@ -1,13 +1,14 @@
 import React from "react";
 import { CyberButton } from "@/components/cyber/CyberButton";
 import { Textarea } from "@/components/ui/textarea";
-import { Dice5, Mic, Upload, Grid3X3, Plus, List } from "lucide-react";
+import { Dice5, Mic, Upload, Plus, List } from "lucide-react";
 
 interface ChatInputProps {
   input: string;
   setInput: (input: string) => void;
   onSend: () => void;
   onRandomize: () => void;
+  onMelodySpeech: () => void;
   disabled?: boolean;
 }
 
@@ -16,6 +17,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   setInput,
   onSend,
   onRandomize,
+  onMelodySpeech,
   disabled = false
 }) => {
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -64,8 +66,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             >
               <Dice5 className="w-4 h-4" />
             </CyberButton>
-            <CyberButton variant="icon" disabled={disabled}>
-              <Grid3X3 className="w-4 h-4" />
+            <CyberButton 
+              variant="icon" 
+              onClick={onMelodySpeech}
+              disabled={disabled}
+            >
+              <Mic className="w-4 h-4" />
             </CyberButton>
             <CyberButton variant="icon" disabled={disabled}>
               <List className="w-4 h-4" />

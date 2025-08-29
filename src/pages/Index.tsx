@@ -9,7 +9,7 @@ import { sanitizeStyle } from "@/lib/styleSanitizer";
 import { Spinner } from "@/components/ui/spinner";
 import { ImageAnalysisLoader } from "@/components/ui/image-analysis-loader";
 import { toast } from "sonner";
-import { Dice5, Mic, Upload, Grid3X3, Plus, List, Play, Pause, X, SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX } from "lucide-react";
+import { Dice5, Mic, Upload, Plus, List, Play, Pause, X, SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX } from "lucide-react";
 
 // Components
 import { CyberCard } from "@/components/cyber/CyberCard";
@@ -26,6 +26,7 @@ import { ResizableContainer } from "@/components/layout/ResizableContainer";
 import { TagInput } from "@/components/song/TagInput";
 import PlayerDock from "@/components/audio/PlayerDock";
 import TrackListPanel from "@/components/tracklist/TrackListPanel";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 // Hooks
 import { useChat } from "@/hooks/use-chat";
@@ -128,6 +129,7 @@ const Index = () => {
   const [styleTags, setStyleTags] = useState<string[]>([]);
   const [chatHeight, setChatHeight] = useState(500);
   const [isResizing, setIsResizing] = useState(false);
+  const [showMelodySpeech, setShowMelodySpeech] = useState(false);
   
   // Ref for chat input to maintain focus
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
@@ -1097,7 +1099,7 @@ async function startGeneration() {
     {/* Icon tray — perfectly centered icons */}
     <div className="bg-[#040404] rounded-lg h-9 w-full grid grid-cols-4 place-items-center px-2 hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] transition-shadow">
       <button onClick={handleFileUpload} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Upload"><Upload size={18} /></button>
-      <button className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Grid"><Grid3X3 size={18} /></button>
+      <button onClick={() => setShowMelodySpeech(true)} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Microphone"><Mic size={18} /></button>
       <button onClick={randomizeAll} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Randomize"><Dice5 size={18} /></button>
       <button className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="List"><List size={18} /></button>
     </div>
@@ -1264,6 +1266,29 @@ async function startGeneration() {
           onClose={() => setShowFullscreenKaraoke(false)}
         />
       )}
+
+      {/* Melody Speech Overlay */}
+      <Dialog open={showMelodySpeech} onOpenChange={setShowMelodySpeech}>
+        <DialogContent className="max-w-none w-full h-full bg-black/10 backdrop-blur border-0 p-0 flex flex-col">
+          <div className="relative w-full h-full flex flex-col">
+            {/* Custom X button */}
+            <button
+              className="absolute top-6 right-6 z-10 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+              onClick={() => setShowMelodySpeech(false)}
+            >
+              <X className="w-6 h-6" />
+            </button>
+            
+            {/* Content */}
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center">
+                <h2 className="text-4xl font-bold text-white mb-4">Melody Speech</h2>
+                <p className="text-white/60 text-lg">Speech-to-melody functionality coming soon...</p>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <script
         type="application/ld+json"
