@@ -1204,7 +1204,7 @@ async function startGeneration() {
               <div className="col-span-7 space-y-2 flex flex-col">
                 <label className="text-sm font-medium text-white/80">Lyrics</label>
                 <div className="bg-[#2d2d2d] rounded-lg flex-1 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
-                  <div className="h-full overflow-y-auto custom-scrollbar">
+                  <div className="h-full overflow-y-auto lyrics-scrollbar">
                     <Textarea
                       value={details.lyrics || ""}
                       onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
