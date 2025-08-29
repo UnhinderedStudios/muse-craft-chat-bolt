@@ -14,7 +14,7 @@ export interface VoiceChatState {
 
 interface UseVoiceChatProps {
   messages: ChatMessage[];
-  sendMessage: (message: string, systemPrompt: string, attachments?: any[]) => Promise<void>;
+  sendMessage: (message: string, systemPrompt: string, attachments?: any[]) => Promise<ChatMessage | null>;
 }
 
 export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
@@ -204,37 +204,30 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
       setCurrentTranscript(""); // Clear transcript
       console.log('Processing transcript:', transcript);
 
-      // Send message through the main chat system with voice-specific system prompt
-      await sendMessage(transcript, "You are a helpful voice assistant. Keep responses conversational and concise since they will be spoken aloud. Be engaging and natural in your speech.");
+      // Send message through the main chat system and get the AI response directly
+      const aiResponse = await sendMessage(transcript, "You are a helpful voice assistant. Keep responses conversational and concise since they will be spoken aloud. Be engaging and natural in your speech.");
 
-      // Get the AI response from the last message
-      // We'll wait a moment for the chat to update with the AI response
-      setTimeout(async () => {
-        // The sendMessage should have updated the main chat with AI response
-        // Get the latest AI message and convert to speech
-        const latestMessage = messages[messages.length - 1];
-        if (latestMessage && latestMessage.role === 'assistant') {
-          const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
-            body: { 
-              text: latestMessage.content,
-              voice: 'alloy'
-            }
-          });
+      console.log('AI response received:', aiResponse?.content);
 
-          if (!ttsError && ttsData) {
-            await playAudio(ttsData.audioContent);
-          } else {
-            console.error('Text-to-speech error:', ttsError);
+      // Convert AI response to speech if we got a response
+      if (aiResponse && aiResponse.content) {
+        const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
+          body: { 
+            text: aiResponse.content,
+            voice: 'alloy'
           }
-        }
+        });
 
-        setIsProcessing(false);
-
-        // Automatically start listening again after AI finishes speaking
-        if (isAutoListeningRef.current) {
-          setTimeout(() => startListening(), 1000);
+        if (!ttsError && ttsData) {
+          await playAudio(ttsData.audioContent);
+        } else {
+          console.error('Text-to-speech error:', ttsError);
         }
-      }, 2000); // Wait for chat to process and respond
+      } else {
+        console.log('No AI response received');
+      }
+
+      setIsProcessing(false);
 
     } catch (error) {
       console.error('Error processing transcript:', error);
@@ -244,7 +237,7 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
         setTimeout(() => startListening(), 500);
       }
     }
-  }, [sendMessage, messages, startListening]);
+  }, [sendMessage, startListening]);
 
   const playAudio = useCallback(async (base64Audio: string) => {
     try {

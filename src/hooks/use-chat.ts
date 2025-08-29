@@ -48,8 +48,10 @@ export function useChat() {
         content: response.content 
       };
       setMessages([...newMessages, assistantMessage]);
+      return assistantMessage; // Return the AI response
     } catch (error) {
       console.error("Chat error:", error);
+      return null;
     }
   };
 

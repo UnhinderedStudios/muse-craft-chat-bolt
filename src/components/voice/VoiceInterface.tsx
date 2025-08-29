@@ -9,7 +9,7 @@ import { ChatMessage } from "@/types";
 interface VoiceInterfaceProps {
   onClose: () => void;
   messages: ChatMessage[];
-  sendMessage: (message: string, systemPrompt: string, attachments?: any[]) => Promise<void>;
+  sendMessage: (message: string, systemPrompt: string, attachments?: any[]) => Promise<ChatMessage | null>;
 }
 
 export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, messages, sendMessage }) => {
