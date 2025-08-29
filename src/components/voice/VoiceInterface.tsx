@@ -42,7 +42,11 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
       <Button
         variant="ghost"
         size="icon"
-        onClick={onClose}
+        onClick={() => {
+          // Stop conversation immediately before closing
+          stopRecording();
+          onClose();
+        }}
         className="absolute top-4 right-4 z-50 text-text-secondary hover:text-text-primary"
       >
         <X className="w-6 h-6" />

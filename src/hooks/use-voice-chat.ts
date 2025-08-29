@@ -32,6 +32,8 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const isAutoListeningRef = useRef(false);
+  const finalTranscriptRef = useRef("");
+  const streamRef = useRef<MediaStream | null>(null);
 
   // Initialize speech recognition for real-time transcription
   useEffect(() => {
@@ -43,31 +45,42 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
       recognitionRef.current.lang = 'en-US';
 
       recognitionRef.current.onresult = (event) => {
-        let interimTranscript = '';
-        let finalTranscript = '';
+        // Don't process speech when we're playing TTS to prevent self-recording
+        if (isPlaying) {
+          console.log('Ignoring speech during TTS playback');
+          return;
+        }
 
+        let interimTranscript = '';
+        
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
-            finalTranscript += transcript;
+            // Accumulate final transcripts
+            finalTranscriptRef.current += transcript + " ";
+            console.log('Added final transcript:', transcript);
+            console.log('Accumulated transcript:', finalTranscriptRef.current.trim());
           } else {
             interimTranscript += transcript;
           }
         }
 
-        setCurrentTranscript(finalTranscript + interimTranscript);
+        // Show current accumulated final + interim for UI feedback
+        const displayTranscript = finalTranscriptRef.current.trim() + (interimTranscript ? " " + interimTranscript : "");
+        setCurrentTranscript(displayTranscript);
 
         // Reset silence timeout on speech
         if (silenceTimeoutRef.current) {
           clearTimeout(silenceTimeoutRef.current);
         }
 
-        // Set new silence timeout
+        // Set new silence timeout - only process if we have accumulated final transcript
         silenceTimeoutRef.current = setTimeout(() => {
-          const currentFinalTranscript = finalTranscript.trim();
-          if (currentFinalTranscript) {
-            console.log('Processing final transcript from timeout:', currentFinalTranscript);
-            processTranscript(currentFinalTranscript);
+          const accumulatedTranscript = finalTranscriptRef.current.trim();
+          if (accumulatedTranscript && accumulatedTranscript.length > 2) {
+            console.log('Processing accumulated transcript from timeout:', accumulatedTranscript);
+            processTranscript(accumulatedTranscript);
+            finalTranscriptRef.current = ""; // Clear after processing
           }
         }, 2000); // 2 second pause
       };
@@ -78,8 +91,12 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
 
       recognitionRef.current.onend = () => {
         if (isAutoListeningRef.current && !isProcessing && !isPlaying) {
-          // Restart listening automatically
-          setTimeout(() => startListening(), 500);
+          // Restart listening automatically after a brief pause
+          setTimeout(() => {
+            if (isAutoListeningRef.current && !isPlaying) {
+              startListening();
+            }
+          }, 500);
         }
       };
     }
@@ -87,15 +104,26 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
 
   const startListening = useCallback(async () => {
     try {
+      // Don't start listening if we're playing TTS
+      if (isPlaying) {
+        console.log('Cannot start listening - TTS is playing');
+        return;
+      }
+
+      console.log('Starting listening...');
       setIsListening(true);
       setIsRecording(true);
       setCurrentTranscript("");
+      finalTranscriptRef.current = ""; // Clear accumulated transcript
       audioChunksRef.current = [];
-      isAutoListeningRef.current = true;
 
       // Start speech recognition for real-time transcription
       if (recognitionRef.current) {
-        recognitionRef.current.start();
+        try {
+          recognitionRef.current.start();
+        } catch (error) {
+          console.log('Speech recognition already started or error:', error);
+        }
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -107,6 +135,8 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
           autoGainControl: true
         }
       });
+
+      streamRef.current = stream;
 
       mediaRecorderRef.current = new MediaRecorder(stream, {
         mimeType: 'audio/webm'
@@ -121,6 +151,7 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
       mediaRecorderRef.current.onstop = async () => {
         // Stop all tracks
         stream.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
       };
 
       mediaRecorderRef.current.start(100); // Collect data every 100ms
@@ -129,25 +160,42 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
       setIsListening(false);
       setIsRecording(false);
     }
-  }, []);
+  }, [isPlaying]);
 
   const stopRecording = useCallback(() => {
+    console.log('Stopping recording...');
+    
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      setIsListening(false);
-      
-      // Stop speech recognition
-      if (recognitionRef.current) {
+    }
+    
+    setIsRecording(false);
+    setIsListening(false);
+    
+    // Stop speech recognition
+    if (recognitionRef.current) {
+      try {
         recognitionRef.current.stop();
-      }
-
-      // Clear silence timeout
-      if (silenceTimeoutRef.current) {
-        clearTimeout(silenceTimeoutRef.current);
-        silenceTimeoutRef.current = null;
+      } catch (error) {
+        console.log('Speech recognition stop error:', error);
       }
     }
+
+    // Stop media stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+
+    // Clear silence timeout
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+      silenceTimeoutRef.current = null;
+    }
+
+    // Clear accumulated transcript
+    finalTranscriptRef.current = "";
+    setCurrentTranscript("");
   }, [isRecording]);
 
   const processTranscript = useCallback(async (transcript: string) => {
@@ -200,7 +248,13 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
 
   const playAudio = useCallback(async (base64Audio: string) => {
     try {
+      console.log('Starting TTS playback - disabling microphone');
       setIsPlaying(true);
+
+      // Stop listening immediately when TTS starts to prevent self-recording
+      if (isListening || isRecording) {
+        stopRecording();
+      }
 
       // Stop any currently playing audio
       if (currentAudioRef.current) {
@@ -219,9 +273,19 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
       currentAudioRef.current = audio;
 
       audio.onended = () => {
+        console.log('TTS playback ended - can resume listening');
         setIsPlaying(false);
         URL.revokeObjectURL(audioUrl);
         currentAudioRef.current = null;
+        
+        // Automatically restart listening after TTS finishes
+        if (isAutoListeningRef.current) {
+          setTimeout(() => {
+            if (isAutoListeningRef.current && !isPlaying) {
+              startListening();
+            }
+          }, 500);
+        }
       };
 
       audio.onerror = (error) => {
@@ -229,14 +293,24 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
         setIsPlaying(false);
         URL.revokeObjectURL(audioUrl);
         currentAudioRef.current = null;
+        
+        // Restart listening on error too
+        if (isAutoListeningRef.current) {
+          setTimeout(() => startListening(), 500);
+        }
       };
 
       await audio.play();
     } catch (error) {
       console.error('Error playing audio:', error);
       setIsPlaying(false);
+      
+      // Restart listening on error
+      if (isAutoListeningRef.current) {
+        setTimeout(() => startListening(), 500);
+      }
     }
-  }, [volume, isMuted]);
+  }, [volume, isMuted, isListening, isRecording, stopRecording, startListening]);
 
   const toggleMute = useCallback(() => {
     setIsMuted(prev => !prev);
@@ -251,11 +325,15 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
   }, [startListening]);
 
   const stopConversation = useCallback(() => {
+    console.log('Stopping conversation - full cleanup');
     isAutoListeningRef.current = false;
+    
+    // Stop recording and listening
     stopRecording();
     setIsListening(false);
+    setIsProcessing(false);
     
-    // Stop any playing audio
+    // Stop any playing audio immediately
     if (currentAudioRef.current) {
       currentAudioRef.current.pause();
       currentAudioRef.current = null;
@@ -267,6 +345,10 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
       clearTimeout(silenceTimeoutRef.current);
       silenceTimeoutRef.current = null;
     }
+
+    // Reset transcripts
+    finalTranscriptRef.current = "";
+    setCurrentTranscript("");
   }, [stopRecording]);
 
   // Update volume when it changes
