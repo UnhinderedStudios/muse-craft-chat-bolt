@@ -62,7 +62,7 @@ export const TagInput: React.FC<TagInputProps> = ({
 
   return (
     <div 
-      className={cn("h-full min-h-0 overflow-y-auto song-params-scrollbar relative cursor-text", className)}
+      className={cn("max-h-[200px] overflow-y-auto song-params-scrollbar relative cursor-text", className)}
       onClick={handleContainerClick}
     >
       {/* Inner flex container for tags and input */}
