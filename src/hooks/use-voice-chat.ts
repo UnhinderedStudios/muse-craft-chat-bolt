@@ -45,7 +45,7 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
       recognitionRef.current.lang = 'en-US';
 
       recognitionRef.current.onresult = (event) => {
-        // Don't process speech when we're playing TTS to prevent self-recording
+        // Don't process or show speech when we're playing TTS to prevent self-recording
         if (isPlaying) {
           console.log('Ignoring speech during TTS playback');
           return;
@@ -245,6 +245,9 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
     try {
       console.log('Starting TTS playback - disabling microphone');
       setIsPlaying(true);
+      
+      // Clear transcript display immediately when TTS starts
+      setCurrentTranscript("");
 
       // Stop listening immediately when TTS starts to prevent self-recording
       if (isListening || isRecording) {
