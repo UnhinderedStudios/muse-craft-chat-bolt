@@ -32,7 +32,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
       <div 
         className="overflow-y-auto custom-scrollbar pl-8 pr-6 pt-8"
         ref={scrollerRef}
-        style={{ height: `${chatHeight}px` }}
+        style={{ height: `${chatHeight}px`, minHeight: `${chatHeight}px` }}
         onScroll={(e) => {
           const target = e.target as HTMLDivElement;
           setScrollTop(target.scrollTop);

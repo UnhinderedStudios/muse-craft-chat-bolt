@@ -125,8 +125,7 @@ const Index = () => {
   const [isReadingText, setIsReadingText] = useState(false);
   const [details, setDetails] = useState<SongDetails>({});
   const [styleTags, setStyleTags] = useState<string[]>([]);
-  const [chatHeight, setChatHeight] = useState(500);
-  const [isResizing, setIsResizing] = useState(false);
+  const { chatHeight, isResizing, handleMouseDown } = useResize();
   const [showMelodySpeech, setShowMelodySpeech] = useState(false);
   
   // Use the chat hook for both main chat and voice interface
@@ -240,29 +239,6 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isPlaying, currentTrackIndex, tracks.length]);
 
-  // Handle chat resize functionality
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsResizing(true);
-    
-    const startY = e.clientY;
-    const startHeight = chatHeight;
-    
-    const handleMouseMove = (e: MouseEvent) => {
-      const deltaY = e.clientY - startY;
-      const newHeight = Math.max(300, Math.min(800, startHeight + deltaY)); // Min 300px, Max 800px
-      setChatHeight(newHeight);
-    };
-    
-    const handleMouseUp = () => {
-      setIsResizing(false);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-    
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
 
   useEffect(() => {
     scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
@@ -1089,7 +1065,7 @@ async function startGeneration() {
     <button
       onClick={startGeneration}
       disabled={busy || !canGenerate}
-      className="h-9 w-full rounded-lg text-[13px] font-medium text-white bg-accent-primary hover:bg-accent-primary/90 disabled:bg-accent-primary/40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+      className="h-9 w-full rounded-lg text-[13px] font-medium text-white bg-accent-primary hover:bg-accent-primary/90 disabled:bg-accent-primary/60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
       aria-disabled={busy || !canGenerate}
     >
       <span className="text-sm leading-none">✦</span>
