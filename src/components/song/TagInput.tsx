@@ -62,11 +62,11 @@ export const TagInput: React.FC<TagInputProps> = ({
 
   return (
     <div 
-      className={cn("min-h-[120px] max-h-[120px] overflow-y-auto lyrics-scrollbar relative cursor-text p-2", className)}
+      className={cn("min-h-[120px] max-h-[120px] overflow-y-auto lyrics-scrollbar relative cursor-text", className)}
       onClick={handleContainerClick}
     >
       {/* Inner flex container for tags and input */}
-      <div className="flex flex-wrap gap-2 items-start">
+      <div className="flex flex-wrap gap-2 items-start p-2">
         {/* Render existing tags */}
         {tags.map((tag, index) => (
           <div
