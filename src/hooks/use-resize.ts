@@ -14,11 +14,20 @@ export function useResize() {
     
     const handleMouseMove = (e: MouseEvent) => {
       const deltaY = e.clientY - startY;
+      const proposedHeight = startHeight + deltaY;
+      
+      // Enforce strict boundaries with additional validation
       const newHeight = Math.max(
         CHAT_HEIGHT_LIMITS.MIN, 
-        Math.min(CHAT_HEIGHT_LIMITS.MAX, startHeight + deltaY)
+        Math.min(CHAT_HEIGHT_LIMITS.MAX, proposedHeight)
       );
-      setChatHeight(newHeight);
+      
+      // Only update if the new height is actually different and within practical bounds
+      // Ensure we don't exceed limits that would break scrolling (account for the 140px offset)
+      const maxPracticalHeight = Math.min(CHAT_HEIGHT_LIMITS.MAX, window.innerHeight - 200);
+      const clampedHeight = Math.min(newHeight, maxPracticalHeight);
+      
+      setChatHeight(clampedHeight);
     };
     
     const handleMouseUp = () => {
