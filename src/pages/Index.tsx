@@ -964,15 +964,15 @@ async function startGeneration() {
 
   return (
     <div
-      className="min-h-screen bg-[#0c0c0c] overflow-x-hidden"
+      className="h-screen bg-[#0c0c0c] overflow-hidden flex flex-col"
       style={{
         ["--dock-h" as any]: `${DOCK_H}px`,
-        // match Tailwind gap-5 (1.25rem) so spacing is seamless when docked
-        ["--page-gap" as any]: "1.25rem",
+        // match Tailwind gap-3 (0.75rem) for consistent spacing
+        ["--page-gap" as any]: "0.75rem",
       }}
     >
       {/* Three Column Layout - Sessions, Chat + Form, Karaoke + Template */}
-      <main className="w-full px-3 pt-4 pb-0 min-h-0">
+      <main className="flex-1 w-full px-3 pt-3 pb-3 min-h-0 overflow-hidden">
         {/* 1 col on mobile, 8 cols on iPad, 12 cols on desktop */}
         <div
           className="
@@ -981,7 +981,7 @@ async function startGeneration() {
             xl:grid-cols-[minmax(0,1.62fr)_minmax(0,5.94fr)_minmax(0,1.98fr)_minmax(0,2.42fr)]
             gap-3 lg:items-stretch
             lg:grid-rows-[20px_auto_1fr]
-            lg:max-h-[calc(100vh-var(--dock-h)-var(--page-gap))]
+            h-full
             lg:min-h-0
             lg:overflow-hidden
           ">

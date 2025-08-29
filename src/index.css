@@ -108,8 +108,18 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html, body {
+    height: 100vh;
+    overflow: hidden;
+  }
+
   body {
     @apply bg-background text-foreground;
+  }
+
+  #root {
+    height: 100vh;
+    overflow: hidden;
   }
 }
 
