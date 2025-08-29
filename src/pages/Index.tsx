@@ -1192,15 +1192,13 @@ async function startGeneration() {
                 {/* Song Parameters */}
                 <div className="space-y-2 flex-1 flex flex-col">
                   <label className="text-sm font-medium text-white/80 flex-shrink-0">Song Parameters</label>
-                  <div className="bg-[#2d2d2d] rounded-lg border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200 flex-1 overflow-hidden">
-                    <div className="h-full overflow-y-auto song-params-scrollbar">
+                  <div className="bg-[#2d2d2d] rounded-lg border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200 flex-1 flex flex-col overflow-hidden">
                       <TagInput
                         tags={styleTags}
                         onChange={handleStyleTagsChange}
                         placeholder='Add song parameters such as "Pop", "128bpm", "female vocals" and separate them by comma'
-                        className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-4 resize-none h-full"
+                        className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none flex-1"
                       />
-                    </div>
                   </div>
                 </div>
               </div>
