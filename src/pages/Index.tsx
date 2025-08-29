@@ -133,6 +133,8 @@ const Index = () => {
   
   // Ref for chat input to maintain focus
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
   const [footerH, setFooterH] = useState(0);
 
@@ -153,6 +155,15 @@ const Index = () => {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  const scrollToBottom = () => {
+    const el = bottomRef.current;
+    if (!el) return;
+    // wait a tick so the loader is in the DOM with final height
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ block: "end", inline: "nearest", behavior: "smooth" });
+    });
+  };
+
   // measure footer height (desktop)
   useEffect(() => {
     if (!isDesktop) { setFooterH(0); return; }
@@ -168,11 +179,17 @@ const Index = () => {
     return () => { ro.disconnect(); window.removeEventListener('resize', update); };
   }, [isDesktop]);
 
-  // always keep the bottom in view when things change
+  // Auto-scroll to bottom when messages change or height changes
   useEffect(() => {
-    if (!scrollerRef.current) return;
-    scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight;
-  }, [messages, chatHeight, footerH]);
+    scrollToBottom();
+  }, [
+    messages,          // new messages
+    chatHeight,        // resize
+    footerH,           // input/footer height changes
+    busy,              // loader toggles (Dice path)
+    isAnalyzingImage,  // image loader
+    isReadingText      // doc loader
+  ]);
 
   // MAX the chat scroller can take while guaranteeing the form keeps MIN_FORM
   const MAX_SCROLLER = clamp(vh - MIN_FORM - RESERVED, MIN_SCROLLER, vh);
@@ -258,7 +275,6 @@ const Index = () => {
   } | null>(null);
   const [isGeneratingCovers, setIsGeneratingCovers] = useState(false);
   const [scrollTop, setScrollTop] = useState<number>(0);
-  const scrollerRef = useRef<HTMLDivElement>(null);
   const audioRefs = useRef<HTMLAudioElement[]>([]);
   const lastDiceAt = useRef<number>(0);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -1048,12 +1064,13 @@ async function startGeneration() {
                   <ChatBubble key={i} role={m.role} content={m.content} />
                 ))}
                 {busy && (
-                  <div className="space-y-3">
+                  <div className="space-y-3" role="status" aria-live="polite">
                     {isAnalyzingImage && <ImageAnalysisLoader text="Analyzing Image..." />}
                     {isReadingText && <ImageAnalysisLoader text="Reading Document..." />}
                     {!isAnalyzingImage && !isReadingText && <Spinner />}
                   </div>
                 )}
+                <div ref={bottomRef} style={{ height: 1 }} />
               </div>
             </div>
 
