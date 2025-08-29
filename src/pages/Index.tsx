@@ -1174,9 +1174,9 @@ async function startGeneration() {
             } : { height: 'auto' }}
           >
             {/* Two-column layout: Left (Title + Song Parameters), Right (Lyrics) */}
-            <div className="grid grid-cols-12 gap-4 h-full">
+            <div className="grid grid-cols-12 gap-4 h-full min-h-0">
               {/* Left column */}
-              <div className="col-span-5 space-y-3 flex flex-col">
+              <div className="col-span-5 space-y-3 flex flex-col min-h-0 min-w-0">
                 {/* Title */}
                 <div className="space-y-2 flex-shrink-0">
                   <label className="text-sm font-medium text-white/80">Title</label>
@@ -1190,14 +1190,19 @@ async function startGeneration() {
                   </div>
                 </div>
                 {/* Song Parameters */}
-                <div className="space-y-2 flex-1 flex flex-col min-h-[80px]">
+                <div className="space-y-2 flex-1 flex flex-col min-h-[80px] min-h-0">
                   <label className="text-sm font-medium text-white/80 flex-shrink-0">Song Parameters</label>
-                  <div className="bg-[#2d2d2d] rounded-lg border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
-                    <TagInput
-                      tags={styleTags}
-                      onChange={handleStyleTagsChange}
-                      placeholder='Add song parameters such as "Pop", "128bpm", "female vocals" and separate them by comma'
-                    />
+                  {/* Outer box fills remaining height */}
+                  <div className="bg-[#2d2d2d] rounded-lg border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200 flex-1 min-h-[100px] min-h-0">
+                    {/* Inner scroll area mirrors Lyrics behavior */}
+                    <div className="h-full overflow-y-auto song-params-scrollbar px-4 py-3">
+                      <TagInput
+                        tags={styleTags}
+                        onChange={handleStyleTagsChange}
+                        placeholder='Add song parameters such as "Pop", "128bpm", "female vocals" and separate them by comma'
+                        className="max-h-full"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
