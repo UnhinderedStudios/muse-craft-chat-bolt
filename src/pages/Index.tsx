@@ -1203,13 +1203,15 @@ async function startGeneration() {
               {/* Right column: Lyrics */}
               <div className="col-span-7 space-y-2 flex flex-col">
                 <label className="text-sm font-medium text-white/80">Lyrics</label>
-                <div className="bg-[#2d2d2d] rounded-lg p-4 flex-1 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
-                  <Textarea
-                    value={details.lyrics || ""}
-                    onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
-                    placeholder="Enter your lyrics here..."
-                    className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 resize-none w-full h-full lyrics-scrollbar"
-                  />
+                <div className="bg-[#2d2d2d] rounded-lg flex-1 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
+                  <div className="max-h-[260px] overflow-y-auto lyrics-scrollbar p-4">
+                    <Textarea
+                      value={details.lyrics || ""}
+                      onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
+                      placeholder="Enter your lyrics here..."
+                      className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 resize-none w-full h-full lyrics-scrollbar"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
