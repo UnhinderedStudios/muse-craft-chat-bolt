@@ -1168,7 +1168,7 @@ async function startGeneration() {
 
           {/* Row 2 - Center: Form */}
           <div 
-            className="order-7 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 min-h-[400px]"
+            className="order-7 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 min-h-[280px]"
             style={isDesktop ? { 
               height: `calc(100vh - ${chatHeight}px - 144px)` // 144px accounts for header, gaps, padding, and spacer
             } : { height: 'auto' }}
@@ -1190,9 +1190,9 @@ async function startGeneration() {
                   </div>
                 </div>
                 {/* Song Parameters */}
-                <div className="space-y-2 flex-1 flex flex-col min-h-[160px]">
+                <div className="space-y-2 flex-1 flex flex-col min-h-[80px]">
                   <label className="text-sm font-medium text-white/80 flex-shrink-0">Song Parameters</label>
-                  <div className="bg-[#2d2d2d] rounded-lg border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200 flex-1 min-h-[120px]">
+                  <div className="bg-[#2d2d2d] rounded-lg border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200 flex-1 min-h-[60px]">
                     <div className="h-full overflow-y-auto song-params-scrollbar">
                       <TagInput
                         tags={styleTags}
@@ -1206,9 +1206,9 @@ async function startGeneration() {
               </div>
 
               {/* Right column: Lyrics */}
-              <div className="col-span-7 space-y-2 flex flex-col min-h-[200px]">
+              <div className="col-span-7 space-y-2 flex flex-col min-h-[140px]">
                 <label className="text-sm font-medium text-white/80 flex-shrink-0">Lyrics</label>
-                <div className="bg-[#2d2d2d] rounded-lg flex-1 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200 min-h-[160px]">
+                <div className="bg-[#2d2d2d] rounded-lg flex-1 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200 min-h-[100px]">
                   <div className="h-full">
                     <Textarea
                       value={details.lyrics || ""}
