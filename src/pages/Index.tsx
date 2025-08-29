@@ -247,7 +247,7 @@ const Index = () => {
     
     const handleMouseMove = (e: MouseEvent) => {
       const deltaY = e.clientY - startY;
-      const newHeight = Math.max(300, Math.min(800, startHeight - deltaY)); // Min 300px, Max 800px - Fixed: subtract deltaY so dragging up increases height
+      const newHeight = Math.max(300, Math.min(800, startHeight + deltaY)); // Min 300px, Max 800px
       setChatHeight(newHeight);
     };
     
