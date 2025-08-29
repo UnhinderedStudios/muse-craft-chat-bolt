@@ -1167,13 +1167,18 @@ async function startGeneration() {
           </div>
 
           {/* Row 2 - Center: Form */}
-          <div className="order-7 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 h-full">
+          <div 
+            className="order-7 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4"
+            style={isDesktop ? { 
+              height: `calc(100vh - ${chatHeight}px - 144px)` // 144px accounts for header, gaps, padding, and spacer
+            } : { height: 'auto' }}
+          >
             {/* Two-column layout: Left (Title + Song Parameters), Right (Lyrics) */}
-            <div className="grid grid-cols-12 gap-4 h-auto">
+            <div className="grid grid-cols-12 gap-4 h-full">
               {/* Left column */}
-              <div className="col-span-5 space-y-3">
+              <div className="col-span-5 space-y-3 flex flex-col">
                 {/* Title */}
-                <div className="space-y-2">
+                <div className="space-y-2 flex-shrink-0">
                   <label className="text-sm font-medium text-white/80">Title</label>
                   <div className="bg-[#2d2d2d] rounded-lg p-4 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
                     <Input
@@ -1185,15 +1190,15 @@ async function startGeneration() {
                   </div>
                 </div>
                 {/* Song Parameters */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/80">Song Parameters</label>
-                  <div className="bg-[#2d2d2d] rounded-lg border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
-                    <div className="max-h-[260px] overflow-y-auto song-params-scrollbar">
+                <div className="space-y-2 flex-1 flex flex-col min-h-0">
+                  <label className="text-sm font-medium text-white/80 flex-shrink-0">Song Parameters</label>
+                  <div className="bg-[#2d2d2d] rounded-lg border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200 flex-1 min-h-0">
+                    <div className="h-full overflow-y-auto song-params-scrollbar">
                       <TagInput
                         tags={styleTags}
                         onChange={handleStyleTagsChange}
                         placeholder='Add song parameters such as "Pop", "128bpm", "female vocals" and separate them by comma'
-                        className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[120px] resize-none"
+                        className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[120px] resize-none h-full"
                       />
                     </div>
                   </div>
@@ -1201,9 +1206,9 @@ async function startGeneration() {
               </div>
 
               {/* Right column: Lyrics */}
-              <div className="col-span-7 space-y-2 flex flex-col">
-                <label className="text-sm font-medium text-white/80">Lyrics</label>
-                <div className="bg-[#2d2d2d] rounded-lg flex-1 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
+              <div className="col-span-7 space-y-2 flex flex-col min-h-0">
+                <label className="text-sm font-medium text-white/80 flex-shrink-0">Lyrics</label>
+                <div className="bg-[#2d2d2d] rounded-lg flex-1 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200 min-h-0">
                   <div className="h-full">
                     <Textarea
                       value={details.lyrics || ""}
