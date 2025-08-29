@@ -66,7 +66,7 @@ export const TagInput: React.FC<TagInputProps> = ({
       onClick={handleContainerClick}
     >
       {/* Inner flex container for tags and input */}
-      <div className="flex flex-wrap gap-2 items-start p-4">
+      <div className="flex flex-wrap gap-2 items-start p-4 h-full min-h-0">
         {/* Render existing tags */}
         {tags.map((tag, index) => (
           <div
