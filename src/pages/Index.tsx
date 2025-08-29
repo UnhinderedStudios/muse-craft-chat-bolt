@@ -132,6 +132,9 @@ const Index = () => {
   const [isResizing, setIsResizing] = useState(false);
   const [showMelodySpeech, setShowMelodySpeech] = useState(false);
   
+  // Use the chat hook
+  const { sendMessage } = useChat();
+  
   // Ref for chat input to maintain focus
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -1277,7 +1280,11 @@ async function startGeneration() {
           <div className="sr-only" id="melody-speech-description">
             Voice-powered AI chat interface with real-time speech recognition and text-to-speech
           </div>
-          <VoiceInterface onClose={() => setShowMelodySpeech(false)} />
+        <VoiceInterface 
+          onClose={() => setShowMelodySpeech(false)} 
+          messages={messages}
+          sendMessage={sendMessage}
+        />
         </DialogContent>
       </Dialog>
 

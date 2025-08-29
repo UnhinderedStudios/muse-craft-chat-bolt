@@ -3,7 +3,6 @@ import { ChatMessage } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface VoiceChatState {
-  messages: ChatMessage[];
   isRecording: boolean;
   isPlaying: boolean;
   isProcessing: boolean;
@@ -13,8 +12,12 @@ export interface VoiceChatState {
   currentTranscript: string;
 }
 
-export const useVoiceChat = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+interface UseVoiceChatProps {
+  messages: ChatMessage[];
+  sendMessage: (message: string, systemPrompt: string, attachments?: any[]) => Promise<void>;
+}
+
+export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -61,8 +64,10 @@ export const useVoiceChat = () => {
 
         // Set new silence timeout
         silenceTimeoutRef.current = setTimeout(() => {
-          if (finalTranscript.trim()) {
-            stopRecording();
+          const currentFinalTranscript = finalTranscript.trim();
+          if (currentFinalTranscript) {
+            console.log('Processing final transcript from timeout:', currentFinalTranscript);
+            processTranscript(currentFinalTranscript);
           }
         }, 2000); // 2 second pause
       };
@@ -114,11 +119,6 @@ export const useVoiceChat = () => {
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        if (audioChunksRef.current.length > 0) {
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-          await processAudio(audioBlob);
-        }
-        
         // Stop all tracks
         stream.getTracks().forEach(track => track.stop());
       };
@@ -150,86 +150,53 @@ export const useVoiceChat = () => {
     }
   }, [isRecording]);
 
-  const processAudio = useCallback(async (audioBlob: Blob) => {
+  const processTranscript = useCallback(async (transcript: string) => {
     try {
       setIsProcessing(true);
-
-      // Only process if we have a meaningful transcript
-      const userText = currentTranscript.trim();
-      if (!userText) {
-        console.log('No speech detected');
-        setIsProcessing(false);
-        // Restart listening if no speech was detected
-        if (isAutoListeningRef.current) {
-          setTimeout(() => startListening(), 500);
-        }
-        return;
-      }
-
-      console.log('Processing transcript:', userText);
-
-      // Add user message
-      const userMessage: ChatMessage = { role: "user", content: userText };
-      setMessages(prev => [...prev, userMessage]);
       setCurrentTranscript(""); // Clear transcript
+      console.log('Processing transcript:', transcript);
 
-      // Get AI response
-      const { data: chatData, error: chatError } = await supabase.functions.invoke('chat', {
-        body: { 
-          messages: [...messages, userMessage],
-          system: "You are a helpful voice assistant. Keep responses conversational and concise since they will be spoken aloud. Be engaging and natural in your speech."
+      // Send message through the main chat system with voice-specific system prompt
+      await sendMessage(transcript, "You are a helpful voice assistant. Keep responses conversational and concise since they will be spoken aloud. Be engaging and natural in your speech.");
+
+      // Get the AI response from the last message
+      // We'll wait a moment for the chat to update with the AI response
+      setTimeout(async () => {
+        // The sendMessage should have updated the main chat with AI response
+        // Get the latest AI message and convert to speech
+        const latestMessage = messages[messages.length - 1];
+        if (latestMessage && latestMessage.role === 'assistant') {
+          const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
+            body: { 
+              text: latestMessage.content,
+              voice: 'alloy'
+            }
+          });
+
+          if (!ttsError && ttsData) {
+            await playAudio(ttsData.audioContent);
+          } else {
+            console.error('Text-to-speech error:', ttsError);
+          }
         }
-      });
 
-      if (chatError) {
-        console.error('Chat error:', chatError);
         setIsProcessing(false);
-        // Restart listening on error
+
+        // Automatically start listening again after AI finishes speaking
         if (isAutoListeningRef.current) {
-          setTimeout(() => startListening(), 500);
+          setTimeout(() => startListening(), 1000);
         }
-        return;
-      }
+      }, 2000); // Wait for chat to process and respond
 
-      const aiResponse = chatData.content;
-      const aiMessage: ChatMessage = { role: "assistant", content: aiResponse };
-      setMessages(prev => [...prev, aiMessage]);
-
-      // Convert response to speech
-      const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
-        body: { 
-          text: aiResponse,
-          voice: 'alloy'
-        }
-      });
-
-      if (ttsError) {
-        console.error('Text-to-speech error:', ttsError);
-        setIsProcessing(false);
-        // Restart listening on error
-        if (isAutoListeningRef.current) {
-          setTimeout(() => startListening(), 500);
-        }
-        return;
-      }
-
-      // Play audio response
-      await playAudio(ttsData.audioContent);
-      setIsProcessing(false);
-
-      // Automatically start listening again after AI finishes speaking
-      if (isAutoListeningRef.current) {
-        setTimeout(() => startListening(), 1000);
-      }
     } catch (error) {
-      console.error('Error processing audio:', error);
+      console.error('Error processing transcript:', error);
       setIsProcessing(false);
       // Restart listening on error
       if (isAutoListeningRef.current) {
         setTimeout(() => startListening(), 500);
       }
     }
-  }, [currentTranscript, messages, startListening]);
+  }, [sendMessage, messages, startListening]);
 
   const playAudio = useCallback(async (base64Audio: string) => {
     try {
@@ -311,7 +278,6 @@ export const useVoiceChat = () => {
   }, [isMuted]);
 
   return {
-    messages,
     isRecording,
     isPlaying,
     isProcessing,

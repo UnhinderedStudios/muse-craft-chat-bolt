@@ -4,14 +4,16 @@ import { VoiceChatLog } from "./VoiceChatLog";
 import { useVoiceChat } from "@/hooks/use-voice-chat";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Volume2, VolumeX, X } from "lucide-react";
+import { ChatMessage } from "@/types";
 
 interface VoiceInterfaceProps {
   onClose: () => void;
+  messages: ChatMessage[];
+  sendMessage: (message: string, systemPrompt: string, attachments?: any[]) => Promise<void>;
 }
 
-export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose }) => {
+export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, messages, sendMessage }) => {
   const {
-    messages,
     isRecording,
     isPlaying,
     isProcessing,
@@ -23,7 +25,7 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose }) => {
     setVolume,
     isListening,
     currentTranscript
-  } = useVoiceChat();
+  } = useVoiceChat({ messages, sendMessage });
 
   const [showChatLog, setShowChatLog] = useState(true);
 
