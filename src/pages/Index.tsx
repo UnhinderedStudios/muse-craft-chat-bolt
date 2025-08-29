@@ -987,7 +987,7 @@ async function startGeneration() {
               style={isDesktop ? { height: `${chatHeight - 140}px` } : undefined}
               onScroll={(e) => setScrollTop((e.target as HTMLDivElement).scrollTop)}
             >
-              <div className="space-y-4 pr-4 pl-4 pt-4 pb-42">
+              <div className="space-y-4 pr-4 pl-4 pt-4 pb-52">
                 {messages.map((m, i) => (
                   <ChatBubble key={i} role={m.role} content={m.content} />
                 ))}
