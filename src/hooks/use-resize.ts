@@ -16,15 +16,16 @@ export function useResize() {
       const deltaY = e.clientY - startY;
       const proposedHeight = startHeight + deltaY;
       
-      // Check if we're trying to resize beyond boundaries and prevent unnecessary processing
-      if (proposedHeight <= CHAT_HEIGHT_LIMITS.MIN && deltaY < 0) {
+      // Block upward drag when already at minimum (trying to make smaller)
+      if (chatHeight <= CHAT_HEIGHT_LIMITS.MIN && deltaY < 0) {
         e.preventDefault();
-        return; // Early return to prevent interference with other elements
+        return;
       }
       
-      if (proposedHeight >= CHAT_HEIGHT_LIMITS.MAX && deltaY > 0) {
+      // Block downward drag when already at maximum (trying to make larger)  
+      if (chatHeight >= CHAT_HEIGHT_LIMITS.MAX && deltaY > 0) {
         e.preventDefault();
-        return; // Early return to prevent interference with other elements
+        return;
       }
       
       // Enforce strict boundaries with additional validation
