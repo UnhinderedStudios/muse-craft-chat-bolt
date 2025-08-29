@@ -136,22 +136,8 @@ const Index = () => {
   const footerRef = useRef<HTMLDivElement>(null);
   const [footerH, setFooterH] = useState(0);
 
-  // utils
-  const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
-
-  // constants that already exist visually in your layout
-  const RESERVED = 144;     // header + grid gaps + card paddings (your existing comment)
-  const MIN_FORM = 280;     // matches class min-h-[280px]
-  const MIN_SCROLLER = 120; // hard stop for the chat scroll area
-
-  // track viewport height for proper max calculations
-  const [vh, setVh] = useState<number>(typeof window !== "undefined" ? window.innerHeight : 900);
-  useEffect(() => {
-    const onResize = () => setVh(window.innerHeight);
-    onResize();
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
+  // constants
+  const MIN_SCROLLER = 120;
 
   // measure footer height (desktop)
   useEffect(() => {
@@ -168,27 +154,34 @@ const Index = () => {
     return () => { ro.disconnect(); window.removeEventListener('resize', update); };
   }, [isDesktop]);
 
-  // always keep the bottom in view when things change
+  // bottom ref and scroll helper for auto-scroll
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollToBottom = () => {
+    requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({
+        block: "end",
+        inline: "nearest",
+        behavior: "smooth",
+      });
+    });
+  };
+
+  // auto-scroll when content or loader states change
   useEffect(() => {
-    if (!scrollerRef.current) return;
-    scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight;
-  }, [messages, chatHeight, footerH]);
+    scrollToBottom();
+  }, [
+    messages.length,   // new messages
+    busy,              // Dice / generation loaders
+    isAnalyzingImage,
+    isReadingText,
+    chatHeight,        // resize
+    footerH            // footer height changed
+  ]);
 
-  // MAX the chat scroller can take while guaranteeing the form keeps MIN_FORM
-  const MAX_SCROLLER = clamp(vh - MIN_FORM - RESERVED, MIN_SCROLLER, vh);
-
-  // height actually used by the chat scroller (clamped on both ends)
+  // ✅ scroller height: chat resize - footer height - tiny gap
   const scrollerHeight = isDesktop
-    ? clamp(chatHeight - footerH - 8, MIN_SCROLLER, MAX_SCROLLER)
+    ? Math.max(chatHeight - footerH - 8, MIN_SCROLLER)
     : undefined;
-
-  // the form's height becomes the complement of the scroller (also clamped)
-  const formHeightPx = isDesktop
-    ? clamp(vh - scrollerHeight - RESERVED, MIN_FORM, vh)
-    : undefined;
-
-  // padding so the last message never hides under the input/footer
-  const bottomPad = footerH + 24;
 
   // Sync styleTags with details.style
   useEffect(() => {
@@ -1040,20 +1033,24 @@ async function startGeneration() {
             <div
               ref={scrollerRef}
               className={`overflow-y-auto overscroll-y-contain custom-scrollbar pl-6 lg:pl-8 pr-4 lg:pr-6 pt-6 lg:pt-8 ${isDesktop ? '' : 'max-h-[50vh]'}`}
-              style={isDesktop ? { height: `${scrollerHeight}px`, maxHeight: `${MAX_SCROLLER}px` } : undefined}
+              style={isDesktop ? { height: `${scrollerHeight}px` } : undefined}
               onScroll={(e) => setScrollTop((e.target as HTMLDivElement).scrollTop)}
             >
-              <div className="space-y-4 pr-4 pl-4 pt-4" style={{ paddingBottom: bottomPad }}>
+              <div className="space-y-4 pr-4 pl-4 pt-4" style={{ paddingBottom: footerH + 24 }}>
                 {messages.map((m, i) => (
                   <ChatBubble key={i} role={m.role} content={m.content} />
                 ))}
+
                 {busy && (
-                  <div className="space-y-3">
+                  <div className="space-y-3" role="status" aria-live="polite">
                     {isAnalyzingImage && <ImageAnalysisLoader text="Analyzing Image..." />}
                     {isReadingText && <ImageAnalysisLoader text="Reading Document..." />}
                     {!isAnalyzingImage && !isReadingText && <Spinner />}
                   </div>
                 )}
+
+                {/* 👇 keeps the last item (including loader) above the footer/gradient */}
+                <div ref={bottomRef} style={{ height: 1, scrollMarginBottom: footerH + 24 }} />
               </div>
             </div>
 
@@ -1202,10 +1199,12 @@ async function startGeneration() {
           </div>
 
           {/* Row 2 - Center: Form */}
-          <div 
-            className="order-7 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 min-h-[280px]"
-            style={isDesktop ? { height: `${formHeightPx}px` } : { height: 'auto' }}
-          >
+            <div 
+              className="order-7 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 min-h-[280px]"
+              style={isDesktop
+                ? { height: `calc(100vh - ${scrollerHeight}px - 144px)` }
+                : { height: 'auto' }}
+            >
             {/* Two-column layout: Left (Title + Song Parameters), Right (Lyrics) */}
             <div className="grid grid-cols-12 gap-4 h-full min-h-0">
               {/* Left column */}
