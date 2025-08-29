@@ -38,7 +38,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({
           setScrollTop(target.scrollTop);
         }}
       >
-        <div className="space-y-4 pr-4 pl-4 pt-4 pb-32">
+        <div className="space-y-4 pr-4 pl-4 pt-4 pb-24">
           {messages.map((msg, i) => (
             <ChatBubble key={i} role={msg.role} content={msg.content} />
           ))}
