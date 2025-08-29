@@ -205,26 +205,24 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
     }
   }, [isPlaying]);
 
+  // Create a simple stopRecording function that only stops recording
   const stopRecording = useCallback(() => {
     console.log('Stopping recording...');
     
-    if (mediaRecorderRef.current && isRecording) {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
+    }
+    
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
     }
     
     setIsRecording(false);
     setIsListening(false);
+    setCurrentTranscript("");
+    finalTranscriptRef.current = "";
     
-    // Stop speech recognition
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch (error) {
-        console.log('Speech recognition stop error:', error);
-      }
-    }
-
-    // Stop media stream
+    // Clean up media stream
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
@@ -235,11 +233,7 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
       clearTimeout(silenceTimeoutRef.current);
       silenceTimeoutRef.current = null;
     }
-
-    // Clear accumulated transcript
-    finalTranscriptRef.current = "";
-    setCurrentTranscript("");
-  }, [isRecording]);
+  }, []);
 
 
   const playAudio = useCallback(async (base64Audio: string) => {
@@ -387,6 +381,7 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
     }
   }, [isMuted]);
 
+
   return {
     isRecording,
     isPlaying,
@@ -396,7 +391,8 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
     isListening,
     currentTranscript,
     startRecording: startConversation,
-    stopRecording: stopConversation,
+    stopRecording,
+    stopConversation,
     toggleMute,
     setVolume: updateVolume
   };
