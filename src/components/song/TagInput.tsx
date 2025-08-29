@@ -62,46 +62,49 @@ export const TagInput: React.FC<TagInputProps> = ({
 
   return (
     <div 
-      className={cn("min-h-[120px] max-h-[120px] overflow-y-auto flex flex-wrap gap-2 items-start relative cursor-text", className)}
+      className={cn("min-h-[120px] max-h-[120px] overflow-y-auto relative cursor-text p-2", className)}
       onClick={handleContainerClick}
     >
-      {/* Render existing tags */}
-      {tags.map((tag, index) => (
-        <div
-          key={index}
-          className="inline-flex items-center gap-1 px-3 py-1 bg-white text-[#2d2d2d] rounded-full text-sm font-medium cursor-default max-w-full"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <span className="break-words break-all">{tag}</span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              removeTag(index);
-            }}
-            className="hover:bg-gray-200 rounded-full p-0.5 transition-colors flex-shrink-0"
+      {/* Inner flex container for tags and input */}
+      <div className="flex flex-wrap gap-2 items-start">
+        {/* Render existing tags */}
+        {tags.map((tag, index) => (
+          <div
+            key={index}
+            className="inline-flex items-center gap-1 px-3 py-1 bg-white text-[#2d2d2d] rounded-full text-sm font-medium cursor-default max-w-full"
+            onClick={(e) => e.stopPropagation()}
           >
-            <X size={12} />
-          </button>
-        </div>
-      ))}
+            <span className="break-words break-all">{tag}</span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                removeTag(index);
+              }}
+              className="hover:bg-gray-200 rounded-full p-0.5 transition-colors flex-shrink-0"
+            >
+              <X size={12} />
+            </button>
+          </div>
+        ))}
+        
+        {/* Input field */}
+        <input
+          ref={inputRef}
+          type="text"
+          value={inputValue}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          placeholder=""
+          className="bg-transparent border-0 text-white placeholder:text-white/40 focus:outline-none flex-1 min-w-[120px] text-sm"
+        />
+      </div>
       
       {/* Show multiline placeholder when no tags and no input */}
       {tags.length === 0 && !inputValue && (
-        <div className="absolute top-0 left-0 pointer-events-none text-white/40 text-sm whitespace-pre-wrap leading-relaxed z-0">
+        <div className="absolute top-2 left-2 pointer-events-none text-white/40 text-sm whitespace-pre-wrap leading-relaxed">
           {placeholder}
         </div>
       )}
-      
-      {/* Input field */}
-      <input
-        ref={inputRef}
-        type="text"
-        value={inputValue}
-        onChange={handleInputChange}
-        onKeyDown={handleKeyDown}
-        placeholder=""
-        className="bg-transparent border-0 text-white placeholder:text-white/40 focus:outline-none flex-1 min-w-[120px] text-sm relative z-10"
-      />
     </div>
   );
 };
