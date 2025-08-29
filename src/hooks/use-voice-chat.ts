@@ -249,6 +249,12 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
       // Clear transcript display immediately when TTS starts
       setCurrentTranscript("");
 
+      // Stop speech recognition completely during TTS to prevent self-recording
+      if (recognitionRef.current) {
+        console.log('Stopping speech recognition for TTS');
+        recognitionRef.current.stop();
+      }
+      
       // Stop listening immediately when TTS starts to prevent self-recording
       if (isListening || isRecording) {
         stopRecording();

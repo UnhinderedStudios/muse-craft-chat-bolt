@@ -78,7 +78,7 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
               {(isListening || isRecording) && "Listening..."}
               {!isProcessing && !isPlaying && !isListening && !isRecording && "Ready to chat"}
             </p>
-            {currentTranscript && (
+            {currentTranscript && !isPlaying && (
               <div className="bg-surface-secondary/80 backdrop-blur rounded-lg p-3 max-w-md">
                 <p className="text-sm text-text-primary italic">"{currentTranscript}"</p>
               </div>
