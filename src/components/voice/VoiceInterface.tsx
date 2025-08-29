@@ -43,7 +43,7 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
         variant="ghost"
         size="icon"
         onClick={() => {
-          // Stop conversation immediately before closing
+          // Stop conversation immediately before closing - this will stop all TTS and speech recognition
           stopRecording();
           onClose();
         }}

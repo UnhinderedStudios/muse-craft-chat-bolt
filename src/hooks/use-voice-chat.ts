@@ -34,6 +34,7 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
   const isAutoListeningRef = useRef(false);
   const finalTranscriptRef = useRef("");
   const streamRef = useRef<MediaStream | null>(null);
+  const postTTSTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize speech recognition for real-time transcription
   useEffect(() => {
@@ -45,9 +46,9 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
       recognitionRef.current.lang = 'en-US';
 
       recognitionRef.current.onresult = (event) => {
-        // Don't process or show speech when we're playing TTS to prevent self-recording
-        if (isPlaying) {
-          console.log('Ignoring speech during TTS playback');
+        // Don't process or show speech when we're playing TTS or shortly after to prevent self-recording
+        if (isPlaying || postTTSTimeoutRef.current) {
+          console.log('Ignoring speech during/after TTS playback');
           return;
         }
 
@@ -283,13 +284,23 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
         URL.revokeObjectURL(audioUrl);
         currentAudioRef.current = null;
         
-        // Automatically restart listening after TTS finishes
+        // Clear any lingering transcript immediately when TTS ends
+        setCurrentTranscript("");
+        finalTranscriptRef.current = "";
+        
+        // Set a protection period to prevent transcript flash
+        postTTSTimeoutRef.current = setTimeout(() => {
+          postTTSTimeoutRef.current = null;
+          console.log('Post-TTS protection period ended');
+        }, 1500);
+        
+        // Automatically restart listening after TTS finishes with longer delay
         if (isAutoListeningRef.current) {
           setTimeout(() => {
             if (isAutoListeningRef.current && !isPlaying) {
               startListening();
             }
-          }, 500);
+          }, 1000);
         }
       };
 
@@ -350,10 +361,15 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
       setIsPlaying(false);
     }
 
-    // Clear timeouts
+    // Clear all timeouts
     if (silenceTimeoutRef.current) {
       clearTimeout(silenceTimeoutRef.current);
       silenceTimeoutRef.current = null;
+    }
+    
+    if (postTTSTimeoutRef.current) {
+      clearTimeout(postTTSTimeoutRef.current);
+      postTTSTimeoutRef.current = null;
     }
 
     // Reset transcripts
