@@ -1148,7 +1148,7 @@ async function startGeneration() {
           <div 
             className="order-7 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 min-h-[280px]"
             style={isDesktop ? { 
-              height: `calc(100vh - ${chatHeight}px - 144px)` // 144px accounts for header, gaps, padding, and spacer
+              height: `calc(100vh - ${chatHeight - 140}px - 144px)` // 144px accounts for header, gaps, padding, and spacer
             } : { height: 'auto' }}
           >
             {/* Two-column layout: Left (Title + Song Parameters), Right (Lyrics) */}
