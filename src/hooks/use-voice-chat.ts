@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { ChatMessage } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -9,6 +9,8 @@ export interface VoiceChatState {
   isProcessing: boolean;
   isMuted: boolean;
   volume: number;
+  isListening: boolean;
+  currentTranscript: string;
 }
 
 export const useVoiceChat = () => {
@@ -18,15 +20,78 @@ export const useVoiceChat = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolume] = useState(0.7);
+  const [isListening, setIsListening] = useState(false);
+  const [currentTranscript, setCurrentTranscript] = useState("");
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const isAutoListeningRef = useRef(false);
 
-  const startRecording = useCallback(async () => {
+  // Initialize speech recognition for real-time transcription
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'en-US';
+
+      recognitionRef.current.onresult = (event) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+
+        setCurrentTranscript(finalTranscript + interimTranscript);
+
+        // Reset silence timeout on speech
+        if (silenceTimeoutRef.current) {
+          clearTimeout(silenceTimeoutRef.current);
+        }
+
+        // Set new silence timeout
+        silenceTimeoutRef.current = setTimeout(() => {
+          if (finalTranscript.trim()) {
+            stopRecording();
+          }
+        }, 2000); // 2 second pause
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+      };
+
+      recognitionRef.current.onend = () => {
+        if (isAutoListeningRef.current && !isProcessing && !isPlaying) {
+          // Restart listening automatically
+          setTimeout(() => startListening(), 500);
+        }
+      };
+    }
+  }, [isProcessing, isPlaying]);
+
+  const startListening = useCallback(async () => {
     try {
+      setIsListening(true);
       setIsRecording(true);
+      setCurrentTranscript("");
       audioChunksRef.current = [];
+      isAutoListeningRef.current = true;
+
+      // Start speech recognition for real-time transcription
+      if (recognitionRef.current) {
+        recognitionRef.current.start();
+      }
 
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
@@ -49,16 +114,19 @@ export const useVoiceChat = () => {
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        await processAudio(audioBlob);
+        if (audioChunksRef.current.length > 0) {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          await processAudio(audioBlob);
+        }
         
         // Stop all tracks
         stream.getTracks().forEach(track => track.stop());
       };
 
-      mediaRecorderRef.current.start();
+      mediaRecorderRef.current.start(100); // Collect data every 100ms
     } catch (error) {
       console.error('Error starting recording:', error);
+      setIsListening(false);
       setIsRecording(false);
     }
   }, []);
@@ -67,6 +135,18 @@ export const useVoiceChat = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      setIsListening(false);
+      
+      // Stop speech recognition
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+
+      // Clear silence timeout
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = null;
+      }
     }
   }, [isRecording]);
 
@@ -74,75 +154,82 @@ export const useVoiceChat = () => {
     try {
       setIsProcessing(true);
 
-      // Convert audio to base64
-      const reader = new FileReader();
-      reader.readAsDataURL(audioBlob);
-      
-      reader.onloadend = async () => {
-        const base64Audio = (reader.result as string).split(',')[1];
-
-        // Convert speech to text
-        const { data: sttData, error: sttError } = await supabase.functions.invoke('speech-to-text', {
-          body: { audio: base64Audio }
-        });
-
-        if (sttError) {
-          console.error('Speech-to-text error:', sttError);
-          return;
-        }
-
-        const userText = sttData.text.trim();
-        if (!userText) {
-          console.log('No speech detected');
-          setIsProcessing(false);
-          return;
-        }
-
-        // Add user message
-        const userMessage: ChatMessage = { role: "user", content: userText };
-        setMessages(prev => [...prev, userMessage]);
-
-        // Get AI response
-        const { data: chatData, error: chatError } = await supabase.functions.invoke('chat', {
-          body: { 
-            messages: [...messages, userMessage],
-            system: "You are a helpful voice assistant. Keep responses conversational and concise since they will be spoken aloud. Be engaging and natural in your speech."
-          }
-        });
-
-        if (chatError) {
-          console.error('Chat error:', chatError);
-          setIsProcessing(false);
-          return;
-        }
-
-        const aiResponse = chatData.content;
-        const aiMessage: ChatMessage = { role: "assistant", content: aiResponse };
-        setMessages(prev => [...prev, aiMessage]);
-
-        // Convert response to speech
-        const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
-          body: { 
-            text: aiResponse,
-            voice: 'alloy'
-          }
-        });
-
-        if (ttsError) {
-          console.error('Text-to-speech error:', ttsError);
-          setIsProcessing(false);
-          return;
-        }
-
-        // Play audio response
-        await playAudio(ttsData.audioContent);
+      // Only process if we have a meaningful transcript
+      const userText = currentTranscript.trim();
+      if (!userText) {
+        console.log('No speech detected');
         setIsProcessing(false);
-      };
+        // Restart listening if no speech was detected
+        if (isAutoListeningRef.current) {
+          setTimeout(() => startListening(), 500);
+        }
+        return;
+      }
+
+      console.log('Processing transcript:', userText);
+
+      // Add user message
+      const userMessage: ChatMessage = { role: "user", content: userText };
+      setMessages(prev => [...prev, userMessage]);
+      setCurrentTranscript(""); // Clear transcript
+
+      // Get AI response
+      const { data: chatData, error: chatError } = await supabase.functions.invoke('chat', {
+        body: { 
+          messages: [...messages, userMessage],
+          system: "You are a helpful voice assistant. Keep responses conversational and concise since they will be spoken aloud. Be engaging and natural in your speech."
+        }
+      });
+
+      if (chatError) {
+        console.error('Chat error:', chatError);
+        setIsProcessing(false);
+        // Restart listening on error
+        if (isAutoListeningRef.current) {
+          setTimeout(() => startListening(), 500);
+        }
+        return;
+      }
+
+      const aiResponse = chatData.content;
+      const aiMessage: ChatMessage = { role: "assistant", content: aiResponse };
+      setMessages(prev => [...prev, aiMessage]);
+
+      // Convert response to speech
+      const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
+        body: { 
+          text: aiResponse,
+          voice: 'alloy'
+        }
+      });
+
+      if (ttsError) {
+        console.error('Text-to-speech error:', ttsError);
+        setIsProcessing(false);
+        // Restart listening on error
+        if (isAutoListeningRef.current) {
+          setTimeout(() => startListening(), 500);
+        }
+        return;
+      }
+
+      // Play audio response
+      await playAudio(ttsData.audioContent);
+      setIsProcessing(false);
+
+      // Automatically start listening again after AI finishes speaking
+      if (isAutoListeningRef.current) {
+        setTimeout(() => startListening(), 1000);
+      }
     } catch (error) {
       console.error('Error processing audio:', error);
       setIsProcessing(false);
+      // Restart listening on error
+      if (isAutoListeningRef.current) {
+        setTimeout(() => startListening(), 500);
+      }
     }
-  }, [messages]);
+  }, [currentTranscript, messages, startListening]);
 
   const playAudio = useCallback(async (base64Audio: string) => {
     try {
@@ -191,6 +278,30 @@ export const useVoiceChat = () => {
     }
   }, [isMuted, volume]);
 
+  const startConversation = useCallback(() => {
+    isAutoListeningRef.current = true;
+    startListening();
+  }, [startListening]);
+
+  const stopConversation = useCallback(() => {
+    isAutoListeningRef.current = false;
+    stopRecording();
+    setIsListening(false);
+    
+    // Stop any playing audio
+    if (currentAudioRef.current) {
+      currentAudioRef.current.pause();
+      currentAudioRef.current = null;
+      setIsPlaying(false);
+    }
+
+    // Clear timeouts
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+      silenceTimeoutRef.current = null;
+    }
+  }, [stopRecording]);
+
   // Update volume when it changes
   const updateVolume = useCallback((newVolume: number) => {
     setVolume(newVolume);
@@ -206,8 +317,10 @@ export const useVoiceChat = () => {
     isProcessing,
     isMuted,
     volume,
-    startRecording,
-    stopRecording,
+    isListening,
+    currentTranscript,
+    startRecording: startConversation,
+    stopRecording: stopConversation,
     toggleMute,
     setVolume: updateVolume
   };

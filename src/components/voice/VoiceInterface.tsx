@@ -20,7 +20,9 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose }) => {
     toggleMute,
     isMuted,
     volume,
-    setVolume
+    setVolume,
+    isListening,
+    currentTranscript
   } = useVoiceChat();
 
   const [showChatLog, setShowChatLog] = useState(true);
@@ -28,7 +30,7 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose }) => {
   const getOrbState = () => {
     if (isProcessing) return "processing";
     if (isPlaying) return "speaking";
-    if (isRecording) return "listening";
+    if (isListening || isRecording) return "listening";
     return "idle";
   };
 
@@ -67,11 +69,16 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose }) => {
             <p className="text-lg text-text-primary font-medium">
               {isProcessing && "Processing..."}
               {isPlaying && "Speaking..."}
-              {isRecording && "Listening..."}
-              {!isProcessing && !isPlaying && !isRecording && "Ready to chat"}
+              {(isListening || isRecording) && "Listening..."}
+              {!isProcessing && !isPlaying && !isListening && !isRecording && "Ready to chat"}
             </p>
+            {currentTranscript && (
+              <div className="bg-surface-secondary/80 backdrop-blur rounded-lg p-3 max-w-md">
+                <p className="text-sm text-text-primary italic">"{currentTranscript}"</p>
+              </div>
+            )}
             <p className="text-sm text-text-secondary">
-              {isRecording ? "Release to send" : "Hold to speak"}
+              {isListening || isRecording ? "Speak now..." : "Click to start conversation"}
             </p>
           </div>
         </div>
@@ -120,18 +127,15 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose }) => {
       {/* Main Voice Control */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
         <Button
-          onMouseDown={startRecording}
-          onMouseUp={stopRecording}
-          onTouchStart={startRecording}
-          onTouchEnd={stopRecording}
-          disabled={isProcessing || isPlaying}
+          onClick={isListening ? stopRecording : startRecording}
+          disabled={isProcessing}
           className={`w-20 h-20 rounded-full transition-all duration-200 ${
-            isRecording 
+            isListening || isRecording
               ? 'bg-red-500 hover:bg-red-600 scale-110 shadow-[0_0_40px_rgba(239,68,68,0.6)]' 
               : 'bg-accent-primary hover:bg-accent-primary/90 shadow-[0_0_20px_rgba(202,36,116,0.4)]'
           }`}
         >
-          {isRecording ? (
+          {isListening || isRecording ? (
             <MicOff className="w-8 h-8 text-white" />
           ) : (
             <Mic className="w-8 h-8 text-white" />
