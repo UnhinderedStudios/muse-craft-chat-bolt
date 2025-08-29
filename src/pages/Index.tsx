@@ -136,6 +136,23 @@ const Index = () => {
   const footerRef = useRef<HTMLDivElement>(null);
   const [footerH, setFooterH] = useState(0);
 
+  // utils
+  const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+
+  // constants that already exist visually in your layout
+  const RESERVED = 144;     // header + grid gaps + card paddings (your existing comment)
+  const MIN_FORM = 280;     // matches class min-h-[280px]
+  const MIN_SCROLLER = 120; // hard stop for the chat scroll area
+
+  // track viewport height for proper max calculations
+  const [vh, setVh] = useState<number>(typeof window !== "undefined" ? window.innerHeight : 900);
+  useEffect(() => {
+    const onResize = () => setVh(window.innerHeight);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   // measure footer height (desktop)
   useEffect(() => {
     if (!isDesktop) { setFooterH(0); return; }
@@ -157,10 +174,21 @@ const Index = () => {
     scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight;
   }, [messages, chatHeight, footerH]);
 
-  // computed sizes
-  const MIN_SCROLLER = 120; // hard stop for the scroll area
-  const scrollerHeight = isDesktop ? Math.max(chatHeight - footerH - 8, MIN_SCROLLER) : undefined;
-  const bottomPad = footerH + 24; // padding so last message never hides under footer
+  // MAX the chat scroller can take while guaranteeing the form keeps MIN_FORM
+  const MAX_SCROLLER = clamp(vh - MIN_FORM - RESERVED, MIN_SCROLLER, vh);
+
+  // height actually used by the chat scroller (clamped on both ends)
+  const scrollerHeight = isDesktop
+    ? clamp(chatHeight - footerH - 8, MIN_SCROLLER, MAX_SCROLLER)
+    : undefined;
+
+  // the form's height becomes the complement of the scroller (also clamped)
+  const formHeightPx = isDesktop
+    ? clamp(vh - scrollerHeight - RESERVED, MIN_FORM, vh)
+    : undefined;
+
+  // padding so the last message never hides under the input/footer
+  const bottomPad = footerH + 24;
 
   // Sync styleTags with details.style
   useEffect(() => {
@@ -1012,7 +1040,7 @@ async function startGeneration() {
             <div
               ref={scrollerRef}
               className={`overflow-y-auto overscroll-y-contain custom-scrollbar pl-6 lg:pl-8 pr-4 lg:pr-6 pt-6 lg:pt-8 ${isDesktop ? '' : 'max-h-[50vh]'}`}
-              style={isDesktop ? { height: `${scrollerHeight}px` } : undefined}
+              style={isDesktop ? { height: `${scrollerHeight}px`, maxHeight: `${MAX_SCROLLER}px` } : undefined}
               onScroll={(e) => setScrollTop((e.target as HTMLDivElement).scrollTop)}
             >
               <div className="space-y-4 pr-4 pl-4 pt-4" style={{ paddingBottom: bottomPad }}>
@@ -1176,10 +1204,7 @@ async function startGeneration() {
           {/* Row 2 - Center: Form */}
           <div 
             className="order-7 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 min-h-[280px]"
-            style={isDesktop ? {
-              // 100vh minus the *actual* scroller height (clamped) minus your fixed chrome below
-              height: `calc(100vh - ${scrollerHeight}px - 144px)`
-            } : { height: 'auto' }}
+            style={isDesktop ? { height: `${formHeightPx}px` } : { height: 'auto' }}
           >
             {/* Two-column layout: Left (Title + Song Parameters), Right (Lyrics) */}
             <div className="grid grid-cols-12 gap-4 h-full min-h-0">
