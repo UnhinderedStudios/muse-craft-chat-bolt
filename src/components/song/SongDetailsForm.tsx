@@ -40,14 +40,12 @@ export const SongDetailsForm: React.FC<SongDetailsFormProps> = ({
         <div className="flex items-center gap-2">
           <CyberChip variant="teal">Style</CyberChip>
         </div>
-        <div className="h-[120px] overflow-y-auto">
-          <TagInput
-            tags={styleTags}
-            onChange={setStyleTags}
-            placeholder="Type style elements and press Enter..."
-            className="bg-card-alt border-border-main"
-          />
-        </div>
+        <TagInput
+          tags={styleTags}
+          onChange={setStyleTags}
+          placeholder="Type style elements and press Enter..."
+          className="bg-card-alt border-border-main"
+        />
       </CyberCard>
 
       {/* Lyrics */}
