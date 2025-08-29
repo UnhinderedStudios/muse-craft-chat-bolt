@@ -117,3 +117,21 @@
 .chat-input-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #383838;
 }
+
+/* Song Parameters Scrollbar - Darker color */
+.song-params-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.song-params-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.song-params-scrollbar::-webkit-scrollbar-thumb {
+  background: #464646;
+  border-radius: 4px;
+}
+
+.song-params-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #565656;
+}

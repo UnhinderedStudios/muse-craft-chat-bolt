@@ -1188,7 +1188,7 @@ async function startGeneration() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-white/80">Song Parameters</label>
                   <div className="bg-[#2d2d2d] rounded-lg border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
-                    <div className="max-h-[260px] overflow-y-auto lyrics-scrollbar">
+                    <div className="max-h-[260px] overflow-y-auto song-params-scrollbar">
                       <TagInput
                         tags={styleTags}
                         onChange={handleStyleTagsChange}
@@ -1209,7 +1209,7 @@ async function startGeneration() {
                       value={details.lyrics || ""}
                       onChange={(e) => setDetails({ ...details, lyrics: e.target.value })}
                       placeholder="Enter your lyrics here..."
-                      className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-4 resize-none w-full h-full lyrics-scrollbar"
+                      className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-4 resize-none w-full h-full song-params-scrollbar"
                     />
                   </div>
                 </div>
