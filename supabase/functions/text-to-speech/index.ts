@@ -1,4 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { encode as base64Encode } from 'https://deno.land/std@0.168.0/encoding/base64.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -36,16 +37,32 @@ serve(async (req) => {
     })
 
     if (!response.ok) {
-      const error = await response.json()
-      console.error('OpenAI TTS API error:', error)
-      throw new Error(error.error?.message || 'Failed to generate speech')
+      let errBody: any = null;
+      try {
+        errBody = await response.json();
+      } catch (_) {
+        try {
+          errBody = await response.text();
+        } catch (_) {
+          errBody = null;
+        }
+      }
+
+      console.error('OpenAI TTS API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errBody,
+      });
+
+      const message =
+        (errBody && (errBody.error?.message || errBody.message)) ||
+        `Failed to generate speech (status ${response.status})`;
+      throw new Error(message);
     }
 
-    // Convert audio buffer to base64
+    // Convert audio buffer to base64 safely
     const arrayBuffer = await response.arrayBuffer()
-    const base64Audio = btoa(
-      String.fromCharCode(...new Uint8Array(arrayBuffer))
-    )
+    const base64Audio = base64Encode(new Uint8Array(arrayBuffer))
 
     console.log('Text-to-speech conversion successful')
 
