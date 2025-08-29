@@ -136,8 +136,22 @@ const Index = () => {
   const footerRef = useRef<HTMLDivElement>(null);
   const [footerH, setFooterH] = useState(0);
 
-  // constants
-  const MIN_SCROLLER = 120;
+  // utils
+  const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+
+  // constants that already exist visually in your layout
+  const RESERVED = 144;     // header + grid gaps + card paddings (your existing comment)
+  const MIN_FORM = 280;     // matches class min-h-[280px]
+  const MIN_SCROLLER = 120; // hard stop for the chat scroll area
+
+  // track viewport height for proper max calculations
+  const [vh, setVh] = useState<number>(typeof window !== "undefined" ? window.innerHeight : 900);
+  useEffect(() => {
+    const onResize = () => setVh(window.innerHeight);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   // measure footer height (desktop)
   useEffect(() => {
@@ -154,34 +168,27 @@ const Index = () => {
     return () => { ro.disconnect(); window.removeEventListener('resize', update); };
   }, [isDesktop]);
 
-  // bottom ref and scroll helper for auto-scroll
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const scrollToBottom = () => {
-    requestAnimationFrame(() => {
-      bottomRef.current?.scrollIntoView({
-        block: "end",
-        inline: "nearest",
-        behavior: "smooth",
-      });
-    });
-  };
-
-  // auto-scroll when content or loader states change
+  // always keep the bottom in view when things change
   useEffect(() => {
-    scrollToBottom();
-  }, [
-    messages.length,   // new messages
-    busy,              // Dice / generation loaders
-    isAnalyzingImage,
-    isReadingText,
-    chatHeight,        // resize
-    footerH            // footer height changed
-  ]);
+    if (!scrollerRef.current) return;
+    scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight;
+  }, [messages, chatHeight, footerH]);
 
-  // ✅ scroller height: chat resize - footer height - tiny gap
+  // MAX the chat scroller can take while guaranteeing the form keeps MIN_FORM
+  const MAX_SCROLLER = clamp(vh - MIN_FORM - RESERVED, MIN_SCROLLER, vh);
+
+  // height actually used by the chat scroller (clamped on both ends)
   const scrollerHeight = isDesktop
-    ? Math.max(chatHeight - footerH - 8, MIN_SCROLLER)
+    ? clamp(chatHeight - footerH - 8, MIN_SCROLLER, MAX_SCROLLER)
     : undefined;
+
+  // the form's height becomes the complement of the scroller (also clamped)
+  const formHeightPx = isDesktop
+    ? clamp(vh - scrollerHeight - RESERVED, MIN_FORM, vh)
+    : undefined;
+
+  // padding so the last message never hides under the input/footer
+  const bottomPad = footerH + 24;
 
   // Sync styleTags with details.style
   useEffect(() => {
@@ -1033,33 +1040,29 @@ async function startGeneration() {
             <div
               ref={scrollerRef}
               className={`overflow-y-auto overscroll-y-contain custom-scrollbar pl-6 lg:pl-8 pr-4 lg:pr-6 pt-6 lg:pt-8 ${isDesktop ? '' : 'max-h-[50vh]'}`}
-              style={isDesktop ? { height: `${scrollerHeight}px` } : undefined}
+              style={isDesktop ? { height: `${scrollerHeight}px`, maxHeight: `${MAX_SCROLLER}px` } : undefined}
               onScroll={(e) => setScrollTop((e.target as HTMLDivElement).scrollTop)}
             >
-              <div className="space-y-4 pr-4 pl-4 pt-4" style={{ paddingBottom: footerH + 24 }}>
+              <div className="space-y-4 pr-4 pl-4 pt-4" style={{ paddingBottom: bottomPad }}>
                 {messages.map((m, i) => (
                   <ChatBubble key={i} role={m.role} content={m.content} />
                 ))}
-
                 {busy && (
-                  <div className="space-y-3" role="status" aria-live="polite">
+                  <div className="space-y-3">
                     {isAnalyzingImage && <ImageAnalysisLoader text="Analyzing Image..." />}
                     {isReadingText && <ImageAnalysisLoader text="Reading Document..." />}
                     {!isAnalyzingImage && !isReadingText && <Spinner />}
                   </div>
                 )}
-
-                {/* 👇 keeps the last item (including loader) above the footer/gradient */}
-                <div ref={bottomRef} style={{ height: 1, scrollMarginBottom: footerH + 24 }} />
               </div>
             </div>
 
             {/* tools footer: absolute on desktop, sticky on smaller screens */}
             <div
               ref={footerRef}
-              className={`absolute bottom-0 left-0 right-0 ${isDesktop ? 'pt-8 pb-8 px-8' : 'pt-4 pb-4 px-4'} bg-gradient-to-t from-[#151515] via-[#151515]/98 via-[#151515]/90 to-transparent pointer-events-none z-20`}
+              className={`${isDesktop ? 'absolute bottom-0 pt-8 pb-8 px-8' : 'sticky bottom-0 pt-4 pb-4 px-4'} left-0 right-0 bg-gradient-to-t from-[#151515] via-[#151515]/98 via-[#151515]/90 to-transparent`}
             >
-              <div className="space-y-4 pointer-events-auto">
+              <div className="space-y-4">
                 {attachedFiles.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {attachedFiles.map((file, index) => (
@@ -1199,12 +1202,10 @@ async function startGeneration() {
           </div>
 
           {/* Row 2 - Center: Form */}
-            <div 
-              className="order-7 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 min-h-[280px]"
-              style={isDesktop
-                ? { height: `calc(100vh - ${scrollerHeight}px - 144px)` }
-                : { height: 'auto' }}
-            >
+          <div 
+            className="order-7 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 min-h-[280px]"
+            style={isDesktop ? { height: `${formHeightPx}px` } : { height: 'auto' }}
+          >
             {/* Two-column layout: Left (Title + Song Parameters), Right (Lyrics) */}
             <div className="grid grid-cols-12 gap-4 h-full min-h-0">
               {/* Left column */}
