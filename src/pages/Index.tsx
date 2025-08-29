@@ -1089,7 +1089,7 @@ async function startGeneration() {
     <button
       onClick={startGeneration}
       disabled={busy || !canGenerate}
-      className="h-9 w-full rounded-lg text-[13px] font-medium text-white bg-accent-primary hover:bg-accent-primary/90 disabled:opacity-50 disabled:saturate-75 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+      className="h-9 w-full rounded-lg text-[13px] font-medium text-white bg-accent-primary hover:bg-accent-primary/90 disabled:bg-accent-primary/40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
       aria-disabled={busy || !canGenerate}
     >
       <span className="text-sm leading-none">✦</span>
