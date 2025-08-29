@@ -1193,7 +1193,7 @@ async function startGeneration() {
                         tags={styleTags}
                         onChange={handleStyleTagsChange}
                         placeholder='Add song parameters such as "Pop", "128bpm", "female vocals" and separate them by comma'
-                        className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 min-h-[120px] resize-none"
+                        className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-0 resize-none"
                       />
                     </div>
                   </div>
