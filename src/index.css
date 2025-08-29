@@ -62,6 +62,16 @@ All colors MUST be HSL.
     --brand-2: 196 100% 50%; /* cyan */
     --shadow-elegant: 0 10px 30px -10px hsl(var(--brand-2) / 0.35);
     --shadow-glow: 0 0 40px hsl(var(--brand-1) / 0.45);
+    
+    /* App specific colors */
+    --bg-canvas: 0 0% 100%;
+    --bg-card-alt: 0 0% 98%;
+    --border-main: 214.3 31.8% 91.4%;
+    --text-primary: 222.2 84% 4.9%;
+    --text-secondary: 215.4 16.3% 46.9%;
+    --accent-primary: 328 85% 54%; /* Pink color for Generate button #f92c8f */
+    --purple-chip: 258 100% 66%;
+    --teal-chip: 196 100% 50%;
   }
 
   .dark {
@@ -100,6 +110,16 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* App specific colors - dark mode */
+    --bg-canvas: 222.2 84% 4.9%;
+    --bg-card-alt: 217.2 32.6% 17.5%;
+    --border-main: 217.2 32.6% 17.5%;
+    --text-primary: 210 40% 98%;
+    --text-secondary: 215 20.2% 65.1%;
+    --accent-primary: 328 85% 54%; /* Same pink color for Generate button */
+    --purple-chip: 258 100% 66%;
+    --teal-chip: 196 100% 50%;
   }
 }
 
