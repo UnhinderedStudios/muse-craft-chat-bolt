@@ -133,6 +133,34 @@ const Index = () => {
   
   // Ref for chat input to maintain focus
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
+  const [footerH, setFooterH] = useState(0);
+
+  // measure footer height (desktop)
+  useEffect(() => {
+    if (!isDesktop) { setFooterH(0); return; }
+    const el = footerRef.current;
+    if (!el) return;
+
+    const update = () => setFooterH(el.offsetHeight || 0);
+    update();
+
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    window.addEventListener('resize', update);
+    return () => { ro.disconnect(); window.removeEventListener('resize', update); };
+  }, [isDesktop]);
+
+  // always keep the bottom in view when things change
+  useEffect(() => {
+    if (!scrollerRef.current) return;
+    scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight;
+  }, [messages, chatHeight, footerH]);
+
+  // computed sizes
+  const MIN_SCROLLER = 120; // hard stop for the scroll area
+  const scrollerHeight = isDesktop ? Math.max(chatHeight - footerH - 8, MIN_SCROLLER) : undefined;
+  const bottomPad = footerH + 24; // padding so last message never hides under footer
 
   // Sync styleTags with details.style
   useEffect(() => {
@@ -983,11 +1011,11 @@ async function startGeneration() {
             {/* chat scroll area: fixed height on desktop, capped height on mobile/tablet */}
             <div
               ref={scrollerRef}
-              className={`overflow-y-auto custom-scrollbar pl-6 lg:pl-8 pr-4 lg:pr-6 pt-6 lg:pt-8 ${isDesktop ? '' : 'max-h-[50vh]'}`}
-              style={isDesktop ? { height: `${chatHeight - 140}px` } : undefined}
+              className={`overflow-y-auto overscroll-y-contain custom-scrollbar pl-6 lg:pl-8 pr-4 lg:pr-6 pt-6 lg:pt-8 ${isDesktop ? '' : 'max-h-[50vh]'}`}
+              style={isDesktop ? { height: `${scrollerHeight}px` } : undefined}
               onScroll={(e) => setScrollTop((e.target as HTMLDivElement).scrollTop)}
             >
-              <div className="space-y-4 pr-4 pl-4 pt-4 pb-52">
+              <div className="space-y-4 pr-4 pl-4 pt-4" style={{ paddingBottom: bottomPad }}>
                 {messages.map((m, i) => (
                   <ChatBubble key={i} role={m.role} content={m.content} />
                 ))}
@@ -1003,6 +1031,7 @@ async function startGeneration() {
 
             {/* tools footer: absolute on desktop, sticky on smaller screens */}
             <div
+              ref={footerRef}
               className={`${isDesktop ? 'absolute bottom-0 pt-8 pb-8 px-8' : 'sticky bottom-0 pt-4 pb-4 px-4'} left-0 right-0 bg-gradient-to-t from-[#151515] via-[#151515]/98 via-[#151515]/90 to-transparent`}
             >
               <div className="space-y-4">
@@ -1147,8 +1176,9 @@ async function startGeneration() {
           {/* Row 2 - Center: Form */}
           <div 
             className="order-7 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 bg-[#151515] rounded-xl p-4 space-y-4 min-h-[280px]"
-            style={isDesktop ? { 
-              height: `calc(100vh - ${chatHeight - 140}px - 144px)` // 144px accounts for header, gaps, padding, and spacer
+            style={isDesktop ? {
+              // 100vh minus the *actual* scroller height (clamped) minus your fixed chrome below
+              height: `calc(100vh - ${scrollerHeight}px - 144px)`
             } : { height: 'auto' }}
           >
             {/* Two-column layout: Left (Title + Song Parameters), Right (Lyrics) */}
