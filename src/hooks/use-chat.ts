@@ -4,7 +4,9 @@ import { api } from "@/lib/api";
 // System prompt will be passed from parent component
 
 export function useChat() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { role: "assistant", content: "Hey! I can help write and generate a song. What vibe are you going for?" },
+  ]);
   const [input, setInput] = useState("");
   const [scrollTop, setScrollTop] = useState(0);
   const scrollerRef = useRef<HTMLDivElement>(null);

@@ -119,9 +119,6 @@ function sanitizeStyleSafe(input?: string): string | undefined {
 const Index = () => {
   const DOCK_H = 80; // px — reduced height to make container more compact
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: "assistant", content: "Hey! I can help write and generate a song. What vibe are you going for?" },
-  ]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
@@ -132,8 +129,8 @@ const Index = () => {
   const [isResizing, setIsResizing] = useState(false);
   const [showMelodySpeech, setShowMelodySpeech] = useState(false);
   
-  // Use the chat hook
-  const { sendMessage } = useChat();
+  // Use the chat hook for both main chat and voice interface
+  const { messages, sendMessage } = useChat();
   
   // Ref for chat input to maintain focus
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
@@ -543,14 +540,8 @@ const Index = () => {
       console.error("[Chat] Attachment text extraction failed:", e);
     }
     
-    // Display original user content in chat (without extracted text)
-    const displayMessage = { role: "user", content, attachments: fileAttachments } as ChatMessage;
-    const next = [...messages, displayMessage];
-    setMessages(next);
-    
-    // But send combined content to API (user content + extracted text)
+    // Send combined content to API (user content + extracted text)
     const apiContent = appendedText ? `${content}\n\n${appendedText}` : content;
-    const apiMessages = [...messages, { role: "user", content: apiContent, attachments: fileAttachments } as ChatMessage];
     setInput("");
     setAttachedFiles([]); // Clear attachments after sending
 
@@ -577,30 +568,35 @@ const Index = () => {
     setIsReadingText(hasTextAttachments || false);
     
     try {
+      const systemPrompt = "You are a helpful assistant that helps users create and generate songs. Be creative, engaging, and provide detailed suggestions.";
       console.debug("[Chat] Using systemPrompt (first 160 chars):", systemPrompt.slice(0, 160));
-      const res = await api.chat(apiMessages, systemPrompt);
-      const assistantMsg = res.content;
-      setMessages((m) => [...m, { role: "assistant", content: assistantMsg }]);
       
-      // Try new parser first
-      const songRequest = parseSongRequest(assistantMsg);
-      if (songRequest) {
-        const converted = convertToSongDetails(songRequest);
-        const now = Date.now();
-        if (now - lastDiceAt.current >= 4000) {
-          const finalStyle = sanitizeStyleSafe(converted.style);
-          const cleaned: SongDetails = { ...converted, ...(finalStyle ? { style: finalStyle } : {}) };
-          setDetails((d) => mergeNonEmpty(d, cleaned));
-        }
-      } else {
-        // Fallback to old extraction method
-        const extracted = extractDetails(assistantMsg);
-        if (extracted) {
+      // Use the shared sendMessage function
+      const assistantMessage = await sendMessage(apiContent, systemPrompt, fileAttachments);
+      
+      if (assistantMessage) {
+        const assistantMsg = assistantMessage.content;
+        
+        // Try new parser first
+        const songRequest = parseSongRequest(assistantMsg);
+        if (songRequest) {
+          const converted = convertToSongDetails(songRequest);
           const now = Date.now();
           if (now - lastDiceAt.current >= 4000) {
-            const finalStyle = sanitizeStyleSafe(extracted.style);
-            const cleaned: SongDetails = { ...extracted, ...(finalStyle ? { style: finalStyle } : {}) };
+            const finalStyle = sanitizeStyleSafe(converted.style);
+            const cleaned: SongDetails = { ...converted, ...(finalStyle ? { style: finalStyle } : {}) };
             setDetails((d) => mergeNonEmpty(d, cleaned));
+          }
+        } else {
+          // Fallback to old extraction method
+          const extracted = extractDetails(assistantMsg);
+          if (extracted) {
+            const now = Date.now();
+            if (now - lastDiceAt.current >= 4000) {
+              const finalStyle = sanitizeStyleSafe(extracted.style);
+              const cleaned: SongDetails = { ...extracted, ...(finalStyle ? { style: finalStyle } : {}) };
+              setDetails((d) => mergeNonEmpty(d, cleaned));
+            }
           }
         }
       }

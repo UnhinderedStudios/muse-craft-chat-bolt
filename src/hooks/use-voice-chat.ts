@@ -114,6 +114,7 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
 
             } catch (error) {
               console.error('Error processing transcript:', error);
+              console.error('Full error details:', JSON.stringify(error, null, 2));
               setIsProcessing(false);
               // Restart listening on error
               if (isAutoListeningRef.current) {
