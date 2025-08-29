@@ -16,9 +16,11 @@ export function useResize() {
       const deltaY = e.clientY - startY;
       const proposedHeight = startHeight + deltaY;
       
-      // Block when proposed height would exceed boundaries
+      // Completely stop resize operation when hitting boundaries
       if (proposedHeight < CHAT_HEIGHT_LIMITS.MIN || proposedHeight > CHAT_HEIGHT_LIMITS.MAX) {
-        e.preventDefault();
+        setIsResizing(false);
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
         return;
       }
       
