@@ -983,11 +983,11 @@ async function startGeneration() {
             {/* chat scroll area: fixed height on desktop, capped height on mobile/tablet */}
             <div
               ref={scrollerRef}
-              className={`overflow-y-auto custom-scrollbar pl-6 lg:pl-8 pr-4 lg:pr-6 pt-6 lg:pt-8 ${isDesktop ? '' : 'max-h-[56vh]'}`}
-              style={isDesktop ? { height: `${chatHeight}px` } : undefined}
+              className={`overflow-y-auto custom-scrollbar pl-6 lg:pl-8 pr-4 lg:pr-6 pt-6 lg:pt-8 ${isDesktop ? '' : 'max-h-[50vh]'}`}
+              style={isDesktop ? { height: `${chatHeight - 140}px` } : undefined}
               onScroll={(e) => setScrollTop((e.target as HTMLDivElement).scrollTop)}
             >
-              <div className="space-y-4 pr-4 pl-4 pt-4 pb-4 lg:pb-32">
+              <div className="space-y-4 pr-4 pl-4 pt-4 pb-32">
                 {messages.map((m, i) => (
                   <ChatBubble key={i} role={m.role} content={m.content} />
                 ))}
