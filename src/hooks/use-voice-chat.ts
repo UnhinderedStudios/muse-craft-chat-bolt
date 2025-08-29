@@ -75,11 +75,51 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
         }
 
         // Set new silence timeout - only process if we have accumulated final transcript
-        silenceTimeoutRef.current = setTimeout(() => {
+        silenceTimeoutRef.current = setTimeout(async () => {
           const accumulatedTranscript = finalTranscriptRef.current.trim();
           if (accumulatedTranscript && accumulatedTranscript.length > 2) {
             console.log('Processing accumulated transcript from timeout:', accumulatedTranscript);
-            processTranscript(accumulatedTranscript);
+            
+            // Process transcript directly here to avoid scope issues
+            try {
+              setIsProcessing(true);
+              setCurrentTranscript(""); // Clear transcript
+              console.log('Sending message to chat:', accumulatedTranscript);
+
+              // Send message through the main chat system and get the AI response directly
+              const aiResponse = await sendMessage(accumulatedTranscript, "You are a helpful voice assistant. Keep responses conversational and concise since they will be spoken aloud. Be engaging and natural in your speech.");
+
+              console.log('AI response received:', aiResponse?.content);
+
+              // Convert AI response to speech if we got a response
+              if (aiResponse && aiResponse.content) {
+                const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
+                  body: { 
+                    text: aiResponse.content,
+                    voice: 'alloy'
+                  }
+                });
+
+                if (!ttsError && ttsData) {
+                  await playAudio(ttsData.audioContent);
+                } else {
+                  console.error('Text-to-speech error:', ttsError);
+                }
+              } else {
+                console.log('No AI response received');
+              }
+
+              setIsProcessing(false);
+
+            } catch (error) {
+              console.error('Error processing transcript:', error);
+              setIsProcessing(false);
+              // Restart listening on error
+              if (isAutoListeningRef.current) {
+                setTimeout(() => startListening(), 500);
+              }
+            }
+            
             finalTranscriptRef.current = ""; // Clear after processing
           }
         }, 2000); // 2 second pause
@@ -100,7 +140,7 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
         }
       };
     }
-  }, [isProcessing, isPlaying]);
+  }, [isProcessing, isPlaying, sendMessage]);
 
   const startListening = useCallback(async () => {
     try {
@@ -198,46 +238,6 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
     setCurrentTranscript("");
   }, [isRecording]);
 
-  const processTranscript = useCallback(async (transcript: string) => {
-    try {
-      setIsProcessing(true);
-      setCurrentTranscript(""); // Clear transcript
-      console.log('Processing transcript:', transcript);
-
-      // Send message through the main chat system and get the AI response directly
-      const aiResponse = await sendMessage(transcript, "You are a helpful voice assistant. Keep responses conversational and concise since they will be spoken aloud. Be engaging and natural in your speech.");
-
-      console.log('AI response received:', aiResponse?.content);
-
-      // Convert AI response to speech if we got a response
-      if (aiResponse && aiResponse.content) {
-        const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
-          body: { 
-            text: aiResponse.content,
-            voice: 'alloy'
-          }
-        });
-
-        if (!ttsError && ttsData) {
-          await playAudio(ttsData.audioContent);
-        } else {
-          console.error('Text-to-speech error:', ttsError);
-        }
-      } else {
-        console.log('No AI response received');
-      }
-
-      setIsProcessing(false);
-
-    } catch (error) {
-      console.error('Error processing transcript:', error);
-      setIsProcessing(false);
-      // Restart listening on error
-      if (isAutoListeningRef.current) {
-        setTimeout(() => startListening(), 500);
-      }
-    }
-  }, [sendMessage, startListening]);
 
   const playAudio = useCallback(async (base64Audio: string) => {
     try {
