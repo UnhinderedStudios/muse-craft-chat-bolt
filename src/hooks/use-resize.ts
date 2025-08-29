@@ -16,10 +16,9 @@ export function useResize() {
       const deltaY = e.clientY - startY;
       const proposedHeight = startHeight + deltaY;
       
-      // Allow upward movement (negative deltaY) from any position
-      // But prevent downward movement below DEFAULT
+      // Enforce strict boundaries with additional validation
       const newHeight = Math.max(
-        CHAT_HEIGHT_LIMITS.DEFAULT, 
+        CHAT_HEIGHT_LIMITS.MIN, 
         Math.min(CHAT_HEIGHT_LIMITS.MAX, proposedHeight)
       );
       
