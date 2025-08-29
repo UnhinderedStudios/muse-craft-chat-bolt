@@ -89,7 +89,8 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
               // Send message through the main chat system and get the AI response directly
               const aiResponse = await sendMessage(accumulatedTranscript, "You are a helpful voice assistant. Keep responses conversational and concise since they will be spoken aloud. Be engaging and natural in your speech.");
 
-              console.log('AI response received:', aiResponse?.content);
+              console.log('AI response received:', aiResponse);
+              console.log('AI response content:', aiResponse?.content);
 
               // Convert AI response to speech if we got a response
               if (aiResponse && aiResponse.content) {
