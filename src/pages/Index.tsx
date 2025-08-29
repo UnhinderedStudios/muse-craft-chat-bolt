@@ -1023,7 +1023,7 @@ async function startGeneration() {
           </div>
 
           {/* Row 1 - Center: Chat */}
-          <div className="order-3 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 min-h-0 bg-[#151515] rounded-2xl relative overflow-hidden flex flex-col">
+          <div className="order-3 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 min-h-0 bg-[#151515] rounded-2xl relative overflow-hidden">
             {/* top fade */}
             {scrollTop > 0 && (
               <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#151515] via-[#151515]/95 via-[#151515]/70 to-transparent z-30 pointer-events-none" />
@@ -1032,10 +1032,11 @@ async function startGeneration() {
             {/* chat scroll area: fixed height on desktop, capped height on mobile/tablet */}
             <div
               ref={scrollerRef}
-              className={`flex-1 min-h-0 overflow-y-auto overscroll-y-contain custom-scrollbar pl-6 lg:pl-8 pr-4 lg:pr-6 pt-6 lg:pt-8 ${isDesktop ? '' : 'max-h-[50vh]'}`}
+              className={`overflow-y-auto overscroll-y-contain custom-scrollbar pl-6 lg:pl-8 pr-4 lg:pr-6 pt-6 lg:pt-8 ${isDesktop ? '' : 'max-h-[50vh]'}`}
+              style={isDesktop ? { height: `${scrollerHeight}px` } : undefined}
               onScroll={(e) => setScrollTop((e.target as HTMLDivElement).scrollTop)}
             >
-              <div className="space-y-4 pr-4 pl-4 pt-4 pb-4">
+              <div className="space-y-4 pr-4 pl-4 pt-4" style={{ paddingBottom: footerH + 24 }}>
                 {messages.map((m, i) => (
                   <ChatBubble key={i} role={m.role} content={m.content} />
                 ))}
@@ -1049,16 +1050,16 @@ async function startGeneration() {
                 )}
 
                 {/* 👇 keeps the last item (including loader) above the footer/gradient */}
-                <div ref={bottomRef} style={{ height: 1, scrollMarginBlockEnd: 16 }} />
+                <div ref={bottomRef} style={{ height: 1, scrollMarginBottom: footerH + 24 }} />
               </div>
             </div>
 
             {/* tools footer: absolute on desktop, sticky on smaller screens */}
             <div
               ref={footerRef}
-              className={`${isDesktop ? 'pt-8 pb-8 px-8' : 'pt-4 pb-4 px-4'} shrink-0 bg-gradient-to-t from-[#151515] via-[#151515]/98 via-[#151515]/90 to-transparent`}
+              className={`absolute bottom-0 left-0 right-0 ${isDesktop ? 'pt-8 pb-8 px-8' : 'pt-4 pb-4 px-4'} bg-gradient-to-t from-[#151515] via-[#151515]/98 via-[#151515]/90 to-transparent pointer-events-none z-20`}
             >
-              <div className="space-y-4">
+              <div className="space-y-4 pointer-events-auto">
                 {attachedFiles.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {attachedFiles.map((file, index) => (
