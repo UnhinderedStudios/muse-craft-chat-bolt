@@ -27,6 +27,7 @@ import { TagInput } from "@/components/song/TagInput";
 import PlayerDock from "@/components/audio/PlayerDock";
 import TrackListPanel from "@/components/tracklist/TrackListPanel";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { VoiceInterface } from "@/components/voice/VoiceInterface";
 
 // Hooks
 import { useChat } from "@/hooks/use-chat";
@@ -1269,24 +1270,8 @@ async function startGeneration() {
 
       {/* Melody Speech Overlay */}
       <Dialog open={showMelodySpeech} onOpenChange={setShowMelodySpeech}>
-        <DialogContent className="max-w-none w-full h-full bg-black/10 backdrop-blur border-0 p-0 flex flex-col">
-          <div className="relative w-full h-full flex flex-col">
-            {/* Custom X button */}
-            <button
-              className="absolute top-6 right-6 z-10 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
-              onClick={() => setShowMelodySpeech(false)}
-            >
-              <X className="w-6 h-6" />
-            </button>
-            
-            {/* Content */}
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center">
-                <h2 className="text-4xl font-bold text-white mb-4">Melody Speech</h2>
-                <p className="text-white/60 text-lg">Speech-to-melody functionality coming soon...</p>
-              </div>
-            </div>
-          </div>
+        <DialogContent className="max-w-full max-h-full w-screen h-screen bg-black/10 backdrop-blur border-0 p-0 m-0 rounded-none">
+          <VoiceInterface onClose={() => setShowMelodySpeech(false)} />
         </DialogContent>
       </Dialog>
 
