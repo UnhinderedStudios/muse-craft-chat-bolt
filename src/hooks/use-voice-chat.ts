@@ -264,8 +264,9 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
       
-      audio.volume = isMuted ? 0 : volume;
       currentAudioRef.current = audio;
+      audio.volume = isMuted ? 0 : volume;
+      console.log('TTS audio volume initialized to:', audio.volume, '(muted:', isMuted, 'volume:', volume, ')');
 
       audio.onended = () => {
         console.log('TTS playback ended - can resume listening');
@@ -308,11 +309,16 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
   }, [volume, isMuted, isListening, isRecording, stopRecording, startListening]);
 
   const toggleMute = useCallback(() => {
-    setIsMuted(prev => !prev);
-    if (currentAudioRef.current) {
-      currentAudioRef.current.volume = isMuted ? volume : 0;
-    }
-  }, [isMuted, volume]);
+    setIsMuted(prev => {
+      const newMutedState = !prev;
+      console.log('Toggle mute - new state:', newMutedState);
+      if (currentAudioRef.current) {
+        currentAudioRef.current.volume = newMutedState ? 0 : volume;
+        console.log('Audio volume set to:', currentAudioRef.current.volume);
+      }
+      return newMutedState;
+    });
+  }, [volume]);
 
   const startConversation = useCallback(() => {
     isAutoListeningRef.current = true;
@@ -348,9 +354,11 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
 
   // Update volume when it changes
   const updateVolume = useCallback((newVolume: number) => {
+    console.log('Volume updated to:', newVolume, '(muted:', isMuted, ')');
     setVolume(newVolume);
-    if (currentAudioRef.current && !isMuted) {
-      currentAudioRef.current.volume = newVolume;
+    if (currentAudioRef.current) {
+      currentAudioRef.current.volume = isMuted ? 0 : newVolume;
+      console.log('Audio element volume set to:', currentAudioRef.current.volume);
     }
   }, [isMuted]);
 
