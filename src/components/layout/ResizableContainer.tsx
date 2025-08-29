@@ -24,7 +24,11 @@ export const ResizableContainer: React.FC<ResizableContainerProps> = ({
           "absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize group transition-colors duration-200",
           isResizing ? "bg-accent-primary/50" : "bg-white/20 hover:bg-white/40"
         )}
-        onMouseDown={handleMouseDown}
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          handleMouseDown(e);
+        }}
         style={{ 
           clipPath: 'polygon(100% 0%, 0% 100%, 100% 100%)',
           borderBottomRightRadius: '16px' 
