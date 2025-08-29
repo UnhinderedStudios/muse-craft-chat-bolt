@@ -1187,7 +1187,7 @@ async function startGeneration() {
                 {/* Song Parameters */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-white/80">Song Parameters</label>
-                  <div className="bg-[#2d2d2d] rounded-lg p-4 border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
+                  <div className="bg-[#2d2d2d] rounded-lg border border-transparent hover:border-white/50 focus-within:border-white focus-within:hover:border-white transition-colors duration-200">
                     <div className="max-h-[260px] overflow-y-auto lyrics-scrollbar">
                       <TagInput
                         tags={styleTags}
