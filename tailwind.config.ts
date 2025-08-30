@@ -171,14 +171,6 @@ export default {
 					'100%': {
 						transform: 'translateX(0%)'
 					}
-				},
-				'text-scroll': {
-					'0%, 20%': { 
-						transform: 'translateX(0)'
-					},
-					'80%, 100%': { 
-						transform: 'translateX(calc(-100% + 100px))'
-					}
 				}
 			},
 			animation: {
@@ -199,8 +191,7 @@ export default {
 				'waveform-8': 'waveform-8 0.85s ease-in-out infinite',
 				'waveform-9': 'waveform-9 0.55s ease-in-out infinite',
 				'waveform-10': 'waveform-10 0.8s ease-in-out infinite',
-				'scroll-text': 'scroll-text 4s ease-in-out infinite',
-				'text-scroll': 'text-scroll 4s ease-in-out infinite'
+				'scroll-text': 'scroll-text 4s ease-in-out infinite'
 			}
 		}
 	},
