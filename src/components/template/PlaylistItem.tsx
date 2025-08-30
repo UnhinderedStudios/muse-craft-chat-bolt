@@ -37,7 +37,7 @@ export function PlaylistItem({ playlist, onMenuAction, isArtist = false }: Playl
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
-              <div className="text-sm text-white font-medium truncate">
+              <div className="text-sm text-white font-medium truncate hover:animate-scroll-text hover:overflow-visible group-hover:whitespace-nowrap">
                 {playlist.name}
                 {playlist.isFavorited && (
                   <span className="ml-2 text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">
@@ -54,7 +54,7 @@ export function PlaylistItem({ playlist, onMenuAction, isArtist = false }: Playl
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button 
-                  className="opacity-0 group-hover:opacity-100 w-8 h-8 flex items-center justify-center text-white/60 hover:text-white transition-all duration-200"
+                  className="opacity-0 group-hover:opacity-100 w-8 h-8 mr-2 flex items-center justify-center text-white/60 hover:text-white transition-all duration-200"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MoreVertical className="w-4 h-4" />
