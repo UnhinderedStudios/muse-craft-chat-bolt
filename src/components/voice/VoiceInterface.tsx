@@ -71,8 +71,68 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
         <div className="flex flex-col items-center space-y-8">
           <AnimatedOrb state={getOrbState()} />
           
+          {/* Controls Row - directly under orb */}
+          <div className="flex items-center justify-center space-x-6">
+            {/* Chat Log Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowChatLog(!showChatLog)}
+              className="w-12 h-12 rounded-full text-text-secondary hover:text-text-primary border border-white/20 hover:border-white/40 transition-all"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            </Button>
+
+            {/* Volume Control */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleMute}
+              className="w-12 h-12 rounded-full text-text-secondary hover:text-text-primary border border-white/20 hover:border-white/40 transition-all"
+            >
+              {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+            </Button>
+
+            {/* Main Voice Control */}
+            <Button
+              onClick={isListening ? stopRecording : startRecording}
+              disabled={isProcessing}
+              className={`w-16 h-16 rounded-full transition-all duration-200 ${
+                isListening || isRecording
+                  ? 'bg-red-500 hover:bg-red-600 scale-110 shadow-[0_0_40px_rgba(239,68,68,0.6)]' 
+                  : 'bg-accent-primary hover:bg-accent-primary/90 shadow-[0_0_20px_rgba(202,36,116,0.4)]'
+              }`}
+            >
+              {isListening || isRecording ? (
+                <MicOff className="w-6 h-6 text-white" />
+              ) : (
+                <Mic className="w-6 h-6 text-white" />
+              )}
+            </Button>
+
+            {/* Volume Slider */}
+            <div className="flex items-center space-x-2 px-3 py-2 rounded-full border border-white/20 bg-black/20 backdrop-blur-sm">
+              <Volume2 className="w-4 h-4 text-text-secondary" />
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.1"
+                value={volume}
+                onChange={(e) => setVolume(parseFloat(e.target.value))}
+                className="w-16 h-2 bg-white/20 rounded-lg appearance-none cursor-pointer 
+                           [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 
+                           [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full 
+                           [&::-webkit-slider-thumb]:bg-accent-primary [&::-webkit-slider-thumb]:shadow-md"
+              />
+              <span className="text-xs text-text-secondary min-w-[2rem]">{Math.round(volume * 100)}</span>
+            </div>
+          </div>
+          
           {/* Status Text */}
-          <div className="text-center space-y-2">
+          <div className="text-center space-y-2 mt-4">
             <p className="text-lg text-text-primary font-medium">
               {isProcessing && "Processing..."}
               {isPlaying && "Speaking..."}
@@ -80,8 +140,8 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
               {!isProcessing && !isPlaying && !isListening && !isRecording && "Ready to chat"}
             </p>
             {currentTranscript && !isPlaying && (
-              <div className="bg-surface-secondary/80 backdrop-blur rounded-lg p-3 max-w-md">
-                <p className="text-sm text-text-primary italic">"{currentTranscript}"</p>
+              <div className="bg-[hsl(var(--chat-bubble))] backdrop-blur rounded-lg p-3 max-w-md border border-white/10">
+                <p className="text-sm text-[hsl(var(--chat-text))] italic">"{currentTranscript}"</p>
               </div>
             )}
             <p className="text-sm text-text-secondary">
@@ -89,65 +149,6 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
             </p>
           </div>
         </div>
-
-        {/* Controls Panel */}
-        <div className="absolute right-8 top-20 space-y-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowChatLog(!showChatLog)}
-            className="text-text-secondary hover:text-text-primary"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleMute}
-            className="text-text-secondary hover:text-text-primary"
-          >
-            {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-          </Button>
-
-          {/* Volume Slider */}
-          <div className="flex flex-col items-center space-y-2">
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.1"
-              value={volume}
-              onChange={(e) => setVolume(parseFloat(e.target.value))}
-              className="w-20 h-2 bg-surface-secondary rounded-lg appearance-none cursor-pointer 
-                         [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 
-                         [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full 
-                         [&::-webkit-slider-thumb]:bg-accent-primary"
-              style={{ transform: 'rotate(-90deg)' }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Main Voice Control */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
-        <Button
-          onClick={isListening ? stopRecording : startRecording}
-          disabled={isProcessing}
-          className={`w-20 h-20 rounded-full transition-all duration-200 ${
-            isListening || isRecording
-              ? 'bg-red-500 hover:bg-red-600 scale-110 shadow-[0_0_40px_rgba(239,68,68,0.6)]' 
-              : 'bg-accent-primary hover:bg-accent-primary/90 shadow-[0_0_20px_rgba(202,36,116,0.4)]'
-          }`}
-        >
-          {isListening || isRecording ? (
-            <MicOff className="w-8 h-8 text-white" />
-          ) : (
-            <Mic className="w-8 h-8 text-white" />
-          )}
-        </Button>
       </div>
     </div>
   );
