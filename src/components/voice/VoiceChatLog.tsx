@@ -8,10 +8,7 @@ interface VoiceChatLogProps {
 
 export const VoiceChatLog: React.FC<VoiceChatLogProps> = ({ messages }) => {
   return (
-    <div className="relative h-full bg-black/5 bg-white/5 backdrop-blur-xl border border-white/10 border-t-white/20 rounded-xl p-4 overflow-hidden shadow-inner">
-      {/* Glass reflection effect */}
-      <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/10 via-transparent to-transparent pointer-events-none" />
-      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-t-xl" />
+    <div className="h-full bg-gray-900/10 border border-white/20 rounded-xl p-4 overflow-hidden">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-text-primary">Voice Chat</h3>
         <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
@@ -33,14 +30,12 @@ export const VoiceChatLog: React.FC<VoiceChatLogProps> = ({ messages }) => {
             >
               <div
                 className={cn(
-                  "relative max-w-[80%] px-3 py-2 rounded-lg text-xs leading-relaxed backdrop-blur-md border",
+                  "max-w-[80%] px-3 py-2 rounded-lg text-xs leading-relaxed border",
                   message.role === "user"
-                    ? "bg-accent-primary/60 bg-white/5 text-white ml-4 border-white/20"
-                    : "bg-black/20 bg-white/5 text-text-primary mr-4 border-white/10"
+                    ? "bg-accent-primary text-white ml-4 border-white/30"
+                    : "bg-gray-800/80 text-text-primary mr-4 border-white/20"
                 )}
               >
-                {/* Glass highlight for chat bubbles */}
-                <div className="absolute inset-0 rounded-lg bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
                 <div className="flex items-center space-x-2 mb-1">
                   <div
                     className={cn(
