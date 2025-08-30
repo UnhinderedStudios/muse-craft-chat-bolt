@@ -90,7 +90,7 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
       </div>
 
       {/* Bottom Controls Dock */}
-      <div className="absolute bottom-10 w-full flex justify-center -ml-4">
+      <div className="absolute bottom-20 w-full flex justify-center -ml-2">
         <div className="flex items-center space-x-6 bg-black/20 backdrop-blur-sm rounded-full px-6 py-4">
           {/* Chat Log Toggle */}
           <Button
