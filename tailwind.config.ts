@@ -115,44 +115,24 @@ export default {
 				},
 				'loading-spin': {
 					'0%': {
-						background: 'conic-gradient(from 0deg, transparent 0deg, hsl(var(--accent-primary)) 30deg, transparent 60deg, transparent 360deg)',
+						boxShadow: '0 0 80px hsl(var(--accent-primary) / 0.8), 0 -40px 0 -30px hsl(var(--accent-primary))',
 						transform: 'rotate(0deg)'
 					},
 					'100%': {
-						background: 'conic-gradient(from 0deg, transparent 0deg, hsl(var(--accent-primary)) 30deg, transparent 60deg, transparent 360deg)',
+						boxShadow: '0 0 80px hsl(var(--accent-primary) / 0.8), 0 -40px 0 -30px hsl(var(--accent-primary))',
 						transform: 'rotate(360deg)'
 					}
 				},
-				'lava-blob-1': {
-					'0%, 100%': { transform: 'translate(0, 0) scale(1) rotate(0deg)' },
-					'25%': { transform: 'translate(20px, -10px) scale(1.2) rotate(90deg)' },
-					'50%': { transform: 'translate(-15px, 25px) scale(0.8) rotate(180deg)' },
-					'75%': { transform: 'translate(10px, -20px) scale(1.1) rotate(270deg)' }
-				},
-				'lava-blob-2': {
-					'0%, 100%': { transform: 'translate(0, 0) scale(1) rotate(0deg)' },
-					'33%': { transform: 'translate(-25px, 15px) scale(1.3) rotate(120deg)' },
-					'66%': { transform: 'translate(20px, -25px) scale(0.7) rotate(240deg)' }
-				},
-				'lava-blob-3': {
-					'0%, 100%': { transform: 'translate(0, 0) scale(1) rotate(0deg)' },
-					'20%': { transform: 'translate(15px, 20px) scale(0.9) rotate(72deg)' },
-					'40%': { transform: 'translate(-20px, -10px) scale(1.4) rotate(144deg)' },
-					'60%': { transform: 'translate(25px, -15px) scale(0.6) rotate(216deg)' },
-					'80%': { transform: 'translate(-10px, 25px) scale(1.2) rotate(288deg)' }
-				},
-				'lava-blob-4': {
-					'0%, 100%': { transform: 'translate(0, 0) scale(1) rotate(0deg)' },
-					'30%': { transform: 'translate(-20px, -20px) scale(1.1) rotate(108deg)' },
-					'60%': { transform: 'translate(25px, 15px) scale(0.8) rotate(216deg)' },
-					'90%': { transform: 'translate(-15px, 20px) scale(1.3) rotate(324deg)' }
-				},
-				'lava-blob-5': {
-					'0%, 100%': { transform: 'translate(0, 0) scale(1) rotate(0deg)' },
-					'25%': { transform: 'translate(20px, 20px) scale(0.7) rotate(90deg)' },
-					'50%': { transform: 'translate(-25px, -15px) scale(1.4) rotate(180deg)' },
-					'75%': { transform: 'translate(15px, -25px) scale(0.9) rotate(270deg)' }
-				},
+				'waveform-1': { '0%, 100%': { height: '20px' }, '50%': { height: '60px' } },
+				'waveform-2': { '0%, 100%': { height: '40px' }, '33%': { height: '45px' }, '66%': { height: '25px' } },
+				'waveform-3': { '0%, 100%': { height: '15px' }, '25%': { height: '55px' }, '75%': { height: '30px' } },
+				'waveform-4': { '0%, 100%': { height: '50px' }, '40%': { height: '20px' }, '80%': { height: '65px' } },
+				'waveform-5': { '0%, 100%': { height: '30px' }, '20%': { height: '45px' }, '60%': { height: '15px' } },
+				'waveform-6': { '0%, 100%': { height: '35px' }, '50%': { height: '60px' } },
+				'waveform-7': { '0%, 100%': { height: '25px' }, '30%': { height: '50px' }, '70%': { height: '40px' } },
+				'waveform-8': { '0%, 100%': { height: '45px' }, '25%': { height: '20px' }, '75%': { height: '55px' } },
+				'waveform-9': { '0%, 100%': { height: '20px' }, '40%': { height: '65px' }, '80%': { height: '35px' } },
+				'waveform-10': { '0%, 100%': { height: '40px' }, '50%': { height: '25px' } },
 				'glow-spin': {
 					'0%': {
 						transform: 'rotate(0deg)',
@@ -190,11 +170,16 @@ export default {
 				'glow-spin': 'glow-spin 2s linear infinite',
 				'wave-flow': 'wave-flow 0.8s ease-in-out infinite',
 				'loading-spin': 'loading-spin 1.5s linear infinite',
-				'lava-blob-1': 'lava-blob-1 8s ease-in-out infinite',
-				'lava-blob-2': 'lava-blob-2 7s ease-in-out infinite',
-				'lava-blob-3': 'lava-blob-3 9s ease-in-out infinite',
-				'lava-blob-4': 'lava-blob-4 6s ease-in-out infinite',
-				'lava-blob-5': 'lava-blob-5 7.5s ease-in-out infinite'
+				'waveform-1': 'waveform-1 0.6s ease-in-out infinite',
+				'waveform-2': 'waveform-2 0.8s ease-in-out infinite',
+				'waveform-3': 'waveform-3 0.7s ease-in-out infinite',
+				'waveform-4': 'waveform-4 0.9s ease-in-out infinite',
+				'waveform-5': 'waveform-5 0.5s ease-in-out infinite',
+				'waveform-6': 'waveform-6 0.75s ease-in-out infinite',
+				'waveform-7': 'waveform-7 0.65s ease-in-out infinite',
+				'waveform-8': 'waveform-8 0.85s ease-in-out infinite',
+				'waveform-9': 'waveform-9 0.55s ease-in-out infinite',
+				'waveform-10': 'waveform-10 0.8s ease-in-out infinite'
 			}
 		}
 	},
