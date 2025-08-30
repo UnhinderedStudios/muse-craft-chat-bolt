@@ -54,16 +54,16 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
       </Button>
 
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex items-center justify-center w-full max-w-4xl relative">
-        {/* Chat Log */}
+      {/* Main Content Area - CSS Grid Layout */}
+      <div className="flex-1 w-full max-w-6xl grid grid-cols-[320px_1fr_320px] gap-8 items-center">
+        {/* Chat Log - Left Column */}
         {showChatLog && (
-          <div className="absolute left-8 top-20 bottom-24 w-80">
+          <div className="h-[calc(100vh-200px)] flex items-start justify-start pt-20">
             <VoiceChatLog messages={messages} />
           </div>
         )}
 
-        {/* Central Orb - Centered */}
+        {/* Central Orb - Center Column */}
         <div className="flex flex-col items-center justify-center">
           <AnimatedOrb state={getOrbState()} />
           
@@ -84,11 +84,14 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
             )}
           </div>
         </div>
+
+        {/* Right Column - Empty for future use */}
+        <div></div>
       </div>
 
       {/* Bottom Controls Dock */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex items-center justify-center">
-        <div className="flex items-center space-x-6 bg-black/20 backdrop-blur-sm rounded-full px-6 py-4 border border-white/10">
+      <div className="absolute bottom-8 w-full flex justify-center">
+        <div className="flex items-center space-x-6 bg-black/20 backdrop-blur-sm rounded-full px-6 py-4">
           {/* Chat Log Toggle */}
           <Button
             variant="ghost"
