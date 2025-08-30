@@ -1451,7 +1451,10 @@ async function startGeneration() {
           </div>
 
           {/* Row 2 - Right: Template */}
-          <div className="order-8 md:col-span-8 lg:col-span-1 xl:col-span-1">
+          <div 
+            className="order-8 md:col-span-8 lg:col-span-1 xl:col-span-1"
+            style={isDesktop ? { height: `${formHeightPx}px` } : { height: 'auto' }}
+          >
             <TemplatePanel />
           </div>
         </div>
