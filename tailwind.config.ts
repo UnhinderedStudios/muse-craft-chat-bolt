@@ -96,11 +96,63 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'breathe': {
+					'0%, 100%': {
+						opacity: '0.6',
+						transform: 'scale(1)'
+					},
+					'50%': {
+						opacity: '0.8',
+						transform: 'scale(1.05)'
+					}
+				},
+				'breathe-intense': {
+					'0%, 100%': {
+						opacity: '0.7',
+						transform: 'scale(1)'
+					},
+					'50%': {
+						opacity: '1',
+						transform: 'scale(1.1)'
+					}
+				},
+				'glow-spin': {
+					'0%': {
+						transform: 'rotate(0deg)',
+						opacity: '0.8'
+					},
+					'100%': {
+						transform: 'rotate(360deg)',
+						opacity: '0.8'
+					}
+				},
+				'wave-flow': {
+					'0%, 100%': {
+						transform: 'scaleX(1) scaleY(1)',
+						opacity: '0.8'
+					},
+					'25%': {
+						transform: 'scaleX(1.2) scaleY(0.8)',
+						opacity: '1'
+					},
+					'50%': {
+						transform: 'scaleX(0.8) scaleY(1.2)',
+						opacity: '0.9'
+					},
+					'75%': {
+						transform: 'scaleX(1.1) scaleY(0.9)',
+						opacity: '1'
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'breathe': 'breathe 3s ease-in-out infinite',
+				'breathe-intense': 'breathe-intense 2s ease-in-out infinite',
+				'glow-spin': 'glow-spin 2s linear infinite',
+				'wave-flow': 'wave-flow 0.8s ease-in-out infinite'
 			}
 		}
 	},
