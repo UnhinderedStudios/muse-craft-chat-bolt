@@ -37,13 +37,15 @@ export function PlaylistItem({ playlist, onMenuAction, isArtist = false }: Playl
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
-              <div className="text-sm text-white font-medium truncate">
-                {playlist.name}
-                {playlist.isFavorited && (
-                  <span className="ml-2 text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">
-                    ★
-                  </span>
-                )}
+              <div className="text-sm text-white font-medium truncate group-hover:animate-scroll-text overflow-hidden whitespace-nowrap">
+                <span className="inline-block">
+                  {playlist.name}
+                  {playlist.isFavorited && (
+                    <span className="ml-2 text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">
+                      ★
+                    </span>
+                  )}
+                </span>
               </div>
               <div className="text-xs text-white/60">
                 {playlist.songCount} {playlist.songCount === 1 ? 'song' : 'songs'}
@@ -54,7 +56,7 @@ export function PlaylistItem({ playlist, onMenuAction, isArtist = false }: Playl
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button 
-                  className="opacity-0 group-hover:opacity-100 w-8 h-8 flex items-center justify-center text-white/60 hover:text-white transition-all duration-200"
+                  className="opacity-0 group-hover:opacity-100 w-8 h-8 flex items-center justify-center text-white/60 hover:text-white transition-all duration-200 ml-2"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MoreVertical className="w-4 h-4" />

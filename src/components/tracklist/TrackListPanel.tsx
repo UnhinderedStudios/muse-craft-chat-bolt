@@ -196,7 +196,9 @@ export default function TrackListPanel({
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs text-white/60 truncate">No Artist – {t.title || "Song Title"}</div>
+                    <div className="text-xs text-white/60 truncate group-hover:animate-scroll-text overflow-hidden whitespace-nowrap">
+                      <span className="inline-block">No Artist – {t.title || "Song Title"}</span>
+                    </div>
                     <div
                       className="mt-1 h-1.5 bg-white/10 rounded cursor-pointer"
                       onClick={(e) => {
@@ -268,8 +270,12 @@ export default function TrackListPanel({
                     <div className="flex-1 ml-3 flex flex-col justify-start">
                       {/* Title above controls */}
                       <div className="mb-1 mt-1">
-                        <div className="text-sm text-white font-medium truncate">{t.title || "Song Title"}</div>
-                        <div className="text-xs text-white/60 truncate">No Artist</div>
+                        <div className="text-sm text-white font-medium truncate group-hover:animate-scroll-text overflow-hidden whitespace-nowrap">
+                          <span className="inline-block">{t.title || "Song Title"}</span>
+                        </div>
+                        <div className="text-xs text-white/60 truncate group-hover:animate-scroll-text overflow-hidden whitespace-nowrap">
+                          <span className="inline-block">No Artist</span>
+                        </div>
                       </div>
 
                       {/* Controls line: Play button + Progress bar + 4 icons */}
