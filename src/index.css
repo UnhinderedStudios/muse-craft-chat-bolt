@@ -9,6 +9,21 @@
   .bg-gradient-radial {
     background: radial-gradient(var(--tw-gradient-stops));
   }
+
+  @keyframes hover-marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(calc(-1 * var(--marquee-distance, 0px))); }
+  }
+
+  .marquee-track {
+    animation-name: hover-marquee;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-track { animation: none !important; }
+  }
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here.

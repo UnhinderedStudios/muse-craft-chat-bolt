@@ -2,6 +2,7 @@ import React from "react";
 import { MoreVertical, Music, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Playlist } from "./TemplatePanel";
+import EllipsisMarquee from "@/components/ui/EllipsisMarquee";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,15 +38,18 @@ export function PlaylistItem({ playlist, onMenuAction, isArtist = false }: Playl
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
-              <div className="overflow-hidden">
-                <div className="text-sm text-white font-medium truncate group-hover:animate-scroll-text group-hover:whitespace-nowrap group-hover:overflow-visible group-hover:[text-overflow:unset]">
-                  {playlist.name}
-                  {playlist.isFavorited && (
-                    <span className="ml-2 text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">
-                      ★
-                    </span>
-                  )}
-                </div>
+              <div className="flex items-center gap-2">
+                <EllipsisMarquee
+                  text={playlist.name}
+                  className="text-sm text-white font-medium max-w-[180px]"
+                  speedPxPerSec={70}
+                  gapPx={32}
+                />
+                {playlist.isFavorited && (
+                  <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded shrink-0">
+                    ★
+                  </span>
+                )}
               </div>
               <div className="text-xs text-white/60">
                 {playlist.songCount} {playlist.songCount === 1 ? 'song' : 'songs'}
