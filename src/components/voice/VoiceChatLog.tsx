@@ -30,10 +30,9 @@ export const VoiceChatLog: React.FC<VoiceChatLogProps> = ({ messages }) => {
             >
               <div
                 className={cn(
-                  "max-w-[80%] px-3 py-2 rounded-lg text-xs leading-relaxed border",
-                  message.role === "user"
-                    ? "bg-white text-gray-800 ml-4 border-gray-300"
-                    : "bg-gray-100 text-gray-800 mr-4 border-gray-300"
+                  "max-w-[80%] px-3 py-2 rounded-lg text-xs leading-relaxed border border-white/10",
+                  "bg-[hsl(var(--chat-bubble))] text-[hsl(var(--chat-text))]",
+                  message.role === "user" ? "ml-4" : "mr-4"
                 )}
               >
                 <div className="flex items-center space-x-2 mb-1">
@@ -43,7 +42,7 @@ export const VoiceChatLog: React.FC<VoiceChatLogProps> = ({ messages }) => {
                       message.role === "user" ? "bg-white/60" : "bg-accent-primary"
                     )}
                   />
-                  <span className="text-xs opacity-70 font-medium">
+                  <span className="text-xs font-medium text-[hsl(var(--chat-label))]">
                     {message.role === "user" ? "You" : "AI"}
                   </span>
                 </div>

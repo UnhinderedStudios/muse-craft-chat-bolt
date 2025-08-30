@@ -72,6 +72,11 @@ All colors MUST be HSL.
     --accent-primary: 328 85% 54%; /* Pink color for Generate button #f92c8f */
     --purple-chip: 258 100% 66%;
     --teal-chip: 196 100% 50%;
+    
+    /* Chat bubble colors */
+    --chat-bubble: 0 0% 12.5%; /* #202020 */
+    --chat-text: 0 0% 77.6%; /* #c6c6c6 */
+    --chat-label: 0 0% 100%; /* white */
   }
 
   .dark {
@@ -120,6 +125,11 @@ All colors MUST be HSL.
     --accent-primary: 328 85% 54%; /* Same pink color for Generate button */
     --purple-chip: 258 100% 66%;
     --teal-chip: 196 100% 50%;
+    
+    /* Chat bubble colors - same for dark mode */
+    --chat-bubble: 0 0% 12.5%; /* #202020 */
+    --chat-text: 0 0% 77.6%; /* #c6c6c6 */
+    --chat-label: 0 0% 100%; /* white */
   }
 }
 
