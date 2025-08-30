@@ -101,7 +101,7 @@ export const TagInput: React.FC<TagInputProps> = ({
       
       {/* Show multiline placeholder when no tags and no input */}
       {tags.length === 0 && !inputValue && (
-        <div className="absolute top-4 left-4 pointer-events-none text-white/40 text-sm whitespace-pre-wrap leading-relaxed">
+        <div className="absolute top-0 left-0 pointer-events-none text-white/40 text-sm whitespace-pre-wrap leading-relaxed">
           {placeholder}
         </div>
       )}
