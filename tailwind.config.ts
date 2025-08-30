@@ -165,8 +165,11 @@ export default {
 					'0%': {
 						transform: 'translateX(0%)'
 					},
+					'50%': {
+						transform: 'translateX(-30%)'
+					},
 					'100%': {
-						transform: 'translateX(-100%)'
+						transform: 'translateX(0%)'
 					}
 				}
 			},
@@ -188,7 +191,7 @@ export default {
 				'waveform-8': 'waveform-8 0.85s ease-in-out infinite',
 				'waveform-9': 'waveform-9 0.55s ease-in-out infinite',
 				'waveform-10': 'waveform-10 0.8s ease-in-out infinite',
-				'scroll-text': 'scroll-text 3s linear infinite'
+				'scroll-text': 'scroll-text 4s ease-in-out infinite'
 			}
 		}
 	},

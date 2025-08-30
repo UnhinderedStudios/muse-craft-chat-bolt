@@ -37,13 +37,15 @@ export function PlaylistItem({ playlist, onMenuAction, isArtist = false }: Playl
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
-              <div className="text-sm text-white font-medium truncate hover:animate-scroll-text hover:overflow-visible group-hover:whitespace-nowrap">
-                {playlist.name}
-                {playlist.isFavorited && (
-                  <span className="ml-2 text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">
-                    ★
-                  </span>
-                )}
+              <div className="overflow-hidden">
+                <div className="text-sm text-white font-medium truncate group-hover:animate-scroll-text group-hover:whitespace-nowrap">
+                  {playlist.name}
+                  {playlist.isFavorited && (
+                    <span className="ml-2 text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">
+                      ★
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="text-xs text-white/60">
                 {playlist.songCount} {playlist.songCount === 1 ? 'song' : 'songs'}
