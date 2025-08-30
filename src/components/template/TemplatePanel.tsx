@@ -101,7 +101,7 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
   const displayData = viewMode === "playlists" ? getSortedPlaylists() : filteredData;
 
   return (
-    <div className={cn("h-full bg-[#151515] rounded-2xl flex flex-col", className)}>
+    <div className={cn("h-[280px] bg-[#151515] rounded-2xl flex flex-col", className)}>
       {/* Header with Toggle */}
       <div className="shrink-0 p-4 pb-3">
         <div className="flex items-center justify-between mb-4">
