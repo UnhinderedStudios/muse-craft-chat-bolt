@@ -54,13 +54,6 @@ export const VoiceChatLog: React.FC<VoiceChatLogProps> = ({ messages }) => {
         )}
       </div>
 
-      {/* Cyber Grid Lines */}
-      <div className="absolute inset-0 pointer-events-none opacity-10">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-accent-primary to-transparent h-px top-1/4" />
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-accent-primary to-transparent h-px top-3/4" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent-primary to-transparent w-px left-1/4" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent-primary to-transparent w-px left-3/4" />
-      </div>
     </div>
   );
 };
