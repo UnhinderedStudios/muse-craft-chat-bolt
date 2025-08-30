@@ -39,7 +39,7 @@ export function PlaylistItem({ playlist, onMenuAction, isArtist = false }: Playl
             <div className="min-w-0 flex-1">
               <div className="overflow-hidden group-hover:overflow-visible">
                 <div 
-                  className="text-sm text-white font-medium truncate group-hover:whitespace-nowrap group-hover:truncate-none group-hover:animate-scroll-text-reveal"
+                  className="text-sm text-white font-medium truncate group-hover:whitespace-nowrap group-hover:overflow-visible group-hover:[text-overflow:unset] group-hover:animate-scroll-text-reveal"
                   title={playlist.name}
                 >
                   {playlist.name}
