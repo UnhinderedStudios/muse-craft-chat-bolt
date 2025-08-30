@@ -99,18 +99,18 @@ export default {
 				},
 				'breathe': {
 					'0%, 100%': {
-						boxShadow: '0 0 40px rgba(255, 255, 255, 0.4)'
+						boxShadow: '0 0 40px rgba(255, 255, 255, 0.32)'
 					},
 					'50%': {
-						boxShadow: '0 0 80px rgba(255, 255, 255, 0.8)'
+						boxShadow: '0 0 80px rgba(255, 255, 255, 0.64)'
 					}
 				},
 				'breathe-intense': {
 					'0%, 100%': {
-						boxShadow: '0 0 80px hsl(var(--accent-primary) / 0.6)'
+						boxShadow: '0 0 80px hsl(var(--accent-primary) / 0.48)'
 					},
 					'50%': {
-						boxShadow: '0 0 140px hsl(var(--accent-primary) / 1)'
+						boxShadow: '0 0 140px hsl(var(--accent-primary) / 0.8)'
 					}
 				},
 				'glow-spin': {
@@ -145,8 +145,8 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
-				'breathe': 'breathe 3s ease-in-out infinite',
-				'breathe-intense': 'breathe-intense 2s ease-in-out infinite',
+				'breathe': 'breathe 6s ease-in-out infinite',
+				'breathe-intense': 'breathe-intense 4s ease-in-out infinite',
 				'glow-spin': 'glow-spin 2s linear infinite',
 				'wave-flow': 'wave-flow 0.8s ease-in-out infinite'
 			}
