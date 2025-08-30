@@ -38,7 +38,7 @@ export function PlaylistItem({ playlist, onMenuAction, isArtist = false }: Playl
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <div className="overflow-hidden">
-                <div className="text-sm text-white font-medium truncate group-hover:animate-scroll-text group-hover:whitespace-nowrap">
+                <div className="text-sm text-white font-medium truncate group-hover:animate-scroll-text group-hover:whitespace-nowrap group-hover:overflow-visible group-hover:[text-overflow:unset]">
                   {playlist.name}
                   {playlist.isFavorited && (
                     <span className="ml-2 text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">
