@@ -8,7 +8,7 @@ interface VoiceChatLogProps {
 
 export const VoiceChatLog: React.FC<VoiceChatLogProps> = ({ messages }) => {
   return (
-    <div className="relative h-full bg-black/10 bg-white/5 backdrop-blur-xl border border-white/20 border-t-white/30 rounded-xl p-4 overflow-hidden shadow-inner">
+    <div className="relative h-full bg-black/5 bg-white/5 backdrop-blur-xl border border-white/10 border-t-white/20 rounded-xl p-4 overflow-hidden shadow-inner">
       {/* Glass reflection effect */}
       <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/10 via-transparent to-transparent pointer-events-none" />
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded-t-xl" />
