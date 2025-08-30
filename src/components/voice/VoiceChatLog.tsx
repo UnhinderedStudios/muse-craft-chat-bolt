@@ -8,7 +8,7 @@ interface VoiceChatLogProps {
 
 export const VoiceChatLog: React.FC<VoiceChatLogProps> = ({ messages }) => {
   return (
-    <div className="h-full bg-gray-900/10 border border-white/20 rounded-xl p-4 overflow-hidden">
+    <div className="h-full bg-gray-900/20 border border-white/20 rounded-xl p-4 overflow-hidden">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-text-primary">Voice Chat</h3>
         <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
