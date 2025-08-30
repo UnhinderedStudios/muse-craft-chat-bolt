@@ -36,6 +36,10 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
   const streamRef = useRef<MediaStream | null>(null);
   const postTTSTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isOverlayActiveRef = useRef(true); // Track if overlay is active
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const audioOutputDetectionRef = useRef<boolean>(false);
+  const cleanupCompleteRef = useRef(false);
 
   // Initialize speech recognition for real-time transcription
   useEffect(() => {
@@ -47,29 +51,39 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
       recognitionRef.current.lang = 'en-US';
 
       recognitionRef.current.onresult = (event) => {
-        // Don't process or show speech when we're playing TTS or shortly after to prevent self-recording
-        if (isPlaying || postTTSTimeoutRef.current) {
-          console.log('Ignoring speech during/after TTS playback');
+        // Enhanced protection against self-recording
+        if (isPlaying || postTTSTimeoutRef.current || audioOutputDetectionRef.current || !isOverlayActiveRef.current) {
+          console.log('🚫 Ignoring speech - TTS playing:', isPlaying, 'Post-TTS timeout:', !!postTTSTimeoutRef.current, 'Audio output detected:', audioOutputDetectionRef.current);
           return;
         }
 
         let interimTranscript = '';
+        let hasNewFinalTranscript = false;
         
         for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
+          const transcript = event.results[i][0].transcript.trim();
+          
+          // Skip empty or very short transcripts
+          if (transcript.length < 2) continue;
+          
           if (event.results[i].isFinal) {
-            // Accumulate final transcripts
-            finalTranscriptRef.current += transcript + " ";
-            console.log('Added final transcript:', transcript);
-            console.log('Accumulated transcript:', finalTranscriptRef.current.trim());
+            // Prevent duplicate processing of same transcript
+            if (!finalTranscriptRef.current.includes(transcript)) {
+              finalTranscriptRef.current += transcript + " ";
+              hasNewFinalTranscript = true;
+              console.log('✅ Added final transcript:', transcript);
+              console.log('📝 Accumulated transcript:', finalTranscriptRef.current.trim());
+            }
           } else {
             interimTranscript += transcript;
           }
         }
 
-        // Show current accumulated final + interim for UI feedback
-        const displayTranscript = finalTranscriptRef.current.trim() + (interimTranscript ? " " + interimTranscript : "");
-        setCurrentTranscript(displayTranscript);
+        // Only update display if we have meaningful content
+        if (hasNewFinalTranscript || interimTranscript) {
+          const displayTranscript = finalTranscriptRef.current.trim() + (interimTranscript ? " " + interimTranscript : "");
+          setCurrentTranscript(displayTranscript);
+        }
 
         // Reset silence timeout on speech
         if (silenceTimeoutRef.current) {
@@ -79,54 +93,70 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
         // Set new silence timeout - only process if we have accumulated final transcript
         silenceTimeoutRef.current = setTimeout(async () => {
           const accumulatedTranscript = finalTranscriptRef.current.trim();
-          if (accumulatedTranscript && accumulatedTranscript.length > 2) {
-            console.log('Processing accumulated transcript from timeout:', accumulatedTranscript);
+          
+          // Enhanced validation and anti-loop protection
+          if (!accumulatedTranscript || 
+              accumulatedTranscript.length < 3 || 
+              !isOverlayActiveRef.current ||
+              isPlaying || 
+              audioOutputDetectionRef.current) {
+            console.log('🚫 Skipping transcript processing - invalid conditions');
+            return;
+          }
+
+          console.log('🎯 Processing accumulated transcript:', accumulatedTranscript);
+          
+          try {
+            // Clear transcript immediately to prevent reprocessing
+            finalTranscriptRef.current = "";
+            setCurrentTranscript("");
+            setIsProcessing(true);
             
-            // Process transcript directly here to avoid scope issues
-            try {
-              setIsProcessing(true);
-              setCurrentTranscript(""); // Clear transcript
-              console.log('Sending message to chat:', accumulatedTranscript);
-
-              // Send message through the main chat system and get the AI response directly
-              const aiResponse = await sendMessage(accumulatedTranscript, "You are a helpful voice assistant. Keep responses conversational and concise since they will be spoken aloud. Be engaging and natural in your speech.");
-
-              console.log('AI response received:', aiResponse);
-              console.log('AI response content:', aiResponse?.content);
-
-              // Convert AI response to speech if we got a response
-              if (aiResponse && aiResponse.content) {
-                const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
-                  body: { 
-                    text: aiResponse.content,
-                    voice: 'alloy'
-                  }
-                });
-
-                if (!ttsError && ttsData) {
-                  await playAudio(ttsData.audioContent);
-                } else {
-                  console.error('Text-to-speech error:', ttsError);
-                }
-              } else {
-                console.log('No AI response received');
-              }
-
-              setIsProcessing(false);
-
-            } catch (error) {
-              console.error('Error processing transcript:', error);
-              console.error('Full error details:', JSON.stringify(error, null, 2));
-              setIsProcessing(false);
-              // Restart listening on error only if overlay is active
-              if (isAutoListeningRef.current && isOverlayActiveRef.current) {
-                setTimeout(() => startListening(), 500);
-              }
+            // Stop all audio input during processing
+            if (recognitionRef.current) {
+              recognitionRef.current.stop();
             }
             
-            finalTranscriptRef.current = ""; // Clear after processing
+            console.log('📤 Sending message to chat:', accumulatedTranscript);
+
+            // Send message through the main chat system
+            const aiResponse = await sendMessage(accumulatedTranscript, "You are a helpful voice assistant. Keep responses conversational and concise since they will be spoken aloud. Be engaging and natural in your speech.");
+
+            console.log('🤖 AI response received:', aiResponse?.content);
+
+            // Convert AI response to speech if we got a response
+            if (aiResponse?.content && isOverlayActiveRef.current) {
+              const { data: ttsData, error: ttsError } = await supabase.functions.invoke('text-to-speech', {
+                body: { 
+                  text: aiResponse.content,
+                  voice: 'alloy'
+                }
+              });
+
+              if (!ttsError && ttsData && isOverlayActiveRef.current) {
+                await playAudio(ttsData.audioContent);
+              } else {
+                console.error('❌ Text-to-speech error:', ttsError);
+              }
+            }
+
+            setIsProcessing(false);
+
+          } catch (error) {
+            console.error('❌ Error processing transcript:', error);
+            setIsProcessing(false);
+            finalTranscriptRef.current = ""; // Clear on error
+            
+            // Restart listening on error only if overlay is still active
+            if (isAutoListeningRef.current && isOverlayActiveRef.current && !cleanupCompleteRef.current) {
+              setTimeout(() => {
+                if (isOverlayActiveRef.current && !cleanupCompleteRef.current) {
+                  startListening();
+                }
+              }, 1000);
+            }
           }
-        }, 2000); // 2 second pause
+        }, 2500); // Longer pause to prevent rapid-fire processing
       };
 
       recognitionRef.current.onerror = (event) => {
@@ -134,13 +164,24 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
       };
 
       recognitionRef.current.onend = () => {
-        if (isAutoListeningRef.current && !isProcessing && !isPlaying && isOverlayActiveRef.current) {
+        console.log('🎤 Speech recognition ended');
+        if (isAutoListeningRef.current && 
+            !isProcessing && 
+            !isPlaying && 
+            !audioOutputDetectionRef.current &&
+            isOverlayActiveRef.current && 
+            !cleanupCompleteRef.current) {
           // Restart listening automatically after a brief pause
           setTimeout(() => {
-            if (isAutoListeningRef.current && !isPlaying && isOverlayActiveRef.current) {
+            if (isAutoListeningRef.current && 
+                !isPlaying && 
+                !audioOutputDetectionRef.current &&
+                isOverlayActiveRef.current && 
+                !cleanupCompleteRef.current) {
+              console.log('🔄 Auto-restarting speech recognition');
               startListening();
             }
-          }, 500);
+          }, 800);
         }
       };
     }
@@ -148,28 +189,35 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
 
   const startListening = useCallback(async () => {
     try {
-      // Don't start listening if we're playing TTS
-      if (isPlaying) {
-        console.log('Cannot start listening - TTS is playing');
+      // Enhanced validation before starting
+      if (isPlaying || audioOutputDetectionRef.current || !isOverlayActiveRef.current || cleanupCompleteRef.current) {
+        console.log('🚫 Cannot start listening - conditions not met:', {
+          isPlaying,
+          audioOutputDetected: audioOutputDetectionRef.current,
+          overlayActive: isOverlayActiveRef.current,
+          cleanupComplete: cleanupCompleteRef.current
+        });
         return;
       }
 
-      console.log('Starting listening...');
+      console.log('🎤 Starting enhanced listening...');
       setIsListening(true);
       setIsRecording(true);
       setCurrentTranscript("");
-      finalTranscriptRef.current = ""; // Clear accumulated transcript
+      finalTranscriptRef.current = "";
       audioChunksRef.current = [];
 
-      // Start speech recognition for real-time transcription
+      // Start speech recognition with enhanced error handling
       if (recognitionRef.current) {
         try {
           recognitionRef.current.start();
+          console.log('✅ Speech recognition started');
         } catch (error) {
-          console.log('Speech recognition already started or error:', error);
+          console.log('⚠️ Speech recognition start error (might already be running):', error);
         }
       }
 
+      // Get user media with enhanced audio settings
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           sampleRate: 44100,
@@ -182,84 +230,142 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
 
       streamRef.current = stream;
 
+      // Create audio context for output detection
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioContext();
+        analyserRef.current = audioContextRef.current.createAnalyser();
+        analyserRef.current.fftSize = 256;
+      }
+
       mediaRecorderRef.current = new MediaRecorder(stream, {
         mimeType: 'audio/webm'
       });
 
       mediaRecorderRef.current.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        if (event.data.size > 0 && !audioOutputDetectionRef.current) {
           audioChunksRef.current.push(event.data);
         }
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        // Stop all tracks
-        stream.getTracks().forEach(track => track.stop());
+        console.log('📹 MediaRecorder stopped');
+        // Comprehensive cleanup of media stream
+        if (stream) {
+          stream.getTracks().forEach(track => {
+            track.stop();
+            console.log('🛑 Stopped media track:', track.kind);
+          });
+        }
         streamRef.current = null;
       };
 
-      mediaRecorderRef.current.start(100); // Collect data every 100ms
+      mediaRecorderRef.current.start(100);
+      console.log('📹 MediaRecorder started');
+      
     } catch (error) {
-      console.error('Error starting recording:', error);
+      console.error('❌ Error starting recording:', error);
       setIsListening(false);
       setIsRecording(false);
     }
   }, [isPlaying]);
 
-  // Create a simple stopRecording function that only stops recording
+  // Enhanced stopRecording with comprehensive cleanup
   const stopRecording = useCallback(() => {
-    console.log('Stopping recording...');
+    console.log('🛑 Enhanced stopping recording...');
     
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop();
+    // Stop MediaRecorder
+    if (mediaRecorderRef.current) {
+      try {
+        if (mediaRecorderRef.current.state === 'recording') {
+          mediaRecorderRef.current.stop();
+        }
+      } catch (error) {
+        console.log('⚠️ Error stopping media recorder:', error);
+      }
+      mediaRecorderRef.current = null;
     }
     
+    // Stop speech recognition
     if (recognitionRef.current) {
-      recognitionRef.current.stop();
+      try {
+        recognitionRef.current.stop();
+        recognitionRef.current.abort(); // Force abort for immediate stop
+      } catch (error) {
+        console.log('⚠️ Error stopping recognition:', error);
+      }
     }
     
+    // Comprehensive media stream cleanup
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => {
+        track.stop();
+        console.log('🔇 Force stopped track:', track.kind, 'State:', track.readyState);
+      });
+      streamRef.current = null;
+    }
+
+    // Reset all state
     setIsRecording(false);
     setIsListening(false);
     setCurrentTranscript("");
     finalTranscriptRef.current = "";
+    audioOutputDetectionRef.current = false;
     
-    // Clean up media stream
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-
-    // Clear silence timeout
+    // Clear all timeouts
     if (silenceTimeoutRef.current) {
       clearTimeout(silenceTimeoutRef.current);
       silenceTimeoutRef.current = null;
     }
+    
+    console.log('✅ Recording cleanup complete');
   }, []);
 
 
   const playAudio = useCallback(async (base64Audio: string) => {
     try {
-      console.log('Starting TTS playback - disabling microphone');
-      setIsPlaying(true);
+      console.log('🔊 Starting enhanced TTS playback');
       
-      // Clear transcript display immediately when TTS starts
+      // Immediate protection setup
+      audioOutputDetectionRef.current = true;
+      setIsPlaying(true);
       setCurrentTranscript("");
+      finalTranscriptRef.current = "";
 
-      // Stop speech recognition completely during TTS to prevent self-recording
+      // Aggressive stop of all input systems
       if (recognitionRef.current) {
-        console.log('Stopping speech recognition for TTS');
-        recognitionRef.current.stop();
+        console.log('🛑 Force stopping speech recognition for TTS');
+        try {
+          recognitionRef.current.stop();
+          recognitionRef.current.abort();
+        } catch (error) {
+          console.log('⚠️ Error stopping recognition:', error);
+        }
       }
       
-      // Stop listening immediately when TTS starts to prevent self-recording
+      // Complete recording shutdown
       if (isListening || isRecording) {
         stopRecording();
       }
 
-      // Stop any currently playing audio
+      // Aggressive cleanup of existing audio
       if (currentAudioRef.current) {
-        currentAudioRef.current.pause();
+        try {
+          currentAudioRef.current.pause();
+          currentAudioRef.current.currentTime = 0;
+          currentAudioRef.current.src = '';
+          currentAudioRef.current.load();
+        } catch (error) {
+          console.log('⚠️ Error cleaning up previous audio:', error);
+        }
         currentAudioRef.current = null;
+      }
+
+      // Early exit if overlay closed during setup
+      if (!isOverlayActiveRef.current || cleanupCompleteRef.current) {
+        console.log('🚫 Overlay closed during TTS setup, aborting');
+        audioOutputDetectionRef.current = false;
+        setIsPlaying(false);
+        return;
       }
 
       const audioBlob = new Blob([
@@ -271,54 +377,87 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
       
       currentAudioRef.current = audio;
       audio.volume = isMuted ? 0 : volume;
-      console.log('TTS audio volume initialized to:', audio.volume, '(muted:', isMuted, 'volume:', volume, ')');
+      console.log('🔊 TTS audio initialized, volume:', audio.volume);
 
       audio.onended = () => {
-        console.log('TTS playback ended - can resume listening');
+        console.log('✅ TTS playback ended');
         setIsPlaying(false);
-        URL.revokeObjectURL(audioUrl);
+        audioOutputDetectionRef.current = false;
+        
+        try {
+          URL.revokeObjectURL(audioUrl);
+        } catch (error) {
+          console.log('⚠️ Error revoking audio URL:', error);
+        }
+        
         currentAudioRef.current = null;
         
-        // Clear any lingering transcript immediately when TTS ends
-        setCurrentTranscript("");
-        finalTranscriptRef.current = "";
-        
-        // Set a protection period to prevent transcript flash
+        // Extended protection period
         postTTSTimeoutRef.current = setTimeout(() => {
           postTTSTimeoutRef.current = null;
-          console.log('Post-TTS protection period ended');
-        }, 1500);
+          console.log('🛡️ Post-TTS protection period ended');
+        }, 2000);
         
-        // Automatically restart listening after TTS finishes with longer delay
-        if (isAutoListeningRef.current && isOverlayActiveRef.current) {
+        // Restart listening only if overlay still active
+        if (isAutoListeningRef.current && isOverlayActiveRef.current && !cleanupCompleteRef.current) {
           setTimeout(() => {
-            if (isAutoListeningRef.current && !isPlaying && isOverlayActiveRef.current) {
+            if (isAutoListeningRef.current && 
+                !isPlaying && 
+                isOverlayActiveRef.current && 
+                !cleanupCompleteRef.current) {
+              console.log('🔄 Restarting listening after TTS');
+              startListening();
+            }
+          }, 1500);
+        }
+      };
+
+      audio.onerror = (error) => {
+        console.error('❌ Audio playback error:', error);
+        setIsPlaying(false);
+        audioOutputDetectionRef.current = false;
+        
+        try {
+          URL.revokeObjectURL(audioUrl);
+        } catch (e) {
+          console.log('⚠️ Error revoking URL on error:', e);
+        }
+        
+        currentAudioRef.current = null;
+        
+        // Restart listening on error if overlay still active
+        if (isAutoListeningRef.current && isOverlayActiveRef.current && !cleanupCompleteRef.current) {
+          setTimeout(() => {
+            if (isOverlayActiveRef.current && !cleanupCompleteRef.current) {
               startListening();
             }
           }, 1000);
         }
       };
 
-      audio.onerror = (error) => {
-        console.error('Audio playback error:', error);
+      // Additional check before playing
+      if (isOverlayActiveRef.current && !cleanupCompleteRef.current) {
+        await audio.play();
+        console.log('🎵 TTS playback started');
+      } else {
+        console.log('🚫 Overlay closed, skipping audio play');
         setIsPlaying(false);
+        audioOutputDetectionRef.current = false;
         URL.revokeObjectURL(audioUrl);
-        currentAudioRef.current = null;
-        
-        // Restart listening on error too, only if overlay is active
-        if (isAutoListeningRef.current && isOverlayActiveRef.current) {
-          setTimeout(() => startListening(), 500);
-        }
-      };
-
-      await audio.play();
-    } catch (error) {
-      console.error('Error playing audio:', error);
-      setIsPlaying(false);
+      }
       
-      // Restart listening on error, only if overlay is active
-      if (isAutoListeningRef.current && isOverlayActiveRef.current) {
-        setTimeout(() => startListening(), 500);
+    } catch (error) {
+      console.error('❌ Error in TTS playback:', error);
+      setIsPlaying(false);
+      audioOutputDetectionRef.current = false;
+      
+      // Restart listening on error if conditions allow
+      if (isAutoListeningRef.current && isOverlayActiveRef.current && !cleanupCompleteRef.current) {
+        setTimeout(() => {
+          if (isOverlayActiveRef.current && !cleanupCompleteRef.current) {
+            startListening();
+          }
+        }, 1000);
       }
     }
   }, [volume, isMuted, isListening, isRecording, stopRecording, startListening]);
@@ -341,33 +480,71 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
   }, [startListening]);
 
   const stopConversation = useCallback(() => {
-    console.log('Stopping conversation - full cleanup');
-    isAutoListeningRef.current = false;
-    isOverlayActiveRef.current = false; // Mark overlay as closed
+    console.log('🛑 EMERGENCY STOP - Complete conversation cleanup');
     
-    // Stop recording and listening
-    stopRecording();
+    // Mark cleanup as in progress
+    cleanupCompleteRef.current = true;
+    isAutoListeningRef.current = false;
+    isOverlayActiveRef.current = false;
+    audioOutputDetectionRef.current = false;
+    
+    // Immediate state reset
     setIsListening(false);
     setIsProcessing(false);
+    setIsRecording(false);
+    setCurrentTranscript("");
+    finalTranscriptRef.current = "";
     
-    // Stop any playing audio immediately with complete cleanup
+    // Aggressive audio cleanup
     if (currentAudioRef.current) {
-      // Remove all event listeners to prevent callbacks
-      currentAudioRef.current.onended = null;
-      currentAudioRef.current.onerror = null;
-      currentAudioRef.current.onloadeddata = null;
-      currentAudioRef.current.oncanplay = null;
-      
-      // Force stop audio
-      currentAudioRef.current.pause();
-      currentAudioRef.current.currentTime = 0;
-      currentAudioRef.current.src = ''; // Clear source to force stop
-      currentAudioRef.current.load(); // Force reload empty source
+      try {
+        // Remove ALL event listeners
+        currentAudioRef.current.onended = null;
+        currentAudioRef.current.onerror = null;
+        currentAudioRef.current.onloadeddata = null;
+        currentAudioRef.current.oncanplay = null;
+        currentAudioRef.current.onplay = null;
+        currentAudioRef.current.onpause = null;
+        
+        // Force immediate stop
+        currentAudioRef.current.pause();
+        currentAudioRef.current.currentTime = 0;
+        currentAudioRef.current.src = '';
+        currentAudioRef.current.load();
+        currentAudioRef.current.remove(); // Remove from DOM if attached
+      } catch (error) {
+        console.log('⚠️ Error during audio cleanup:', error);
+      }
       currentAudioRef.current = null;
       setIsPlaying(false);
     }
 
-    // Clear all timeouts
+    // Force stop recording with enhanced cleanup
+    stopRecording();
+
+    // Force stop speech recognition
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+        recognitionRef.current.abort();
+        // Don't nullify as it might be reused
+      } catch (error) {
+        console.log('⚠️ Error stopping recognition in cleanup:', error);
+      }
+    }
+
+    // Cleanup audio context
+    if (audioContextRef.current) {
+      try {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+        analyserRef.current = null;
+      } catch (error) {
+        console.log('⚠️ Error closing audio context:', error);
+      }
+    }
+
+    // Clear ALL timeouts
     if (silenceTimeoutRef.current) {
       clearTimeout(silenceTimeoutRef.current);
       silenceTimeoutRef.current = null;
@@ -378,15 +555,16 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
       postTTSTimeoutRef.current = null;
     }
 
-    // Reset transcripts
-    finalTranscriptRef.current = "";
-    setCurrentTranscript("");
+    console.log('✅ EMERGENCY CLEANUP COMPLETE');
   }, [stopRecording]);
 
   const startConversationAgain = useCallback(() => {
-    isOverlayActiveRef.current = true; // Mark overlay as active again
+    console.log('🔄 Restarting conversation');
+    cleanupCompleteRef.current = false;
+    isOverlayActiveRef.current = true;
+    audioOutputDetectionRef.current = false;
     startConversation();
-  }, []);
+  }, [startConversation]);
 
   // Update volume when it changes
   const updateVolume = useCallback((newVolume: number) => {
