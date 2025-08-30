@@ -30,10 +30,10 @@ export const VoiceChatLog: React.FC<VoiceChatLogProps> = ({ messages }) => {
             >
               <div
                 className={cn(
-                  "max-w-[80%] px-3 py-2 rounded-lg text-xs leading-relaxed border backdrop-blur-md",
+                  "max-w-[80%] px-3 py-2 rounded-lg text-xs leading-relaxed border",
                   message.role === "user"
-                    ? "bg-white/80 text-gray-800 ml-4 border-white/40"
-                    : "bg-gray-100/80 text-gray-800 mr-4 border-gray-300/40"
+                    ? "bg-white text-gray-800 ml-4 border-gray-300"
+                    : "bg-gray-100 text-gray-800 mr-4 border-gray-300"
                 )}
               >
                 <div className="flex items-center space-x-2 mb-1">
