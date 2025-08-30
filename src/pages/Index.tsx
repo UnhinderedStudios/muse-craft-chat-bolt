@@ -28,6 +28,7 @@ import PlayerDock from "@/components/audio/PlayerDock";
 import TrackListPanel from "@/components/tracklist/TrackListPanel";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { VoiceInterface } from "@/components/voice/VoiceInterface";
+import { TemplatePanel } from "@/components/template/TemplatePanel";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
 // Hooks
@@ -1450,8 +1451,8 @@ async function startGeneration() {
           </div>
 
           {/* Row 2 - Right: Template */}
-          <div className="order-8 md:col-span-8 lg:col-span-1 xl:col-span-1 bg-[#151515] rounded-2xl flex items-center justify-center h-full">
-            <span className="text-text-secondary">TEMPLATE</span>
+          <div className="order-8 md:col-span-8 lg:col-span-1 xl:col-span-1">
+            <TemplatePanel />
           </div>
         </div>
 
