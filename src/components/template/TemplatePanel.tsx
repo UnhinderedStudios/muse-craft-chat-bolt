@@ -104,8 +104,7 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
     <div className={cn("h-[280px] bg-[#151515] rounded-2xl flex flex-col", className)}>
       {/* Header with Toggle */}
       <div className="shrink-0 p-4 pb-3">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-white text-lg font-medium">Template</h2>
+        <div className="flex items-center justify-center mb-4">
           <div className="flex items-center gap-3">
             <span className={cn("text-sm", viewMode === "playlists" ? "text-white" : "text-white/60")}>
               Playlists
