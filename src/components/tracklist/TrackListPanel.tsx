@@ -169,7 +169,7 @@ export default function TrackListPanel({
 
       {/* Scrollable area */}
       <div className="min-h-0 flex-1 overflow-hidden">
-        <div ref={scrollRef} className="h-full overflow-y-auto lyrics-scrollbar">
+        <div ref={scrollRef} className="h-full overflow-y-auto overflow-x-hidden lyrics-scrollbar">
           <div className={`min-h-full flex flex-col justify-start gap-3 px-4 pt-2 pb-4`}>
         {paginatedTracks.map((t, pageIndex) => {
           // Calculate the actual index in the full filtered tracks array
