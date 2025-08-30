@@ -15,7 +15,7 @@ export const AnimatedOrb: React.FC<AnimatedOrbProps> = ({ state }) => {
       case "processing":
         return "shadow-[0_0_120px_hsl(var(--accent-primary)_/_0.8)] animate-breathe-intense";
       default:
-        return "shadow-[0_0_80px_hsl(var(--foreground)_/_0.6)] animate-breathe";
+        return "shadow-[0_0_80px_rgba(255,255,255,0.6)] animate-breathe";
     }
   };
 
