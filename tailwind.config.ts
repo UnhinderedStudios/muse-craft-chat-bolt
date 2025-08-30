@@ -99,10 +99,10 @@ export default {
 				},
 				'breathe': {
 					'0%, 100%': {
-						boxShadow: '0 0 40px rgba(255, 255, 255, 0.32)'
+						boxShadow: '0 0 30px rgba(255, 255, 255, 0.2)'
 					},
 					'50%': {
-						boxShadow: '0 0 80px rgba(255, 255, 255, 0.64)'
+						boxShadow: '0 0 50px rgba(255, 255, 255, 0.4)'
 					}
 				},
 				'breathe-intense': {
