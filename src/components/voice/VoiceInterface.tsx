@@ -55,7 +55,7 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
 
 
       {/* Main Content Area - CSS Grid Layout */}
-      <div className="flex-1 w-full max-w-6xl grid grid-cols-[280px_1fr_320px] gap-8 items-center">
+      <div className="flex-1 w-full max-w-6xl grid grid-cols-[280px_1fr_320px] gap-8 items-center -mt-16">
         {/* Chat Log - Left Column */}
         {showChatLog && (
           <div className="h-[calc(100vh-200px)] flex items-start justify-start pt-20 -ml-8">
