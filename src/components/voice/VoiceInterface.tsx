@@ -53,10 +53,6 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
         <X className="w-6 h-6" />
       </Button>
 
-      {/* Title */}
-      <div className="absolute top-8 left-1/2 transform -translate-x-1/2">
-        <h2 className="text-2xl font-bold text-text-primary">Melody Speech</h2>
-      </div>
 
       {/* Main Content Area */}
       <div className="flex-1 flex items-center justify-center w-full max-w-4xl">
@@ -71,7 +67,7 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
         <div className="flex flex-col items-center space-y-8">
           <AnimatedOrb state={getOrbState()} />
           
-          {/* Controls Row - directly under orb */}
+          {/* Controls Row - centered under orb */}
           <div className="flex items-center justify-center space-x-6">
             {/* Chat Log Toggle */}
             <Button
@@ -95,7 +91,7 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
               {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
             </Button>
 
-            {/* Main Voice Control */}
+            {/* Main Voice Control - centered */}
             <Button
               onClick={isListening ? stopRecording : startRecording}
               disabled={isProcessing}
@@ -137,16 +133,15 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
               {isProcessing && "Processing..."}
               {isPlaying && "Speaking..."}
               {(isListening || isRecording) && "Listening..."}
-              {!isProcessing && !isPlaying && !isListening && !isRecording && "Ready to chat"}
             </p>
             {currentTranscript && !isPlaying && (
               <div className="bg-[hsl(var(--chat-bubble))] backdrop-blur rounded-lg p-3 max-w-md border border-white/10">
                 <p className="text-sm text-[hsl(var(--chat-text))] italic">"{currentTranscript}"</p>
               </div>
             )}
-            <p className="text-sm text-text-secondary">
-              {isListening || isRecording ? "Speak now..." : "Click to start conversation"}
-            </p>
+            {(isListening || isRecording) && (
+              <p className="text-sm text-text-secondary">Speak now...</p>
+            )}
           </div>
         </div>
       </div>
