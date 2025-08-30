@@ -113,6 +113,46 @@ export default {
 						boxShadow: '0 0 140px hsl(var(--accent-primary) / 0.8)'
 					}
 				},
+				'loading-spin': {
+					'0%': {
+						background: 'conic-gradient(from 0deg, transparent 0deg, hsl(var(--accent-primary)) 30deg, transparent 60deg, transparent 360deg)',
+						transform: 'rotate(0deg)'
+					},
+					'100%': {
+						background: 'conic-gradient(from 0deg, transparent 0deg, hsl(var(--accent-primary)) 30deg, transparent 60deg, transparent 360deg)',
+						transform: 'rotate(360deg)'
+					}
+				},
+				'lava-blob-1': {
+					'0%, 100%': { transform: 'translate(0, 0) scale(1) rotate(0deg)' },
+					'25%': { transform: 'translate(20px, -10px) scale(1.2) rotate(90deg)' },
+					'50%': { transform: 'translate(-15px, 25px) scale(0.8) rotate(180deg)' },
+					'75%': { transform: 'translate(10px, -20px) scale(1.1) rotate(270deg)' }
+				},
+				'lava-blob-2': {
+					'0%, 100%': { transform: 'translate(0, 0) scale(1) rotate(0deg)' },
+					'33%': { transform: 'translate(-25px, 15px) scale(1.3) rotate(120deg)' },
+					'66%': { transform: 'translate(20px, -25px) scale(0.7) rotate(240deg)' }
+				},
+				'lava-blob-3': {
+					'0%, 100%': { transform: 'translate(0, 0) scale(1) rotate(0deg)' },
+					'20%': { transform: 'translate(15px, 20px) scale(0.9) rotate(72deg)' },
+					'40%': { transform: 'translate(-20px, -10px) scale(1.4) rotate(144deg)' },
+					'60%': { transform: 'translate(25px, -15px) scale(0.6) rotate(216deg)' },
+					'80%': { transform: 'translate(-10px, 25px) scale(1.2) rotate(288deg)' }
+				},
+				'lava-blob-4': {
+					'0%, 100%': { transform: 'translate(0, 0) scale(1) rotate(0deg)' },
+					'30%': { transform: 'translate(-20px, -20px) scale(1.1) rotate(108deg)' },
+					'60%': { transform: 'translate(25px, 15px) scale(0.8) rotate(216deg)' },
+					'90%': { transform: 'translate(-15px, 20px) scale(1.3) rotate(324deg)' }
+				},
+				'lava-blob-5': {
+					'0%, 100%': { transform: 'translate(0, 0) scale(1) rotate(0deg)' },
+					'25%': { transform: 'translate(20px, 20px) scale(0.7) rotate(90deg)' },
+					'50%': { transform: 'translate(-25px, -15px) scale(1.4) rotate(180deg)' },
+					'75%': { transform: 'translate(15px, -25px) scale(0.9) rotate(270deg)' }
+				},
 				'glow-spin': {
 					'0%': {
 						transform: 'rotate(0deg)',
@@ -148,7 +188,13 @@ export default {
 				'breathe': 'breathe 6s ease-in-out infinite',
 				'breathe-intense': 'breathe-intense 4s ease-in-out infinite',
 				'glow-spin': 'glow-spin 2s linear infinite',
-				'wave-flow': 'wave-flow 0.8s ease-in-out infinite'
+				'wave-flow': 'wave-flow 0.8s ease-in-out infinite',
+				'loading-spin': 'loading-spin 1.5s linear infinite',
+				'lava-blob-1': 'lava-blob-1 8s ease-in-out infinite',
+				'lava-blob-2': 'lava-blob-2 7s ease-in-out infinite',
+				'lava-blob-3': 'lava-blob-3 9s ease-in-out infinite',
+				'lava-blob-4': 'lava-blob-4 6s ease-in-out infinite',
+				'lava-blob-5': 'lava-blob-5 7.5s ease-in-out infinite'
 			}
 		}
 	},
