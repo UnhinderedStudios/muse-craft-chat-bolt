@@ -35,6 +35,7 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
   const finalTranscriptRef = useRef("");
   const streamRef = useRef<MediaStream | null>(null);
   const postTTSTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isOverlayActiveRef = useRef(true); // Track if overlay is active
 
   // Initialize speech recognition for real-time transcription
   useEffect(() => {
@@ -117,8 +118,8 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
               console.error('Error processing transcript:', error);
               console.error('Full error details:', JSON.stringify(error, null, 2));
               setIsProcessing(false);
-              // Restart listening on error
-              if (isAutoListeningRef.current) {
+              // Restart listening on error only if overlay is active
+              if (isAutoListeningRef.current && isOverlayActiveRef.current) {
                 setTimeout(() => startListening(), 500);
               }
             }
@@ -133,10 +134,10 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
       };
 
       recognitionRef.current.onend = () => {
-        if (isAutoListeningRef.current && !isProcessing && !isPlaying) {
+        if (isAutoListeningRef.current && !isProcessing && !isPlaying && isOverlayActiveRef.current) {
           // Restart listening automatically after a brief pause
           setTimeout(() => {
-            if (isAutoListeningRef.current && !isPlaying) {
+            if (isAutoListeningRef.current && !isPlaying && isOverlayActiveRef.current) {
               startListening();
             }
           }, 500);
@@ -289,9 +290,9 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
         }, 1500);
         
         // Automatically restart listening after TTS finishes with longer delay
-        if (isAutoListeningRef.current) {
+        if (isAutoListeningRef.current && isOverlayActiveRef.current) {
           setTimeout(() => {
-            if (isAutoListeningRef.current && !isPlaying) {
+            if (isAutoListeningRef.current && !isPlaying && isOverlayActiveRef.current) {
               startListening();
             }
           }, 1000);
@@ -304,8 +305,8 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
         URL.revokeObjectURL(audioUrl);
         currentAudioRef.current = null;
         
-        // Restart listening on error too
-        if (isAutoListeningRef.current) {
+        // Restart listening on error too, only if overlay is active
+        if (isAutoListeningRef.current && isOverlayActiveRef.current) {
           setTimeout(() => startListening(), 500);
         }
       };
@@ -315,8 +316,8 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
       console.error('Error playing audio:', error);
       setIsPlaying(false);
       
-      // Restart listening on error
-      if (isAutoListeningRef.current) {
+      // Restart listening on error, only if overlay is active
+      if (isAutoListeningRef.current && isOverlayActiveRef.current) {
         setTimeout(() => startListening(), 500);
       }
     }
@@ -342,15 +343,26 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
   const stopConversation = useCallback(() => {
     console.log('Stopping conversation - full cleanup');
     isAutoListeningRef.current = false;
+    isOverlayActiveRef.current = false; // Mark overlay as closed
     
     // Stop recording and listening
     stopRecording();
     setIsListening(false);
     setIsProcessing(false);
     
-    // Stop any playing audio immediately
+    // Stop any playing audio immediately with complete cleanup
     if (currentAudioRef.current) {
+      // Remove all event listeners to prevent callbacks
+      currentAudioRef.current.onended = null;
+      currentAudioRef.current.onerror = null;
+      currentAudioRef.current.onloadeddata = null;
+      currentAudioRef.current.oncanplay = null;
+      
+      // Force stop audio
       currentAudioRef.current.pause();
+      currentAudioRef.current.currentTime = 0;
+      currentAudioRef.current.src = ''; // Clear source to force stop
+      currentAudioRef.current.load(); // Force reload empty source
       currentAudioRef.current = null;
       setIsPlaying(false);
     }
@@ -371,6 +383,11 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
     setCurrentTranscript("");
   }, [stopRecording]);
 
+  const startConversationAgain = useCallback(() => {
+    isOverlayActiveRef.current = true; // Mark overlay as active again
+    startConversation();
+  }, []);
+
   // Update volume when it changes
   const updateVolume = useCallback((newVolume: number) => {
     console.log('Volume updated to:', newVolume, '(muted:', isMuted, ')');
@@ -390,7 +407,7 @@ export const useVoiceChat = ({ messages, sendMessage }: UseVoiceChatProps) => {
     volume,
     isListening,
     currentTranscript,
-    startRecording: startConversation,
+    startRecording: startConversationAgain,
     stopRecording,
     stopConversation,
     toggleMute,
