@@ -99,32 +99,28 @@ export default {
 				},
 				'breathe': {
 					'0%, 100%': {
-						opacity: '0.6',
-						transform: 'scale(1)'
+						boxShadow: '0 0 40px rgba(255, 255, 255, 0.4)'
 					},
 					'50%': {
-						opacity: '0.8',
-						transform: 'scale(1.05)'
+						boxShadow: '0 0 80px rgba(255, 255, 255, 0.8)'
 					}
 				},
 				'breathe-intense': {
 					'0%, 100%': {
-						opacity: '0.7',
-						transform: 'scale(1)'
+						boxShadow: '0 0 80px hsl(var(--accent-primary) / 0.6)'
 					},
 					'50%': {
-						opacity: '1',
-						transform: 'scale(1.1)'
+						boxShadow: '0 0 140px hsl(var(--accent-primary) / 1)'
 					}
 				},
 				'glow-spin': {
 					'0%': {
 						transform: 'rotate(0deg)',
-						opacity: '0.8'
+						boxShadow: '0 0 100px hsl(var(--accent-primary) / 0.7)'
 					},
 					'100%': {
 						transform: 'rotate(360deg)',
-						opacity: '0.8'
+						boxShadow: '0 0 120px hsl(var(--accent-primary) / 0.9)'
 					}
 				},
 				'wave-flow': {

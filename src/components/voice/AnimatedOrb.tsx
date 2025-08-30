@@ -9,13 +9,13 @@ export const AnimatedOrb: React.FC<AnimatedOrbProps> = ({ state }) => {
   const getGlowClasses = () => {
     switch (state) {
       case "listening":
-        return "shadow-[0_0_120px_hsl(var(--accent-primary)_/_0.8)] animate-glow-spin";
+        return "animate-glow-spin";
       case "speaking":
         return "shadow-[0_0_160px_hsl(var(--accent-primary)_/_1)] animate-pulse";
       case "processing":
-        return "shadow-[0_0_120px_hsl(var(--accent-primary)_/_0.8)] animate-breathe-intense";
+        return "animate-breathe-intense";
       default:
-        return "shadow-[0_0_80px_rgba(255,255,255,0.6)] animate-breathe";
+        return "animate-breathe";
     }
   };
 
