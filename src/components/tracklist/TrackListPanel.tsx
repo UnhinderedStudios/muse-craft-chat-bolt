@@ -393,46 +393,45 @@ export default function TrackListPanel({
              <div className="mt-3 flex justify-center">
                <Pagination>
                  <PaginationContent className="gap-1">
-                   <PaginationItem>
-                     <PaginationPrevious
-                       href="#"
-                       onClick={(e) => {
-                         e.preventDefault();
-                         handlePageChange(currentPage - 1);
-                       }}
-                       className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                     />
-                   </PaginationItem>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handlePageChange(currentPage - 1);
+                        }}
+                        className={currentPage === 1 ? "pointer-events-none text-white/20 hover:text-white/20" : ""}
+                      />
+                    </PaginationItem>
                    
                    {Array.from({ length: totalPages }, (_, index) => {
                      const page = index + 1;
                      return (
-                       <PaginationItem key={page}>
-                         <PaginationLink
-                           href="#"
-                           onClick={(e) => {
-                             e.preventDefault();
-                             handlePageChange(page);
-                           }}
-                           isActive={page === currentPage}
-                           className="text-white/60 hover:text-white border-white/20 hover:border-white/40"
-                         >
-                           {page}
-                         </PaginationLink>
-                       </PaginationItem>
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handlePageChange(page);
+                            }}
+                            isActive={page === currentPage}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
                      );
                    })}
                    
-                   <PaginationItem>
-                     <PaginationNext
-                       href="#"
-                       onClick={(e) => {
-                         e.preventDefault();
-                         handlePageChange(currentPage + 1);
-                       }}
-                       className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                     />
-                   </PaginationItem>
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handlePageChange(currentPage + 1);
+                        }}
+                        className={currentPage === totalPages ? "pointer-events-none text-white/20 hover:text-white/20" : ""}
+                      />
+                    </PaginationItem>
                  </PaginationContent>
                </Pagination>
              </div>
