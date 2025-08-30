@@ -67,31 +67,9 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
         <div className="flex flex-col items-center space-y-8">
           <AnimatedOrb state={getOrbState()} />
           
-          {/* Controls Row - centered under orb */}
-          <div className="flex items-center justify-center space-x-6">
-            {/* Chat Log Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowChatLog(!showChatLog)}
-              className="w-12 h-12 rounded-full text-text-secondary hover:text-text-primary border border-white/20 hover:border-white/40 transition-all"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
-            </Button>
-
-            {/* Volume Control */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleMute}
-              className="w-12 h-12 rounded-full text-text-secondary hover:text-text-primary border border-white/20 hover:border-white/40 transition-all"
-            >
-              {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-            </Button>
-
-            {/* Main Voice Control - centered */}
+          {/* Controls Layout - Main mic button centered under orb */}
+          <div className="relative flex flex-col items-center space-y-4">
+            {/* Main Voice Control - perfectly centered under orb */}
             <Button
               onClick={isListening ? stopRecording : startRecording}
               disabled={isProcessing}
@@ -108,22 +86,53 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
               )}
             </Button>
 
-            {/* Volume Slider */}
-            <div className="flex items-center space-x-2 px-3 py-2 rounded-full border border-white/20 bg-black/20 backdrop-blur-sm">
-              <Volume2 className="w-4 h-4 text-text-secondary" />
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={volume}
-                onChange={(e) => setVolume(parseFloat(e.target.value))}
-                className="w-16 h-2 bg-white/20 rounded-lg appearance-none cursor-pointer 
-                           [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 
-                           [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full 
-                           [&::-webkit-slider-thumb]:bg-accent-primary [&::-webkit-slider-thumb]:shadow-md"
-              />
-              <span className="text-xs text-text-secondary min-w-[2rem]">{Math.round(volume * 100)}</span>
+            {/* Side Controls - positioned around the mic button */}
+            <div className="flex items-center justify-center space-x-8">
+              {/* Left Controls */}
+              <div className="flex items-center space-x-4">
+                {/* Chat Log Toggle */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowChatLog(!showChatLog)}
+                  className="w-12 h-12 rounded-full text-text-secondary hover:text-text-primary border border-white/20 hover:border-white/40 transition-all"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                </Button>
+
+                {/* Volume Control */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleMute}
+                  className="w-12 h-12 rounded-full text-text-secondary hover:text-text-primary border border-white/20 hover:border-white/40 transition-all"
+                >
+                  {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                </Button>
+              </div>
+
+              {/* Right Controls */}
+              <div className="flex items-center">
+                {/* Volume Slider */}
+                <div className="flex items-center space-x-2 px-3 py-2 rounded-full border border-white/20 bg-black/20 backdrop-blur-sm">
+                  <Volume2 className="w-4 h-4 text-text-secondary" />
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={volume}
+                    onChange={(e) => setVolume(parseFloat(e.target.value))}
+                    className="w-16 h-2 bg-white/20 rounded-lg appearance-none cursor-pointer 
+                               [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 
+                               [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full 
+                               [&::-webkit-slider-thumb]:bg-accent-primary [&::-webkit-slider-thumb]:shadow-md"
+                  />
+                  <span className="text-xs text-text-secondary min-w-[2rem]">{Math.round(volume * 100)}</span>
+                </div>
+              </div>
             </div>
           </div>
           
