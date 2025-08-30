@@ -9,7 +9,7 @@ export const AnimatedOrb: React.FC<AnimatedOrbProps> = ({ state }) => {
   const getGlowClasses = () => {
     switch (state) {
       case "listening":
-        return "shadow-[0_0_120px_hsl(var(--accent-primary)_/_0.9)] animate-glow-spin";
+        return "shadow-[0_0_120px_hsl(var(--accent-primary)_/_0.8)] animate-glow-spin";
       case "speaking":
         return "shadow-[0_0_160px_hsl(var(--accent-primary)_/_1)] animate-pulse";
       case "processing":
@@ -23,10 +23,15 @@ export const AnimatedOrb: React.FC<AnimatedOrbProps> = ({ state }) => {
     if (state === "speaking") {
       return (
         <div className="absolute inset-0 rounded-full overflow-hidden">
-          {/* Wave visualization rings */}
-          <div className="absolute inset-8 border-4 border-accent-primary/30 rounded-full animate-wave-flow" />
-          <div className="absolute inset-12 border-3 border-accent-primary/40 rounded-full animate-wave-flow" style={{ animationDelay: '0.3s' }} />
-          <div className="absolute inset-16 border-2 border-accent-primary/50 rounded-full animate-wave-flow" style={{ animationDelay: '0.6s' }} />
+          {/* Futuristic wave visualization */}
+          <div className="absolute inset-8 rounded-full">
+            {/* Animated gradient rings */}
+            <div className="absolute inset-0 rounded-full bg-gradient-conic from-accent-primary/60 via-transparent to-accent-primary/60 animate-spin" style={{ animationDuration: '3s' }} />
+            <div className="absolute inset-4 rounded-full bg-gradient-conic from-transparent via-accent-primary/40 to-transparent animate-spin" style={{ animationDuration: '2s', animationDirection: 'reverse' }} />
+            <div className="absolute inset-8 rounded-full bg-gradient-radial from-accent-primary/30 to-transparent animate-pulse" />
+          </div>
+          {/* Pulsing center */}
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-accent-primary rounded-full animate-ping" />
         </div>
       );
     }
@@ -45,7 +50,7 @@ export const AnimatedOrb: React.FC<AnimatedOrbProps> = ({ state }) => {
       />
       
       {/* Base Ring */}
-      <div className="relative w-64 h-64 rounded-full border-4 border-border/40 backdrop-blur-sm transition-all duration-500">
+      <div className="relative w-64 h-64 rounded-full border border-white/80 backdrop-blur-sm transition-all duration-500">
         {/* Inner Content */}
         {getInnerContent()}
       </div>
