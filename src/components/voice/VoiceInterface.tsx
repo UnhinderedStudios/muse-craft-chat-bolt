@@ -38,7 +38,7 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
   };
 
   return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-background via-background/95 to-accent/10 p-8">
+    <div className="relative w-full h-full flex flex-col items-center justify-center p-8">
       {/* Close Button */}
       <Button
         variant="ghost"

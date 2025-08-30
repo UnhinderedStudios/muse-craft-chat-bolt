@@ -1481,7 +1481,7 @@ async function startGeneration() {
       {/* Melody Speech Overlay */}
       <Dialog open={showMelodySpeech} onOpenChange={setShowMelodySpeech}>
         <DialogContent 
-          className="max-w-full max-h-full w-screen h-screen bg-black/10 backdrop-blur border-0 p-0 m-0 rounded-none"
+          className="max-w-full max-h-full w-screen h-screen bg-black/20 backdrop-blur-md border-0 p-0 m-0 rounded-none"
           aria-describedby="melody-speech-description"
         >
           <div className="sr-only" id="melody-speech-description">
