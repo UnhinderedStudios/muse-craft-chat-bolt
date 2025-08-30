@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { AnimatedOrb } from "./AnimatedOrb";
 import { VoiceChatLog } from "./VoiceChatLog";
 import { useVoiceChat } from "@/hooks/use-voice-chat";
-import { useVoiceIsolatedChat } from "@/hooks/use-voice-isolated-chat";
 import { Button } from "@/components/ui/button";
 import { Mic, MicOff, Volume2, VolumeX, X } from "lucide-react";
 import { ChatMessage } from "@/types";
@@ -14,9 +13,6 @@ interface VoiceInterfaceProps {
 }
 
 export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, messages, sendMessage }) => {
-  // Use isolated voice chat state to prevent interference with main chat
-  const { voiceMessages, sendVoiceMessage, clearVoiceMessages } = useVoiceIsolatedChat();
-  
   const {
     isRecording,
     isPlaying,
@@ -30,7 +26,7 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
     setVolume,
     isListening,
     currentTranscript
-  } = useVoiceChat({ messages: voiceMessages, sendMessage: sendVoiceMessage });
+  } = useVoiceChat({ messages, sendMessage });
 
   const [showChatLog, setShowChatLog] = useState(true);
 
@@ -48,9 +44,8 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
         variant="ghost"
         size="icon"
         onClick={() => {
-          // Stop conversation and clear voice messages before closing
+          // Stop conversation before closing
           stopConversation();
-          clearVoiceMessages();
           onClose();
         }}
         className="absolute top-4 right-4 z-50 text-text-secondary hover:text-text-primary"
@@ -68,7 +63,7 @@ export const VoiceInterface: React.FC<VoiceInterfaceProps> = ({ onClose, message
         {/* Chat Log */}
         {showChatLog && (
           <div className="absolute left-8 top-20 bottom-24 w-80">
-            <VoiceChatLog messages={voiceMessages} />
+            <VoiceChatLog messages={messages} />
           </div>
         )}
 
