@@ -415,7 +415,11 @@ export default function TrackListPanel({
                              handlePageChange(page);
                            }}
                            isActive={page === currentPage}
-                           className="text-white/60 hover:text-white border-white/20 hover:border-white/40"
+                            className={`text-white/60 border-white/20 transition-colors ${
+                              page === currentPage 
+                                ? "text-white hover:text-white border-white/40" 
+                                : "hover:text-white/80 hover:border-white/30"
+                            }`}
                          >
                            {page}
                          </PaginationLink>
