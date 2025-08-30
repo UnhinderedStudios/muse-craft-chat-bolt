@@ -37,17 +37,23 @@ export function PlaylistItem({ playlist, onMenuAction, isArtist = false }: Playl
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
-              <div className="overflow-hidden group-hover:overflow-visible">
+              <div className="overflow-hidden relative">
                 <div 
-                  className="text-sm text-white font-medium truncate group-hover:whitespace-nowrap group-hover:overflow-visible group-hover:[text-overflow:unset] group-hover:animate-scroll-text-reveal"
+                  className="text-sm text-white font-medium whitespace-nowrap group-hover:animate-text-scroll"
                   title={playlist.name}
+                  style={{
+                    maskImage: 'linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%)',
+                    WebkitMaskImage: 'linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%)'
+                  }}
                 >
-                  {playlist.name}
-                  {playlist.isFavorited && (
-                    <span className="ml-2 text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">
-                      ★
-                    </span>
-                  )}
+                  <span className="inline-block">
+                    {playlist.name}
+                    {playlist.isFavorited && (
+                      <span className="ml-2 text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">
+                        ★
+                      </span>
+                    )}
+                  </span>
                 </div>
               </div>
               <div className="text-xs text-white/60">
