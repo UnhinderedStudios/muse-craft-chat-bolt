@@ -160,8 +160,8 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
 
       {/* Content */}
       <div className="flex-1 min-h-0 overflow-hidden">
-        <div className="h-full overflow-y-auto overflow-x-hidden px-4 pb-4">
-          <div className="flex flex-col gap-2">
+        <div className="h-full overflow-y-auto overflow-x-hidden lyrics-scrollbar">
+          <div className="min-h-full flex flex-col justify-start gap-2 px-4 pb-4">
             {/* Create Playlist Prompt */}
             {shouldShowCreatePrompt && (
               <CreatePlaylistPrompt
