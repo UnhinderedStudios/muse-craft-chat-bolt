@@ -29,19 +29,6 @@ export const DragProvider: React.FC<DragProviderProps> = ({ children }) => {
   const dragThreshold = useRef({ distance: 5, time: 150 });
   const dragStartTime = useRef<number>(0);
 
-  const startDrag = useCallback((track: TrackItem, event: React.MouseEvent) => {
-    const { clientX, clientY } = event;
-    dragStartTime.current = Date.now();
-    
-    setDragState(prev => ({
-      ...prev,
-      isDragging: false, // Start as candidate, not dragging yet
-      draggedTrack: track,
-      mousePosition: { x: clientX, y: clientY },
-      dragStartPos: { x: clientX, y: clientY },
-    }));
-  }, []);
-
   const updateDragPosition = useCallback((x: number, y: number) => {
     setDragState(prev => {
       if (!prev.draggedTrack) return prev;
@@ -64,15 +51,55 @@ export const DragProvider: React.FC<DragProviderProps> = ({ children }) => {
     });
   }, []);
 
+  const endDrag = useCallback(() => {
+    setDragState(initialDragState);
+  }, []);
+
+  const startDrag = useCallback((track: TrackItem, event: React.MouseEvent) => {
+    const { clientX, clientY } = event;
+    dragStartTime.current = Date.now();
+    
+    setDragState(prev => ({
+      ...prev,
+      isDragging: false, // Start as candidate, not dragging yet
+      draggedTrack: track,
+      mousePosition: { x: clientX, y: clientY },
+      dragStartPos: { x: clientX, y: clientY },
+    }));
+
+    // Add global listeners immediately when drag candidate is created
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      updateDragPosition(e.clientX, e.clientY);
+    };
+
+    const handleGlobalMouseUp = () => {
+      endDrag();
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+      document.body.style.userSelect = '';
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        endDrag();
+        document.removeEventListener('mousemove', handleGlobalMouseMove);
+        document.removeEventListener('mouseup', handleGlobalMouseUp);
+        document.removeEventListener('keydown', handleKeyDown);
+        document.body.style.userSelect = '';
+      }
+    };
+
+    document.addEventListener('mousemove', handleGlobalMouseMove);
+    document.addEventListener('mouseup', handleGlobalMouseUp);
+    document.addEventListener('keydown', handleKeyDown);
+    document.body.style.userSelect = 'none';
+  }, [updateDragPosition, endDrag]);
+
   const setActiveDropZone = useCallback((zoneId: string | null) => {
     setDragState(prev => ({
       ...prev,
       activeDropZone: zoneId,
     }));
-  }, []);
-
-  const endDrag = useCallback(() => {
-    setDragState(initialDragState);
   }, []);
 
   const contextValue: DragContextType = {
