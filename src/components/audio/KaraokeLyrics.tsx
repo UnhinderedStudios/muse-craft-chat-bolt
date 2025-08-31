@@ -177,8 +177,10 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
     >
       {words.map((word, index) => {
         const isHighlighted = index === highlightedIndex;
-        const isPast = currentTime > word.end;
-        const isFuture = currentTime < word.start;
+        // Use the same adjusted time for consistency to avoid flashing
+        const adjustedTime = currentTime + 0.3;
+        const isPast = adjustedTime > word.end;
+        const isFuture = adjustedTime < word.start;
         const isNonSung = isNonSungWord(word.word);
         
         return (
@@ -197,9 +199,9 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
                 ? '#f92c8f' // Pink color for non-sung words (matches Generate button)
                 : isHighlighted 
                   ? '#ffffff' 
-                  : isPast && !isHighlighted 
-                    ? '#f1f1f1' 
-                    : '#656565',
+                  : isPast 
+                    ? '#888888' // Consistent gray for past words
+                    : '#656565', // Default gray for future words
               textShadow: isHighlighted ? '0 0 8px rgba(255, 255, 255, 0.3)' : 'none',
               marginRight: word.word.endsWith('\n') ? '0' : '0.25rem',
             }}
