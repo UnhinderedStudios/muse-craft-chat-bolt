@@ -65,9 +65,14 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, isArtist = fa
 
     const handleMouseUp = () => {
       if (isDropReady && dragState.draggedTrack && onTrackAdd) {
+        console.log('🎵 Track dropped on playlist:', playlist.name, dragState.draggedTrack.title);
         onTrackAdd(playlist.id, dragState.draggedTrack);
         setShowDropSuccess(true);
-        setTimeout(() => setShowDropSuccess(false), 600);
+        console.log('✨ Showing drop success animation for playlist:', playlist.name);
+        setTimeout(() => {
+          setShowDropSuccess(false);
+          console.log('🎯 Drop success animation completed for playlist:', playlist.name);
+        }, 1000);
       }
     };
 
