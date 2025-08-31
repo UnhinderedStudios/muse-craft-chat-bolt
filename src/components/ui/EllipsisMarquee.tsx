@@ -32,8 +32,20 @@ export default function EllipsisMarquee({
       const inner = measureRef.current;
       if (!wrap || !inner) return;
 
-      // Force the measure span to its natural width  
-      const isOverflow = inner.scrollWidth > wrap.clientWidth + 8;
+      // Force the measure span to its natural width
+      const isOverflow = inner.scrollWidth > wrap.clientWidth + 1;
+      
+      // Debug logging for overflow detection
+      if (text.includes("Ocean Wave")) {
+        console.log("Ocean Wave debug:", {
+          text,
+          scrollWidth: inner.scrollWidth,
+          clientWidth: wrap.clientWidth,
+          difference: inner.scrollWidth - wrap.clientWidth,
+          isOverflow
+        });
+      }
+      
       setOverflowing(isOverflow);
       setDistance(inner.scrollWidth);
     };
