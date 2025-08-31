@@ -63,22 +63,30 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, isArtist = fa
   useEffect(() => {
     if (!dragState.isDragging) return;
 
-    const handleMouseUp = () => {
+    const handleMouseUp = (e: MouseEvent) => {
+      console.log('🎯 PlaylistItem mouseup triggered, isDropReady:', isDropReady, 'draggedTrack:', dragState.draggedTrack?.title);
       if (isDropReady && dragState.draggedTrack && onTrackAdd) {
+        e.stopPropagation(); // Prevent other mouseup handlers
         console.log('🎵 Track dropped on playlist:', playlist.name, dragState.draggedTrack.title);
         onTrackAdd(playlist.id, dragState.draggedTrack);
         setShowDropSuccess(true);
         console.log('✨ Showing drop success animation for playlist:', playlist.name);
+        
+        // Delay the drag end to allow our animation to start
+        setTimeout(() => {
+          endDrag();
+        }, 50);
+        
         setTimeout(() => {
           setShowDropSuccess(false);
           console.log('🎯 Drop success animation completed for playlist:', playlist.name);
-        }, 1000);
+        }, 1500);
       }
     };
 
     document.addEventListener('mouseup', handleMouseUp);
     return () => document.removeEventListener('mouseup', handleMouseUp);
-  }, [isDropReady, dragState.draggedTrack, playlist.id, onTrackAdd, dragState.isDragging]);
+  }, [isDropReady, dragState.draggedTrack, playlist.id, onTrackAdd, dragState.isDragging, endDrag]);
 
   return (
     <div 
