@@ -72,12 +72,12 @@ export function SessionItem({ session, onMenuAction, onTitleEdit }: SessionItemP
   return (
     <div 
       className={cn(
-        "group bg-session-item-bg rounded-xl px-3 py-2 cursor-pointer hover:bg-session-item-hover transition-all duration-200"
+        "group bg-[#1e1e1e] rounded-xl px-3 py-2 cursor-pointer hover:bg-[#252525] transition-all duration-200"
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         {/* Icon - Fixed width */}
         <div className="flex-none w-8 h-8 rounded-md bg-black/30 flex items-center justify-center">
           <Clock className="w-4 h-4 text-white/60" />
