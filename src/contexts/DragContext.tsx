@@ -43,6 +43,10 @@ export const DragProvider: React.FC<DragProviderProps> = ({ children }) => {
         distance > dragThreshold.current.distance && 
         timeElapsed > dragThreshold.current.time;
 
+      if (shouldStartDragging) {
+        console.log('✅ Drag threshold met, starting visual drag');
+      }
+
       return {
         ...prev,
         isDragging: shouldStartDragging || prev.isDragging,
@@ -52,12 +56,14 @@ export const DragProvider: React.FC<DragProviderProps> = ({ children }) => {
   }, []);
 
   const endDrag = useCallback(() => {
+    console.log('🏁 Ending drag operation');
     setDragState(initialDragState);
   }, []);
 
   const startDrag = useCallback((track: TrackItem, event: React.MouseEvent) => {
     const { clientX, clientY } = event;
     dragStartTime.current = Date.now();
+    console.log('🚀 Starting drag for track:', track.title);
     
     setDragState(prev => ({
       ...prev,

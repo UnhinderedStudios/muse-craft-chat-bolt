@@ -66,26 +66,32 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, isArtist = fa
     const handleMouseUp = (e: MouseEvent) => {
       console.log('🎯 PlaylistItem mouseup triggered, isDropReady:', isDropReady, 'draggedTrack:', dragState.draggedTrack?.title);
       if (isDropReady && dragState.draggedTrack && onTrackAdd) {
-        e.stopPropagation(); // Prevent other mouseup handlers
+        e.stopPropagation();
+        e.preventDefault();
         console.log('🎵 Track dropped on playlist:', playlist.name, dragState.draggedTrack.title);
-        onTrackAdd(playlist.id, dragState.draggedTrack);
+        
+        // Set success state immediately
         setShowDropSuccess(true);
-        console.log('✨ Showing drop success animation for playlist:', playlist.name);
+        console.log('✨ Drop success state set to true for playlist:', playlist.name);
         
-        // Delay the drag end to allow our animation to start
-        setTimeout(() => {
-          endDrag();
-        }, 50);
+        // Call the track add handler
+        onTrackAdd(playlist.id, dragState.draggedTrack);
+        console.log('🎵 onTrackAdd called successfully');
         
+        // End drag immediately - no delay
+        endDrag();
+        console.log('🏁 Drag ended');
+        
+        // Reset success animation after longer duration
         setTimeout(() => {
           setShowDropSuccess(false);
-          console.log('🎯 Drop success animation completed for playlist:', playlist.name);
-        }, 1500);
+          console.log('🎯 Drop success animation reset for playlist:', playlist.name);
+        }, 2000);
       }
     };
 
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => document.removeEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mouseup', handleMouseUp, { capture: true });
+    return () => document.removeEventListener('mouseup', handleMouseUp, { capture: true });
   }, [isDropReady, dragState.draggedTrack, playlist.id, onTrackAdd, dragState.isDragging, endDrag]);
 
   return (
