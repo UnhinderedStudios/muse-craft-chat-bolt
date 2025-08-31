@@ -175,11 +175,11 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
   return (
     <div className={cn("h-full bg-[#151515] rounded-2xl flex flex-col", className)}>
       {/* Header with New Session Button */}
-      <div className="shrink-0 px-2 pt-4 pb-3">
-        <div className="flex items-center justify-center mb-4 mx-1">
+      <div className="shrink-0 px-2 pt-3 pb-2">
+        <div className="flex items-center justify-center mb-3">
           <Button
             onClick={handleCreateSession}
-            className="w-full bg-accent-primary hover:bg-accent-primary/80 text-white font-medium px-4 py-[6px] rounded-xl flex items-center justify-center gap-2"
+            className="w-full bg-accent-primary hover:bg-accent-primary/80 text-white font-medium px-4 py-1 rounded-xl flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
             New Session
@@ -187,7 +187,7 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
         </div>
 
         {/* Search Bar */}
-        <div className="relative mx-1">
+        <div className="relative">
           <Input
             ref={searchInputRef}
             value={searchQuery}
