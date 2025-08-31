@@ -34,18 +34,6 @@ export default function EllipsisMarquee({
 
       // Force the measure span to its natural width
       const isOverflow = inner.scrollWidth > wrap.clientWidth + 1;
-      
-      // Debug logging for overflow detection
-      if (text.includes("Ocean Wave")) {
-        console.log("Ocean Wave debug:", {
-          text,
-          scrollWidth: inner.scrollWidth,
-          clientWidth: wrap.clientWidth,
-          difference: inner.scrollWidth - wrap.clientWidth,
-          isOverflow
-        });
-      }
-      
       setOverflowing(isOverflow);
       setDistance(inner.scrollWidth);
     };
@@ -82,21 +70,15 @@ export default function EllipsisMarquee({
         onBlur: () => setInternalActive(false),
       })}
     >
-      {/* Hidden measurement span - no text-ellipsis to get true width */}
+      {/* Static, truncated text when not showing marquee */}
       <span
         ref={measureRef}
-        className="absolute invisible whitespace-nowrap"
-        style={{ left: '-9999px' }}
+        className={`block whitespace-nowrap overflow-hidden text-ellipsis ${
+          showMarquee ? "invisible" : "visible"
+        }`}
       >
         {text}
       </span>
-
-      {/* Visible truncated text when not showing marquee */}
-      {!showMarquee && (
-        <span className="block whitespace-nowrap overflow-hidden text-ellipsis">
-          {text}
-        </span>
-      )}
 
       {/* Marquee only when hovered AND overflowing; clipped by wrapper */}
       {showMarquee && (
