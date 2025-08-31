@@ -373,6 +373,14 @@ const Index = () => {
     }
   ]);
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
+  // Keep karaoke version selection in sync with the currently selected track
+  useEffect(() => {
+    const currentTrack = tracks[currentTrackIndex];
+    if (!currentTrack) { setCurrentAudioIndex(versions.length ? 0 : -1); return; }
+    const idx = versions.findIndex(v => v.audioId === currentTrack.id);
+    if (idx !== -1) setCurrentAudioIndex(idx);
+    else setCurrentAudioIndex(-1);
+  }, [currentTrackIndex, tracks, versions]);
   const [showFullscreenKaraoke, setShowFullscreenKaraoke] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<number>(0);
   const [lastProgressUpdate, setLastProgressUpdate] = useState<number>(Date.now());
@@ -1340,6 +1348,7 @@ async function startGeneration() {
             <KaraokeRightPanel
               versions={versions}
               currentAudioIndex={currentAudioIndex}
+              currentTrackIndex={currentTrackIndex}
               currentTime={currentTime}
               isPlaying={isPlaying}
               albumCovers={albumCovers}
@@ -1347,10 +1356,10 @@ async function startGeneration() {
               audioRefs={audioRefs}
               onPlayPause={handleAudioPlay}
               onAudioPause={handleAudioPause}
-                    onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
-                    onSeek={handleSeek}
-                    onRetryTimestamps={handleRetryTimestamps}
-                  />
+              onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
+              onSeek={handleSeek}
+              onRetryTimestamps={handleRetryTimestamps}
+            />
           </div>
 
           {/* Far-right Track List: spans both rows, bleeds to the right, sticky inner */}

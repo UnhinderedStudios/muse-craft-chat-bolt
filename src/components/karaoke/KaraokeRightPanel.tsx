@@ -15,6 +15,7 @@ interface KaraokeRightPanelProps {
     timestampError?: string;
   }>;
   currentAudioIndex: number;
+  currentTrackIndex: number;
   currentTime: number;
   isPlaying: boolean;
   albumCovers: { cover1: string; cover2: string } | null;
@@ -30,6 +31,7 @@ interface KaraokeRightPanelProps {
 export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   versions,
   currentAudioIndex,
+  currentTrackIndex,
   currentTime,
   isPlaying,
   albumCovers,
@@ -42,9 +44,9 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   onRetryTimestamps,
 }) => {
   const hasContent = versions.length > 0;
-  const currentVersion = hasContent ? versions[currentAudioIndex] : null;
-  const currentAlbumCover = hasContent && currentAudioIndex === 0 ? albumCovers?.cover1 : hasContent ? albumCovers?.cover2 : null;
-  const audioElement = hasContent ? audioRefs.current[currentAudioIndex] : null;
+  const currentVersion = hasContent && currentAudioIndex >= 0 && currentAudioIndex < versions.length ? versions[currentAudioIndex] : null;
+  const currentAlbumCover = hasContent && currentAudioIndex >= 0 && (currentAudioIndex === 0 ? albumCovers?.cover1 : albumCovers?.cover2) || null;
+  const audioElement = audioRefs.current[currentTrackIndex] || null;
   const duration = audioElement?.duration || 0;
 
   // Scroll delegation for the main panel
@@ -57,7 +59,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
     if (isPlaying) {
       onAudioPause();
     } else {
-      onPlayPause(currentAudioIndex);
+      onPlayPause(currentTrackIndex);
     }
   };
 
@@ -116,7 +118,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
               {/* Track Info & Progress */}
               <div className="flex-1 min-w-0">
                 <div className="text-xs text-white/80 mb-0.5">
-                  {hasContent ? `Version ${currentAudioIndex + 1}` : "Waiting for audio..."}
+                  {currentVersion ? `Version ${currentAudioIndex + 1}` : "Waiting for audio..."}
                 </div>
                 
                 {/* Progress Bar - Made more compact */}
