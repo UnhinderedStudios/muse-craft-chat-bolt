@@ -77,10 +77,10 @@ export function SessionItem({ session, onMenuAction, onTitleEdit }: SessionItemP
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {/* Icon - Fixed width */}
-        <div className="flex-none w-10 h-10 rounded-md bg-black/30 flex items-center justify-center">
-          <Clock className="w-5 h-5 text-white/60" />
+        <div className="flex-none w-8 h-8 rounded-md bg-black/30 flex items-center justify-center">
+          <Clock className="w-4 h-4 text-white/60" />
         </div>
 
         {/* Title area - Flexible with overflow handling */}
