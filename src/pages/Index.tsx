@@ -1190,6 +1190,12 @@ async function startGeneration() {
           <div className="order-0 lg:col-span-4 h-5 bg-[#151515] rounded-2xl" />
 
 
+          {/* Row 1 - Left: Sessions */}
+          <div className="order-2 md:col-span-2 lg:col-span-1 xl:col-span-1 bg-[#151515] rounded-2xl p-6">
+            <h3 className="text-white font-semibold mb-4">Sessions</h3>
+            <p className="text-gray-400 text-sm">Session management coming soon...</p>
+          </div>
+
           {/* Row 1 - Center: Chat */}
           <div className="order-3 md:col-span-6 lg:col-span-1 xl:col-span-1 min-w-0 min-h-0 bg-[#151515] rounded-2xl relative overflow-hidden">
             {/* top fade */}
