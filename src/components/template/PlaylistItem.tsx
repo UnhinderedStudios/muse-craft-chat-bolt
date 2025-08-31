@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { MoreVertical, Music, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Playlist } from "./TemplatePanel";
@@ -18,12 +18,18 @@ interface PlaylistItemProps {
 }
 
 export function PlaylistItem({ playlist, onMenuAction, isArtist = false }: PlaylistItemProps) {
+  const [isHovered, setIsHovered] = useState(false);
+  
   const handleMenuAction = (action: string) => {
     onMenuAction(playlist.id, action);
   };
 
   return (
-    <div className="group bg-[#1e1e1e] rounded-xl p-3 cursor-pointer hover:bg-[#252525] transition-colors">
+    <div 
+      className="group bg-[#1e1e1e] rounded-xl p-3 cursor-pointer hover:bg-[#252525] transition-colors"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <div className="flex items-center gap-3">
         {/* Icon - Fixed width */}
         <div className="flex-none w-10 h-10 rounded-md bg-black/30 flex items-center justify-center">
@@ -41,6 +47,7 @@ export function PlaylistItem({ playlist, onMenuAction, isArtist = false }: Playl
             className="w-full text-sm font-medium text-white"
             speedPxPerSec={70}
             gapPx={32}
+            isActive={isHovered}
           />
           <div className="text-xs text-white/60 truncate">
             {playlist.songCount} {playlist.songCount === 1 ? 'song' : 'songs'}

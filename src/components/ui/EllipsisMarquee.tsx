@@ -5,6 +5,7 @@ type Props = {
   className?: string;      // apply typography here
   speedPxPerSec?: number;  // default 60
   gapPx?: number;          // default 24
+  isActive?: boolean;      // external hover state
 };
 
 export default function EllipsisMarquee({
@@ -12,12 +13,13 @@ export default function EllipsisMarquee({
   className,
   speedPxPerSec = 60,
   gapPx = 24,
+  isActive,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
 
   const [overflowing, setOverflowing] = useState(false);
-  const [active, setActive] = useState(false); // hover/focus
+  const [internalActive, setInternalActive] = useState(false); // internal hover/focus
   const [distance, setDistance] = useState(0);
 
   const prefersReduced =
@@ -52,6 +54,7 @@ export default function EllipsisMarquee({
     return Math.min(20, Math.max(4, sec)); // clamp 4–20s
   }, [distance, gapPx, speedPxPerSec]);
 
+  const active = isActive !== undefined ? isActive : internalActive;
   const showMarquee = active && overflowing && !prefersReduced;
 
   return (
@@ -59,10 +62,10 @@ export default function EllipsisMarquee({
       ref={wrapRef}
       className={`relative block w-full overflow-hidden ${className || ""}`}
       aria-label={text}
-      onMouseEnter={() => setActive(true)}
-      onMouseLeave={() => setActive(false)}
-      onFocus={() => setActive(true)}
-      onBlur={() => setActive(false)}
+      onMouseEnter={() => setInternalActive(true)}
+      onMouseLeave={() => setInternalActive(false)}
+      onFocus={() => setInternalActive(true)}
+      onBlur={() => setInternalActive(false)}
     >
       {/* Static, truncated text when not showing marquee */}
       <span
