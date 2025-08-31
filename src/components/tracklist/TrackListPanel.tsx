@@ -205,7 +205,7 @@ export default function TrackListPanel({
                     <EllipsisMarquee
                       text={`No Artist – ${t.title || "Song Title"}`}
                       className="text-xs text-white/60"
-                      speedPxPerSec={70}
+                      speedPxPerSec={60}
                       gapPx={32}
                       isActive={hoveredTracks[t.id]}
                     />
@@ -287,7 +287,7 @@ export default function TrackListPanel({
                         <EllipsisMarquee
                           text={t.title || "Song Title"}
                           className="text-sm text-white font-medium"
-                          speedPxPerSec={70}
+                          speedPxPerSec={60}
                           gapPx={32}
                           isActive={hoveredTracks[t.id]}
                         />
