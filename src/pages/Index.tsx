@@ -29,6 +29,7 @@ import TrackListPanel from "@/components/tracklist/TrackListPanel";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { VoiceInterface } from "@/components/voice/VoiceInterface";
 import { TemplatePanel } from "@/components/template/TemplatePanel";
+import { SessionsPanel } from "@/components/sessions/SessionsPanel";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
 // Hooks
@@ -1376,10 +1377,9 @@ async function startGeneration() {
             />
           </div>
 
-          {/* Row 2 - Left: Sessions 2 */}
-          <div className="order-6 md:col-span-2 lg:col-span-1 xl:col-span-1 bg-[#151515] rounded-2xl p-6 h-full">
-            <h3 className="text-white font-semibold mb-4">Session 2</h3>
-            <p className="text-gray-400 text-sm">Additional session functionality...</p>
+          {/* Row 2 - Left: Sessions */}
+          <div className="order-6 md:col-span-2 lg:col-span-1 xl:col-span-1">
+            <SessionsPanel className="h-full" />
           </div>
 
           {/* Row 2 - Center: Form */}

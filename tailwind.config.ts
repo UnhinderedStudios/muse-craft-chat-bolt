@@ -70,7 +70,9 @@ export default {
 				'text-secondary': 'hsl(var(--text-secondary))',
 				'accent-primary': 'hsl(var(--accent-primary))',
 				'purple-chip': 'hsl(var(--purple-chip))',
-				'teal-chip': 'hsl(var(--teal-chip))'
+				'teal-chip': 'hsl(var(--teal-chip))',
+				'session-item-bg': 'hsl(var(--session-item-bg))',
+				'session-item-hover': 'hsl(var(--session-item-hover))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
