@@ -81,7 +81,7 @@ export default function TrackListPanel({
   const [dragStartTrack, setDragStartTrack] = useState<{ track: TrackItem; startPos: { x: number; y: number } } | null>(null);
   
   // Drag functionality
-  const { startDrag, dragState } = useDrag();
+  const { startDrag, updateDragPosition, dragState } = useDrag();
   
   // Scroll delegation
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -211,6 +211,11 @@ export default function TrackListPanel({
                         startPos: { x: e.clientX, y: e.clientY } 
                       });
                       startDrag(t, e);
+                    }
+                  }}
+                  onMouseMove={(e) => {
+                    if (dragStartTrack?.track.id === t.id && !active) {
+                      updateDragPosition(e.clientX, e.clientY);
                     }
                   }}
                   onMouseUp={() => {

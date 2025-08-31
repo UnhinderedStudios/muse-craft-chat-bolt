@@ -35,6 +35,7 @@ export const DragProvider: React.FC<DragProviderProps> = ({ children }) => {
     
     setDragState(prev => ({
       ...prev,
+      isDragging: false, // Start as candidate, not dragging yet
       draggedTrack: track,
       mousePosition: { x: clientX, y: clientY },
       dragStartPos: { x: clientX, y: clientY },
