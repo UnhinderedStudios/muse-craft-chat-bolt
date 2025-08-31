@@ -6,6 +6,7 @@ type Props = {
   speedPxPerSec?: number;  // default 60
   gapPx?: number;          // default 24
   isActive?: boolean;      // external hover state
+  fixedDuration?: number;  // optional fixed duration in seconds
 };
 
 export default function EllipsisMarquee({
@@ -14,6 +15,7 @@ export default function EllipsisMarquee({
   speedPxPerSec = 60,
   gapPx = 24,
   isActive,
+  fixedDuration,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
@@ -49,10 +51,11 @@ export default function EllipsisMarquee({
   }, [text]);
 
   const duration = useMemo(() => {
+    if (fixedDuration) return fixedDuration;
     const px = distance + gapPx;
     const sec = speedPxPerSec > 0 ? px / speedPxPerSec : 6;
     return Math.min(20, Math.max(4, sec)); // clamp 4–20s
-  }, [distance, gapPx, speedPxPerSec]);
+  }, [distance, gapPx, speedPxPerSec, fixedDuration]);
 
   const active = isActive !== undefined ? isActive : internalActive;
   const showMarquee = active && overflowing && !prefersReduced;
