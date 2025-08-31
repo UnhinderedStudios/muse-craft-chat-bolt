@@ -11,7 +11,7 @@ interface SessionsPanelProps {
   className?: string;
 }
 
-// Mock data for development
+// Mock data for development - more sessions to trigger scrollbar
 const mockSessions: Session[] = [
   { 
     id: "session-1", 
@@ -36,6 +36,54 @@ const mockSessions: Session[] = [
     title: "Jazz Fusion Project",
     createdAt: Date.now() - 345600000, // 4 days ago
     lastModified: Date.now() - 86400000 // 1 day ago
+  },
+  { 
+    id: "session-5", 
+    title: "Lo-Fi Hip Hop Vibes",
+    createdAt: Date.now() - 432000000, // 5 days ago
+    lastModified: Date.now() - 172800000 // 2 days ago
+  },
+  { 
+    id: "session-6", 
+    title: "Rock Anthem Session",
+    createdAt: Date.now() - 518400000, // 6 days ago
+    lastModified: Date.now() - 259200000 // 3 days ago
+  },
+  { 
+    id: "session-7", 
+    title: "Ambient Soundscapes",
+    createdAt: Date.now() - 604800000, // 7 days ago
+    lastModified: Date.now() - 345600000 // 4 days ago
+  },
+  { 
+    id: "session-8", 
+    title: "Country Roads Mix",
+    createdAt: Date.now() - 691200000, // 8 days ago
+    lastModified: Date.now() - 432000000 // 5 days ago
+  },
+  { 
+    id: "session-9", 
+    title: "Classical Crossover",
+    createdAt: Date.now() - 777600000, // 9 days ago
+    lastModified: Date.now() - 518400000 // 6 days ago
+  },
+  { 
+    id: "session-10", 
+    title: "Reggae Sunset Session",
+    createdAt: Date.now() - 864000000, // 10 days ago
+    lastModified: Date.now() - 604800000 // 7 days ago
+  },
+  { 
+    id: "session-11", 
+    title: "Punk Revival Project",
+    createdAt: Date.now() - 950400000, // 11 days ago
+    lastModified: Date.now() - 691200000 // 8 days ago
+  },
+  { 
+    id: "session-12", 
+    title: "Orchestral Arrangements",
+    createdAt: Date.now() - 1036800000, // 12 days ago
+    lastModified: Date.now() - 777600000 // 9 days ago
   }
 ];
 
