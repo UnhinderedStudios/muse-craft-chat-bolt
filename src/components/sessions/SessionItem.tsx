@@ -114,14 +114,14 @@ export function SessionItem({ session, onMenuAction, onTitleEdit }: SessionItemP
           </div>
         </div>
 
-        {/* 3-dot Menu - Fixed width */}
+        {/* 3-dot Menu - Reduced size */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button 
-              className="flex-none opacity-0 group-hover:opacity-100 w-8 h-8 flex items-center justify-center text-white/60 hover:text-white transition-all duration-200"
+              className="flex-none opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center text-white/60 hover:text-white transition-all duration-200"
               onClick={(e) => e.stopPropagation()}
             >
-              <MoreVertical className="w-4 h-4" />
+              <MoreVertical className="w-3 h-3" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent 
