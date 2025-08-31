@@ -62,10 +62,13 @@ export default function EllipsisMarquee({
       ref={wrapRef}
       className={`relative block w-full overflow-hidden ${className || ""}`}
       aria-label={text}
-      onMouseEnter={() => setInternalActive(true)}
-      onMouseLeave={() => setInternalActive(false)}
-      onFocus={() => setInternalActive(true)}
-      onBlur={() => setInternalActive(false)}
+      // Only use internal hover handlers when isActive prop is not provided
+      {...(isActive === undefined && {
+        onMouseEnter: () => setInternalActive(true),
+        onMouseLeave: () => setInternalActive(false),
+        onFocus: () => setInternalActive(true),
+        onBlur: () => setInternalActive(false),
+      })}
     >
       {/* Static, truncated text when not showing marquee */}
       <span
