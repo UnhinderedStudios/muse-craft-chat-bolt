@@ -33,7 +33,7 @@ export default function EllipsisMarquee({
       if (!wrap || !inner) return;
 
       // Force the measure span to its natural width
-      const isOverflow = inner.scrollWidth > wrap.clientWidth + 1;
+      const isOverflow = inner.scrollWidth > wrap.clientWidth + 3;
       setOverflowing(isOverflow);
       setDistance(inner.scrollWidth);
     };
