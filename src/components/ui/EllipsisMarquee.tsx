@@ -12,7 +12,7 @@ export default function EllipsisMarquee({
   text,
   className,
   speedPxPerSec = 60,
-  gapPx = 8,
+  gapPx = 24,
   isActive,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
