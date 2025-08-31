@@ -175,11 +175,11 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
   return (
     <div className={cn("h-full bg-[#151515] rounded-2xl flex flex-col", className)}>
       {/* Header with New Session Button */}
-      <div className="shrink-0 p-4 pb-3">
-        <div className="flex items-center justify-center mb-4">
+      <div className="shrink-0 px-2 pt-4 pb-3">
+        <div className="flex items-center justify-center mb-4 mx-1">
           <Button
             onClick={handleCreateSession}
-            className="bg-accent-primary hover:bg-accent-primary/80 text-white font-medium px-4 py-2 rounded-lg flex items-center gap-2"
+            className="w-full bg-accent-primary hover:bg-accent-primary/80 text-white font-medium px-4 py-[6px] rounded-xl flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
             New Session
@@ -187,13 +187,13 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
         </div>
 
         {/* Search Bar */}
-        <div className="relative">
+        <div className="relative mx-1">
           <Input
             ref={searchInputRef}
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Search sessions..."
-            className="w-full bg-[#1e1e1e] border-0 text-white placeholder:text-white/40 focus-visible:ring-1 focus-visible:ring-white/20 pr-20"
+            className="w-full bg-[#1e1e1e] border-0 text-white placeholder:text-white/40 focus-visible:ring-1 focus-visible:ring-white/20 pr-20 rounded-xl"
           />
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
             <button className="text-white/40 hover:text-white/60 transition-colors">
