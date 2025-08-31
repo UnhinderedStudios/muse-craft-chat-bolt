@@ -4,6 +4,7 @@ import { TrackItem } from "@/types";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useScrollDelegationHook } from "@/utils/scrollDelegation";
+import EllipsisMarquee from "@/components/ui/EllipsisMarquee";
 import {
   Pagination,
   PaginationContent,
@@ -72,6 +73,9 @@ export default function TrackListPanel({
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const tracksPerPage = 15;
+
+  // Track hover states
+  const [hoveredTracks, setHoveredTracks] = useState<{ [key: string]: boolean }>({});
   
   // Scroll delegation
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -183,6 +187,8 @@ export default function TrackListPanel({
                 setCurrentIndex(actualIndex);
                 onPlayPause(actualIndex);
               } : undefined}
+              onMouseEnter={() => setHoveredTracks(prev => ({ ...prev, [t.id]: true }))}
+              onMouseLeave={() => setHoveredTracks(prev => ({ ...prev, [t.id]: false }))}
             >
               {!active ? (
                 /* Regular track row */
@@ -196,7 +202,13 @@ export default function TrackListPanel({
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="text-xs text-white/60 truncate">No Artist – {t.title || "Song Title"}</div>
+                    <EllipsisMarquee
+                      text={`No Artist – ${t.title || "Song Title"}`}
+                      className="text-xs text-white/60"
+                      speedPxPerSec={70}
+                      gapPx={32}
+                      isActive={hoveredTracks[t.id]}
+                    />
                     <div
                       className="mt-1 h-1.5 bg-white/10 rounded cursor-pointer"
                       onClick={(e) => {
@@ -242,7 +254,11 @@ export default function TrackListPanel({
                 </div>
               ) : (
                 /* Active track - album art hugs left edge */
-                <div className="bg-[#1e1e1e] rounded-xl flex flex-col">
+                <div 
+                  className="bg-[#1e1e1e] rounded-xl flex flex-col"
+                  onMouseEnter={() => setHoveredTracks(prev => ({ ...prev, [t.id]: true }))}
+                  onMouseLeave={() => setHoveredTracks(prev => ({ ...prev, [t.id]: false }))}
+                >
                   {/* First row: Album art + Content */}
                   <div className="flex">
                     {/* Album art - flush with container left edge, only top-left corner rounded */}
@@ -268,7 +284,13 @@ export default function TrackListPanel({
                     <div className="flex-1 ml-3 flex flex-col justify-start">
                       {/* Title above controls */}
                       <div className="mb-1 mt-1">
-                        <div className="text-sm text-white font-medium truncate">{t.title || "Song Title"}</div>
+                        <EllipsisMarquee
+                          text={t.title || "Song Title"}
+                          className="text-sm text-white font-medium"
+                          speedPxPerSec={70}
+                          gapPx={32}
+                          isActive={hoveredTracks[t.id]}
+                        />
                         <div className="text-xs text-white/60 truncate">No Artist</div>
                       </div>
 
