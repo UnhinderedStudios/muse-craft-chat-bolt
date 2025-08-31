@@ -98,10 +98,13 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, isArtist = fa
     <div 
       id={`playlist-${playlist.id}`}
       className={cn(
-        "group bg-[#1e1e1e] rounded-xl p-3 cursor-pointer hover:bg-[#252525] transition-all duration-200",
+        "group bg-playlist-bg rounded-xl p-3 cursor-pointer hover:bg-playlist-bg-hover transition-all duration-200",
         isDropReady && "playlist-drop-ready",
         showDropSuccess && "playlist-drop-success"
       )}
+      style={{
+        backgroundColor: showDropSuccess ? undefined : `hsl(var(--playlist-bg))`,
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

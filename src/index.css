@@ -153,6 +153,10 @@ All colors MUST be HSL.
     --chat-bubble: 0 0% 12.5%; /* #202020 */
     --chat-text: 0 0% 77.6%; /* #c6c6c6 */
     --chat-label: 0 0% 100%; /* white */
+    
+    /* Playlist item colors */
+    --playlist-bg: 0 0% 11.8%; /* #1e1e1e */
+    --playlist-bg-hover: 0 0% 14.5%; /* #252525 */
   }
 }
 
