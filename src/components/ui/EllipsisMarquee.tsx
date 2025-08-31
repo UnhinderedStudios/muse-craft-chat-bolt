@@ -89,7 +89,7 @@ export default function EllipsisMarquee({
               {
                 ["--marquee-distance" as any]: `${distance + gapPx}px`,
                 animationDuration: `${duration}s`,
-                gap: `${gapPx}px`,
+                gap: `8px`,
               } as React.CSSProperties
             }
           >
