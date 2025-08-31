@@ -5,6 +5,8 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useScrollDelegationHook } from "@/utils/scrollDelegation";
 import EllipsisMarquee from "@/components/ui/EllipsisMarquee";
+import { useDrag } from "@/contexts/DragContext";
+import { cn } from "@/lib/utils";
 import {
   Pagination,
   PaginationContent,
@@ -76,6 +78,10 @@ export default function TrackListPanel({
 
   // Track hover states
   const [hoveredTracks, setHoveredTracks] = useState<{ [key: string]: boolean }>({});
+  const [dragStartTrack, setDragStartTrack] = useState<{ track: TrackItem; startPos: { x: number; y: number } } | null>(null);
+  
+  // Drag functionality
+  const { startDrag, dragState } = useDrag();
   
   // Scroll delegation
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -192,7 +198,25 @@ export default function TrackListPanel({
             >
               {!active ? (
                 /* Regular track row */
-                <div className="flex items-center gap-3">
+                <div 
+                  className={cn(
+                    "flex items-center gap-3",
+                    dragStartTrack?.track.id === t.id && "track-detaching"
+                  )}
+                  onMouseDown={(e) => {
+                    // Only start drag detection for non-selected tracks
+                    if (!active) {
+                      setDragStartTrack({ 
+                        track: t, 
+                        startPos: { x: e.clientX, y: e.clientY } 
+                      });
+                      startDrag(t, e);
+                    }
+                  }}
+                  onMouseUp={() => {
+                    setDragStartTrack(null);
+                  }}
+                >
                   <div className="shrink-0 w-10 h-10 rounded-md bg-black/30 overflow-hidden">
                     {t.coverUrl ? (
                       <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />

@@ -1,0 +1,62 @@
+/* Drag and Drop Animations */
+
+@keyframes detach-float {
+  0% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  100% {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  }
+}
+
+@keyframes drop-confirm {
+  0% {
+    background-color: hsl(var(--accent-primary));
+    transform: scale(1);
+    box-shadow: 0 0 20px hsl(var(--accent-primary) / 0.5);
+  }
+  50% {
+    background-color: hsl(var(--accent-primary));
+    transform: scale(1.15);
+    box-shadow: 0 0 30px hsl(var(--accent-primary) / 0.7);
+  }
+  100% {
+    background-color: transparent;
+    transform: scale(1);
+    box-shadow: none;
+  }
+}
+
+@keyframes drop-ready-pulse {
+  0%, 100% {
+    transform: scale(1);
+    border-color: hsl(var(--accent-primary) / 0.5);
+    box-shadow: 0 0 10px hsl(var(--accent-primary) / 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    border-color: hsl(var(--accent-primary));
+    box-shadow: 0 0 20px hsl(var(--accent-primary) / 0.5);
+  }
+}
+
+.track-detaching {
+  animation: detach-float 0.3s ease-out forwards;
+}
+
+.playlist-drop-ready {
+  border: 2px solid hsl(var(--accent-primary));
+  animation: drop-ready-pulse 1.5s ease-in-out infinite;
+  background-color: hsl(var(--accent-primary) / 0.1);
+}
+
+.playlist-drop-success {
+  animation: drop-confirm 0.6s ease-out;
+}
+
+.drag-clone-rotate {
+  transform: rotate(-2deg) scale(0.95);
+  transition: transform 0.1s ease-out;
+}

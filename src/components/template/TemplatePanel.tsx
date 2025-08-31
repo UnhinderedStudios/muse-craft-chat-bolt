@@ -5,6 +5,8 @@ import { Filter, Search, X, MoreVertical, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PlaylistItem } from "./PlaylistItem";
 import { CreatePlaylistPrompt } from "./CreatePlaylistPrompt";
+import { TrackItem } from "@/types";
+import { toast } from "sonner";
 
 export interface Playlist {
   id: string;
@@ -87,6 +89,20 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
   const handlePlaylistAction = (playlistId: string, action: string) => {
     console.log(`Action ${action} on playlist ${playlistId}`);
     // Add playlist management logic here
+  };
+
+  // Handle track added to playlist
+  const handleTrackAdd = (playlistId: string, track: TrackItem) => {
+    const playlist = playlists.find(p => p.id === playlistId);
+    if (playlist) {
+      setPlaylists(prev => prev.map(p => 
+        p.id === playlistId 
+          ? { ...p, songCount: p.songCount + 1 }
+          : p
+      ));
+      
+      toast.success(`Added "${track.title}" to "${playlist.name}"`);
+    }
   };
 
   // Get sorted playlists (Favourited always first unless searching)
@@ -175,6 +191,7 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
                 key={item.id}
                 playlist={item}
                 onMenuAction={handlePlaylistAction}
+                onTrackAdd={handleTrackAdd}
                 isArtist={viewMode === "artists"}
               />
             ))}

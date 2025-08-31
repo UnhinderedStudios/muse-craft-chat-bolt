@@ -1,0 +1,90 @@
+import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import { DragState, DragContextType } from '@/types/drag';
+import { TrackItem } from '@/types';
+
+const initialDragState: DragState = {
+  isDragging: false,
+  draggedTrack: null,
+  mousePosition: { x: 0, y: 0 },
+  activeDropZone: null,
+  dragStartPos: { x: 0, y: 0 },
+};
+
+const DragContext = createContext<DragContextType | undefined>(undefined);
+
+export const useDrag = () => {
+  const context = useContext(DragContext);
+  if (!context) {
+    throw new Error('useDrag must be used within a DragProvider');
+  }
+  return context;
+};
+
+interface DragProviderProps {
+  children: React.ReactNode;
+}
+
+export const DragProvider: React.FC<DragProviderProps> = ({ children }) => {
+  const [dragState, setDragState] = useState<DragState>(initialDragState);
+  const dragThreshold = useRef({ distance: 5, time: 150 });
+  const dragStartTime = useRef<number>(0);
+
+  const startDrag = useCallback((track: TrackItem, event: React.MouseEvent) => {
+    const { clientX, clientY } = event;
+    dragStartTime.current = Date.now();
+    
+    setDragState(prev => ({
+      ...prev,
+      draggedTrack: track,
+      mousePosition: { x: clientX, y: clientY },
+      dragStartPos: { x: clientX, y: clientY },
+    }));
+  }, []);
+
+  const updateDragPosition = useCallback((x: number, y: number) => {
+    setDragState(prev => {
+      if (!prev.draggedTrack) return prev;
+
+      const deltaX = x - prev.dragStartPos.x;
+      const deltaY = y - prev.dragStartPos.y;
+      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      const timeElapsed = Date.now() - dragStartTime.current;
+
+      const shouldStartDragging = 
+        !prev.isDragging && 
+        distance > dragThreshold.current.distance && 
+        timeElapsed > dragThreshold.current.time;
+
+      return {
+        ...prev,
+        isDragging: shouldStartDragging || prev.isDragging,
+        mousePosition: { x, y },
+      };
+    });
+  }, []);
+
+  const setActiveDropZone = useCallback((zoneId: string | null) => {
+    setDragState(prev => ({
+      ...prev,
+      activeDropZone: zoneId,
+    }));
+  }, []);
+
+  const endDrag = useCallback(() => {
+    setDragState(initialDragState);
+  }, []);
+
+  const contextValue: DragContextType = {
+    dragState,
+    startDrag,
+    endDrag,
+    updateDragPosition,
+    setActiveDropZone,
+  };
+
+  return (
+    <DragContext.Provider value={contextValue}>
+      {children}
+    </DragContext.Provider>
+  );
+};
