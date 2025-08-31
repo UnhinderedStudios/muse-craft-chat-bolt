@@ -77,14 +77,14 @@ export function SessionItem({ session, onMenuAction, onTitleEdit }: SessionItemP
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="flex items-center gap-1">
+      <div className="flex items-center">
         {/* Icon - Fixed width */}
         <div className="flex-none w-8 h-8 rounded-md bg-black/30 flex items-center justify-center">
           <Clock className="w-4 h-4 text-white/60" />
         </div>
 
         {/* Title area - Flexible with overflow handling */}
-        <div className="flex-1 min-w-0 overflow-hidden">
+        <div className="flex-1 min-w-0 overflow-hidden ml-1">
           {isEditing ? (
             <Input
               value={editTitle}
@@ -114,14 +114,14 @@ export function SessionItem({ session, onMenuAction, onTitleEdit }: SessionItemP
           </div>
         </div>
 
-        {/* 3-dot Menu - Reduced size */}
+        {/* 3-dot Menu - Compact margins */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button 
-              className="flex-none opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center text-white/60 hover:text-white transition-all duration-200"
+              className="flex-none opacity-0 group-hover:opacity-100 w-4 h-4 -mr-2 flex items-center justify-center text-white/60 hover:text-white transition-all duration-200"
               onClick={(e) => e.stopPropagation()}
             >
-              <MoreVertical className="w-3 h-3" />
+              <MoreVertical className="w-4 h-4" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent 
