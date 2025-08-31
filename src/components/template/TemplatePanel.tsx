@@ -20,7 +20,7 @@ interface TemplatePanelProps {
 
 // Mock data for development
 const mockPlaylists: Playlist[] = [
-  { id: "fav", name: "Favourites", songCount: 12, isFavorited: false, createdAt: Date.now() - 86400000 },
+  { id: "fav", name: "Favourited", songCount: 12, isFavorited: true, createdAt: Date.now() - 86400000 },
   { id: "chill", name: "Chill Vibes", songCount: 8, createdAt: Date.now() - 172800000 },
   { id: "workout", name: "Workout Mix", songCount: 15, createdAt: Date.now() - 259200000 },
   { id: "study", name: "Study Focus", songCount: 6, createdAt: Date.now() - 345600000 },
