@@ -82,15 +82,21 @@ export default function EllipsisMarquee({
         onBlur: () => setInternalActive(false),
       })}
     >
-      {/* Static, truncated text when not showing marquee */}
+      {/* Hidden measurement span - no text-ellipsis to get true width */}
       <span
         ref={measureRef}
-        className={`block whitespace-nowrap overflow-hidden text-ellipsis ${
-          showMarquee ? "invisible" : "visible"
-        }`}
+        className="absolute invisible whitespace-nowrap"
+        style={{ left: '-9999px' }}
       >
         {text}
       </span>
+
+      {/* Visible truncated text when not showing marquee */}
+      {!showMarquee && (
+        <span className="block whitespace-nowrap overflow-hidden text-ellipsis">
+          {text}
+        </span>
+      )}
 
       {/* Marquee only when hovered AND overflowing; clipped by wrapper */}
       {showMarquee && (
