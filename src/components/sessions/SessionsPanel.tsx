@@ -223,7 +223,7 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
       {/* Content */}
       <div className="flex-1 min-h-0 overflow-hidden">
         <div className="h-full overflow-y-auto overflow-x-hidden lyrics-scrollbar">
-          <div className="min-h-full flex flex-col justify-start gap-2 px-4 pb-4">
+          <div className="min-h-full flex flex-col justify-start gap-2 px-2 pb-4">
             {/* Session Items */}
             {sortedSessions.map((session) => (
               <SessionItem

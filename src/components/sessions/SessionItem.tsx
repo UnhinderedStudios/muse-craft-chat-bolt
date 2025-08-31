@@ -72,7 +72,7 @@ export function SessionItem({ session, onMenuAction, onTitleEdit }: SessionItemP
   return (
     <div 
       className={cn(
-        "group bg-session-item-bg rounded-xl p-3 cursor-pointer hover:bg-session-item-hover transition-all duration-200"
+        "group bg-session-item-bg rounded-xl px-3 py-2 cursor-pointer hover:bg-session-item-hover transition-all duration-200"
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
