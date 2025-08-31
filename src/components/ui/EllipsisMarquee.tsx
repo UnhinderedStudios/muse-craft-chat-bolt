@@ -87,9 +87,9 @@ export default function EllipsisMarquee({
             className="marquee-track will-change-transform flex"
             style={
               {
-                ["--marquee-distance" as any]: `${distance + gapPx}px`,
+                ["--marquee-distance" as any]: `${distance + 12}px`,
                 animationDuration: `${duration}s`,
-                gap: `8px`,
+                gap: `12px`,
               } as React.CSSProperties
             }
           >
