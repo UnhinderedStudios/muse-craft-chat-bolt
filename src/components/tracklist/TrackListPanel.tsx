@@ -245,11 +245,11 @@ export default function TrackListPanel({
                   <div className="flex-1 min-w-0">
                     <div
                       onDoubleClick={() => setCurrentIndex(actualIndex)}
-                      className="cursor-pointer"
+                      className="cursor-pointer w-0 flex-1"
                     >
                       <EllipsisMarquee
                         text={`No Artist – ${t.title || "Song Title"}`}
-                        className="text-xs text-white/60 min-w-0"
+                        className="text-xs text-white/60 truncate"
                       />
                     </div>
                     <div
@@ -365,11 +365,11 @@ export default function TrackListPanel({
                                   setSelectedDraftTitle(t.title || "");
                                   setIsEditingSelectedTitle(true);
                                 }}
-                                className="cursor-pointer"
+                                className="cursor-pointer w-0 flex-1"
                               >
                                 <EllipsisMarquee
                                   text={t.title || "Song Title"}
-                                  className="text-white text-sm font-medium min-w-0"
+                                  className="text-white text-sm font-medium truncate"
                                 />
                               </div>
                             )}
