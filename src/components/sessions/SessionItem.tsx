@@ -16,9 +16,10 @@ interface SessionItemProps {
   session: Session;
   onMenuAction: (sessionId: string, action: string) => void;
   onTitleEdit?: (sessionId: string, newTitle: string) => void;
+  onSessionClick?: (session: Session) => void;
 }
 
-export function SessionItem({ session, onMenuAction, onTitleEdit }: SessionItemProps) {
+export function SessionItem({ session, onMenuAction, onTitleEdit, onSessionClick }: SessionItemProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(session.title);
@@ -69,6 +70,12 @@ export function SessionItem({ session, onMenuAction, onTitleEdit }: SessionItemP
     });
   };
 
+  const handleSessionClick = () => {
+    if (!isEditing) {
+      onSessionClick?.(session);
+    }
+  };
+
   return (
     <div 
       className={cn(
@@ -76,6 +83,7 @@ export function SessionItem({ session, onMenuAction, onTitleEdit }: SessionItemP
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={handleSessionClick}
     >
       <div className="flex items-center">
         {/* Icon - Fixed width */}

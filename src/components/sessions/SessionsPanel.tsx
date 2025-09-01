@@ -14,6 +14,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { SessionConfirmationDialog } from "./SessionConfirmationDialog";
 
 interface SessionsPanelProps {
   className?: string;
@@ -103,6 +104,10 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const sessionsPerPage = 10;
+  
+  // Session confirmation dialog state
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   
   const searchInputRef = useRef<HTMLInputElement>(null);
   
@@ -199,6 +204,34 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
     toast.success("Session renamed successfully");
   };
 
+  // Handle session click
+  const handleSessionClick = (session: Session) => {
+    setSelectedSession(session);
+    setIsDialogOpen(true);
+  };
+
+  // Handle dialog actions
+  const handleLoadSession = (sessionId: string) => {
+    const session = sessions.find(s => s.id === sessionId);
+    if (session) {
+      toast.success(`Loading session: "${session.title}"`);
+      // Add session loading logic here
+    }
+  };
+
+  const handleDeleteSession = (sessionId: string) => {
+    const session = sessions.find(s => s.id === sessionId);
+    if (session) {
+      setSessions(prev => prev.filter(s => s.id !== sessionId));
+      toast.success(`Deleted session: "${session.title}"`);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setSelectedSession(null);
+  };
+
   return (
     <div className={cn("h-full bg-[#151515] rounded-2xl flex flex-col", className)}>
       {/* Header with New Session Button */}
@@ -258,6 +291,7 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
                 session={session}
                 onMenuAction={handleSessionAction}
                 onTitleEdit={handleTitleEdit}
+                onSessionClick={handleSessionClick}
               />
             ))}
 
@@ -340,6 +374,15 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
           </div>
         </div>
       </div>
+
+      {/* Session Confirmation Dialog */}
+      <SessionConfirmationDialog
+        session={selectedSession}
+        isOpen={isDialogOpen}
+        onClose={handleCloseDialog}
+        onLoadSession={handleLoadSession}
+        onDeleteSession={handleDeleteSession}
+      />
     </div>
   );
 }
