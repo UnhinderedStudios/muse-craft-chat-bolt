@@ -61,9 +61,9 @@ export function SessionConfirmationDialog({
           </h2>
           <div className="relative flex justify-center">
             <Loader2 
-              className="w-8 h-8 animate-spin text-pink-400" 
+              className="w-8 h-8 animate-spin text-pink-500" 
               style={{
-                filter: 'drop-shadow(0 0 8px rgba(244, 114, 182, 0.6)) drop-shadow(0 0 16px rgba(244, 114, 182, 0.4))',
+                filter: 'drop-shadow(0 0 8px rgba(236, 72, 153, 0.6)) drop-shadow(0 0 16px rgba(236, 72, 153, 0.4))',
                 animationDuration: '1s'
               }}
             />
@@ -74,14 +74,14 @@ export function SessionConfirmationDialog({
         <div className="flex gap-4">
           <button
             onClick={handleLoadSession}
-            className="h-12 px-4 rounded-xl bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-all duration-200 font-medium flex-1"
+            className="h-12 px-4 rounded-xl bg-pink-500/20 text-pink-400 hover:bg-pink-500/30 transition-all duration-200 font-medium flex-1"
           >
             Load Selected
           </button>
           
           <button
             onClick={handleDeleteSession}
-            className="h-12 px-4 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-all duration-200 font-medium flex-1"
+            className="h-12 px-4 rounded-xl bg-gray-500/20 text-gray-400 hover:bg-gray-500/30 transition-all duration-200 font-medium flex-1"
           >
             Delete Session
           </button>
