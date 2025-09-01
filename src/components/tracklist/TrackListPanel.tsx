@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Play, Pause, RotateCw, X, Heart, Shuffle, Repeat, MoreHorizontal, Search } from "lucide-react";
+import { Play, Pause, RotateCw, X, Heart, Shuffle, Repeat, MoreHorizontal, Search, Edit3 } from "lucide-react";
 import { TrackItem } from "@/types";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,7 @@ type Props = {
   onSeek: (t: number) => void;
   setCurrentIndex: (index: number) => void;
   onTimeUpdate: (audio: HTMLAudioElement) => void;
+  onTrackTitleUpdate?: (trackIndex: number, newTitle: string) => void;
 };
 
 // Generate 20 test tracks for testing search functionality
@@ -63,6 +64,7 @@ export default function TrackListPanel({
   onSeek,
   setCurrentIndex,
   onTimeUpdate,
+  onTrackTitleUpdate,
 }: Props) {
   const [audioCurrentTimes, setAudioCurrentTimes] = useState<number[]>([]);
   const [showQuickAlbumGenerator, setShowQuickAlbumGenerator] = useState(false);
@@ -79,6 +81,10 @@ export default function TrackListPanel({
   // Track hover states
   const [hoveredTracks, setHoveredTracks] = useState<{ [key: string]: boolean }>({});
   const [dragStartTrack, setDragStartTrack] = useState<{ track: TrackItem; startPos: { x: number; y: number } } | null>(null);
+  
+  // Title editing state for selected track
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
   
   // Drag functionality
   const { startDrag, dragState } = useDrag();
@@ -126,6 +132,30 @@ export default function TrackListPanel({
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
+    }
+  };
+
+  // Title editing functions
+  const handleTitleClick = () => {
+    if (currentIndex >= 0 && filteredTracks[currentIndex]) {
+      setIsEditingTitle(true);
+      setEditTitle(filteredTracks[currentIndex].title || "");
+    }
+  };
+
+  const handleTitleSubmit = () => {
+    if (editTitle.trim() && editTitle.trim() !== filteredTracks[currentIndex]?.title && onTrackTitleUpdate) {
+      onTrackTitleUpdate(currentIndex, editTitle.trim());
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleTitleSubmit();
+    } else if (e.key === 'Escape') {
+      setEditTitle(filteredTracks[currentIndex]?.title || "");
+      setIsEditingTitle(false);
     }
   };
 
@@ -308,13 +338,30 @@ export default function TrackListPanel({
                     <div className="flex-1 ml-3 flex flex-col justify-start">
                       {/* Title above controls */}
                       <div className="mb-1 mt-1">
-                        <EllipsisMarquee
-                          text={t.title || "Song Title"}
-                          className="text-sm text-white font-medium"
-                          speedPxPerSec={70}
-                          gapPx={32}
-                          isActive={hoveredTracks[t.id]}
-                        />
+                        {isEditingTitle ? (
+                          <input
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            onBlur={handleTitleSubmit}
+                            onKeyDown={handleKeyDown}
+                            className="w-full text-sm font-medium bg-transparent border-none outline-none text-white p-0 m-0"
+                            autoFocus
+                          />
+                        ) : (
+                          <div 
+                            onClick={handleTitleClick}
+                            className="flex items-center gap-1 group/title cursor-pointer"
+                          >
+                            <EllipsisMarquee
+                              text={t.title || "Song Title"}
+                              className="text-sm text-white font-medium"
+                              speedPxPerSec={70}
+                              gapPx={32}
+                              isActive={hoveredTracks[t.id]}
+                            />
+                            <Edit3 className="w-3 h-3 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+                          </div>
+                        )}
                         <div className="text-xs text-white/60 truncate">No Artist</div>
                       </div>
 
