@@ -243,10 +243,15 @@ export default function TrackListPanel({
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <EllipsisMarquee
-                      text={`No Artist – ${t.title || "Song Title"}`}
-                      className="text-xs text-white/60 min-w-0"
-                    />
+                    <div
+                      onDoubleClick={() => setCurrentIndex(actualIndex)}
+                      className="cursor-pointer"
+                    >
+                      <EllipsisMarquee
+                        text={`No Artist – ${t.title || "Song Title"}`}
+                        className="text-xs text-white/60 min-w-0"
+                      />
+                    </div>
                     <div
                       className="mt-1 h-1.5 bg-white/10 rounded cursor-pointer"
                       onClick={(e) => {
@@ -351,10 +356,22 @@ export default function TrackListPanel({
                                 "
                               />
                             ) : (
-                              <EllipsisMarquee
-                                text={t.title || "Song Title"}
-                                className="text-white text-sm font-medium min-w-0 cursor-pointer"
-                              />
+                              <div
+                                onDoubleClick={() => {
+                                  if (!isSelected) {
+                                    setCurrentIndex(actualIndex);
+                                    return;
+                                  }
+                                  setSelectedDraftTitle(t.title || "");
+                                  setIsEditingSelectedTitle(true);
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <EllipsisMarquee
+                                  text={t.title || "Song Title"}
+                                  className="text-white text-sm font-medium min-w-0"
+                                />
+                              </div>
                             )}
                           </div>
                           <button
