@@ -86,12 +86,12 @@ export function SessionItem({ session, onMenuAction, onTitleEdit }: SessionItemP
         {/* Title area - Flexible with overflow handling */}
         <div className="flex-1 min-w-0 overflow-hidden ml-1">
           {isEditing ? (
-            <Input
+            <input
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
               onBlur={handleTitleSubmit}
               onKeyDown={handleKeyDown}
-              className="w-full text-sm font-medium bg-transparent border-white/20 text-white"
+              className="w-full text-sm font-medium bg-transparent border-none outline-none text-white p-0 m-0"
               autoFocus
             />
           ) : (
