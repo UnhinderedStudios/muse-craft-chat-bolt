@@ -17,44 +17,175 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
+export interface Song {
+  id: string;
+  title: string;
+  artist: string;
+  albumArt: string;
+  dateCreated: number;
+  duration: number; // in seconds
+}
+
 export interface Playlist {
   id: string;
   name: string;
   songCount: number;
   isFavorited?: boolean;
   createdAt: number;
+  songs: Song[];
 }
 
 interface TemplatePanelProps {
   className?: string;
 }
 
+// Mock songs data
+const mockSongs: Song[] = [
+  { id: "song1", title: "Midnight Dreams", artist: "Synthwave Master", albumArt: "/placeholder.svg", dateCreated: Date.now() - 86400000, duration: 240 },
+  { id: "song2", title: "Electric Nights", artist: "Neon Pulse", albumArt: "/placeholder.svg", dateCreated: Date.now() - 172800000, duration: 195 },
+  { id: "song3", title: "Cosmic Journey", artist: "Space Echo", albumArt: "/placeholder.svg", dateCreated: Date.now() - 259200000, duration: 320 },
+  { id: "song4", title: "Digital Rain", artist: "Cyber Dreams", albumArt: "/placeholder.svg", dateCreated: Date.now() - 345600000, duration: 280 },
+  { id: "song5", title: "Neon Glow", artist: "Retro Wave", albumArt: "/placeholder.svg", dateCreated: Date.now() - 432000000, duration: 215 },
+  { id: "song6", title: "Chrome Hearts", artist: "Synthwave Master", albumArt: "/placeholder.svg", dateCreated: Date.now() - 518400000, duration: 255 },
+  { id: "song7", title: "Virtual Reality", artist: "Tech Noir", albumArt: "/placeholder.svg", dateCreated: Date.now() - 604800000, duration: 305 },
+  { id: "song8", title: "City Lights", artist: "Urban Dreams", albumArt: "/placeholder.svg", dateCreated: Date.now() - 691200000, duration: 188 },
+];
+
 // Mock data for development
 const mockPlaylists: Playlist[] = [
-  { id: "fav", name: "Favourites", songCount: 12, isFavorited: false, createdAt: Date.now() - 86400000 },
-  { id: "chill", name: "Chill Vibes", songCount: 8, createdAt: Date.now() - 172800000 },
-  { id: "workout", name: "Workout Mix", songCount: 15, createdAt: Date.now() - 259200000 },
-  { id: "study", name: "Study Focus", songCount: 6, createdAt: Date.now() - 345600000 },
-  { id: "party", name: "Party Hits", songCount: 22, createdAt: Date.now() - 432000000 },
-  { id: "road-trip", name: "Road Trip Classics", songCount: 18, createdAt: Date.now() - 518400000 },
-  { id: "morning", name: "Morning Coffee", songCount: 11, createdAt: Date.now() - 604800000 },
-  { id: "late-night", name: "Late Night Vibes", songCount: 9, createdAt: Date.now() - 691200000 },
-  { id: "rock", name: "Rock Anthems", songCount: 24, createdAt: Date.now() - 777600000 },
-  { id: "jazz", name: "Smooth Jazz", songCount: 13, createdAt: Date.now() - 864000000 },
-  { id: "electronic", name: "Electronic Beats", songCount: 16, createdAt: Date.now() - 950400000 },
-  { id: "indie", name: "Indie Discoveries", songCount: 7, createdAt: Date.now() - 1036800000 },
-  { id: "pop", name: "Pop Hits 2024", songCount: 20, createdAt: Date.now() - 1123200000 },
-  { id: "acoustic", name: "Acoustic Sessions", songCount: 14, createdAt: Date.now() - 1209600000 },
-  { id: "hip-hop", name: "Hip Hop Essentials", songCount: 19, createdAt: Date.now() - 1296000000 },
-  { id: "classical", name: "Classical Favorites", songCount: 10, createdAt: Date.now() - 1382400000 },
-  { id: "country", name: "Country Roads", songCount: 17, createdAt: Date.now() - 1468800000 },
-  { id: "blues", name: "Blues Collection", songCount: 12, createdAt: Date.now() - 1555200000 },
+  { 
+    id: "fav", 
+    name: "Favourites", 
+    songCount: 12, 
+    isFavorited: false, 
+    createdAt: Date.now() - 86400000, 
+    songs: mockSongs.slice(0, 4) 
+  },
+  { 
+    id: "chill", 
+    name: "Chill Vibes", 
+    songCount: 8, 
+    createdAt: Date.now() - 172800000, 
+    songs: mockSongs.slice(1, 4) 
+  },
+  { 
+    id: "workout", 
+    name: "Workout Mix", 
+    songCount: 15, 
+    createdAt: Date.now() - 259200000, 
+    songs: mockSongs.slice(0, 6) 
+  },
+  { 
+    id: "study", 
+    name: "Study Focus", 
+    songCount: 6, 
+    createdAt: Date.now() - 345600000, 
+    songs: mockSongs.slice(2, 5) 
+  },
+  { 
+    id: "party", 
+    name: "Party Hits", 
+    songCount: 22, 
+    createdAt: Date.now() - 432000000, 
+    songs: mockSongs 
+  },
+  { 
+    id: "road-trip", 
+    name: "Road Trip Classics", 
+    songCount: 18, 
+    createdAt: Date.now() - 518400000, 
+    songs: mockSongs.slice(0, 7) 
+  },
+  { 
+    id: "morning", 
+    name: "Morning Coffee", 
+    songCount: 11, 
+    createdAt: Date.now() - 604800000, 
+    songs: mockSongs.slice(1, 6) 
+  },
+  { 
+    id: "late-night", 
+    name: "Late Night Vibes", 
+    songCount: 9, 
+    createdAt: Date.now() - 691200000, 
+    songs: mockSongs.slice(0, 3) 
+  },
+  { 
+    id: "rock", 
+    name: "Rock Anthems", 
+    songCount: 24, 
+    createdAt: Date.now() - 777600000, 
+    songs: mockSongs.slice(2, 8) 
+  },
+  { 
+    id: "jazz", 
+    name: "Smooth Jazz", 
+    songCount: 13, 
+    createdAt: Date.now() - 864000000, 
+    songs: mockSongs.slice(0, 5) 
+  },
+  { 
+    id: "electronic", 
+    name: "Electronic Beats", 
+    songCount: 16, 
+    createdAt: Date.now() - 950400000, 
+    songs: mockSongs.slice(1, 7) 
+  },
+  { 
+    id: "indie", 
+    name: "Indie Discoveries", 
+    songCount: 7, 
+    createdAt: Date.now() - 1036800000, 
+    songs: mockSongs.slice(0, 4) 
+  },
+  { 
+    id: "pop", 
+    name: "Pop Hits 2024", 
+    songCount: 20, 
+    createdAt: Date.now() - 1123200000, 
+    songs: mockSongs 
+  },
+  { 
+    id: "acoustic", 
+    name: "Acoustic Sessions", 
+    songCount: 14, 
+    createdAt: Date.now() - 1209600000, 
+    songs: mockSongs.slice(2, 7) 
+  },
+  { 
+    id: "hip-hop", 
+    name: "Hip Hop Essentials", 
+    songCount: 19, 
+    createdAt: Date.now() - 1296000000, 
+    songs: mockSongs.slice(0, 6) 
+  },
+  { 
+    id: "classical", 
+    name: "Classical Favorites", 
+    songCount: 10, 
+    createdAt: Date.now() - 1382400000, 
+    songs: mockSongs.slice(1, 5) 
+  },
+  { 
+    id: "country", 
+    name: "Country Roads", 
+    songCount: 17, 
+    createdAt: Date.now() - 1468800000, 
+    songs: mockSongs.slice(0, 7) 
+  },
+  { 
+    id: "blues", 
+    name: "Blues Collection", 
+    songCount: 12, 
+    createdAt: Date.now() - 1555200000, 
+    songs: mockSongs.slice(2, 6) 
+  },
 ];
 
 const mockArtists = [
-  { id: "artist1", name: "Synthwave Master", songCount: 5, createdAt: Date.now() - 86400000 },
-  { id: "artist2", name: "Jazz Ensemble", songCount: 9, createdAt: Date.now() - 172800000 },
-  { id: "artist3", name: "Rock Legend", songCount: 12, createdAt: Date.now() - 259200000 },
+  { id: "artist1", name: "Synthwave Master", songCount: 5, createdAt: Date.now() - 86400000, songs: [] },
+  { id: "artist2", name: "Jazz Ensemble", songCount: 9, createdAt: Date.now() - 172800000, songs: [] },
+  { id: "artist3", name: "Rock Legend", songCount: 12, createdAt: Date.now() - 259200000, songs: [] },
 ];
 
 export function TemplatePanel({ className }: TemplatePanelProps) {
@@ -123,7 +254,8 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
       id: `playlist_${Date.now()}`,
       name,
       songCount: 0,
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      songs: []
     };
     setPlaylists(prev => [...prev, newPlaylist]);
     clearSearch();
