@@ -5,6 +5,7 @@ import { Filter, Search, X, MoreVertical, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PlaylistItem } from "./PlaylistItem";
 import { CreatePlaylistPrompt } from "./CreatePlaylistPrompt";
+import { PlaylistOverlay } from "./PlaylistOverlay";
 import { TrackItem } from "@/types";
 import { toast } from "sonner";
 import {
@@ -63,6 +64,10 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
   const [showCreatePrompt, setShowCreatePrompt] = useState(false);
   const [playlists, setPlaylists] = useState<Playlist[]>(mockPlaylists);
   const [artists, setArtists] = useState<Playlist[]>(mockArtists);
+  
+  // Overlay state
+  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
+  const [showOverlay, setShowOverlay] = useState(false);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -141,6 +146,17 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
         a.id === playlistId ? { ...a, name: newTitle } : a
       ));
     }
+  };
+
+  // Handle playlist click to show overlay
+  const handlePlaylistClick = (playlist: Playlist) => {
+    setSelectedPlaylist(playlist);
+    setShowOverlay(true);
+  };
+
+  const handleCloseOverlay = () => {
+    setShowOverlay(false);
+    setSelectedPlaylist(null);
   };
 
   // Handle track added to playlist
@@ -251,6 +267,7 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
                 onMenuAction={handlePlaylistAction}
                 onTrackAdd={handleTrackAdd}
                 onTitleEdit={handlePlaylistTitleEdit}
+                onPlaylistClick={handlePlaylistClick}
                 isArtist={viewMode === "artists"}
               />
             ))}
@@ -339,6 +356,13 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
           </div>
         </div>
       </div>
+
+      {/* Playlist Overlay */}
+      <PlaylistOverlay
+        playlist={selectedPlaylist}
+        isOpen={showOverlay}
+        onClose={handleCloseOverlay}
+      />
     </div>
   );
 }

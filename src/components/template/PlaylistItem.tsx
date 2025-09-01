@@ -18,10 +18,11 @@ interface PlaylistItemProps {
   onMenuAction: (playlistId: string, action: string) => void;
   onTrackAdd?: (playlistId: string, track: TrackItem) => void;
   onTitleEdit?: (playlistId: string, newTitle: string) => void;
+  onPlaylistClick?: (playlist: Playlist) => void;
   isArtist?: boolean;
 }
 
-export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, isArtist = false }: PlaylistItemProps) {
+export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, onPlaylistClick, isArtist = false }: PlaylistItemProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isDropReady, setIsDropReady] = useState(false);
   const [showDropSuccess, setShowDropSuccess] = useState(false);
@@ -120,6 +121,18 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
     return () => document.removeEventListener('mouseup', handleMouseUp, { capture: true });
   }, [isDropReady, dragState.draggedTrack, playlist.id, onTrackAdd, dragState.isDragging, endDrag]);
 
+  const handlePlaylistClick = (e: React.MouseEvent) => {
+    // Don't trigger if clicking on edit area, dropdown, or during editing
+    if (isEditing) return;
+    
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-radix-collection-item]') || target.closest('button') || target.closest('input')) {
+      return;
+    }
+    
+    onPlaylistClick?.(playlist);
+  };
+
   return (
     <div 
       id={`playlist-${playlist.id}`}
@@ -130,6 +143,7 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={handlePlaylistClick}
     >
       <div className="flex items-center gap-3">
         {/* Icon - Fixed width */}
