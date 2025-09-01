@@ -34,6 +34,8 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
   };
 
   const handleTitleClick = () => {
+    // Don't allow editing of Favourites playlist
+    if (playlist.id === "fav") return;
     setIsEditing(true);
     setEditTitle(playlist.name);
   };
@@ -153,7 +155,10 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
           ) : (
             <div 
               onClick={handleTitleClick}
-              className="flex items-center gap-1 group/title"
+              className={cn(
+                "flex items-center gap-1 group/title",
+                playlist.id === "fav" ? "cursor-default" : "cursor-pointer"
+              )}
             >
               <EllipsisMarquee
                 text={playlist.name}
@@ -162,7 +167,9 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
                 gapPx={32}
                 isActive={isHovered}
               />
-              <Edit3 className="w-3 h-3 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+              {playlist.id !== "fav" && (
+                <Edit3 className="w-3 h-3 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+              )}
             </div>
           )}
           <div className="text-xs text-white/60 truncate">
