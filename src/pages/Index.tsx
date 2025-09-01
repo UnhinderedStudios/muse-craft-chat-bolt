@@ -1384,6 +1384,15 @@ async function startGeneration() {
                 }
               }}
               onTimeUpdate={handleTimeUpdate}
+              onTrackTitleUpdate={(trackIndex, newTitle) => {
+                setTracks(prevTracks => 
+                  prevTracks.map((track, index) => 
+                    index === trackIndex 
+                      ? { ...track, title: newTitle }
+                      : track
+                  )
+                );
+              }}
             />
           </div>
 
