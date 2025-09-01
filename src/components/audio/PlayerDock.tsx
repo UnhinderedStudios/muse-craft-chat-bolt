@@ -119,24 +119,25 @@ export default function PlayerDock({
                 />
               ) : (
                 <>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex items-center min-w-0 flex-1">
                     <EllipsisMarquee
                       text={title || "No track yet"}
                       className="text-sm text-white/90"
+                      speedPxPerSec={30}
                     />
+                    {onTitleUpdate && (
+                      <button
+                        onClick={() => {
+                          console.log("Edit button clicked, title:", title, "onTitleUpdate:", !!onTitleUpdate);
+                          handleEditStart();
+                        }}
+                        className="p-1 hover:bg-white/10 rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0 ml-1"
+                        disabled={disabled}
+                      >
+                        <Pencil size={12} />
+                      </button>
+                    )}
                   </div>
-                  {onTitleUpdate && (
-                    <button
-                      onClick={() => {
-                        console.log("Edit button clicked, title:", title, "onTitleUpdate:", !!onTitleUpdate);
-                        handleEditStart();
-                      }}
-                      className="p-1 hover:bg-white/10 rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0"
-                      disabled={disabled}
-                    >
-                      <Pencil size={12} />
-                    </button>
-                  )}
                 </>
               )}
             </div>
