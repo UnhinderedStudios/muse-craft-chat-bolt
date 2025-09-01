@@ -126,7 +126,10 @@ export default function PlayerDock({
                   </div>
                   {onTitleUpdate && (
                     <button
-                      onClick={handleEditStart}
+                      onClick={() => {
+                        console.log("Edit button clicked, title:", title, "onTitleUpdate:", !!onTitleUpdate);
+                        handleEditStart();
+                      }}
                       className="p-1 hover:bg-white/10 rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0"
                       disabled={disabled}
                     >
