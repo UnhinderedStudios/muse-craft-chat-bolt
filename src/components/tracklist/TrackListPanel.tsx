@@ -365,11 +365,11 @@ export default function TrackListPanel({
                                   setSelectedDraftTitle(t.title || "");
                                   setIsEditingSelectedTitle(true);
                                 }}
-                                className="cursor-pointer flex-1 min-w-0"
+                                className="cursor-pointer w-full overflow-hidden"
                               >
                                 <EllipsisMarquee
                                   text={t.title || "Song Title"}
-                                  className="text-white text-sm font-medium truncate"
+                                  className="text-white text-sm font-medium w-full"
                                 />
                               </div>
                             )}
