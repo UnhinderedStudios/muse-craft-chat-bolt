@@ -111,10 +111,11 @@ export default function PlayerDock({
                   onChange={(e) => setEditValue(e.target.value.slice(0, 50))}
                   onBlur={handleEditSave}
                   onKeyDown={handleKeyDown}
-                  className="bg-transparent border-b border-white/30 outline-none text-sm text-white/90 flex-1 min-w-0"
+                  className="bg-transparent border-b border-white/30 outline-none text-sm text-white/90 w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
                   placeholder="Track title"
                   autoFocus
                   maxLength={50}
+                  style={{ width: '100%', maxWidth: '100%' }}
                 />
               ) : (
                 <>
