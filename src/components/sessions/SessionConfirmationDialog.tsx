@@ -48,12 +48,9 @@ export function SessionConfirmationDialog({
       className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md"
       onClick={onClose}
     >
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/70" />
-      
       {/* Dialog */}
       <div 
-        className="relative bg-black/70 rounded-2xl border border-white/10 w-[400px] p-6 mx-4"
+        className="relative bg-black/70 rounded-2xl w-[520px] p-6 mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -67,18 +64,18 @@ export function SessionConfirmationDialog({
         </div>
 
         {/* Buttons */}
-        <div className="flex flex-col gap-3">
+        <div className="flex gap-4">
           <CyberButton
             variant="primary"
             onClick={handleLoadSession}
-            className="h-12"
+            className="h-12 flex-1"
           >
             Load Session
           </CyberButton>
           
           <button
             onClick={handleDeleteSession}
-            className="h-12 px-4 rounded-xl bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30 hover:border-red-500/50 transition-all duration-200 font-medium"
+            className="h-12 px-4 rounded-xl bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-all duration-200 font-medium flex-1"
           >
             Delete Session
           </button>
