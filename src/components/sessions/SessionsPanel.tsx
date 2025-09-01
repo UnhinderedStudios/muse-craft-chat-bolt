@@ -206,7 +206,7 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
         <div className="flex items-center justify-center mb-3">
           <Button
             onClick={handleCreateSession}
-            className="w-full bg-accent-primary hover:bg-accent-primary/80 text-white font-medium px-4 py-1 rounded-xl flex items-center justify-center gap-2"
+            className="w-full h-9 bg-accent-primary hover:bg-accent-primary/80 text-white font-medium px-4 rounded-xl flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
             New Session
