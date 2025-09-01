@@ -339,11 +339,18 @@ export default function TrackListPanel({
                         {isEditingTitle ? (
                           <input
                             value={editTitle}
-                            onChange={(e) => setEditTitle(e.target.value)}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (value.length <= 50) { // Character limit
+                                setEditTitle(value);
+                              }
+                            }}
                             onBlur={() => handleTitleSubmit(actualIndex)}
                             onKeyDown={(e) => handleKeyDown(e, actualIndex)}
                             className="w-full text-sm font-medium bg-transparent border-none outline-none text-white p-0 m-0"
                             autoFocus
+                            maxLength={50}
+                            placeholder="Enter song title (max 50 characters)"
                           />
                         ) : (
                           <div 
@@ -351,10 +358,14 @@ export default function TrackListPanel({
                             className="cursor-pointer group/title"
                           >
                             <div className="inline-flex items-baseline gap-1">
-                              <span className="text-sm text-white font-medium">
-                                {t.title || "Song Title"}
-                              </span>
-                              <Edit3 className="w-3 h-3 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+                              <EllipsisMarquee
+                                text={t.title || "Song Title"}
+                                className="text-sm text-white font-medium"
+                                speedPxPerSec={70}
+                                gapPx={32}
+                                isActive={hoveredTracks[t.id]}
+                              />
+                              <Edit3 className="w-3 h-3 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0" />
                             </div>
                           </div>
                         )}
