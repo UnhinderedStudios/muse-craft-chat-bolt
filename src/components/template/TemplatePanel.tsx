@@ -35,6 +35,19 @@ const mockPlaylists: Playlist[] = [
   { id: "workout", name: "Workout Mix", songCount: 15, createdAt: Date.now() - 259200000 },
   { id: "study", name: "Study Focus", songCount: 6, createdAt: Date.now() - 345600000 },
   { id: "party", name: "Party Hits", songCount: 22, createdAt: Date.now() - 432000000 },
+  { id: "road-trip", name: "Road Trip Classics", songCount: 18, createdAt: Date.now() - 518400000 },
+  { id: "morning", name: "Morning Coffee", songCount: 11, createdAt: Date.now() - 604800000 },
+  { id: "late-night", name: "Late Night Vibes", songCount: 9, createdAt: Date.now() - 691200000 },
+  { id: "rock", name: "Rock Anthems", songCount: 24, createdAt: Date.now() - 777600000 },
+  { id: "jazz", name: "Smooth Jazz", songCount: 13, createdAt: Date.now() - 864000000 },
+  { id: "electronic", name: "Electronic Beats", songCount: 16, createdAt: Date.now() - 950400000 },
+  { id: "indie", name: "Indie Discoveries", songCount: 7, createdAt: Date.now() - 1036800000 },
+  { id: "pop", name: "Pop Hits 2024", songCount: 20, createdAt: Date.now() - 1123200000 },
+  { id: "acoustic", name: "Acoustic Sessions", songCount: 14, createdAt: Date.now() - 1209600000 },
+  { id: "hip-hop", name: "Hip Hop Essentials", songCount: 19, createdAt: Date.now() - 1296000000 },
+  { id: "classical", name: "Classical Favorites", songCount: 10, createdAt: Date.now() - 1382400000 },
+  { id: "country", name: "Country Roads", songCount: 17, createdAt: Date.now() - 1468800000 },
+  { id: "blues", name: "Blues Collection", songCount: 12, createdAt: Date.now() - 1555200000 },
 ];
 
 const mockArtists = [
