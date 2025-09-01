@@ -109,25 +109,25 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
       className="fixed inset-0 z-50 backdrop-blur-md"
       onClick={onClose}
     >
-      {/* 3x Larger centered rectangle */}
+      {/* Responsive centered rectangle */}
       <div 
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/90 rounded-2xl border border-white/10 min-w-[1200px] max-w-[1800px] w-[90vw] max-h-[90vh] overflow-hidden flex flex-col"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/90 rounded-2xl border border-white/10 w-[95vw] sm:w-[90vw] md:w-[85vw] lg:w-[80vw] xl:min-w-[1200px] xl:max-w-[1800px] max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="shrink-0 p-8 pb-6 border-b border-white/10">
+        <div className="shrink-0 p-4 sm:p-6 lg:p-8 pb-4 sm:pb-6 border-b border-white/10">
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-6 right-6 w-8 h-8 flex items-center justify-center text-white/60 hover:text-white transition-colors rounded-full hover:bg-white/10"
+            className="absolute top-4 right-4 sm:top-6 sm:right-6 w-8 h-8 flex items-center justify-center text-white/60 hover:text-white transition-colors rounded-full hover:bg-white/10"
           >
             <X className="w-5 h-5" />
           </button>
 
           {/* Playlist info */}
-          <div className="text-white mb-6">
-            <h2 className="text-3xl font-bold mb-3">{playlist.name}</h2>
-            <div className="flex items-center gap-4 text-white/60">
+          <div className="text-white mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 sm:mb-3 pr-8">{playlist.name}</h2>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm sm:text-base text-white/60">
               <span>{playlist.songCount} {playlist.songCount === 1 ? 'song' : 'songs'}</span>
               <span>•</span>
               <span>Created {formatDate(playlist.createdAt)}</span>
@@ -144,7 +144,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
           </div>
 
           {/* Search and Filter */}
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
             <div className="relative flex-1">
               <Input
                 value={searchQuery}
@@ -156,7 +156,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
             </div>
             
             <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
-              <SelectTrigger className="w-[200px] bg-white/5 border-white/20 text-white focus:ring-1 focus:ring-white/30 focus:border-white/30">
+              <SelectTrigger className="w-full sm:w-[200px] bg-white/5 border-white/20 text-white focus:ring-1 focus:ring-white/30 focus:border-white/30">
                 <Filter className="w-4 h-4 mr-2" />
                 <SelectValue />
               </SelectTrigger>
@@ -171,7 +171,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
 
           {/* Search results count */}
           {searchQuery && (
-            <div className="text-sm text-white/40 mt-3">
+            <div className="text-xs sm:text-sm text-white/40 mt-2 sm:mt-3">
               {filteredSongs.length} of {playlist.songs.length} songs
             </div>
           )}
@@ -180,7 +180,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
         {/* Song List */}
         <div className="flex-1 min-h-0">
           {sortedSongs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-white/60 p-12">
+            <div className="flex flex-col items-center justify-center h-full text-white/60 p-6 sm:p-12">
               {searchQuery ? (
                 <>
                   <Search className="w-12 h-12 mb-4 opacity-50" />
@@ -199,9 +199,9 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
             </div>
           ) : (
             <ScrollArea className="h-full">
-              <div className="p-6 pt-4 space-y-2">
-                {/* Header row */}
-                <div className="grid grid-cols-[48px_1fr_200px_120px_80px_40px] gap-4 px-4 py-2 text-sm text-white/60 border-b border-white/10 mb-2">
+              <div className="p-3 sm:p-6 pt-2 sm:pt-4 space-y-2">
+                {/* Header row - hidden on mobile */}
+                <div className="hidden lg:grid grid-cols-[48px_1fr_200px_120px_80px_40px] gap-4 px-4 py-2 text-sm text-white/60 border-b border-white/10 mb-2">
                   <div></div>
                   <div>Title</div>
                   <div>Artist</div>
@@ -216,47 +216,59 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                 {sortedSongs.map((song, index) => (
                   <div
                     key={song.id}
-                    className="group grid grid-cols-[48px_1fr_200px_120px_80px_40px] gap-4 px-4 py-3 rounded-lg hover:bg-white/5 transition-colors"
+                    className="group lg:grid lg:grid-cols-[48px_1fr_200px_120px_80px_40px] lg:gap-4 flex flex-col lg:flex-row px-3 sm:px-4 py-3 rounded-lg hover:bg-white/5 transition-colors"
                   >
-                    {/* Album Art */}
-                    <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center">
-                      <img 
-                        src={song.albumArt} 
-                        alt={`${song.title} cover`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          target.parentElement!.innerHTML = '<div class="w-full h-full bg-white/10 flex items-center justify-center"><Play class="w-4 h-4 text-white/40" /></div>';
-                        }}
-                      />
-                    </div>
+                    {/* Mobile layout */}
+                    <div className="flex lg:contents items-center gap-3">
+                      {/* Album Art */}
+                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center shrink-0">
+                        <img 
+                          src={song.albumArt} 
+                          alt={`${song.title} cover`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.parentElement!.innerHTML = '<div class="w-full h-full bg-white/10 flex items-center justify-center"><Play class="w-4 h-4 text-white/40" /></div>';
+                          }}
+                        />
+                      </div>
 
-                    {/* Title */}
-                    <div className="flex flex-col justify-center min-w-0">
-                      <div className="text-white font-medium truncate">{song.title}</div>
-                    </div>
+                      {/* Title & Artist - Mobile */}
+                      <div className="flex-1 min-w-0 lg:contents">
+                        <div className="lg:flex lg:flex-col lg:justify-center lg:min-w-0">
+                          <div className="text-white font-medium truncate">{song.title}</div>
+                          <div className="text-white/60 text-sm lg:hidden truncate">{song.artist}</div>
+                        </div>
+                        
+                        {/* Artist - Desktop */}
+                        <div className="hidden lg:flex lg:items-center text-white/60 truncate">
+                          {song.artist}
+                        </div>
 
-                    {/* Artist */}
-                    <div className="flex items-center text-white/60 truncate">
-                      {song.artist}
-                    </div>
+                        {/* Date - Desktop */}
+                        <div className="hidden lg:flex lg:items-center text-white/60 text-sm">
+                          {formatDate(song.dateCreated)}
+                        </div>
 
-                    {/* Date */}
-                    <div className="flex items-center text-white/60 text-sm">
-                      {formatDate(song.dateCreated)}
-                    </div>
+                        {/* Duration - Desktop */}
+                        <div className="hidden lg:flex lg:items-center text-white/60 text-sm">
+                          {formatDuration(song.duration)}
+                        </div>
+                      </div>
 
-                    {/* Duration */}
-                    <div className="flex items-center text-white/60 text-sm">
-                      {formatDuration(song.duration)}
-                    </div>
+                      {/* Mobile metadata */}
+                      <div className="flex lg:hidden items-center gap-3 text-white/60 text-xs">
+                        <span>{formatDuration(song.duration)}</span>
+                        <span>•</span>
+                        <span>{formatDate(song.dateCreated)}</span>
+                      </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center">
-                      <DropdownMenu>
+                      {/* Actions */}
+                      <div className="flex items-center">
+                        <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white transition-colors rounded opacity-0 group-hover:opacity-100">
+                          <button className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white transition-colors rounded lg:opacity-0 lg:group-hover:opacity-100">
                             <MoreVertical className="w-4 h-4" />
                           </button>
                         </DropdownMenuTrigger>
@@ -292,7 +304,8 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                             Remove from Playlist
                           </DropdownMenuItem>
                         </DropdownMenuContent>
-                      </DropdownMenu>
+                        </DropdownMenu>
+                      </div>
                     </div>
                   </div>
                 ))}
