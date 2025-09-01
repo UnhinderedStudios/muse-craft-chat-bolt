@@ -82,9 +82,9 @@ export default function TrackListPanel({
   const [hoveredTracks, setHoveredTracks] = useState<{ [key: string]: boolean }>({});
   const [dragStartTrack, setDragStartTrack] = useState<{ track: TrackItem; startPos: { x: number; y: number } } | null>(null);
   
-  // Minimal editing state - only selected track
-  const [isEditingSelectedTitle, setIsEditingSelectedTitle] = useState(false);
-  const [selectedDraftTitle, setSelectedDraftTitle] = useState("");
+  // Title editing state for selected track
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
   
   // Drag functionality
   const { startDrag, dragState } = useDrag();
@@ -135,20 +135,32 @@ export default function TrackListPanel({
     }
   };
 
-  // Helper function to clean title
-  const cleanTitle = (v: string) => {
-    return v.replace(/\r?\n/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+  // Title editing functions
+  const handleTitleClick = (trackIndex: number) => {
+    setIsEditingTitle(true);
+    setEditTitle(filteredTracks[trackIndex]?.title || "");
+  };
+
+  const handleTitleSubmit = (trackIndex: number) => {
+    if (editTitle.trim() && editTitle.trim() !== filteredTracks[trackIndex]?.title && onTrackTitleUpdate) {
+      onTrackTitleUpdate(trackIndex, editTitle.trim());
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, trackIndex: number) => {
+    if (e.key === 'Enter') {
+      handleTitleSubmit(trackIndex);
+    } else if (e.key === 'Escape') {
+      setEditTitle(filteredTracks[trackIndex]?.title || "");
+      setIsEditingTitle(false);
+    }
   };
 
   // Initialize audio times array when tracks change
   useEffect(() => {
     setAudioCurrentTimes(new Array(allTracks.length).fill(0));
   }, [allTracks.length]);
-
-  // Cancel editing when selection changes
-  useEffect(() => {
-    setIsEditingSelectedTitle(false);
-  }, [currentIndex]);
 
   // Reset previous track's time when currentIndex changes
   useEffect(() => {
@@ -200,20 +212,19 @@ export default function TrackListPanel({
         {paginatedTracks.map((t, pageIndex) => {
           // Calculate the actual index in the full filtered tracks array
           const actualIndex = filteredTracks.indexOf(t);
-          const isSelected = actualIndex === currentIndex;
-          const isEditingThisRow = isSelected && isEditingSelectedTitle;
+          const active = actualIndex === currentIndex;
           return (
             <div
               key={t.id}
-              className={`${isSelected ? "" : "rounded-xl bg-[#1e1e1e] p-3 cursor-pointer hover:bg-[#252525] transition-colors"}`}
-              onClick={!isSelected ? () => {
+              className={`${active ? "" : "rounded-xl bg-[#1e1e1e] p-3 cursor-pointer hover:bg-[#252525] transition-colors"}`}
+              onClick={!active ? () => {
                 setCurrentIndex(actualIndex);
                 onPlayPause(actualIndex);
               } : undefined}
               onMouseEnter={() => setHoveredTracks(prev => ({ ...prev, [t.id]: true }))}
               onMouseLeave={() => setHoveredTracks(prev => ({ ...prev, [t.id]: false }))}
             >
-              {!isSelected ? (
+              {!active ? (
                 /* Regular track row */
                 <div 
                   className={cn(
@@ -222,7 +233,7 @@ export default function TrackListPanel({
                   )}
                   onMouseDown={(e) => {
                     // Only start drag detection for non-selected tracks
-                    if (!isSelected) {
+                    if (!active) {
                       setDragStartTrack({ 
                         track: t, 
                         startPos: { x: e.clientX, y: e.clientY } 
@@ -243,15 +254,13 @@ export default function TrackListPanel({
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div
-                      onDoubleClick={() => setCurrentIndex(actualIndex)}
-                      className="cursor-pointer flex-1 min-w-0"
-                    >
-                      <EllipsisMarquee
-                        text={`No Artist – ${t.title || "Song Title"}`}
-                        className="text-xs text-white/60 truncate"
-                      />
-                    </div>
+                    <EllipsisMarquee
+                      text={`No Artist – ${t.title || "Song Title"}`}
+                      className="text-xs text-white/60"
+                      speedPxPerSec={70}
+                      gapPx={32}
+                      isActive={hoveredTracks[t.id]}
+                    />
                     <div
                       className="mt-1 h-1.5 bg-white/10 rounded cursor-pointer"
                       onClick={(e) => {
@@ -327,67 +336,28 @@ export default function TrackListPanel({
                     <div className="flex-1 ml-3 flex flex-col justify-start">
                       {/* Title above controls */}
                       <div className="mb-1 mt-1">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="flex-1 min-w-0">
-                            {isEditingThisRow ? (
-                              <input
-                                value={selectedDraftTitle}
-                                autoFocus
-                                onChange={(e) => setSelectedDraftTitle(e.target.value.replace(/\r?\n/g, ""))}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    const next = cleanTitle(selectedDraftTitle);
-                                    if (next && onTrackTitleUpdate) onTrackTitleUpdate(actualIndex, next);
-                                    setIsEditingSelectedTitle(false);
-                                  }
-                                  if (e.key === "Escape") setIsEditingSelectedTitle(false);
-                                }}
-                                onBlur={() => {
-                                  const next = cleanTitle(selectedDraftTitle);
-                                  if (next && onTrackTitleUpdate) onTrackTitleUpdate(actualIndex, next);
-                                  setIsEditingSelectedTitle(false);
-                                }}
-                                maxLength={80}
-                                title={selectedDraftTitle}
-                                className="
-                                  block w-full min-w-0 bg-transparent border-0 p-0
-                                  text-white text-sm font-medium placeholder:text-white/40 focus:outline-none
-                                  overflow-hidden text-ellipsis whitespace-nowrap
-                                "
-                              />
-                            ) : (
-                              <div
-                                onDoubleClick={() => {
-                                  if (!isSelected) {
-                                    setCurrentIndex(actualIndex);
-                                    return;
-                                  }
-                                  setSelectedDraftTitle(t.title || "");
-                                  setIsEditingSelectedTitle(true);
-                                }}
-                                className="cursor-pointer w-full overflow-hidden"
-                              >
-                                <EllipsisMarquee
-                                  text={t.title || "Song Title"}
-                                  className="text-white text-sm font-medium w-full"
-                                />
-                              </div>
-                            )}
-                          </div>
-                          <button
-                            className="w-8 h-8 shrink-0 flex items-center justify-center text-white/40 hover:text-white/60 transition-colors opacity-0 group-hover:opacity-100"
-                            onClick={() => {
-                              if (!isSelected) { 
-                                setCurrentIndex(actualIndex); 
-                                return; 
-                              }
-                              setSelectedDraftTitle(t.title || "");
-                              setIsEditingSelectedTitle(true);
-                            }}
+                        {isEditingTitle ? (
+                          <input
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            onBlur={() => handleTitleSubmit(actualIndex)}
+                            onKeyDown={(e) => handleKeyDown(e, actualIndex)}
+                            className="w-full text-sm font-medium bg-transparent border-none outline-none text-white p-0 m-0"
+                            autoFocus
+                          />
+                        ) : (
+                          <div 
+                            onClick={() => handleTitleClick(actualIndex)}
+                            className="cursor-pointer group/title"
                           >
-                            <Edit3 className="w-3 h-3" />
-                          </button>
-                        </div>
+                            <div className="inline-flex items-baseline gap-1">
+                              <span className="text-sm text-white font-medium">
+                                {t.title || "Song Title"}
+                              </span>
+                              <Edit3 className="w-3 h-3 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+                            </div>
+                          </div>
+                        )}
                         <div className="text-xs text-white/60 truncate">No Artist</div>
                       </div>
 
