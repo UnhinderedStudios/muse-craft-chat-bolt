@@ -1563,6 +1563,15 @@ async function startGeneration() {
             disabled={!tracks[currentTrackIndex]}
             albumCoverUrl={tracks[currentTrackIndex]?.coverUrl}
             onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
+            onTitleUpdate={(newTitle) => {
+              setTracks(prevTracks => 
+                prevTracks.map((track, index) => 
+                  index === currentTrackIndex 
+                    ? { ...track, title: newTitle }
+                    : track
+                )
+              );
+            }}
           />
         </div>
       </footer>

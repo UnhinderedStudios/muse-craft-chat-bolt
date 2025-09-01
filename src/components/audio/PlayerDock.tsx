@@ -1,5 +1,7 @@
-import { Play, Pause, SkipBack, SkipForward, Heart, Share2, Plus, Volume2 } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Heart, Share2, Plus, Volume2, Pencil } from "lucide-react";
 import BarWaveform from "@/components/audio/BarWaveform";
+import EllipsisMarquee from "@/components/ui/EllipsisMarquee";
+import { useState } from "react";
 
 type Props = {
   title: string;
@@ -16,6 +18,7 @@ type Props = {
   disabled?: boolean;
   albumCoverUrl?: string;
   onFullscreenKaraoke?: () => void;
+  onTitleUpdate?: (newTitle: string) => void;
 };
 
 export default function PlayerDock({
@@ -33,10 +36,39 @@ export default function PlayerDock({
   disabled = false,
   albumCoverUrl,
   onFullscreenKaraoke,
+  onTitleUpdate,
 }: Props) {
   const audio = audioRefs.current[currentAudioIndex];
   const duration = audio?.duration ?? 0;
   const progress = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState("");
+
+  const handleEditStart = () => {
+    setEditValue(title);
+    setIsEditing(true);
+  };
+
+  const handleEditSave = () => {
+    if (onTitleUpdate && editValue.trim()) {
+      onTitleUpdate(editValue.trim());
+    }
+    setIsEditing(false);
+  };
+
+  const handleEditCancel = () => {
+    setIsEditing(false);
+    setEditValue("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleEditSave();
+    } else if (e.key === "Escape") {
+      handleEditCancel();
+    }
+  };
 
 
   return (
@@ -71,8 +103,39 @@ export default function PlayerDock({
               />
             </button>
           )}
-          <div className="min-w-0">
-            <div className="truncate text-sm text-white/90">{title || "No track yet"}</div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1 text-sm text-white/90">
+              {isEditing ? (
+                <input
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value.slice(0, 50))}
+                  onBlur={handleEditSave}
+                  onKeyDown={handleKeyDown}
+                  className="bg-transparent border-b border-white/30 outline-none text-sm text-white/90 flex-1 min-w-0"
+                  placeholder="Track title"
+                  autoFocus
+                  maxLength={50}
+                />
+              ) : (
+                <>
+                  <div className="flex-1 min-w-0">
+                    <EllipsisMarquee
+                      text={title || "No track yet"}
+                      className="text-sm text-white/90"
+                    />
+                  </div>
+                  {onTitleUpdate && (
+                    <button
+                      onClick={handleEditStart}
+                      className="p-1 hover:bg-white/10 rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0"
+                      disabled={disabled}
+                    >
+                      <Pencil size={12} />
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
             <div className="text-[11px] text-white/50">
               {formatTime(currentTime)} • {formatTime(duration)}
             </div>
