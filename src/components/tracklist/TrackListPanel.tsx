@@ -136,25 +136,23 @@ export default function TrackListPanel({
   };
 
   // Title editing functions
-  const handleTitleClick = () => {
-    if (currentIndex >= 0 && filteredTracks[currentIndex]) {
-      setIsEditingTitle(true);
-      setEditTitle(filteredTracks[currentIndex].title || "");
-    }
+  const handleTitleClick = (trackIndex: number) => {
+    setIsEditingTitle(true);
+    setEditTitle(filteredTracks[trackIndex]?.title || "");
   };
 
-  const handleTitleSubmit = () => {
-    if (editTitle.trim() && editTitle.trim() !== filteredTracks[currentIndex]?.title && onTrackTitleUpdate) {
-      onTrackTitleUpdate(currentIndex, editTitle.trim());
+  const handleTitleSubmit = (trackIndex: number) => {
+    if (editTitle.trim() && editTitle.trim() !== filteredTracks[trackIndex]?.title && onTrackTitleUpdate) {
+      onTrackTitleUpdate(trackIndex, editTitle.trim());
     }
     setIsEditingTitle(false);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent, trackIndex: number) => {
     if (e.key === 'Enter') {
-      handleTitleSubmit();
+      handleTitleSubmit(trackIndex);
     } else if (e.key === 'Escape') {
-      setEditTitle(filteredTracks[currentIndex]?.title || "");
+      setEditTitle(filteredTracks[trackIndex]?.title || "");
       setIsEditingTitle(false);
     }
   };
@@ -342,24 +340,22 @@ export default function TrackListPanel({
                           <input
                             value={editTitle}
                             onChange={(e) => setEditTitle(e.target.value)}
-                            onBlur={handleTitleSubmit}
-                            onKeyDown={handleKeyDown}
+                            onBlur={() => handleTitleSubmit(actualIndex)}
+                            onKeyDown={(e) => handleKeyDown(e, actualIndex)}
                             className="w-full text-sm font-medium bg-transparent border-none outline-none text-white p-0 m-0"
                             autoFocus
                           />
                         ) : (
                           <div 
-                            onClick={handleTitleClick}
-                            className="flex items-center gap-1 group/title cursor-pointer"
+                            onClick={() => handleTitleClick(actualIndex)}
+                            className="cursor-pointer group/title"
                           >
-                            <EllipsisMarquee
-                              text={t.title || "Song Title"}
-                              className="text-sm text-white font-medium"
-                              speedPxPerSec={70}
-                              gapPx={32}
-                              isActive={hoveredTracks[t.id]}
-                            />
-                            <Edit3 className="w-3 h-3 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+                            <div className="inline-flex items-baseline gap-1">
+                              <span className="text-sm text-white font-medium">
+                                {t.title || "Song Title"}
+                              </span>
+                              <Edit3 className="w-3 h-3 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+                            </div>
                           </div>
                         )}
                         <div className="text-xs text-white/60 truncate">No Artist</div>
