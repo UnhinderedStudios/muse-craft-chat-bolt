@@ -7,6 +7,14 @@ import { PlaylistItem } from "./PlaylistItem";
 import { CreatePlaylistPrompt } from "./CreatePlaylistPrompt";
 import { TrackItem } from "@/types";
 import { toast } from "sonner";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 export interface Playlist {
   id: string;
@@ -43,6 +51,10 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
   const [playlists, setPlaylists] = useState<Playlist[]>(mockPlaylists);
   const [artists, setArtists] = useState<Playlist[]>(mockArtists);
   
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const currentData = viewMode === "playlists" ? playlists : artists;
@@ -64,6 +76,7 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
     setSearchQuery(value);
     setIsSearchMode(value.trim() !== "");
     setShowCreatePrompt(shouldShowCreatePrompt);
+    setCurrentPage(1); // Reset to first page when searching
   };
 
   // Clear search and restore original state
@@ -71,7 +84,20 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
     setSearchQuery("");
     setIsSearchMode(false);
     setShowCreatePrompt(false);
+    setCurrentPage(1);
   };
+
+  // Handle page changes
+  const handlePageChange = (page: number, totalPages: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  // Reset page when switching view modes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [viewMode]);
 
   // Create new playlist
   const handleCreatePlaylist = (name: string) => {
@@ -127,7 +153,13 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
     return [...favourited, ...others];
   };
 
-  const displayData = viewMode === "playlists" ? getSortedPlaylists() : filteredData;
+  const sortedData = viewMode === "playlists" ? getSortedPlaylists() : filteredData;
+  
+  // Calculate pagination
+  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const displayData = sortedData.slice(startIndex, endIndex);
 
   return (
     <div className={cn("h-full bg-[#151515] rounded-2xl flex flex-col", className)}>
@@ -211,7 +243,7 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
             ))}
 
             {/* Empty State */}
-            {!shouldShowCreatePrompt && displayData.length === 0 && (
+            {!shouldShowCreatePrompt && sortedData.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="text-white/60 mb-2">
                   {isSearchMode ? 
@@ -233,6 +265,62 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
                     Create your first playlist
                   </button>
                 )}
+              </div>
+            )}
+            
+            {/* Pagination */}
+            {sortedData.length > itemsPerPage && (
+              <div className="mt-2 flex justify-center px-2">
+                <Pagination className="w-auto">
+                  <PaginationContent className="gap-0.5 text-xs">
+                     <PaginationItem>
+                       <PaginationPrevious
+                         href="#"
+                         onClick={(e) => {
+                           e.preventDefault();
+                           handlePageChange(currentPage - 1, totalPages);
+                         }}
+                         className={cn(
+                           "h-7 px-2 text-xs",
+                           currentPage === 1 ? "pointer-events-none text-white/20 hover:text-white/20" : ""
+                         )}
+                       />
+                     </PaginationItem>
+                    
+                    {Array.from({ length: totalPages }, (_, index) => {
+                      const page = index + 1;
+                      return (
+                         <PaginationItem key={page}>
+                           <PaginationLink
+                             href="#"
+                             onClick={(e) => {
+                               e.preventDefault();
+                               handlePageChange(page, totalPages);
+                             }}
+                             isActive={currentPage === page}
+                             className="h-7 w-7 text-xs"
+                           >
+                             {page}
+                           </PaginationLink>
+                         </PaginationItem>
+                      );
+                    })}
+                    
+                     <PaginationItem>
+                       <PaginationNext
+                         href="#"
+                         onClick={(e) => {
+                           e.preventDefault();
+                           handlePageChange(currentPage + 1, totalPages);
+                         }}
+                         className={cn(
+                           "h-7 px-2 text-xs",
+                           currentPage === totalPages ? "pointer-events-none text-white/20 hover:text-white/20" : ""
+                         )}
+                       />
+                     </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
               </div>
             )}
           </div>
