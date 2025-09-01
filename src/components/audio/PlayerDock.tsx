@@ -89,7 +89,7 @@ export default function PlayerDock({
       {/* Controls row - centered in remaining space */}
       <div className="flex items-center justify-between pt-1 pb-0 px-3">
         {/* Left: album art + title + time - compact */}
-        <div className="flex items-center gap-2 min-w-0 w-48">
+        <div className="flex items-center gap-2 min-w-0 w-48 overflow-hidden">
           {albumCoverUrl && (
             <button
               onClick={onFullscreenKaraoke}
@@ -103,23 +103,28 @@ export default function PlayerDock({
               />
             </button>
           )}
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1 text-sm text-white/90">
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <div className="flex items-center gap-1 text-sm text-white/90 overflow-hidden">
               {isEditing ? (
-                <input
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value.slice(0, 50))}
-                  onBlur={handleEditSave}
-                  onKeyDown={handleKeyDown}
-                  className="bg-transparent border-b border-white/30 outline-none text-sm text-white/90 w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
-                  placeholder="Track title"
-                  autoFocus
-                  maxLength={50}
-                  style={{ width: '100%', maxWidth: '100%' }}
-                />
+                <div className="flex-1 min-w-0 overflow-hidden relative">
+                  <input
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value.slice(0, 50))}
+                    onBlur={handleEditSave}
+                    onKeyDown={handleKeyDown}
+                    className="bg-transparent border-b border-white/30 outline-none text-sm text-white/90 w-full"
+                    placeholder="Track title"
+                    autoFocus
+                    maxLength={50}
+                    style={{ maxWidth: '140px' }}
+                  />
+                  <div className="absolute right-0 top-0 text-xs text-white/40 bg-black/20 px-1 rounded">
+                    {editValue.length}/50
+                  </div>
+                </div>
               ) : (
                 <>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 overflow-hidden">
                     <EllipsisMarquee
                       text={title || "No track yet"}
                       className="text-sm text-white/90"
