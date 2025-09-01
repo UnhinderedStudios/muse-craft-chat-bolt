@@ -6,6 +6,14 @@ import { cn } from "@/lib/utils";
 import { SessionItem } from "./SessionItem";
 import { Session } from "@/types/session";
 import { toast } from "sonner";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface SessionsPanelProps {
   className?: string;
@@ -92,6 +100,10 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [sessions, setSessions] = useState<Session[]>(mockSessions);
   
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const sessionsPerPage = 10;
+  
   const searchInputRef = useRef<HTMLInputElement>(null);
   
   // Filter sessions based on search query
@@ -104,16 +116,31 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
   // Sort sessions by last modified (newest first)
   const sortedSessions = [...filteredSessions].sort((a, b) => b.lastModified - a.lastModified);
 
+  // Calculate pagination
+  const totalPages = Math.ceil(sortedSessions.length / sessionsPerPage);
+  const startIndex = (currentPage - 1) * sessionsPerPage;
+  const endIndex = startIndex + sessionsPerPage;
+  const paginatedSessions = sortedSessions.slice(startIndex, endIndex);
+
   // Handle search input changes
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
     setIsSearchMode(value.trim() !== "");
+    setCurrentPage(1); // Reset to first page when searching
   };
 
   // Clear search and restore original state
   const clearSearch = () => {
     setSearchQuery("");
     setIsSearchMode(false);
+    setCurrentPage(1);
+  };
+
+  // Handle page changes
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
   };
 
   // Create new session
@@ -225,7 +252,7 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
         <div className="h-full overflow-y-auto overflow-x-hidden lyrics-scrollbar">
           <div className="min-h-full flex flex-col justify-start gap-2 px-2 pb-4">
             {/* Session Items */}
-            {sortedSessions.map((session) => (
+            {paginatedSessions.map((session) => (
               <SessionItem
                 key={session.id}
                 session={session}
@@ -252,6 +279,55 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
                     Create your first session
                   </button>
                 )}
+              </div>
+            )}
+            
+            {/* Pagination */}
+            {sortedSessions.length > sessionsPerPage && (
+              <div className="mt-3 flex justify-center">
+                <Pagination>
+                  <PaginationContent className="gap-1">
+                     <PaginationItem>
+                       <PaginationPrevious
+                         href="#"
+                         onClick={(e) => {
+                           e.preventDefault();
+                           handlePageChange(currentPage - 1);
+                         }}
+                         className={currentPage === 1 ? "pointer-events-none text-white/20 hover:text-white/20" : ""}
+                       />
+                     </PaginationItem>
+                    
+                    {Array.from({ length: totalPages }, (_, index) => {
+                      const page = index + 1;
+                      return (
+                         <PaginationItem key={page}>
+                           <PaginationLink
+                             href="#"
+                             onClick={(e) => {
+                               e.preventDefault();
+                               handlePageChange(page);
+                             }}
+                             isActive={currentPage === page}
+                           >
+                             {page}
+                           </PaginationLink>
+                         </PaginationItem>
+                      );
+                    })}
+                    
+                     <PaginationItem>
+                       <PaginationNext
+                         href="#"
+                         onClick={(e) => {
+                           e.preventDefault();
+                           handlePageChange(currentPage + 1);
+                         }}
+                         className={currentPage === totalPages ? "pointer-events-none text-white/20 hover:text-white/20" : ""}
+                       />
+                     </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
               </div>
             )}
           </div>
