@@ -348,13 +348,19 @@ export default function TrackListPanel({
                         ) : (
                           <div 
                             onClick={() => handleTitleClick(actualIndex)}
-                            className="cursor-pointer group/title"
+                            className="cursor-pointer group/title w-full overflow-hidden"
                           >
-                            <div className="inline-flex items-baseline gap-1">
-                              <span className="text-sm text-white font-medium">
-                                {t.title || "Song Title"}
-                              </span>
-                              <Edit3 className="w-3 h-3 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+                            <div className="flex items-baseline gap-1 w-full min-w-0">
+                              <div className="flex-1 min-w-0">
+                                <EllipsisMarquee
+                                  text={t.title || "Song Title"}
+                                  className="text-sm text-white font-medium"
+                                  speedPxPerSec={70}
+                                  gapPx={32}
+                                  isActive={hoveredTracks[t.id]}
+                                />
+                              </div>
+                              <Edit3 className="w-3 h-3 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0" />
                             </div>
                           </div>
                         )}
