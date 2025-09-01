@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { Session } from "@/types/session";
 import { CyberButton } from "@/components/cyber/CyberButton";
+import { Loader2 } from "lucide-react";
 
 interface SessionConfirmationDialogProps {
   session: Session | null;
@@ -55,12 +56,10 @@ export function SessionConfirmationDialog({
       >
         {/* Header */}
         <div className="text-center mb-6">
-          <h2 className="text-xl font-medium text-white mb-2">
+          <h2 className="text-xl font-medium text-white mb-4">
             You're about to leave your current session
           </h2>
-          <p className="text-sm text-white/60">
-            Loading "{session.title}"
-          </p>
+          <Loader2 className="w-6 h-6 animate-spin text-blue-400 mx-auto" />
         </div>
 
         {/* Buttons */}
@@ -69,7 +68,7 @@ export function SessionConfirmationDialog({
             onClick={handleLoadSession}
             className="h-12 px-4 rounded-xl bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-all duration-200 font-medium flex-1"
           >
-            Load Session
+            Load {session.title}...
           </button>
           
           <button
