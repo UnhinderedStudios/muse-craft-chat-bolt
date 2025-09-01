@@ -111,7 +111,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
     >
       {/* Responsive centered rectangle */}
       <div 
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/90 rounded-2xl border border-white/10 w-[95vw] sm:w-[90vw] md:w-[85vw] lg:w-[80vw] xl:min-w-[1200px] xl:max-w-[1800px] max-h-[90vh] overflow-hidden flex flex-col"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/70 rounded-2xl border border-white/10 w-[95vw] sm:w-[90vw] md:w-[85vw] lg:w-[80vw] xl:min-w-[1200px] xl:max-w-[1800px] max-h-[90vh] overflow-hidden flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
