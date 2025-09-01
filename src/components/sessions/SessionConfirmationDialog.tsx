@@ -59,7 +59,15 @@ export function SessionConfirmationDialog({
           <h2 className="text-xl font-medium text-white mb-4">
             You're about to leave your current session
           </h2>
-          <Loader2 className="w-6 h-6 animate-spin text-blue-400 mx-auto" />
+          <div className="relative flex justify-center">
+            <Loader2 
+              className="w-8 h-8 animate-spin text-pink-400" 
+              style={{
+                filter: 'drop-shadow(0 0 8px rgba(244, 114, 182, 0.6)) drop-shadow(0 0 16px rgba(244, 114, 182, 0.4))',
+                animationDuration: '1s'
+              }}
+            />
+          </div>
         </div>
 
         {/* Buttons */}
@@ -68,7 +76,7 @@ export function SessionConfirmationDialog({
             onClick={handleLoadSession}
             className="h-12 px-4 rounded-xl bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-all duration-200 font-medium flex-1"
           >
-            Load {session.title}...
+            Load Selected
           </button>
           
           <button
