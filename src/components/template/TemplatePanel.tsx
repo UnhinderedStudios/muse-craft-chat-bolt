@@ -91,6 +91,19 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
     // Add playlist management logic here
   };
 
+  // Handle playlist title editing
+  const handlePlaylistTitleEdit = (playlistId: string, newTitle: string) => {
+    if (viewMode === "playlists") {
+      setPlaylists(prev => prev.map(p => 
+        p.id === playlistId ? { ...p, name: newTitle } : p
+      ));
+    } else {
+      setArtists(prev => prev.map(a => 
+        a.id === playlistId ? { ...a, name: newTitle } : a
+      ));
+    }
+  };
+
   // Handle track added to playlist
   const handleTrackAdd = (playlistId: string, track: TrackItem) => {
     const playlist = playlists.find(p => p.id === playlistId);
@@ -192,6 +205,7 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
                 playlist={item}
                 onMenuAction={handlePlaylistAction}
                 onTrackAdd={handleTrackAdd}
+                onTitleEdit={handlePlaylistTitleEdit}
                 isArtist={viewMode === "artists"}
               />
             ))}

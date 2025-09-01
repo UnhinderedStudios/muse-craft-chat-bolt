@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { MoreVertical, Music, User } from "lucide-react";
+import { MoreVertical, Music, User, Edit3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Playlist } from "./TemplatePanel";
 import EllipsisMarquee from "@/components/ui/EllipsisMarquee";
@@ -17,17 +17,41 @@ interface PlaylistItemProps {
   playlist: Playlist;
   onMenuAction: (playlistId: string, action: string) => void;
   onTrackAdd?: (playlistId: string, track: TrackItem) => void;
+  onTitleEdit?: (playlistId: string, newTitle: string) => void;
   isArtist?: boolean;
 }
 
-export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, isArtist = false }: PlaylistItemProps) {
+export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, isArtist = false }: PlaylistItemProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isDropReady, setIsDropReady] = useState(false);
   const [showDropSuccess, setShowDropSuccess] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(playlist.name);
   const { dragState, setActiveDropZone, endDrag } = useDrag();
   
   const handleMenuAction = (action: string) => {
     onMenuAction(playlist.id, action);
+  };
+
+  const handleTitleClick = () => {
+    setIsEditing(true);
+    setEditTitle(playlist.name);
+  };
+
+  const handleTitleSubmit = () => {
+    if (editTitle.trim() && editTitle.trim() !== playlist.name) {
+      onTitleEdit?.(playlist.id, editTitle.trim());
+    }
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleTitleSubmit();
+    } else if (e.key === 'Escape') {
+      setEditTitle(playlist.name);
+      setIsEditing(false);
+    }
   };
 
   // Handle drag over detection
@@ -117,13 +141,30 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, isArtist = fa
 
         {/* Title area - Flexible with overflow handling */}
         <div className="flex-1 min-w-0 overflow-hidden">
-          <EllipsisMarquee
-            text={playlist.name}
-            className="w-full text-sm font-medium text-white"
-            speedPxPerSec={70}
-            gapPx={32}
-            isActive={isHovered}
-          />
+          {isEditing ? (
+            <input
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              onBlur={handleTitleSubmit}
+              onKeyDown={handleKeyDown}
+              className="w-full text-sm font-medium bg-transparent border-none outline-none text-white p-0 m-0"
+              autoFocus
+            />
+          ) : (
+            <div 
+              onClick={handleTitleClick}
+              className="flex items-center gap-1 group/title"
+            >
+              <EllipsisMarquee
+                text={playlist.name}
+                className="w-full text-sm font-medium text-white"
+                speedPxPerSec={70}
+                gapPx={32}
+                isActive={isHovered}
+              />
+              <Edit3 className="w-3 h-3 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
+            </div>
+          )}
           <div className="text-xs text-white/60 truncate">
             {playlist.songCount} {playlist.songCount === 1 ? 'song' : 'songs'}
             {playlist.isFavorited && (
