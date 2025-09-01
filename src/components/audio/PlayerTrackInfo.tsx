@@ -50,12 +50,12 @@ export default function PlayerTrackInfo({
   };
 
   return (
-    <div className="grid grid-cols-[auto_1fr] gap-2 items-center w-48 min-w-0">
-      {/* Album cover - fixed width */}
+    <div className="w-48 h-16 relative bg-black/10 border border-white/10 rounded">
+      {/* Album cover - absolute positioned */}
       {albumCoverUrl && (
         <button
           onClick={onFullscreenKaraoke}
-          className="w-8 h-8 aspect-square rounded overflow-hidden border border-white/20 hover:border-white/40 transition-colors flex-shrink-0"
+          className="absolute left-2 top-2 w-8 h-8 rounded overflow-hidden border border-white/20 hover:border-white/40 transition-colors"
           disabled={disabled || !onFullscreenKaraoke}
         >
           <img 
@@ -66,38 +66,43 @@ export default function PlayerTrackInfo({
         </button>
       )}
       
-      {/* Track info - constrained width */}
-      <div className="min-w-0 overflow-hidden">
-        {/* Title row - fixed height to prevent layout shift */}
-        <div className="h-5 flex items-center gap-1 overflow-hidden">
+      {/* Track info - absolute positioned with fixed bounds */}
+      <div className="absolute left-12 right-2 top-1 bottom-1 overflow-hidden">
+        {/* Title row - strict height and overflow */}
+        <div className="h-6 w-full overflow-hidden relative">
           {isEditing ? (
-            <div className="flex items-center gap-1 w-full min-w-0">
+            <div className="flex items-center h-full">
               <input
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value.slice(0, 50))}
                 onBlur={handleEditSave}
                 onKeyDown={handleKeyDown}
-                className="bg-transparent border-b border-white/30 outline-none text-sm text-white/90 min-w-0 flex-1"
+                className="bg-transparent border-b border-white/30 outline-none text-sm text-white/90 w-full h-full"
                 placeholder="Track title"
                 autoFocus
                 maxLength={50}
+                style={{ 
+                  width: '120px',
+                  maxWidth: '120px',
+                  minWidth: '120px'
+                }}
               />
-              <span className="text-xs text-white/40 flex-shrink-0">
-                {editValue.length}/50
-              </span>
             </div>
           ) : (
-            <div className="flex items-center gap-1 w-full min-w-0">
-              <div className="min-w-0 flex-1 overflow-hidden">
-                <EllipsisMarquee
-                  text={title || "No track yet"}
-                  className="text-sm text-white/90"
-                />
+            <div className="flex items-center h-full">
+              <div 
+                className="text-sm text-white/90 overflow-hidden whitespace-nowrap text-ellipsis pr-6"
+                style={{ 
+                  width: '120px',
+                  maxWidth: '120px'
+                }}
+              >
+                {title || "No track yet"}
               </div>
               {onTitleUpdate && (
                 <button
                   onClick={handleEditStart}
-                  className="p-1 hover:bg-white/10 rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0"
+                  className="absolute right-0 top-0 p-1 hover:bg-white/10 rounded opacity-60 hover:opacity-100 transition-opacity"
                   disabled={disabled}
                 >
                   <Pencil size={12} />
@@ -107,11 +112,15 @@ export default function PlayerTrackInfo({
           )}
         </div>
         
-        {/* Time info - fixed height */}
-        <div className="h-4 flex items-center">
-          <div className="text-[11px] text-white/50 overflow-hidden text-ellipsis whitespace-nowrap">
-            {formatTime(currentTime)} • {formatTime(duration)}
-          </div>
+        {/* Time info - strict height */}
+        <div 
+          className="h-4 w-full overflow-hidden text-ellipsis whitespace-nowrap text-[11px] text-white/50"
+          style={{ 
+            width: '120px',
+            maxWidth: '120px'
+          }}
+        >
+          {formatTime(currentTime)} • {formatTime(duration)}
         </div>
       </div>
     </div>
