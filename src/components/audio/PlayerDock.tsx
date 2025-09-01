@@ -1,6 +1,7 @@
-import { Play, Pause, SkipBack, SkipForward, Heart, Share2, Plus, Volume2 } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Heart, Share2, Plus, Volume2, Pencil } from "lucide-react";
 import BarWaveform from "@/components/audio/BarWaveform";
-import PlayerTrackInfo from "@/components/audio/PlayerTrackInfo";
+import EllipsisMarquee from "@/components/ui/EllipsisMarquee";
+import { useState } from "react";
 
 type Props = {
   title: string;
@@ -41,6 +42,35 @@ export default function PlayerDock({
   const duration = audio?.duration ?? 0;
   const progress = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState("");
+
+  const handleEditStart = () => {
+    setEditValue(title);
+    setIsEditing(true);
+  };
+
+  const handleEditSave = () => {
+    if (onTitleUpdate && editValue.trim()) {
+      onTitleUpdate(editValue.trim());
+    }
+    setIsEditing(false);
+  };
+
+  const handleEditCancel = () => {
+    setIsEditing(false);
+    setEditValue("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleEditSave();
+    } else if (e.key === "Escape") {
+      handleEditCancel();
+    }
+  };
+
+
   return (
     <div className="w-full h-full flex flex-col relative z-10 pt-2">
       <div className="h-[28px] bg-transparent">
@@ -58,16 +88,63 @@ export default function PlayerDock({
 
       {/* Controls row - centered in remaining space */}
       <div className="flex items-center justify-between pt-1 pb-0 px-3">
-        {/* Left: track info with new component */}
-        <PlayerTrackInfo
-          title={title}
-          currentTime={currentTime}
-          duration={duration}
-          albumCoverUrl={albumCoverUrl}
-          onFullscreenKaraoke={onFullscreenKaraoke}
-          onTitleUpdate={onTitleUpdate}
-          disabled={disabled}
-        />
+        {/* Left: album art + title + time - compact */}
+        <div className="flex items-center gap-2 min-w-0 w-48">
+          {albumCoverUrl && (
+            <button
+              onClick={onFullscreenKaraoke}
+              className="w-8 h-8 aspect-square rounded overflow-hidden border border-white/20 hover:border-white/40 transition-colors flex-shrink-0"
+              disabled={disabled || !onFullscreenKaraoke}
+            >
+              <img 
+                src={albumCoverUrl} 
+                alt="Album cover"
+                className="w-full h-full object-cover"
+              />
+            </button>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1 text-sm text-white/90">
+              {isEditing ? (
+                <input
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value.slice(0, 50))}
+                  onBlur={handleEditSave}
+                  onKeyDown={handleKeyDown}
+                  className="bg-transparent border-b border-white/30 outline-none text-sm text-white/90 w-full max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
+                  placeholder="Track title"
+                  autoFocus
+                  maxLength={50}
+                  style={{ width: '100%', maxWidth: '100%' }}
+                />
+              ) : (
+                <>
+                  <div className="flex-1 min-w-0">
+                    <EllipsisMarquee
+                      text={title || "No track yet"}
+                      className="text-sm text-white/90"
+                    />
+                  </div>
+                  {onTitleUpdate && (
+                    <button
+                      onClick={() => {
+                        console.log("Edit button clicked, title:", title, "onTitleUpdate:", !!onTitleUpdate);
+                        handleEditStart();
+                      }}
+                      className="p-1 hover:bg-white/10 rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0"
+                      disabled={disabled}
+                    >
+                      <Pencil size={12} />
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+            <div className="text-[11px] text-white/50">
+              {formatTime(currentTime)} • {formatTime(duration)}
+            </div>
+          </div>
+        </div>
 
         {/* Center: transport - prominent */}
         <div className="flex items-center gap-3">
