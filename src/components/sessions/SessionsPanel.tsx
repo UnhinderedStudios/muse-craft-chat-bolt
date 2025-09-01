@@ -284,7 +284,7 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
             
             {/* Pagination */}
             {sortedSessions.length > sessionsPerPage && (
-              <div className="mt-2 flex justify-center px-2">
+              <div className="mt-2 flex justify-center px-6 py-1">
                 <Pagination className="w-auto">
                   <PaginationContent className="gap-0.5 text-xs">
                      <PaginationItem>
@@ -295,7 +295,7 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
                            handlePageChange(currentPage - 1);
                          }}
                          className={cn(
-                           "h-7 px-2 text-xs",
+                           "h-6 px-1.5 text-xs",
                            currentPage === 1 ? "pointer-events-none text-white/20 hover:text-white/20" : ""
                          )}
                        />
@@ -312,7 +312,7 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
                                handlePageChange(page);
                              }}
                              isActive={currentPage === page}
-                             className="h-7 w-7 text-xs"
+                             className="h-6 w-6 text-xs"
                            >
                              {page}
                            </PaginationLink>
@@ -328,7 +328,7 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
                            handlePageChange(currentPage + 1);
                          }}
                          className={cn(
-                           "h-7 px-2 text-xs",
+                           "h-6 px-1.5 text-xs",
                            currentPage === totalPages ? "pointer-events-none text-white/20 hover:text-white/20" : ""
                          )}
                        />
