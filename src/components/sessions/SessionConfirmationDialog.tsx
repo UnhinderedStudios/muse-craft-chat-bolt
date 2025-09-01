@@ -65,13 +65,12 @@ export function SessionConfirmationDialog({
 
         {/* Buttons */}
         <div className="flex gap-4">
-          <CyberButton
-            variant="primary"
+          <button
             onClick={handleLoadSession}
-            className="h-12 flex-1"
+            className="h-12 px-4 rounded-xl bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-all duration-200 font-medium flex-1"
           >
             Load Session
-          </CyberButton>
+          </button>
           
           <button
             onClick={handleDeleteSession}
