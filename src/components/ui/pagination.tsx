@@ -53,7 +53,9 @@ const PaginationLink = ({
         size,
       }),
       "hover:bg-transparent bg-transparent border-none",
-      isActive ? "text-white" : "text-white/60 hover:text-white",
+      isActive 
+        ? "text-white hover:text-white" 
+        : "text-white/60 hover:text-white",
       className
     )}
     {...props}
