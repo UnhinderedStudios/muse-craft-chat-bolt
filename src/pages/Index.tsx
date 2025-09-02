@@ -1203,12 +1203,12 @@ async function startGeneration() {
 
           {/* Row 1 - Left: Soundify Sidebar */}
           <div className="order-2 md:col-span-2 lg:col-span-1 lg:row-start-1 lg:row-span-2 xl:col-span-1 bg-[#1e1e1e] rounded-2xl p-4 flex flex-col h-full max-h-full overflow-hidden">
-            {/* Soundify Logo */}
-            <div className="mb-6 flex-shrink-0 flex justify-center">
+            {/* Soundify Logo - Reduced margin */}
+            <div className="mb-3 flex-shrink-0 flex justify-center">
               <img 
                 src="/lovable-uploads/fd64a6f2-eb35-4daa-97af-2c7f58aca59c.png" 
                 alt="Soundify" 
-                className="h-8 w-auto object-contain"
+                className="h-6 w-auto object-contain"
               />
             </div>
             
@@ -1258,8 +1258,8 @@ async function startGeneration() {
             {/* Flex spacer to push profile to absolute bottom */}
             <div className="flex-1"></div>
             
-            {/* Profile Section - positioned at very bottom */}
-            <div className="flex-shrink-0 space-y-4">
+            {/* Profile Section - positioned at very bottom with more padding */}
+            <div className="flex-shrink-0 space-y-4 pb-4">
               <button className="w-full flex items-center p-3 bg-[#262626] rounded-lg hover:bg-[#2a2a2a] transition-colors">
                 <Avatar className="w-8 h-8 mr-3 flex-shrink-0">
                   <AvatarImage src="/api/placeholder/32/32" alt="Sir Brom" />
