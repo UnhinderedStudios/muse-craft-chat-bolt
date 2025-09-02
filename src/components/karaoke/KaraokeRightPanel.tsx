@@ -186,10 +186,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
             <div className="h-full flex items-center justify-center text-muted-foreground text-center">
               <div>
                 <div className="text-lg mb-2">🎤</div>
-                <p className="mb-4">Karaoke Lyrics will appear here</p>
-                <div className="spinner">
-                  <div className="spinner1"></div>
-                </div>
+                <p>Karaoke lyrics will appear here when you generate a song</p>
               </div>
             </div>
           )}
