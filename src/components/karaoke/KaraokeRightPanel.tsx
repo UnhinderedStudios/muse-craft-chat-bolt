@@ -93,13 +93,10 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
             style={{ backgroundImage: `url(${currentAlbumCover})` }}
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <img 
-              src={musicNotePlaceholder} 
-              alt="Music note placeholder" 
-              className="w-16 h-16 opacity-60"
-            />
-          </div>
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-50"
+            style={{ backgroundImage: `url(${musicNotePlaceholder})` }}
+          />
         )}
         
         {/* Audio Controls Overlay - Made 10% smaller */}
