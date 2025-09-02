@@ -95,7 +95,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
         ) : (
           <div
             className="absolute inset-0 bg-cover bg-center opacity-50"
-            style={{ backgroundImage: `url(/lovable-uploads/e52952b6-c4ce-4b31-bfec-e269875fe04b.png)` }}
+            style={{ backgroundImage: `url(/lovable-uploads/dc351375-5e9e-4b97-8278-50fc80451f7e.png)` }}
           />
         )}
         
