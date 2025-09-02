@@ -1203,7 +1203,7 @@ async function startGeneration() {
           {/* Row 1 - Left: Menu */}
           <div className="order-2 md:col-span-2 lg:col-span-1 lg:row-start-1 lg:row-span-2 xl:col-span-1 bg-[#1e1e1e] rounded-2xl p-6">
             <h3 className="text-white font-semibold mb-4">Menu</h3>
-            <p className="text-gray-400 text-sm">Session management coming soon...</p>
+            
           </div>
 
           {/* Row 1 - Center: Chat */}
