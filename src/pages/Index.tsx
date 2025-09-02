@@ -1201,7 +1201,7 @@ async function startGeneration() {
           <div className="order-1 lg:col-start-3 lg:col-span-2 h-5 bg-[#151515] rounded-2xl" />
 
           {/* Row 1 - Left: Sessions */}
-          <div className="order-2 md:col-span-2 lg:col-span-1 lg:row-start-1 lg:row-end-4 xl:col-span-1 bg-[#151515] rounded-2xl p-6">
+          <div className="order-2 md:col-span-2 lg:col-span-1 xl:col-span-1 bg-[#151515] rounded-2xl p-6">
             <h3 className="text-white font-semibold mb-4">Sessions</h3>
             <p className="text-gray-400 text-sm">Session management coming soon...</p>
           </div>
