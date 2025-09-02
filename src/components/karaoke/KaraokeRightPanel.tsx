@@ -197,17 +197,13 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
         
         {/* Fullscreen Button - Fixed at bottom */}
         {hasContent && currentVersion?.words?.length > 0 && (
-          <div className="flex justify-center">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onFullscreenKaraoke}
-              className="flex items-center gap-2"
-            >
-              <Mic className="w-4 h-4" />
-              Fullscreen
-            </Button>
-          </div>
+          <Button
+            onClick={onFullscreenKaraoke}
+            className="w-full h-9 bg-accent-primary hover:bg-accent-primary/80 text-white font-medium px-4 rounded-xl flex items-center justify-center gap-2"
+          >
+            <Mic className="w-4 h-4" />
+            Fullscreen
+          </Button>
         )}
       </div>
     </div>
