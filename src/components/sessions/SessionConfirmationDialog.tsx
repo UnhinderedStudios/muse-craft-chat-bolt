@@ -74,9 +74,10 @@ export function SessionConfirmationDialog({
         <div className="flex gap-4">
           <button
             onClick={handleLoadSession}
-            className="h-12 px-4 rounded-xl bg-gray-500/20 text-white hover:bg-pink-500 transition-all duration-200 font-medium flex-1"
+            className="relative h-12 px-4 rounded-xl bg-gray-500/20 text-white hover:text-white transition-all duration-200 font-medium flex-1 overflow-hidden group"
           >
-            Load Selected
+            <span className="relative z-10">Load Selected</span>
+            <div className="absolute inset-0 bg-pink-500/80 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
           </button>
           
           <button
