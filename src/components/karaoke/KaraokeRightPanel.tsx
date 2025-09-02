@@ -143,7 +143,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
             </div>
           ) : (
             <div className="text-center text-white/60 text-sm">
-              Generate a song to see audio controls
+              Waiting for a generation
             </div>
           )}
         </div>
