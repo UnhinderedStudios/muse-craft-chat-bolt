@@ -1211,40 +1211,40 @@ async function startGeneration() {
             {/* Navigation Buttons */}
             <div className="flex-1 space-y-1 mb-4 overflow-y-auto min-h-0">
               {/* Generators - Active */}
-              <button className="w-full flex items-center justify-center px-3 py-2 bg-[#2a2a2a] rounded-lg text-white hover:text-gray-200 transition-colors relative text-sm">
-                <div className="w-1.5 h-1.5 bg-accent-primary rounded-full mr-3 shadow-[0_0_6px_hsl(var(--accent-primary))] absolute left-3"></div>
+              <button className="w-full flex items-center px-3 py-2 bg-[#2a2a2a] rounded-lg text-white hover:text-gray-200 transition-colors relative text-sm">
+                <div className="w-1.5 h-1.5 bg-accent-primary rounded-full mr-3 shadow-[0_0_6px_hsl(var(--accent-primary))]"></div>
                 <Music className="w-4 h-4 mr-2" />
                 <span className="font-medium">Generators</span>
               </button>
               
               {/* Other Navigation Items */}
-              <button className="w-full flex items-center justify-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
-                <Compass className="w-4 h-4 mr-2" />
+              <button className="w-full flex items-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
+                <Compass className="w-4 h-4 mr-2 ml-4" />
                 <span>Explore</span>
               </button>
               
-              <button className="w-full flex items-center justify-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
-                <List className="w-4 h-4 mr-2" />
+              <button className="w-full flex items-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
+                <List className="w-4 h-4 mr-2 ml-4" />
                 <span>Playlists</span>
               </button>
               
-              <button className="w-full flex items-center justify-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
-                <Users className="w-4 h-4 mr-2" />
+              <button className="w-full flex items-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
+                <Users className="w-4 h-4 mr-2 ml-4" />
                 <span>Artists</span>
               </button>
               
-              <button className="w-full flex items-center justify-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
-                <HelpCircle className="w-4 h-4 mr-2" />
+              <button className="w-full flex items-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
+                <HelpCircle className="w-4 h-4 mr-2 ml-4" />
                 <span>Support</span>
               </button>
               
-              <button className="w-full flex items-center justify-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
-                <BookOpen className="w-4 h-4 mr-2" />
+              <button className="w-full flex items-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
+                <BookOpen className="w-4 h-4 mr-2 ml-4" />
                 <span>Learn</span>
               </button>
               
-              <button className="w-full flex items-center justify-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
-                <MoreHorizontal className="w-4 h-4 mr-2" />
+              <button className="w-full flex items-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
+                <MoreHorizontal className="w-4 h-4 mr-2 ml-4" />
                 <span>More</span>
               </button>
             </div>
