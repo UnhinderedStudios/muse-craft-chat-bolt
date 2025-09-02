@@ -214,14 +214,6 @@ const Index = () => {
   // Use the chat hook for both main chat and voice interface
   const { messages, sendMessage } = useChat();
   
-  // Use song generation hook
-  const { 
-    generationState, 
-    loadingShells, 
-    startGeneration: startSongGeneration,
-    randomizeAll
-  } = useSongGeneration();
-  
   // Ref for chat input to maintain focus
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
@@ -391,6 +383,8 @@ const Index = () => {
     else setCurrentAudioIndex(-1);
   }, [currentTrackIndex, tracks, versions]);
   const [showFullscreenKaraoke, setShowFullscreenKaraoke] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState<number>(0);
+  const [lastProgressUpdate, setLastProgressUpdate] = useState<number>(Date.now());
   const [albumCovers, setAlbumCovers] = useState<{ 
     cover1: string; 
     cover2: string; 
@@ -408,7 +402,7 @@ const Index = () => {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const audioRefs = useRef<HTMLAudioElement[]>([]);
   const lastDiceAt = useRef<number>(0);
-  
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [attachedFiles, setAttachedFiles] = useState<FileAttachment[]>([]);
 
   // Global spacebar controls for play/pause
@@ -449,6 +443,51 @@ const Index = () => {
     // reset audio refs when result list changes
     audioRefs.current = [];
   }, [audioUrls, audioUrl]);
+
+  // Smooth progress system that never goes backward and handles stagnation
+  useEffect(() => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+    }
+
+    if (busy) {
+      progressIntervalRef.current = setInterval(() => {
+        setGenerationProgress(current => {
+          const now = Date.now();
+          const timeSinceUpdate = now - lastProgressUpdate;
+          
+          // If stuck for more than 3 seconds, start organic creeping
+          if (timeSinceUpdate > 3000 && current < 98) {
+            let creepRate = 0.5; // Base creep rate
+            
+            // Accelerate creeping if stuck longer
+            if (timeSinceUpdate > 15000) {
+              creepRate = 1.5; // Faster creep after 15s
+            } else if (timeSinceUpdate > 5000) {
+              creepRate = 1; // Medium creep after 5s
+            }
+            
+            // Slow down creeping as we approach 98%
+            if (current > 85) {
+              creepRate *= (98 - current) / 13; // Gradual slowdown
+            }
+            
+            // Apply organic creep with slight randomness
+            const organicIncrement = creepRate + (Math.random() * 0.3 - 0.15);
+            return Math.min(current + organicIncrement, 98);
+          }
+          
+          return current;
+        });
+      }, 3000 + Math.random() * 2000); // Check every 3-5 seconds
+    }
+
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
+  }, [busy, lastProgressUpdate]);
 
   // Ensure only one audio element plays at a time across the page
   useEffect(() => {
@@ -790,13 +829,46 @@ const Index = () => {
       });
     }
   }
-  async function handleRandomizeAll() {
+  async function randomizeAll() {
     if (busy) return;
-    lastDiceAt.current = Date.now();
-    const randomized = randomizeAll();
-    setDetails(randomized);
-    setStyleTags(randomized.style ? randomized.style.split(", ").filter(Boolean) : []);
-    toast.success("Randomized song details ready");
+    const content = "Please generate a completely randomized song_request and output ONLY the JSON in a JSON fenced code block (```json ... ```). The lyrics must be a complete song containing Intro, Verse 1, Pre-Chorus, Chorus, Verse 2, Chorus, Bridge, and Outro. No extra text.";
+    setBusy(true);
+    try {
+      // Use a minimal, stateless prompt so we don't get follow-ups that could override fields
+      const minimal: ChatMessage[] = [{ role: "user", content }];
+      console.debug("[Dice] Sending randomize prompt. systemPrompt snippet:", systemPrompt.slice(0,120));
+      const [r1, r2] = await Promise.allSettled([
+        api.chat(minimal, systemPrompt),
+        api.chat(minimal, systemPrompt),
+      ]);
+      const msgs: string[] = [];
+      if (r1.status === "fulfilled") msgs.push(r1.value.content);
+      if (r2.status === "fulfilled") msgs.push(r2.value.content);
+      console.debug("[Dice] Received responses:", msgs.map(m => m.slice(0, 160)));
+      const extractions = msgs.map((m) => {
+        const parsed = parseSongRequest(m);
+        if (parsed) return convertToSongDetails(parsed);
+        return extractDetails(m);
+      }).filter(Boolean) as SongDetails[];
+      if (extractions.length === 0) {
+        console.debug("[Dice] Failed to parse any random song. First response preview:", msgs[0]?.slice(0, 300));
+        toast.message("Couldn't parse random song", { description: "Try again in a moment." });
+      } else {
+        const cleanedList = extractions.map((ex) => {
+          const finalStyle = sanitizeStyleSafe(ex.style);
+          return { ...ex, ...(finalStyle ? { style: finalStyle } : {}) } as SongDetails;
+        });
+        const merged = mergeNonEmpty(...cleanedList);
+        lastDiceAt.current = Date.now();
+        setDetails((d) => mergeNonEmpty(d, merged));
+        toast.success("Randomized song details ready");
+      }
+      // Do not alter chat history for the dice action
+    } catch (e: any) {
+      toast.error(e.message || "Randomize failed");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function testAlbumCoverWithLyrics() {
@@ -827,8 +899,276 @@ async function startGeneration() {
       toast.message("Add a few details first", { description: "Chat a bit more until I extract a song request." });
       return;
     }
+    setAudioUrl(null);
+    setAudioUrls(null);
+    setJobId(null);
+    setVersions([]);
+    setGenerationProgress(0);
+    setLastProgressUpdate(Date.now());
+    setAlbumCovers(null);
+    setIsGeneratingCovers(false);
+    setBusy(true);
     
-    await startSongGeneration(details);
+    // Start album cover generation immediately in parallel
+    if (details.title || details.lyrics || details.style) {
+      setIsGeneratingCovers(true);
+      api.generateAlbumCovers(details)
+        .then(covers => {
+          console.log("Album covers generated:", covers);
+          setAlbumCovers(covers);
+        })
+        .catch(error => {
+          console.error("Album cover generation failed:", error);
+          toast.error("Failed to generate album covers");
+        })
+        .finally(() => {
+          setIsGeneratingCovers(false);
+        });
+    }
+    
+    try {
+      const payload = { ...details, style: sanitizeStyle(details.style || "") };
+      const { jobId } = await api.startSong(payload);
+      setJobId(jobId);
+      toast.success("Song requested. Composing...");
+
+      // Phase A: Wait for generation completion with status confirmation
+      console.log("[Generation] Phase A: Waiting for completion...");
+      // Phase A: Wait up to 10 minutes for generation completion (time-based)
+      const PHASE_A_MAX_MS = 10 * 60 * 1000; // 10 minutes
+      const PHASE_A_START = Date.now();
+      let completionAttempts = 0;
+      let statusRaw = "PENDING";
+      let sunoData: any[] = [];
+      let generationComplete = false;
+
+      while (Date.now() - PHASE_A_START < PHASE_A_MAX_MS) {
+        completionAttempts++;
+        // Progress based on elapsed time (never goes backward)
+        const elapsed = Date.now() - PHASE_A_START;
+        const baseProgress = Math.min((elapsed / PHASE_A_MAX_MS) * 40, 40);
+        let statusProgress = 5;
+        if (statusRaw === "PENDING") statusProgress = 15;
+        else if (statusRaw === "FIRST_SUCCESS") statusProgress = 35;
+        else if (statusRaw === "TEXT_SUCCESS") statusProgress = 55;
+        else if (statusRaw === "SUCCESS") statusProgress = 70;
+        
+        const newProgress = Math.max(baseProgress, statusProgress);
+        setGenerationProgress(current => {
+          if (newProgress > current) {
+            setLastProgressUpdate(Date.now());
+            return newProgress;
+          }
+          return current;
+        });
+        
+        const backoffDelay = Math.min(1500 + completionAttempts * 300, 4000);
+        await new Promise((r) => setTimeout(r, backoffDelay));
+        
+        try {
+          const details = await api.getMusicGenerationDetails(jobId);
+          statusRaw = details.statusRaw;
+          sunoData = details.response?.sunoData || [];
+          
+          console.log(`[Generation] Attempt ${completionAttempts}: Status=${statusRaw}, Tracks=${sunoData.length}`);
+          
+          // Check for completion - accept SUCCESS but not intermediate states
+          if (statusRaw === "SUCCESS" || statusRaw === "COMPLETE" || statusRaw === "ALL_SUCCESS") {
+            console.log("[Generation] Phase A: Generation completed!");
+            setGenerationProgress(current => {
+              setLastProgressUpdate(Date.now());
+              return Math.max(current, 75);
+            });
+            generationComplete = true;
+            break;
+          }
+          
+          if (statusRaw.includes("FAIL") || statusRaw.includes("ERROR")) {
+            throw new Error(`Generation failed with status: ${statusRaw}`);
+          }
+        } catch (e) {
+          console.warn(`[Generation] Details polling error (attempt ${completionAttempts}):`, e);
+          // Continue polling even if details call fails
+        }
+      }
+
+      if (!generationComplete) {
+        throw new Error("Generation timed out after 10 minutes");
+      }
+
+      // Get audio URLs via regular polling
+      console.log("[Generation] Fetching audio URLs...");
+      let audioAttempts = 0;
+      const maxAudioAttempts = 15;
+      
+      while (audioAttempts++ < maxAudioAttempts) {
+        await new Promise((r) => setTimeout(r, 2000));
+        const status = await api.pollSong(jobId);
+        
+        if (status.status === "ready" && status.audioUrls?.length) {
+          console.log("[Generation] Audio URLs ready:", status.audioUrls);
+          setAudioUrls(status.audioUrls);
+          setAudioUrl(status.audioUrls[0]);
+          
+          // Create initial versions from audioUrls and sunoData with real IDs
+          const newVersions = status.audioUrls.map((url, index) => {
+            const trackData = sunoData[index];
+            const realAudioId = trackData?.id;
+            
+            if (!realAudioId || realAudioId.startsWith('track_')) {
+              console.warn(`[Generation] Version ${index}: Missing or invalid audioId, got: ${realAudioId}`);
+            } else {
+              console.log(`[Generation] Version ${index}: Using audioId: ${realAudioId}`);
+            }
+            
+            return {
+              url,
+              audioId: realAudioId || `missing_id_${index}`,
+              musicIndex: index,
+              words: [] as TimestampedWord[],
+              hasTimestamps: false
+            };
+          });
+          
+          console.log("[Generation] Created initial versions:", newVersions);
+          setVersions(newVersions);
+          toast.success("Audio ready! Fetching karaoke lyrics...");
+          
+      // Phase B: Fetch timestamped lyrics for each version with retry logic
+      console.log("[Generation] Phase B: Fetching timestamped lyrics...");
+      console.log("[Generation] Using newVersions for timestamp fetching:", newVersions);
+      console.log("[Generation] newVersions.length:", newVersions.length);
+          setGenerationProgress(current => {
+            setLastProgressUpdate(Date.now());
+            return Math.max(current, 85);
+          });
+          
+          if (newVersions.length === 0) {
+            console.warn("[Generation] No versions available for timestamp fetching");
+            return;
+          }
+
+          const updatedVersions = await Promise.all(
+            newVersions.map(async (version, index) => {
+              let retryAttempts = 0;
+              const maxRetryAttempts = 8;
+              
+              while (retryAttempts++ < maxRetryAttempts) {
+                try {
+                  const exponentialBackoff = Math.min(1000 * Math.pow(1.5, retryAttempts - 1), 8000);
+                  if (retryAttempts > 1) {
+                    console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}, waiting ${exponentialBackoff}ms`);
+                    await new Promise(r => setTimeout(r, exponentialBackoff));
+                  }
+
+                  console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}: Using audioId=${version.audioId}, musicIndex=${version.musicIndex}`);
+                  
+                  const result = await api.getTimestampedLyrics({
+                    taskId: jobId,
+                    audioId: version.audioId,
+                    musicIndex: version.musicIndex
+                  });
+
+                  if (result.alignedWords && result.alignedWords.length > 0) {
+                    console.log(`[Timestamps] Version ${index + 1}: Success with ${result.alignedWords.length} words`);
+                    return {
+                      ...version,
+                      words: result.alignedWords.map((word: any) => {
+                        // Handle different API response formats
+                        const start = word.startS || word.start_s || word.start || 0;
+                        const end = word.endS || word.end_s || word.end || 0;
+                        console.log(`[Word mapping] "${word.word}" -> start: ${start}, end: ${end}`);
+                        return {
+                          word: word.word,
+                          start,
+                          end,
+                          success: !!word.success,
+                          p_align: word.p_align || word.palign || 0
+                        };
+                      }),
+                      hasTimestamps: true
+                    };
+                  } else {
+                    console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}: No aligned words yet`);
+                  }
+                } catch (e) {
+                  console.warn(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts} failed:`, e);
+                }
+              }
+
+              // All retries exhausted
+              console.warn(`[Timestamps] Version ${index + 1}: Failed after ${maxRetryAttempts} attempts`);
+              return {
+                ...version,
+                hasTimestamps: false,
+                timestampError: "Timestamped lyrics not available after retries"
+              };
+            })
+          );
+
+          console.log("[Generation] Final versions with timestamps:", updatedVersions);
+          setVersions(updatedVersions);
+          
+          // Add tracks to the track list (newest first)
+          const batchCreatedAt = Date.now();
+          setTracks(prev => {
+            const existing = new Set(prev.map(t => t.id));
+            const fresh = updatedVersions.map((v, i) => ({
+              id: v.audioId || `${jobId}-${i}`,
+              url: v.url,
+              title: details.title || "Song Title",
+              coverUrl: albumCovers ? (i === 1 ? albumCovers.cover2 : albumCovers.cover1) : undefined,
+              createdAt: batchCreatedAt,
+              params: styleTags,
+              words: v.words,
+              hasTimestamps: v.hasTimestamps,
+            })).filter(t => !existing.has(t.id));
+            
+            return [...fresh, ...prev]; // newest first
+          });
+          
+          // Set active track to first of new batch
+          setCurrentTrackIndex(0);
+          setCurrentTime(0);
+          setIsPlaying(false);
+          
+          // Reset all audio elements to start position
+          setTimeout(() => {
+            audioRefs.current.forEach((audio) => {
+              if (audio) {
+                audio.currentTime = 0;
+              }
+            });
+          }, 100);
+          
+          const successCount = updatedVersions.filter(v => v.hasTimestamps).length;
+          setGenerationProgress(100);
+          setLastProgressUpdate(Date.now());
+          if (successCount > 0) {
+            toast.success(`Song ready with karaoke lyrics! (${successCount}/${updatedVersions.length} versions)`);
+          } else {
+            toast.success("Song ready! (Karaoke lyrics unavailable)");
+          }
+
+          
+          break;
+        }
+        
+        if (status.status === "error") {
+          throw new Error(status.error || "Audio generation failed");
+        }
+      }
+
+      if (audioAttempts >= maxAudioAttempts) {
+        throw new Error("Timed out waiting for audio URLs");
+      }
+
+    } catch (e: any) {
+      console.error("[Generation] Error:", e);
+      toast.error(e.message || "Generation failed");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -1057,7 +1397,7 @@ async function startGeneration() {
     <div className="bg-[#040404] rounded-lg h-9 w-full grid grid-cols-4 place-items-center px-2 hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] transition-shadow">
       <button onClick={handleFileUpload} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Upload"><Upload size={18} /></button>
       <button onClick={() => setShowMelodySpeech(true)} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Microphone"><Mic size={18} /></button>
-      <button onClick={handleRandomizeAll} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Randomize"><Dice5 size={18} /></button>
+      <button onClick={randomizeAll} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Randomize"><Dice5 size={18} /></button>
       <button className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="List"><List size={18} /></button>
     </div>
   </div>
@@ -1103,7 +1443,6 @@ async function startGeneration() {
               currentIndex={currentTrackIndex}
               isPlaying={isPlaying}
               audioRefs={audioRefs}
-              loadingShells={loadingShells}
               onPlayPause={(idx) => {
                 if (currentTrackIndex === idx && isPlaying) {
                   handleAudioPause();
@@ -1195,13 +1534,13 @@ async function startGeneration() {
             </div>
 
             {/* Progress bar */}
-            {generationState.busy && (
+            {busy && generationProgress > 0 && (
               <div className="space-y-2 pt-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-white/60">{generationState.progressText}</span>
-                  <span className="font-medium text-pink-400">{Math.round(generationState.progress)}%</span>
+                  <span className="text-white/60">Generating...</span>
+                  <span className="font-medium text-pink-400">{Math.round(generationProgress)}%</span>
                 </div>
-                <Progress value={generationState.progress} className="h-2" />
+                <Progress value={generationProgress} className="h-2" />
               </div>
             )}
 
