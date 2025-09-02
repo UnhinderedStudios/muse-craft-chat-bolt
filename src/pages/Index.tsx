@@ -1202,70 +1202,70 @@ async function startGeneration() {
           <div className="order-1 lg:col-start-3 lg:col-span-2 h-5 bg-[#1e1e1e] rounded-2xl" />
 
           {/* Row 1 - Left: Soundify Sidebar */}
-          <div className="order-2 md:col-span-2 lg:col-span-1 lg:row-start-1 lg:row-span-2 xl:col-span-1 bg-[#1e1e1e] rounded-2xl p-6 flex flex-col">
+          <div className="order-2 md:col-span-2 lg:col-span-1 lg:row-start-1 lg:row-span-2 xl:col-span-1 bg-[#1e1e1e] rounded-2xl p-4 flex flex-col h-full max-h-full overflow-hidden">
             {/* Soundify Logo */}
-            <div className="mb-6">
-              <h1 className="text-white text-2xl font-bold tracking-wide">Soundify</h1>
+            <div className="mb-4 flex-shrink-0">
+              <h1 className="text-white text-lg font-bold tracking-wide">Soundify</h1>
             </div>
             
             {/* Navigation Buttons */}
-            <div className="flex-1 space-y-2 mb-6">
+            <div className="flex-1 space-y-1 mb-4 overflow-y-auto min-h-0">
               {/* Generators - Active */}
-              <button className="w-full flex items-center px-4 py-3 bg-[#2a2a2a] rounded-xl text-white hover:text-gray-200 transition-colors relative">
-                <div className="w-2 h-2 bg-accent-primary rounded-full mr-3 shadow-[0_0_8px_hsl(var(--accent-primary))]"></div>
-                <Music className="w-5 h-5 mr-3" />
+              <button className="w-full flex items-center px-3 py-2 bg-[#2a2a2a] rounded-lg text-white hover:text-gray-200 transition-colors relative text-sm">
+                <div className="w-1.5 h-1.5 bg-accent-primary rounded-full mr-3 shadow-[0_0_6px_hsl(var(--accent-primary))]"></div>
+                <Music className="w-4 h-4 mr-2" />
                 <span className="font-medium">Generators</span>
               </button>
               
               {/* Other Navigation Items */}
-              <button className="w-full flex items-center px-4 py-3 bg-[#262626] rounded-xl text-gray-300 hover:text-white transition-colors">
-                <Compass className="w-5 h-5 mr-3" />
+              <button className="w-full flex items-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
+                <Compass className="w-4 h-4 mr-2 ml-4" />
                 <span>Explore</span>
               </button>
               
-              <button className="w-full flex items-center px-4 py-3 bg-[#262626] rounded-xl text-gray-300 hover:text-white transition-colors">
-                <List className="w-5 h-5 mr-3" />
+              <button className="w-full flex items-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
+                <List className="w-4 h-4 mr-2 ml-4" />
                 <span>Playlists</span>
               </button>
               
-              <button className="w-full flex items-center px-4 py-3 bg-[#262626] rounded-xl text-gray-300 hover:text-white transition-colors">
-                <Users className="w-5 h-5 mr-3" />
+              <button className="w-full flex items-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
+                <Users className="w-4 h-4 mr-2 ml-4" />
                 <span>Artists</span>
               </button>
               
-              <button className="w-full flex items-center px-4 py-3 bg-[#262626] rounded-xl text-gray-300 hover:text-white transition-colors">
-                <HelpCircle className="w-5 h-5 mr-3" />
+              <button className="w-full flex items-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
+                <HelpCircle className="w-4 h-4 mr-2 ml-4" />
                 <span>Support</span>
               </button>
               
-              <button className="w-full flex items-center px-4 py-3 bg-[#262626] rounded-xl text-gray-300 hover:text-white transition-colors">
-                <BookOpen className="w-5 h-5 mr-3" />
+              <button className="w-full flex items-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
+                <BookOpen className="w-4 h-4 mr-2 ml-4" />
                 <span>Learn</span>
               </button>
               
-              <button className="w-full flex items-center px-4 py-3 bg-[#262626] rounded-xl text-gray-300 hover:text-white transition-colors">
-                <MoreHorizontal className="w-5 h-5 mr-3" />
+              <button className="w-full flex items-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
+                <MoreHorizontal className="w-4 h-4 mr-2 ml-4" />
                 <span>More</span>
               </button>
             </div>
             
             {/* Profile Section */}
-            <div className="mt-auto">
-              <button className="w-full flex items-center p-4 bg-[#262626] rounded-xl hover:bg-[#2a2a2a] transition-colors mb-3">
-                <Avatar className="w-12 h-12 mr-4">
-                  <AvatarImage src="/api/placeholder/48/48" alt="Sir Brom" />
-                  <AvatarFallback className="bg-accent-primary text-white font-semibold">SB</AvatarFallback>
+            <div className="mt-auto flex-shrink-0">
+              <button className="w-full flex items-center p-3 bg-[#262626] rounded-lg hover:bg-[#2a2a2a] transition-colors mb-2">
+                <Avatar className="w-8 h-8 mr-3 flex-shrink-0">
+                  <AvatarImage src="/api/placeholder/32/32" alt="Sir Brom" />
+                  <AvatarFallback className="bg-accent-primary text-white font-semibold text-xs">SB</AvatarFallback>
                 </Avatar>
-                <div className="flex-1 text-left">
-                  <div className="text-white font-medium">Sir Brom</div>
-                  <div className="text-gray-400 text-sm">Pro Plan - Monthly</div>
-                  <div className="text-gray-400 text-sm">Credits - 232,323</div>
+                <div className="flex-1 text-left min-w-0">
+                  <div className="text-white font-medium text-sm truncate">Sir Brom</div>
+                  <div className="text-gray-400 text-xs">Pro Plan</div>
+                  <div className="text-gray-400 text-xs">Credits - 232,323</div>
                 </div>
               </button>
               
               {/* Upgrade Link */}
               <div className="text-center">
-                <button className="text-accent-primary hover:text-accent-primary/80 text-sm font-medium transition-colors">
+                <button className="text-accent-primary hover:text-accent-primary/80 text-xs font-medium transition-colors">
                   Upgrade / Top Up
                 </button>
               </div>
