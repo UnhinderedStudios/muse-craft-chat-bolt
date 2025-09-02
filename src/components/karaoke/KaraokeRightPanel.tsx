@@ -5,6 +5,7 @@ import { TimestampedWord } from "@/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useScrollDelegationHook } from "@/utils/scrollDelegation";
+import musicNotePlaceholder from "@/assets/music-note-placeholder.png";
 
 interface KaraokeRightPanelProps {
   versions: Array<{
@@ -92,7 +93,13 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
             style={{ backgroundImage: `url(${currentAlbumCover})` }}
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-muted/10" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <img 
+              src={musicNotePlaceholder} 
+              alt="Music note placeholder" 
+              className="w-16 h-16 opacity-60"
+            />
+          </div>
         )}
         
         {/* Audio Controls Overlay - Made 10% smaller */}
