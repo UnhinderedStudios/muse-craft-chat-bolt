@@ -1203,72 +1203,69 @@ async function startGeneration() {
 
           {/* Row 1 - Left: Soundify Sidebar */}
           <div className="order-2 md:col-span-2 lg:col-span-1 lg:row-start-1 lg:row-span-2 xl:col-span-1 bg-[#1e1e1e] rounded-2xl p-4 flex flex-col h-full max-h-full overflow-hidden">
-            {/* Soundify Logo - Reduced margin */}
-            <div className="mb-3 flex-shrink-0 flex justify-center">
+            {/* Soundify Logo - Minimal space */}
+            <div className="mb-2 flex-shrink-0 flex justify-center">
               <img 
                 src="/lovable-uploads/fd64a6f2-eb35-4daa-97af-2c7f58aca59c.png" 
                 alt="Soundify" 
-                className="h-6 w-auto object-contain"
+                className="h-5 w-auto object-contain"
               />
             </div>
             
-            {/* Navigation Buttons */}
-            <div className="space-y-3 overflow-hidden">
+            {/* Navigation Buttons - Responsive and flexible */}
+            <div className="flex-1 space-y-1.5 overflow-hidden min-h-0">
               {/* Generators - Active */}
-              <button className="w-full flex items-center justify-between px-3 py-2 bg-[#2a2a2a] rounded-lg text-white hover:text-gray-200 transition-colors relative text-sm">
-                <div className="flex items-center">
-                  <Music className="w-4 h-4 mr-2" />
-                  <span className="font-medium">Generators</span>
+              <button className="w-full flex items-center justify-between px-2.5 py-1.5 bg-[#2a2a2a] rounded-lg text-white hover:text-gray-200 transition-colors relative text-xs lg:text-sm lg:py-2">
+                <div className="flex items-center min-w-0">
+                  <Music className="w-3.5 h-3.5 lg:w-4 lg:h-4 mr-1.5 lg:mr-2 flex-shrink-0" />
+                  <span className="font-medium truncate">Generators</span>
                 </div>
-                <div className="w-1.5 h-1.5 bg-accent-primary rounded-full shadow-[0_0_6px_hsl(var(--accent-primary))]"></div>
+                <div className="w-1.5 h-1.5 bg-accent-primary rounded-full shadow-[0_0_6px_hsl(var(--accent-primary))] flex-shrink-0"></div>
               </button>
               
-              {/* Other Navigation Items */}
-              <button className="w-full flex items-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
-                <Compass className="w-4 h-4 mr-2" />
-                <span>Explore</span>
+              {/* Other Navigation Items - Compact and responsive */}
+              <button className="w-full flex items-center px-2.5 py-1.5 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-xs lg:text-sm lg:py-2">
+                <Compass className="w-3.5 h-3.5 lg:w-4 lg:h-4 mr-1.5 lg:mr-2 flex-shrink-0" />
+                <span className="truncate">Explore</span>
               </button>
               
-              <button className="w-full flex items-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
-                <List className="w-4 h-4 mr-2" />
-                <span>Playlists</span>
+              <button className="w-full flex items-center px-2.5 py-1.5 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-xs lg:text-sm lg:py-2">
+                <List className="w-3.5 h-3.5 lg:w-4 lg:h-4 mr-1.5 lg:mr-2 flex-shrink-0" />
+                <span className="truncate">Playlists</span>
               </button>
               
-              <button className="w-full flex items-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
-                <Users className="w-4 h-4 mr-2" />
-                <span>Artists</span>
+              <button className="w-full flex items-center px-2.5 py-1.5 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-xs lg:text-sm lg:py-2">
+                <Users className="w-3.5 h-3.5 lg:w-4 lg:h-4 mr-1.5 lg:mr-2 flex-shrink-0" />
+                <span className="truncate">Artists</span>
               </button>
               
-              <button className="w-full flex items-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
-                <HelpCircle className="w-4 h-4 mr-2" />
-                <span>Support</span>
+              <button className="w-full flex items-center px-2.5 py-1.5 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-xs lg:text-sm lg:py-2">
+                <HelpCircle className="w-3.5 h-3.5 lg:w-4 lg:h-4 mr-1.5 lg:mr-2 flex-shrink-0" />
+                <span className="truncate">Support</span>
               </button>
               
-              <button className="w-full flex items-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
-                <BookOpen className="w-4 h-4 mr-2" />
-                <span>Learn</span>
+              <button className="w-full flex items-center px-2.5 py-1.5 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-xs lg:text-sm lg:py-2">
+                <BookOpen className="w-3.5 h-3.5 lg:w-4 lg:h-4 mr-1.5 lg:mr-2 flex-shrink-0" />
+                <span className="truncate">Learn</span>
               </button>
               
-              <button className="w-full flex items-center px-3 py-2 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-sm">
-                <MoreHorizontal className="w-4 h-4 mr-2" />
-                <span>More</span>
+              <button className="w-full flex items-center px-2.5 py-1.5 bg-[#262626] rounded-lg text-gray-300 hover:text-white transition-colors text-xs lg:text-sm lg:py-2">
+                <MoreHorizontal className="w-3.5 h-3.5 lg:w-4 lg:h-4 mr-1.5 lg:mr-2 flex-shrink-0" />
+                <span className="truncate">More</span>
               </button>
             </div>
             
-            {/* Flex spacer to push profile to absolute bottom */}
-            <div className="flex-1"></div>
-            
-            {/* Profile Section - positioned at very bottom with more padding */}
-            <div className="flex-shrink-0 space-y-4 pb-4">
-              <button className="w-full flex items-center p-3 bg-[#262626] rounded-lg hover:bg-[#2a2a2a] transition-colors">
-                <Avatar className="w-8 h-8 mr-3 flex-shrink-0">
+            {/* Profile Section - Anchored to absolute bottom */}
+            <div className="flex-shrink-0 mt-2 space-y-2 pb-2">
+              <button className="w-full flex items-center p-2 lg:p-2.5 bg-[#262626] rounded-lg hover:bg-[#2a2a2a] transition-colors">
+                <Avatar className="w-6 h-6 lg:w-7 lg:h-7 mr-2 flex-shrink-0">
                   <AvatarImage src="/api/placeholder/32/32" alt="Sir Brom" />
                   <AvatarFallback className="bg-accent-primary text-white font-semibold text-xs">SB</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 text-left min-w-0">
-                  <div className="text-white font-medium text-sm truncate">Sir Brom</div>
-                  <div className="text-gray-400 text-xs">Pro Plan</div>
-                  <div className="text-gray-400 text-xs">Credits - 232,323</div>
+                  <div className="text-white font-medium text-xs lg:text-sm truncate">Sir Brom</div>
+                  <div className="text-gray-400 text-xs truncate">Pro Plan</div>
+                  <div className="text-gray-400 text-xs truncate">Credits - 232,323</div>
                 </div>
               </button>
               
