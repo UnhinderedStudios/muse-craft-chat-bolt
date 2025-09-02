@@ -43,18 +43,18 @@ export const TrackLoadingShell: React.FC<TrackLoadingShellProps> = ({
           <div className="relative">
             <div className="h-0.5 bg-white/10 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-accent-primary to-accent-secondary transition-all duration-300 ease-out"
+                className="h-full bg-gradient-to-r from-accent-primary to-accent-secondary transition-all duration-500 ease-out"
                 style={{ 
-                  width: `${progress}%`,
+                  width: `${Math.max(0, Math.min(100, progress))}%`,
                   filter: "drop-shadow(0 0 4px rgba(202, 36, 116, 0.6))"
                 }}
               />
             </div>
             {/* Subtle glow effect */}
             <div 
-              className="absolute top-0 h-0.5 bg-gradient-to-r from-accent-primary/50 to-accent-secondary/50 blur-sm transition-all duration-300 ease-out"
+              className="absolute top-0 h-0.5 bg-gradient-to-r from-accent-primary/50 to-accent-secondary/50 blur-sm transition-all duration-500 ease-out"
               style={{ 
-                width: `${Math.min(progress + 10, 100)}%`,
+                width: `${Math.max(0, Math.min(110, progress + 10))}%`,
                 opacity: progress > 0 ? 0.8 : 0
               }}
             />

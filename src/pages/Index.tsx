@@ -391,8 +391,6 @@ const Index = () => {
     else setCurrentAudioIndex(-1);
   }, [currentTrackIndex, tracks, versions]);
   const [showFullscreenKaraoke, setShowFullscreenKaraoke] = useState(false);
-  const [generationProgress, setGenerationProgress] = useState<number>(0);
-  const [lastProgressUpdate, setLastProgressUpdate] = useState<number>(Date.now());
   const [albumCovers, setAlbumCovers] = useState<{ 
     cover1: string; 
     cover2: string; 
@@ -410,7 +408,7 @@ const Index = () => {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const audioRefs = useRef<HTMLAudioElement[]>([]);
   const lastDiceAt = useRef<number>(0);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  
   const [attachedFiles, setAttachedFiles] = useState<FileAttachment[]>([]);
 
   // Global spacebar controls for play/pause
@@ -451,51 +449,6 @@ const Index = () => {
     // reset audio refs when result list changes
     audioRefs.current = [];
   }, [audioUrls, audioUrl]);
-
-  // Smooth progress system that never goes backward and handles stagnation
-  useEffect(() => {
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-    }
-
-    if (busy) {
-      progressIntervalRef.current = setInterval(() => {
-        setGenerationProgress(current => {
-          const now = Date.now();
-          const timeSinceUpdate = now - lastProgressUpdate;
-          
-          // If stuck for more than 3 seconds, start organic creeping
-          if (timeSinceUpdate > 3000 && current < 98) {
-            let creepRate = 0.5; // Base creep rate
-            
-            // Accelerate creeping if stuck longer
-            if (timeSinceUpdate > 15000) {
-              creepRate = 1.5; // Faster creep after 15s
-            } else if (timeSinceUpdate > 5000) {
-              creepRate = 1; // Medium creep after 5s
-            }
-            
-            // Slow down creeping as we approach 98%
-            if (current > 85) {
-              creepRate *= (98 - current) / 13; // Gradual slowdown
-            }
-            
-            // Apply organic creep with slight randomness
-            const organicIncrement = creepRate + (Math.random() * 0.3 - 0.15);
-            return Math.min(current + organicIncrement, 98);
-          }
-          
-          return current;
-        });
-      }, 3000 + Math.random() * 2000); // Check every 3-5 seconds
-    }
-
-    return () => {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-    };
-  }, [busy, lastProgressUpdate]);
 
   // Ensure only one audio element plays at a time across the page
   useEffect(() => {
@@ -839,8 +792,10 @@ const Index = () => {
   }
   async function handleRandomizeAll() {
     if (busy) return;
+    lastDiceAt.current = Date.now();
     const randomized = randomizeAll();
     setDetails(randomized);
+    setStyleTags(randomized.style ? randomized.style.split(", ").filter(Boolean) : []);
     toast.success("Randomized song details ready");
   }
 
@@ -873,13 +828,7 @@ async function startGeneration() {
       return;
     }
     
-    // Use the new song generation hook
-    setBusy(true);
-    try {
-      await startSongGeneration(details);
-    } finally {
-      setBusy(false);
-    }
+    await startSongGeneration(details);
   }
 
   return (
@@ -1246,13 +1195,13 @@ async function startGeneration() {
             </div>
 
             {/* Progress bar */}
-            {busy && generationProgress > 0 && (
+            {generationState.busy && (
               <div className="space-y-2 pt-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-white/60">Generating...</span>
-                  <span className="font-medium text-pink-400">{Math.round(generationProgress)}%</span>
+                  <span className="text-white/60">{generationState.progressText}</span>
+                  <span className="font-medium text-pink-400">{Math.round(generationState.progress)}%</span>
                 </div>
-                <Progress value={generationProgress} className="h-2" />
+                <Progress value={generationState.progress} className="h-2" />
               </div>
             )}
 
