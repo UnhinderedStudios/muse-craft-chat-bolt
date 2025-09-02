@@ -1204,11 +1204,11 @@ async function startGeneration() {
           {/* Row 1 - Left: Soundify Sidebar */}
           <div className="order-2 md:col-span-2 lg:col-span-1 lg:row-start-1 lg:row-span-2 xl:col-span-1 bg-[#1e1e1e] rounded-2xl p-4 flex flex-col h-full max-h-full overflow-hidden">
             {/* Soundify Logo - Minimal space */}
-            <div className="mb-2 flex-shrink-0 flex justify-center">
+            <div className="mb-2 flex-shrink-0 flex justify-center items-center">
               <img 
                 src="/lovable-uploads/92dd2dde-eb4e-44a1-a2a3-b24829727f7a.png" 
                 alt="Soundify" 
-                className="h-5 w-auto object-contain"
+                className="h-6 w-auto object-contain"
               />
             </div>
             
