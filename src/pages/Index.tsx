@@ -1256,7 +1256,7 @@ async function startGeneration() {
             </div>
             
             {/* Profile Section */}
-            <div className="mt-auto flex-shrink-0 space-y-4">
+            <div className="mt-auto flex-shrink-0 space-y-6 pb-2">
               <button className="w-full flex items-center p-3 bg-[#262626] rounded-lg hover:bg-[#2a2a2a] transition-colors">
                 <Avatar className="w-8 h-8 mr-3 flex-shrink-0">
                   <AvatarImage src="/api/placeholder/32/32" alt="Sir Brom" />
