@@ -199,7 +199,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
         {hasContent && currentVersion?.words?.length > 0 && (
           <Button
             onClick={onFullscreenKaraoke}
-            className="w-full h-9 bg-accent-primary hover:bg-accent-primary/80 text-white font-medium px-4 rounded-xl flex items-center justify-center gap-2"
+            className="w-full h-9 bg-accent-primary hover:bg-accent-primary/80 text-white font-medium px-4 rounded-xl flex items-center justify-center gap-2 mt-4"
           >
             <Mic className="w-4 h-4" />
             Fullscreen
