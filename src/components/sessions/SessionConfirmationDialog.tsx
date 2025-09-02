@@ -77,7 +77,7 @@ export function SessionConfirmationDialog({
             className="relative h-12 px-4 rounded-xl bg-gray-500/20 text-white hover:text-white transition-all duration-200 font-medium flex-1 overflow-hidden group"
           >
             <span className="relative z-10">Load Selected</span>
-            <div className="absolute inset-0 bg-pink-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+            <div className="absolute inset-0 bg-accent-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
           </button>
           
           <button
