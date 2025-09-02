@@ -1213,7 +1213,7 @@ async function startGeneration() {
             </div>
             
             {/* Navigation Buttons */}
-            <div className="flex-1 space-y-3 mb-8 overflow-hidden">
+            <div className="flex-1 space-y-3 mb-16 overflow-hidden">
               {/* Generators - Active */}
               <button className="w-full flex items-center justify-between px-3 py-2 bg-[#2a2a2a] rounded-lg text-white hover:text-gray-200 transition-colors relative text-sm">
                 <div className="flex items-center">
@@ -1256,7 +1256,7 @@ async function startGeneration() {
             </div>
             
             {/* Profile Section */}
-            <div className="mt-auto flex-shrink-0 space-y-6 pb-2">
+            <div className="mt-auto flex-shrink-0 space-y-6 pb-6">
               <button className="w-full flex items-center p-3 bg-[#262626] rounded-lg hover:bg-[#2a2a2a] transition-colors">
                 <Avatar className="w-8 h-8 mr-3 flex-shrink-0">
                   <AvatarImage src="/api/placeholder/32/32" alt="Sir Brom" />
