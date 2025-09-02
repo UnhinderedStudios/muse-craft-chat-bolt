@@ -15,6 +15,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { TrackLoadingShell } from "./TrackLoadingShell";
 
 type Props = {
   tracks: TrackItem[];
@@ -26,6 +27,8 @@ type Props = {
   setCurrentIndex: (index: number) => void;
   onTimeUpdate: (audio: HTMLAudioElement) => void;
   onTrackTitleUpdate?: (trackIndex: number, newTitle: string) => void;
+  isGenerating?: boolean;
+  generationProgress?: number;
 };
 
 // Generate 20 test tracks for testing search functionality
@@ -65,6 +68,8 @@ export default function TrackListPanel({
   setCurrentIndex,
   onTimeUpdate,
   onTrackTitleUpdate,
+  isGenerating = false,
+  generationProgress = 0
 }: Props) {
   const [audioCurrentTimes, setAudioCurrentTimes] = useState<number[]>([]);
   const [showQuickAlbumGenerator, setShowQuickAlbumGenerator] = useState(false);
@@ -209,6 +214,14 @@ export default function TrackListPanel({
       <div className="min-h-0 flex-1 overflow-hidden">
         <div ref={scrollRef} className="h-full overflow-y-auto overflow-x-hidden lyrics-scrollbar">
           <div className={`min-h-full flex flex-col justify-start gap-3 px-4 pt-2 pb-4`}>
+            
+            {/* Loading shells - show when generating */}
+            {isGenerating && (
+              <>
+                <TrackLoadingShell progress={generationProgress} trackNumber={1} />
+                <TrackLoadingShell progress={generationProgress} trackNumber={2} />
+              </>
+            )}
         {paginatedTracks.map((t, pageIndex) => {
           // Calculate the actual index in the full filtered tracks array
           const actualIndex = filteredTracks.indexOf(t);

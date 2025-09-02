@@ -1467,6 +1467,8 @@ async function startGeneration() {
                   )
                 );
               }}
+              isGenerating={busy}
+              generationProgress={generationProgress}
             />
           </div>
 
