@@ -178,5 +178,36 @@ All colors MUST be HSL.
     height: 100vh;
     overflow: hidden;
   }
+
+  /* Fullscreen button with center-fill hover effect */
+  .fullscreen-button {
+    position: relative;
+    overflow: hidden;
+    background-color: #353535;
+  }
+
+  .fullscreen-button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background-color: hsl(var(--accent-primary));
+    border-radius: inherit;
+    transition: all 0.3s ease-out;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+  }
+
+  .fullscreen-button:hover::before {
+    width: 100%;
+    height: 100%;
+  }
+
+  .fullscreen-button > * {
+    position: relative;
+    z-index: 1;
+  }
 }
 
