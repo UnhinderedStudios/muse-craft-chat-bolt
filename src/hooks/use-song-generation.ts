@@ -26,13 +26,69 @@ export function useSongGeneration() {
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const randomizeAll = () => {
-    const randomStyle = RANDOM_STYLES[Math.floor(Math.random() * RANDOM_STYLES.length)];
-    const randomTitle = RANDOM_TITLES[Math.floor(Math.random() * RANDOM_TITLES.length)];
-    const randomLyrics = RANDOM_LYRICS[Math.floor(Math.random() * RANDOM_LYRICS.length)];
+    // Generate truly random content with detailed parameters
+    const genres = ["Pop", "Rock", "Hip-Hop", "Electronic", "Folk", "Jazz", "Blues", "Country", "R&B", "Indie", "Metal", "Classical", "Reggae", "Punk", "Alternative"];
+    const moods = ["upbeat", "melancholic", "energetic", "dreamy", "intense", "relaxing", "nostalgic", "romantic", "rebellious", "mysterious"];
+    const tempos = ["slow ballad", "mid-tempo groove", "fast-paced anthem", "downtempo chill", "upbeat dance", "moderate swing"];
+    const vocals = ["male vocals", "female vocals", "duet harmonies", "choir backing", "raspy voice", "smooth voice"];
+    const instruments = ["acoustic guitar", "electric guitar", "piano", "synthesizers", "strings section", "brass section", "drums", "bass guitar"];
+    
+    const genre = genres[Math.floor(Math.random() * genres.length)];
+    const mood = moods[Math.floor(Math.random() * moods.length)];
+    const tempo = tempos[Math.floor(Math.random() * tempos.length)];
+    const vocal = vocals[Math.floor(Math.random() * vocals.length)];
+    const instrument = instruments[Math.floor(Math.random() * instruments.length)];
+    
+    // Generate random detailed style description
+    const detailedStyle = `${genre} with ${mood} vibes, ${tempo} featuring ${vocal} and prominent ${instrument}`;
+    
+    // Generate random title with variety
+    const titleWords1 = ["Dancing", "Lost", "Midnight", "Electric", "Silent", "Golden", "Broken", "Crystal", "Velvet", "Neon", "Cosmic", "Digital"];
+    const titleWords2 = ["Dreams", "Shadows", "Thunder", "Lights", "Hearts", "Memories", "Horizons", "Rain", "Fire", "Stars", "Love", "Time"];
+    const randomTitle = `${titleWords1[Math.floor(Math.random() * titleWords1.length)]} ${titleWords2[Math.floor(Math.random() * titleWords2.length)]} ${Date.now() % 100}`;
+    
+    // Generate random lyrics structure
+    const themes = ["love and loss", "chasing dreams", "finding yourself", "overcoming struggles", "living in the moment", "missing someone"];
+    const settings = ["city nights", "open roads", "empty rooms", "crowded places", "quiet moments", "stormy weather"];
+    const emotions = ["hope", "longing", "freedom", "confusion", "determination", "peace"];
+    
+    const theme = themes[Math.floor(Math.random() * themes.length)];
+    const setting = settings[Math.floor(Math.random() * settings.length)];
+    const emotion = emotions[Math.floor(Math.random() * emotions.length)];
+    
+    const randomLyrics = `[Verse 1]
+Walking through ${setting}
+Thinking about ${theme}
+Every step feels like ${emotion}
+Nothing's quite the same
+
+[Chorus]
+Take me to a place where I belong
+Show me how to write my own song
+In this moment everything feels right
+Dancing through the endless night
+
+[Verse 2]
+Time keeps moving forward
+But my heart stays still
+Searching for the answers
+That only music can fill
+
+[Bridge]
+Let the rhythm guide me home
+Never have to feel alone
+Music is my sanctuary
+Setting my spirit free
+
+[Chorus]
+Take me to a place where I belong
+Show me how to write my own song
+In this moment everything feels right
+Dancing through the endless night`;
     
     return {
       title: randomTitle,
-      style: randomStyle,
+      style: detailedStyle,
       lyrics: randomLyrics
     };
   };
