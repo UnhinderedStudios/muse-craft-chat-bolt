@@ -234,8 +234,12 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
 
   return (
     <div className={cn("h-full bg-[#151515] rounded-2xl flex flex-col", className)}>
-      {/* Header with New Session Button */}
+      {/* Header with Title and New Session Button */}
       <div className="shrink-0 px-2 pt-3 pb-2">
+        {/* Menu Title */}
+        <div className="px-2 mb-3">
+          <h2 className="text-white font-semibold text-lg">Menu</h2>
+        </div>
         <div className="flex items-center justify-center mb-3">
           <Button
             onClick={handleCreateSession}
