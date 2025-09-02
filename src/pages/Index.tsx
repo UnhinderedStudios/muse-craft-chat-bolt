@@ -1194,9 +1194,11 @@ async function startGeneration() {
             lg:overflow-hidden
           ">
 
-          {/* Header Bar */}
-          <div className="order-0 lg:col-span-4 h-5 bg-[#151515] rounded-2xl" />
+          {/* Header Bar for Chat */}
+          <div className="order-0 lg:col-start-2 lg:col-span-1 h-5 bg-[#151515] rounded-2xl" />
 
+          {/* Header Bar for Karaoke + TrackList */}
+          <div className="order-1 lg:col-start-3 lg:col-span-2 h-5 bg-[#151515] rounded-2xl" />
 
           {/* Row 1 - Left: Sessions */}
           <div className="order-2 md:col-span-2 lg:col-span-1 xl:col-span-1 bg-[#151515] rounded-2xl p-6">
