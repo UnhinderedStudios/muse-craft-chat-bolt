@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { SongDetails, GenerationState, TimestampedWord } from "@/types";
 import { api } from "@/lib/api";
-import { GENERATION_STEPS, RANDOM_STYLES, RANDOM_TITLES } from "@/utils/constants";
+import { GENERATION_STEPS, RANDOM_STYLES, RANDOM_TITLES, RANDOM_LYRICS } from "@/utils/constants";
 import { toast } from "sonner";
 
 export function useSongGeneration() {
@@ -28,11 +28,12 @@ export function useSongGeneration() {
   const randomizeAll = () => {
     const randomStyle = RANDOM_STYLES[Math.floor(Math.random() * RANDOM_STYLES.length)];
     const randomTitle = RANDOM_TITLES[Math.floor(Math.random() * RANDOM_TITLES.length)];
+    const randomLyrics = RANDOM_LYRICS[Math.floor(Math.random() * RANDOM_LYRICS.length)];
     
     return {
       title: randomTitle,
       style: randomStyle,
-      lyrics: ""
+      lyrics: randomLyrics
     };
   };
 
