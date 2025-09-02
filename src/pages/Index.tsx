@@ -1206,7 +1206,7 @@ async function startGeneration() {
             {/* Soundify Logo - Minimal space */}
             <div className="mb-2 flex-shrink-0 flex justify-center">
               <img 
-                src="/lovable-uploads/fd64a6f2-eb35-4daa-97af-2c7f58aca59c.png" 
+                src="/lovable-uploads/92dd2dde-eb4e-44a1-a2a3-b24829727f7a.png" 
                 alt="Soundify" 
                 className="h-5 w-auto object-contain"
               />
