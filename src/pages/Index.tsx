@@ -9,11 +9,12 @@ import { sanitizeStyle } from "@/lib/styleSanitizer";
 import { Spinner } from "@/components/ui/spinner";
 import { ImageAnalysisLoader } from "@/components/ui/image-analysis-loader";
 import { toast } from "sonner";
-import { Dice5, Mic, Upload, Plus, List, Play, Pause, X, SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX } from "lucide-react";
+import { Dice5, Mic, Upload, Plus, List, Play, Pause, X, SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX, Music, Compass, Users, HelpCircle, BookOpen, MoreHorizontal } from "lucide-react";
 
 // Components
 import { CyberCard } from "@/components/cyber/CyberCard";
 import { CyberButton } from "@/components/cyber/CyberButton";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ChatBubble } from "@/components/chat/ChatBubble";
 import { ChatContainer } from "@/components/chat/ChatContainer";
 import { ChatInput } from "@/components/chat/ChatInput";
@@ -1200,10 +1201,75 @@ async function startGeneration() {
           {/* Header Bar for Karaoke + TrackList */}
           <div className="order-1 lg:col-start-3 lg:col-span-2 h-5 bg-[#1e1e1e] rounded-2xl" />
 
-          {/* Row 1 - Left: Menu */}
-          <div className="order-2 md:col-span-2 lg:col-span-1 lg:row-start-1 lg:row-span-2 xl:col-span-1 bg-[#1e1e1e] rounded-2xl p-6">
-            <h3 className="text-white font-semibold mb-4">Menu</h3>
+          {/* Row 1 - Left: Soundify Sidebar */}
+          <div className="order-2 md:col-span-2 lg:col-span-1 lg:row-start-1 lg:row-span-2 xl:col-span-1 bg-[#1e1e1e] rounded-2xl p-6 flex flex-col">
+            {/* Soundify Logo */}
+            <div className="mb-6">
+              <h1 className="text-white text-2xl font-bold tracking-wide">Soundify</h1>
+            </div>
             
+            {/* Navigation Buttons */}
+            <div className="flex-1 space-y-2 mb-6">
+              {/* Generators - Active */}
+              <button className="w-full flex items-center px-4 py-3 bg-[#2a2a2a] rounded-xl text-white hover:text-gray-200 transition-colors relative">
+                <div className="w-2 h-2 bg-accent-primary rounded-full mr-3 shadow-[0_0_8px_hsl(var(--accent-primary))]"></div>
+                <Music className="w-5 h-5 mr-3" />
+                <span className="font-medium">Generators</span>
+              </button>
+              
+              {/* Other Navigation Items */}
+              <button className="w-full flex items-center px-4 py-3 bg-[#262626] rounded-xl text-gray-300 hover:text-white transition-colors">
+                <Compass className="w-5 h-5 mr-3" />
+                <span>Explore</span>
+              </button>
+              
+              <button className="w-full flex items-center px-4 py-3 bg-[#262626] rounded-xl text-gray-300 hover:text-white transition-colors">
+                <List className="w-5 h-5 mr-3" />
+                <span>Playlists</span>
+              </button>
+              
+              <button className="w-full flex items-center px-4 py-3 bg-[#262626] rounded-xl text-gray-300 hover:text-white transition-colors">
+                <Users className="w-5 h-5 mr-3" />
+                <span>Artists</span>
+              </button>
+              
+              <button className="w-full flex items-center px-4 py-3 bg-[#262626] rounded-xl text-gray-300 hover:text-white transition-colors">
+                <HelpCircle className="w-5 h-5 mr-3" />
+                <span>Support</span>
+              </button>
+              
+              <button className="w-full flex items-center px-4 py-3 bg-[#262626] rounded-xl text-gray-300 hover:text-white transition-colors">
+                <BookOpen className="w-5 h-5 mr-3" />
+                <span>Learn</span>
+              </button>
+              
+              <button className="w-full flex items-center px-4 py-3 bg-[#262626] rounded-xl text-gray-300 hover:text-white transition-colors">
+                <MoreHorizontal className="w-5 h-5 mr-3" />
+                <span>More</span>
+              </button>
+            </div>
+            
+            {/* Profile Section */}
+            <div className="mt-auto">
+              <button className="w-full flex items-center p-4 bg-[#262626] rounded-xl hover:bg-[#2a2a2a] transition-colors mb-3">
+                <Avatar className="w-12 h-12 mr-4">
+                  <AvatarImage src="/api/placeholder/48/48" alt="Sir Brom" />
+                  <AvatarFallback className="bg-accent-primary text-white font-semibold">SB</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 text-left">
+                  <div className="text-white font-medium">Sir Brom</div>
+                  <div className="text-gray-400 text-sm">Pro Plan - Monthly</div>
+                  <div className="text-gray-400 text-sm">Credits - 232,323</div>
+                </div>
+              </button>
+              
+              {/* Upgrade Link */}
+              <div className="text-center">
+                <button className="text-accent-primary hover:text-accent-primary/80 text-sm font-medium transition-colors">
+                  Upgrade / Top Up
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Row 1 - Center: Chat */}
