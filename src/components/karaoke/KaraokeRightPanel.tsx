@@ -93,11 +93,10 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
             style={{ backgroundImage: `url(${currentAlbumCover})` }}
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="spinner1">
-              <div className="spinner"></div>
-            </div>
-          </div>
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-50"
+            style={{ backgroundImage: `url(/lovable-uploads/dc351375-5e9e-4b97-8278-50fc80451f7e.png)` }}
+          />
         )}
         
         {/* Audio Controls Overlay - Made 10% smaller */}
@@ -187,7 +186,10 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
             <div className="h-full flex items-center justify-center text-muted-foreground text-center">
               <div>
                 <div className="text-lg mb-2">🎤</div>
-                <p>Karaoke lyrics will appear here when you generate a song</p>
+                <p className="mb-4">Karaoke Lyrics will appear here</p>
+                <div className="spinner">
+                  <div className="spinner1"></div>
+                </div>
               </div>
             </div>
           )}

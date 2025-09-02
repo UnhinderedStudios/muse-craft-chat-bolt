@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Custom spinner styles */
 .spinner {
   background-image: linear-gradient(rgb(186, 66, 255) 35%,rgb(0, 225, 255));
   width: 100px;
