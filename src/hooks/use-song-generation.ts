@@ -16,6 +16,13 @@ export function useSongGeneration() {
   const [lyricsUrls, setLyricsUrls] = useState<{ url: string; audioId: string; musicIndex: number; words: TimestampedWord[]; hasTimestamps?: boolean; timestampError?: string; }[]>([]);
   const [covers, setCovers] = useState<string[]>([]);
   
+  // Loading shells state
+  const [loadingShells, setLoadingShells] = useState<{
+    id: string;
+    progress: number;
+    title: string;
+  }[]>([]);
+  
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const randomizeAll = () => {
@@ -31,6 +38,21 @@ export function useSongGeneration() {
 
   const startGeneration = async (details: SongDetails) => {
     setGenerationState(prev => ({ ...prev, busy: true, progress: 0 }));
+    
+    // Immediately create loading shells for 2 songs
+    const shells = [
+      {
+        id: `shell-${Date.now()}-1`,
+        progress: 0,
+        title: details.title || "Generating Song..."
+      },
+      {
+        id: `shell-${Date.now()}-2`,
+        progress: 0,
+        title: details.title || "Generating Song..."
+      }
+    ];
+    setLoadingShells(shells);
     
     try {
       // Start song generation
@@ -54,6 +76,12 @@ export function useSongGeneration() {
         const progress = Math.min((elapsed / MAX_WAIT_MS) * 80, 80);
         const stepIndex = Math.floor((progress / 80) * (GENERATION_STEPS.length - 1));
         
+        // Update loading shells progress
+        setLoadingShells(prev => prev.map(shell => ({
+          ...shell,
+          progress: progress
+        })));
+        
         setGenerationState(prev => ({ 
           ...prev, 
           progress,
@@ -63,6 +91,17 @@ export function useSongGeneration() {
       } while (result.status !== "complete" && attempts < maxAttempts);
 
       if (result.status === "complete" && result.audioUrls) {
+        // Complete loading shells with final progress
+        setLoadingShells(prev => prev.map(shell => ({
+          ...shell,
+          progress: 100
+        })));
+        
+        // Clear loading shells after a brief delay to show completion
+        setTimeout(() => {
+          setLoadingShells([]);
+        }, 1500);
+        
         setGenerationState(prev => ({ 
           ...prev, 
           audioUrls: result.audioUrls,
@@ -85,6 +124,7 @@ export function useSongGeneration() {
     } catch (error) {
       console.error("Generation error:", error);
       toast.error("Failed to generate song");
+      setLoadingShells([]); // Clear loading shells on error
       setGenerationState(prev => ({ 
         ...prev, 
         progress: 0,
@@ -100,6 +140,7 @@ export function useSongGeneration() {
     timestampedLyrics,
     lyricsUrls,
     covers,
+    loadingShells,
     randomizeAll,
     startGeneration,
     setTimestampedLyrics,

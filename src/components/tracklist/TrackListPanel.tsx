@@ -7,6 +7,7 @@ import { useScrollDelegationHook } from "@/utils/scrollDelegation";
 import EllipsisMarquee from "@/components/ui/EllipsisMarquee";
 import { useDrag } from "@/contexts/DragContext";
 import { cn } from "@/lib/utils";
+import { TrackLoadingShell } from "./TrackLoadingShell";
 import {
   Pagination,
   PaginationContent,
@@ -26,6 +27,7 @@ type Props = {
   setCurrentIndex: (index: number) => void;
   onTimeUpdate: (audio: HTMLAudioElement) => void;
   onTrackTitleUpdate?: (trackIndex: number, newTitle: string) => void;
+  loadingShells?: { id: string; progress: number; title: string; }[];
 };
 
 // Generate 20 test tracks for testing search functionality
@@ -65,6 +67,7 @@ export default function TrackListPanel({
   setCurrentIndex,
   onTimeUpdate,
   onTrackTitleUpdate,
+  loadingShells = [],
 }: Props) {
   const [audioCurrentTimes, setAudioCurrentTimes] = useState<number[]>([]);
   const [showQuickAlbumGenerator, setShowQuickAlbumGenerator] = useState(false);
@@ -96,10 +99,25 @@ export default function TrackListPanel({
   // Combine original tracks with test tracks for demo
   const allTracks = [...tracks, ...generateTestTracks()];
   
+  // Combine tracks with loading shells at the top
+  const allTracksWithShells = [...loadingShells.map(shell => ({
+    id: shell.id,
+    url: "",
+    title: shell.title,
+    coverUrl: "",
+    createdAt: Date.now(),
+    params: [],
+    isLoadingShell: true,
+    shellProgress: shell.progress
+  })), ...allTracks];
+  
   // Filter tracks based on search query
   const filteredTracks = searchQuery.trim() === "" 
-    ? allTracks 
-    : allTracks.filter(track => {
+    ? allTracksWithShells 
+    : allTracksWithShells.filter(track => {
+        // Always show loading shells regardless of search
+        if ('isLoadingShell' in track && track.isLoadingShell) return true;
+        
         const query = searchQuery.toLowerCase();
         const titleMatch = track.title?.toLowerCase().includes(query);
         const paramsMatch = track.params?.some(param => 
@@ -210,6 +228,19 @@ export default function TrackListPanel({
         <div ref={scrollRef} className="h-full overflow-y-auto overflow-x-hidden lyrics-scrollbar">
           <div className={`min-h-full flex flex-col justify-start gap-3 px-4 pt-2 pb-4`}>
         {paginatedTracks.map((t, pageIndex) => {
+          // Check if this is a loading shell
+          const isLoadingShell = 'isLoadingShell' in t && t.isLoadingShell;
+          
+          if (isLoadingShell) {
+            return (
+              <TrackLoadingShell
+                key={t.id}
+                progress={(t as any).shellProgress || 0}
+                shellIndex={pageIndex}
+              />
+            );
+          }
+          
           // Calculate the actual index in the full filtered tracks array
           const actualIndex = filteredTracks.indexOf(t);
           const active = actualIndex === currentIndex;

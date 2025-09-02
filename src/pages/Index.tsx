@@ -214,6 +214,14 @@ const Index = () => {
   // Use the chat hook for both main chat and voice interface
   const { messages, sendMessage } = useChat();
   
+  // Use song generation hook
+  const { 
+    generationState, 
+    loadingShells, 
+    startGeneration: startSongGeneration,
+    randomizeAll
+  } = useSongGeneration();
+  
   // Ref for chat input to maintain focus
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
@@ -829,46 +837,11 @@ const Index = () => {
       });
     }
   }
-  async function randomizeAll() {
+  async function handleRandomizeAll() {
     if (busy) return;
-    const content = "Please generate a completely randomized song_request and output ONLY the JSON in a JSON fenced code block (```json ... ```). The lyrics must be a complete song containing Intro, Verse 1, Pre-Chorus, Chorus, Verse 2, Chorus, Bridge, and Outro. No extra text.";
-    setBusy(true);
-    try {
-      // Use a minimal, stateless prompt so we don't get follow-ups that could override fields
-      const minimal: ChatMessage[] = [{ role: "user", content }];
-      console.debug("[Dice] Sending randomize prompt. systemPrompt snippet:", systemPrompt.slice(0,120));
-      const [r1, r2] = await Promise.allSettled([
-        api.chat(minimal, systemPrompt),
-        api.chat(minimal, systemPrompt),
-      ]);
-      const msgs: string[] = [];
-      if (r1.status === "fulfilled") msgs.push(r1.value.content);
-      if (r2.status === "fulfilled") msgs.push(r2.value.content);
-      console.debug("[Dice] Received responses:", msgs.map(m => m.slice(0, 160)));
-      const extractions = msgs.map((m) => {
-        const parsed = parseSongRequest(m);
-        if (parsed) return convertToSongDetails(parsed);
-        return extractDetails(m);
-      }).filter(Boolean) as SongDetails[];
-      if (extractions.length === 0) {
-        console.debug("[Dice] Failed to parse any random song. First response preview:", msgs[0]?.slice(0, 300));
-        toast.message("Couldn't parse random song", { description: "Try again in a moment." });
-      } else {
-        const cleanedList = extractions.map((ex) => {
-          const finalStyle = sanitizeStyleSafe(ex.style);
-          return { ...ex, ...(finalStyle ? { style: finalStyle } : {}) } as SongDetails;
-        });
-        const merged = mergeNonEmpty(...cleanedList);
-        lastDiceAt.current = Date.now();
-        setDetails((d) => mergeNonEmpty(d, merged));
-        toast.success("Randomized song details ready");
-      }
-      // Do not alter chat history for the dice action
-    } catch (e: any) {
-      toast.error(e.message || "Randomize failed");
-    } finally {
-      setBusy(false);
-    }
+    const randomized = randomizeAll();
+    setDetails(randomized);
+    toast.success("Randomized song details ready");
   }
 
   async function testAlbumCoverWithLyrics() {
@@ -899,57 +872,17 @@ async function startGeneration() {
       toast.message("Add a few details first", { description: "Chat a bit more until I extract a song request." });
       return;
     }
-    setAudioUrl(null);
-    setAudioUrls(null);
-    setJobId(null);
-    setVersions([]);
-    setGenerationProgress(0);
-    setLastProgressUpdate(Date.now());
-    setAlbumCovers(null);
-    setIsGeneratingCovers(false);
+    
+    // Use the new song generation hook
     setBusy(true);
-    
-    // Start album cover generation immediately in parallel
-    if (details.title || details.lyrics || details.style) {
-      setIsGeneratingCovers(true);
-      api.generateAlbumCovers(details)
-        .then(covers => {
-          console.log("Album covers generated:", covers);
-          setAlbumCovers(covers);
-        })
-        .catch(error => {
-          console.error("Album cover generation failed:", error);
-          toast.error("Failed to generate album covers");
-        })
-        .finally(() => {
-          setIsGeneratingCovers(false);
-        });
-    }
-    
     try {
-      const payload = { ...details, style: sanitizeStyle(details.style || "") };
-      const { jobId } = await api.startSong(payload);
-      setJobId(jobId);
-      toast.success("Song requested. Composing...");
+      await startSongGeneration(details);
+    } finally {
+      setBusy(false);
+    }
+  }
 
-      // Phase A: Wait for generation completion with status confirmation
-      console.log("[Generation] Phase A: Waiting for completion...");
-      // Phase A: Wait up to 10 minutes for generation completion (time-based)
-      const PHASE_A_MAX_MS = 10 * 60 * 1000; // 10 minutes
-      const PHASE_A_START = Date.now();
-      let completionAttempts = 0;
-      let statusRaw = "PENDING";
-      let sunoData: any[] = [];
-      let generationComplete = false;
-
-      while (Date.now() - PHASE_A_START < PHASE_A_MAX_MS) {
-        completionAttempts++;
-        // Progress based on elapsed time (never goes backward)
-        const elapsed = Date.now() - PHASE_A_START;
-        const baseProgress = Math.min((elapsed / PHASE_A_MAX_MS) * 40, 40);
-        let statusProgress = 5;
-        if (statusRaw === "PENDING") statusProgress = 15;
-        else if (statusRaw === "FIRST_SUCCESS") statusProgress = 35;
+  return (
         else if (statusRaw === "TEXT_SUCCESS") statusProgress = 55;
         else if (statusRaw === "SUCCESS") statusProgress = 70;
         
@@ -1397,7 +1330,7 @@ async function startGeneration() {
     <div className="bg-[#040404] rounded-lg h-9 w-full grid grid-cols-4 place-items-center px-2 hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] transition-shadow">
       <button onClick={handleFileUpload} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Upload"><Upload size={18} /></button>
       <button onClick={() => setShowMelodySpeech(true)} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Microphone"><Mic size={18} /></button>
-      <button onClick={randomizeAll} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Randomize"><Dice5 size={18} /></button>
+      <button onClick={handleRandomizeAll} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Randomize"><Dice5 size={18} /></button>
       <button className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="List"><List size={18} /></button>
     </div>
   </div>
@@ -1443,6 +1376,7 @@ async function startGeneration() {
               currentIndex={currentTrackIndex}
               isPlaying={isPlaying}
               audioRefs={audioRefs}
+              loadingShells={loadingShells}
               onPlayPause={(idx) => {
                 if (currentTrackIndex === idx && isPlaying) {
                   handleAudioPause();
