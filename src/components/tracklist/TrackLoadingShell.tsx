@@ -1,5 +1,4 @@
 import React from "react";
-import { Progress } from "@/components/ui/progress";
 
 interface TrackLoadingShellProps {
   progress: number;
@@ -9,45 +8,46 @@ interface TrackLoadingShellProps {
 export function TrackLoadingShell({ progress, trackNumber }: TrackLoadingShellProps) {
   return (
     <div className="animate-fade-in">
-      <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-4 mb-3 h-[120px] flex items-center gap-4">
-        {/* Album art placeholder with pink spinning loader */}
-        <div className="relative w-16 h-16 bg-white/10 rounded-lg flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 to-purple-500/20 animate-pulse"></div>
-          <div className="relative w-8 h-8 border-2 border-pink-400/30 border-t-pink-400 rounded-full animate-spin"></div>
+      <div className="bg-[#1e1e1e] rounded-xl p-4 flex items-center gap-4 h-[88px] group hover:bg-[#252525] transition-colors">
+        {/* Album art placeholder with scanning animation */}
+        <div className="relative w-12 h-12 bg-[#2a2a2a] rounded-lg overflow-hidden flex-shrink-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-[scanning_2s_ease-in-out_infinite]"></div>
         </div>
         
-        {/* Track info placeholder */}
-        <div className="flex-1 space-y-3">
-          {/* Title placeholder */}
-          <div className="flex items-center gap-2">
-            <div className="h-5 bg-white/20 rounded animate-pulse" style={{ width: `${120 + Math.random() * 80}px` }}></div>
-            <div className="text-xs text-white/40 font-mono">#{trackNumber}</div>
-          </div>
+        {/* Play button area - small pink spinning loader */}
+        <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center">
+          <div className="w-4 h-4 border-2 border-transparent border-t-accent-primary rounded-full animate-spin"></div>
+        </div>
+        
+        {/* Track info area */}
+        <div className="flex-1 min-w-0 space-y-2">
+          {/* Title placeholder - thick pill shape */}
+          <div className="h-4 bg-white/15 rounded-full animate-pulse" style={{ width: `${140 + Math.random() * 60}px` }}></div>
           
-          {/* Progress bar - thin pink line */}
-          <div className="space-y-1">
-            <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+          {/* Progress bar in controls area */}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-pink-400 to-pink-500 transition-all duration-300 ease-out"
+                className="h-full bg-gradient-to-r from-accent-primary to-accent-primary/80 transition-all duration-300 ease-out"
                 style={{ width: `${progress}%` }}
               ></div>
             </div>
-            <div className="text-xs text-white/40">Generating...</div>
+            <div className="text-xs text-white/40 font-mono">#{trackNumber}</div>
           </div>
-          
-          {/* Parameters placeholder */}
-          <div className="flex gap-1.5">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="h-5 bg-white/10 rounded-full animate-pulse"
-                style={{ 
-                  width: `${40 + Math.random() * 30}px`,
-                  animationDelay: `${i * 0.2}s`
-                }}
-              ></div>
-            ))}
-          </div>
+        </div>
+        
+        {/* Parameters placeholder */}
+        <div className="flex gap-1.5 flex-shrink-0">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-6 bg-white/10 rounded-full animate-pulse"
+              style={{ 
+                width: `${35 + Math.random() * 25}px`,
+                animationDelay: `${i * 0.2}s`
+              }}
+            ></div>
+          ))}
         </div>
       </div>
     </div>
