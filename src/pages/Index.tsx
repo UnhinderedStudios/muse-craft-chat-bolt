@@ -904,19 +904,30 @@ const Index = () => {
     }
   }
 
-  const startGeneration = async (details: SongDetails) => {
+  const startGeneration = async (details: SongDetails, jobId?: string) => {
     // Generate unique ID for this generation job
-    const generationId = `gen-${Date.now()}-${Math.random()}`;
+    const generationId = jobId || `gen-${Date.now()}-${Math.random()}`;
     console.log(`[Generation ${generationId}] Starting with details:`, details);
-    setAudioUrl(null);
-    setAudioUrls(null);
-    setJobId(null);
-    setVersions([]);
-    setGenerationProgress(0);
-    setLastProgressUpdate(Date.now());
-    setAlbumCovers(null);
-    setIsGeneratingCovers(false);
+    
+    // DON'T CLEAR EXISTING STATE - this was causing tracks to disappear!
+    // Only set per-job state
     setIsMusicGenerating(true);
+    
+    // Helper function to update job progress
+    const updateJobProgress = (progress: number) => {
+      if (jobId) {
+        setActiveJobs(prev => 
+          prev.map(job => 
+            job.id === jobId ? { ...job, progress } : job
+          )
+        );
+      } else {
+        // Fallback to global progress for non-tracked jobs
+        setGenerationProgress(progress);
+      }
+    };
+    
+    updateJobProgress(5);
     
     // Start album cover generation immediately in parallel
     if (details.title || details.lyrics || details.style) {
@@ -963,13 +974,7 @@ const Index = () => {
         else if (statusRaw === "SUCCESS") statusProgress = 70;
         
         const newProgress = Math.max(baseProgress, statusProgress);
-        setGenerationProgress(current => {
-          if (newProgress > current) {
-            setLastProgressUpdate(Date.now());
-            return newProgress;
-          }
-          return current;
-        });
+        updateJobProgress(newProgress);
         
         const backoffDelay = Math.min(1500 + completionAttempts * 300, 4000);
         await new Promise((r) => setTimeout(r, backoffDelay));
@@ -984,10 +989,7 @@ const Index = () => {
           // Check for completion - accept SUCCESS but not intermediate states
           if (statusRaw === "SUCCESS" || statusRaw === "COMPLETE" || statusRaw === "ALL_SUCCESS") {
             console.log("[Generation] Phase A: Generation completed!");
-            setGenerationProgress(current => {
-              setLastProgressUpdate(Date.now());
-              return Math.max(current, 75);
-            });
+            updateJobProgress(75);
             generationComplete = true;
             break;
           }
@@ -1047,10 +1049,7 @@ const Index = () => {
       console.log("[Generation] Phase B: Fetching timestamped lyrics...");
       console.log("[Generation] Using newVersions for timestamp fetching:", newVersions);
       console.log("[Generation] newVersions.length:", newVersions.length);
-          setGenerationProgress(current => {
-            setLastProgressUpdate(Date.now());
-            return Math.max(current, 85);
-          });
+          updateJobProgress(85);
           
           if (newVersions.length === 0) {
             console.warn("[Generation] No versions available for timestamp fetching");
@@ -1116,7 +1115,7 @@ const Index = () => {
           );
 
           console.log("[Generation] Final versions with timestamps:", updatedVersions);
-          setVersions(updatedVersions);
+          setVersions(prev => [...prev, ...updatedVersions]); // ACCUMULATE, don't replace
           
           // Add tracks to the track list (newest first)
           const batchCreatedAt = Date.now();
@@ -1136,6 +1135,11 @@ const Index = () => {
             return [...fresh, ...prev]; // newest first
           });
           
+          // Update job progress and mark as complete if this was a tracked job
+          if (generationId && activeJobs.some(job => job.id === generationId)) {
+            setActiveJobs(prev => prev.filter(job => job.id !== generationId));
+          }
+          
           // Set active track to first of new batch
           setCurrentTrackIndex(0);
           setCurrentTime(0);
@@ -1151,8 +1155,7 @@ const Index = () => {
           }, 100);
           
           const successCount = updatedVersions.filter(v => v.hasTimestamps).length;
-          setGenerationProgress(100);
-          setLastProgressUpdate(Date.now());
+          updateJobProgress(100);
           if (successCount > 0) {
             toast.success(`Song ready with karaoke lyrics! (${successCount}/${updatedVersions.length} versions)`);
           } else {
@@ -1186,8 +1189,24 @@ const Index = () => {
       return;
     }
     
-    // Job management is now handled inside startGeneration
-    await startGeneration(details);
+    // Create new job and add to activeJobs
+    const jobId = `job-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const newJob = {
+      id: jobId,
+      progress: 0,
+      startTime: Date.now(),
+      isComplete: false
+    };
+    
+    setActiveJobs(prev => [...prev, newJob]);
+    
+    try {
+      await startGeneration(details, jobId);
+    } catch (error) {
+      // Remove failed job
+      setActiveJobs(prev => prev.filter(job => job.id !== jobId));
+      throw error;
+    }
   };
 
   
