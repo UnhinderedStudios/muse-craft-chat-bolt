@@ -867,8 +867,6 @@ const Index = () => {
       toast.error(e.message || "Randomize failed");
     } finally {
       setBusy(false);
-      setIsGeneratingMusic(false);
-      console.log("🎵 Music generation failed/cancelled - isGeneratingMusic set to false");
     }
   }
 
@@ -909,8 +907,21 @@ async function startGeneration() {
     setAlbumCovers(null);
     setIsGeneratingCovers(false);
      setBusy(true);
-     setIsGeneratingMusic(true);
-     console.log("🎵 Music generation started - isGeneratingMusic set to true");
+     
+     // Use new concurrent generation system
+     const generationId = await generationManager.startSingleGeneration(details, (newTracks) => {
+       setTracks(prev => [...newTracks, ...prev]);
+       if (!isPlaying) {
+         setCurrentTrackIndex(0);
+         setCurrentTime(0);
+       }
+     });
+     
+     if (generationId) {
+       toast.success("Generation started! You can start another one.");
+     }
+     setBusy(false);
+     return;
     
     // Start album cover generation immediately in parallel
     if (details.title || details.lyrics || details.style) {
@@ -1182,9 +1193,6 @@ async function startGeneration() {
       toast.error(e.message || "Generation failed");
     } finally {
         setBusy(false);
-        setIsGeneratingMusic(false);
-        console.log("🎵 Music generation completed - isGeneratingMusic set to false");
-      setIsGeneratingMusic(false);
     }
   }
 

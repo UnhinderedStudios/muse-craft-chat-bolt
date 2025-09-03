@@ -2,6 +2,7 @@
 export * from './chat';
 export * from './audio';
 export * from './song';
+export * from './generation';
 
 import { TimestampedWord } from './audio';
 
