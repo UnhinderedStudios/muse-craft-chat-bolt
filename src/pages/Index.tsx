@@ -1254,12 +1254,9 @@ const Index = () => {
             setTimeout(() => {
               console.log(`[Generation] Cleaning up successful job ${wrapperJobId}`);
               setActiveGenerations(prev => prev.filter(job => job.id !== wrapperJobId));
-              // Clean up job-specific album covers after successful completion
-              setJobAlbumCovers(prev => {
-                const newMap = new Map(prev);
-                newMap.delete(wrapperJobId);
-                return newMap;
-              });
+              // Keep album covers in memory - don't delete them as tracks still need them for rendering
+              // Album covers will be cleaned up when user manually clears or on page refresh
+              console.log(`[Album Covers] Keeping covers for job ${wrapperJobId} - tracks still need them`);
             }, 1000);
           }
           
