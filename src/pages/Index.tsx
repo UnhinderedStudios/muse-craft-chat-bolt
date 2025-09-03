@@ -38,6 +38,7 @@ import { useChat } from "@/hooks/use-chat";
 import { useResize } from "@/hooks/use-resize";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useSongGeneration } from "@/hooks/use-song-generation";
+import { useConcurrentGeneration } from "@/hooks/use-concurrent-generation";
 
 // Types
 import { type TimestampedWord, type ChatMessage, type TrackItem } from "@/types";
@@ -405,6 +406,18 @@ const Index = () => {
   const lastDiceAt = useRef<number>(0);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [attachedFiles, setAttachedFiles] = useState<FileAttachment[]>([]);
+
+  // Concurrent generation hook
+  const {
+    jobs,
+    activeJobs,
+    completedTracks,
+    activeJobsCount,
+    canStartNewJob,
+    startJob,
+    removeJob,
+    getJobProgress
+  } = useConcurrentGeneration();
 
   // Global spacebar controls for play/pause
   useEffect(() => {
@@ -896,10 +909,20 @@ const Index = () => {
   }
 
 async function startGeneration() {
+    if (!canStartNewJob) {
+      toast.error(`Maximum 10 concurrent generations allowed`);
+      return;
+    }
     if (!canGenerate) {
       toast.message("Add a few details first", { description: "Chat a bit more until I extract a song request." });
       return;
     }
+    
+    console.log("🎵 Generating with details:", details);
+    console.log("🏷️ Style tags:", styleTags);
+    
+    await startJob(details, styleTags);
+    return;
     setAudioUrl(null);
     setAudioUrls(null);
     setJobId(null);
@@ -1386,12 +1409,12 @@ async function startGeneration() {
     {/* Generate — same height as tray */}
     <button
       onClick={startGeneration}
-      disabled={isMusicGenerating || !canGenerate}
+      disabled={!canStartNewJob || !canGenerate}
       className="h-9 w-full rounded-lg text-[13px] font-medium text-white bg-accent-primary hover:bg-accent-primary/90 disabled:bg-accent-primary/60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-      aria-disabled={isMusicGenerating || !canGenerate}
+      aria-disabled={!canStartNewJob || !canGenerate}
     >
       <span className="text-sm leading-none">✦</span>
-      <span>Generate</span>
+      <span>{activeJobsCount > 0 ? `Generate (${activeJobsCount}/10)` : "Generate"}</span>
     </button>
 
     {/* Icon tray — perfectly centered icons */}
@@ -1440,7 +1463,7 @@ async function startGeneration() {
           {/* Far-right Track List: spans both rows, bleeds to the right, sticky inner */}
           <div className="order-5 lg:order-4 md:col-span-8 lg:col-span-1 xl:col-span-1 lg:row-span-2 lg:self-stretch min-h-0 overflow-hidden">
             <TrackListPanel
-              tracks={tracks}
+              tracks={[...completedTracks, ...tracks]}
               currentIndex={currentTrackIndex}
               isPlaying={isPlaying}
               audioRefs={audioRefs}
@@ -1468,8 +1491,9 @@ async function startGeneration() {
                   )
                 );
               }}
-              isGenerating={isMusicGenerating}
-              generationProgress={generationProgress}
+              isGenerating={activeJobsCount > 0}
+              generationProgress={0}
+              activeJobs={activeJobs}
             />
           </div>
 
