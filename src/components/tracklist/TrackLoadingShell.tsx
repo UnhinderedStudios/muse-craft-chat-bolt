@@ -20,11 +20,16 @@ export function TrackLoadingShell({ progress, trackNumber }: TrackLoadingShellPr
           <div className="h-3 bg-white/15 rounded-full animate-pulse w-32 mb-1"></div>
           
           {/* Progress bar */}
-          <div className="h-1.5 bg-white/10 rounded overflow-hidden">
+          <div className="h-1.5 bg-white/5 rounded overflow-hidden">
             <div 
-              className="h-full bg-white/70 rounded transition-all duration-300 ease-out"
-              style={{ width: `${progress}%` }}
-            ></div>
+              className="h-full bg-gradient-to-r from-accent-primary to-accent-primary/80 rounded transition-all duration-300 ease-out relative"
+              style={{ 
+                width: `${progress}%`,
+                boxShadow: '0 0 8px hsl(var(--accent-primary) / 0.6), 0 0 4px hsl(var(--accent-primary) / 0.4)'
+              }}
+            >
+              <div className="absolute right-0 top-0 w-8 h-full bg-gradient-to-r from-transparent to-accent-primary/20 blur-sm"></div>
+            </div>
           </div>
         </div>
         
