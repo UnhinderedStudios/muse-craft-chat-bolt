@@ -416,6 +416,12 @@ const Index = () => {
   const lastDiceAt = useRef<number>(0);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [attachedFiles, setAttachedFiles] = useState<FileAttachment[]>([]);
+  
+  // Test album cover states
+  const [testCover1, setTestCover1] = useState<string | null>(null);
+  const [testCover2, setTestCover2] = useState<string | null>(null);
+  const [testLoading1, setTestLoading1] = useState(false);
+  const [testLoading2, setTestLoading2] = useState(false);
 
   // Global spacebar controls for play/pause
   useEffect(() => {
@@ -880,6 +886,57 @@ const Index = () => {
       toast.error(e.message || "Randomize failed");
     } finally {
       setIsChatBusy(false);
+    }
+  }
+
+  // Test album cover functions
+  async function testCoverGeneration1() {
+    if (testLoading1) return;
+    setTestLoading1(true);
+    setTestCover1(null);
+    
+    const testData = {
+      title: "Neon Dreams",
+      style: "synthpop, uplifting, 120 BPM, English, female vocals, bright synths",
+      lyrics: "Verse 1\nWalking through the neon lights\nCity glows in purple hues"
+    };
+    
+    console.log("🧪 Test Cover 1 - generating with data:", testData);
+    try {
+      const result = await api.generateAlbumCovers(testData);
+      console.log("✅ Test Cover 1 - success:", result);
+      setTestCover1(result.cover1);
+      toast.success("Test Cover 1 generated!");
+    } catch (error) {
+      console.error("❌ Test Cover 1 - failed:", error);
+      toast.error("Test Cover 1 failed");
+    } finally {
+      setTestLoading1(false);
+    }
+  }
+
+  async function testCoverGeneration2() {
+    if (testLoading2) return;
+    setTestLoading2(true);
+    setTestCover2(null);
+    
+    const testData = {
+      title: "Coffee Shop Blues",
+      style: "indie folk, mellow, 95 BPM, English, male vocals, acoustic guitar",
+      lyrics: "Verse 1\nSitting in this coffee shop\nRain drops on the window"
+    };
+    
+    console.log("🧪 Test Cover 2 - generating with data:", testData);
+    try {
+      const result = await api.generateAlbumCovers(testData);
+      console.log("✅ Test Cover 2 - success:", result);
+      setTestCover2(result.cover2);
+      toast.success("Test Cover 2 generated!");
+    } catch (error) {
+      console.error("❌ Test Cover 2 - failed:", error);
+      toast.error("Test Cover 2 failed");
+    } finally {
+      setTestLoading2(false);
     }
   }
 
@@ -1739,6 +1796,54 @@ const Index = () => {
                       className="bg-transparent border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 p-4 resize-none w-full h-full song-params-scrollbar"
                     />
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Test Album Cover Generation */}
+            <div className="space-y-3 pt-2 border-t border-white/10">
+              <div className="text-sm font-medium text-white/80">Album Cover Test</div>
+              <div className="grid grid-cols-2 gap-4">
+                {/* Test Cover 1 */}
+                <div className="space-y-2">
+                  <Button
+                    onClick={testCoverGeneration1}
+                    disabled={testLoading1}
+                    className="w-full bg-accent-primary hover:bg-accent-primary/80 text-white"
+                    size="sm"
+                  >
+                    {testLoading1 ? "Generating..." : "Generate Cover 1"}
+                  </Button>
+                  {testCover1 && (
+                    <div className="bg-[#2d2d2d] rounded-lg p-2">
+                      <img 
+                        src={testCover1} 
+                        alt="Test Cover 1" 
+                        className="w-full h-24 object-cover rounded"
+                      />
+                    </div>
+                  )}
+                </div>
+                
+                {/* Test Cover 2 */}
+                <div className="space-y-2">
+                  <Button
+                    onClick={testCoverGeneration2}
+                    disabled={testLoading2}
+                    className="w-full bg-accent-primary hover:bg-accent-primary/80 text-white"
+                    size="sm"
+                  >
+                    {testLoading2 ? "Generating..." : "Generate Cover 2"}
+                  </Button>
+                  {testCover2 && (
+                    <div className="bg-[#2d2d2d] rounded-lg p-2">
+                      <img 
+                        src={testCover2} 
+                        alt="Test Cover 2" 
+                        className="w-full h-24 object-cover rounded"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
