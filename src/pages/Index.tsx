@@ -207,15 +207,6 @@ const Index = () => {
   const [isMusicGenerating, setIsMusicGenerating] = useState(false);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const [isReadingText, setIsReadingText] = useState(false);
-  
-  // Per-job state management for concurrent generation
-  const [activeJobs, setActiveJobs] = useState<Array<{
-    id: string;
-    progress: number;
-    startTime: number;
-    isComplete: boolean;
-  }>>([]);
-  const activeJobCount = activeJobs.length;
   const [details, setDetails] = useState<SongDetails>({});
   const [styleTags, setStyleTags] = useState<string[]>([]);
   const { chatHeight, isResizing, handleMouseDown } = useResize();
@@ -360,7 +351,7 @@ const Index = () => {
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentAudioIndex, setCurrentAudioIndex] = useState<number>(0);
-  // Placeholder tracks for design development - remove when ready for production  
+  // Placeholder tracks for design development - remove when ready for production
   const [tracks, setTracks] = useState<TrackItem[]>([
     {
       id: "placeholder-track-1",
@@ -383,8 +374,8 @@ const Index = () => {
       hasTimestamps: false
     }
   ]);
-  
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
+  // Keep karaoke version selection in sync with the currently selected track
   useEffect(() => {
     const currentTrack = tracks[currentTrackIndex];
     if (!currentTrack) { setCurrentAudioIndex(versions.length ? 0 : -1); return; }
@@ -904,30 +895,20 @@ const Index = () => {
     }
   }
 
-  const startGeneration = async (details: SongDetails, jobId?: string) => {
-    // Generate unique ID for this generation job
-    const generationId = jobId || `gen-${Date.now()}-${Math.random()}`;
-    console.log(`[Generation ${generationId}] Starting with details:`, details);
-    
-    // DON'T CLEAR EXISTING STATE - this was causing tracks to disappear!
-    // Only set per-job state
+async function startGeneration() {
+    if (!canGenerate) {
+      toast.message("Add a few details first", { description: "Chat a bit more until I extract a song request." });
+      return;
+    }
+    setAudioUrl(null);
+    setAudioUrls(null);
+    setJobId(null);
+    setVersions([]);
+    setGenerationProgress(0);
+    setLastProgressUpdate(Date.now());
+    setAlbumCovers(null);
+    setIsGeneratingCovers(false);
     setIsMusicGenerating(true);
-    
-    // Helper function to update job progress
-    const updateJobProgress = (progress: number) => {
-      if (jobId) {
-        setActiveJobs(prev => 
-          prev.map(job => 
-            job.id === jobId ? { ...job, progress } : job
-          )
-        );
-      } else {
-        // Fallback to global progress for non-tracked jobs
-        setGenerationProgress(progress);
-      }
-    };
-    
-    updateJobProgress(5);
     
     // Start album cover generation immediately in parallel
     if (details.title || details.lyrics || details.style) {
@@ -974,7 +955,13 @@ const Index = () => {
         else if (statusRaw === "SUCCESS") statusProgress = 70;
         
         const newProgress = Math.max(baseProgress, statusProgress);
-        updateJobProgress(newProgress);
+        setGenerationProgress(current => {
+          if (newProgress > current) {
+            setLastProgressUpdate(Date.now());
+            return newProgress;
+          }
+          return current;
+        });
         
         const backoffDelay = Math.min(1500 + completionAttempts * 300, 4000);
         await new Promise((r) => setTimeout(r, backoffDelay));
@@ -989,7 +976,10 @@ const Index = () => {
           // Check for completion - accept SUCCESS but not intermediate states
           if (statusRaw === "SUCCESS" || statusRaw === "COMPLETE" || statusRaw === "ALL_SUCCESS") {
             console.log("[Generation] Phase A: Generation completed!");
-            updateJobProgress(75);
+            setGenerationProgress(current => {
+              setLastProgressUpdate(Date.now());
+              return Math.max(current, 75);
+            });
             generationComplete = true;
             break;
           }
@@ -1049,7 +1039,10 @@ const Index = () => {
       console.log("[Generation] Phase B: Fetching timestamped lyrics...");
       console.log("[Generation] Using newVersions for timestamp fetching:", newVersions);
       console.log("[Generation] newVersions.length:", newVersions.length);
-          updateJobProgress(85);
+          setGenerationProgress(current => {
+            setLastProgressUpdate(Date.now());
+            return Math.max(current, 85);
+          });
           
           if (newVersions.length === 0) {
             console.warn("[Generation] No versions available for timestamp fetching");
@@ -1115,7 +1108,7 @@ const Index = () => {
           );
 
           console.log("[Generation] Final versions with timestamps:", updatedVersions);
-          setVersions(prev => [...prev, ...updatedVersions]); // ACCUMULATE, don't replace
+          setVersions(updatedVersions);
           
           // Add tracks to the track list (newest first)
           const batchCreatedAt = Date.now();
@@ -1135,11 +1128,6 @@ const Index = () => {
             return [...fresh, ...prev]; // newest first
           });
           
-          // Update job progress and mark as complete if this was a tracked job
-          if (generationId && activeJobs.some(job => job.id === generationId)) {
-            setActiveJobs(prev => prev.filter(job => job.id !== generationId));
-          }
-          
           // Set active track to first of new batch
           setCurrentTrackIndex(0);
           setCurrentTime(0);
@@ -1155,7 +1143,8 @@ const Index = () => {
           }, 100);
           
           const successCount = updatedVersions.filter(v => v.hasTimestamps).length;
-          updateJobProgress(100);
+          setGenerationProgress(100);
+          setLastProgressUpdate(Date.now());
           if (successCount > 0) {
             toast.success(`Song ready with karaoke lyrics! (${successCount}/${updatedVersions.length} versions)`);
           } else {
@@ -1182,34 +1171,6 @@ const Index = () => {
       setIsMusicGenerating(false);
     }
   }
-
-  const startConcurrentGeneration = async (details: SongDetails) => {
-    if (activeJobCount >= 10) {
-      toast.error("Maximum 10 concurrent generations allowed");
-      return;
-    }
-    
-    // Create new job and add to activeJobs
-    const jobId = `job-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const newJob = {
-      id: jobId,
-      progress: 0,
-      startTime: Date.now(),
-      isComplete: false
-    };
-    
-    setActiveJobs(prev => [...prev, newJob]);
-    
-    try {
-      await startGeneration(details, jobId);
-    } catch (error) {
-      // Remove failed job
-      setActiveJobs(prev => prev.filter(job => job.id !== jobId));
-      throw error;
-    }
-  };
-
-  
 
   return (
     <div
@@ -1424,19 +1385,13 @@ const Index = () => {
   <div className="shrink-0 w-[180px] flex flex-col gap-2">
     {/* Generate — same height as tray */}
     <button
-      onClick={() => {
-        if (!canGenerate) {
-          toast.message("Add a few details first", { description: "Chat a bit more until I extract a song request." });
-          return;
-        }
-        startConcurrentGeneration({ ...details, style: sanitizeStyleSafe(details.style) });
-      }}
-      disabled={activeJobCount >= 10 || !canGenerate}
+      onClick={startGeneration}
+      disabled={isMusicGenerating || !canGenerate}
       className="h-9 w-full rounded-lg text-[13px] font-medium text-white bg-accent-primary hover:bg-accent-primary/90 disabled:bg-accent-primary/60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-      aria-disabled={activeJobCount >= 10 || !canGenerate}
+      aria-disabled={isMusicGenerating || !canGenerate}
     >
       <span className="text-sm leading-none">✦</span>
-      <span>{activeJobCount > 0 ? `Generate (${activeJobCount}/10)` : "Generate"}</span>
+      <span>Generate</span>
     </button>
 
     {/* Icon tray — perfectly centered icons */}
@@ -1515,8 +1470,6 @@ const Index = () => {
               }}
               isGenerating={isMusicGenerating}
               generationProgress={generationProgress}
-              activeJobCount={activeJobCount}
-              activeJobs={activeJobs}
             />
           </div>
 
