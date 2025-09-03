@@ -38,6 +38,8 @@ import { useChat } from "@/hooks/use-chat";
 import { useResize } from "@/hooks/use-resize";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useSongGeneration } from "@/hooks/use-song-generation";
+import { useConcurrentGeneration } from "@/hooks/use-concurrent-generation";
+import { useRandomizeOnly } from "@/hooks/use-randomize-only";
 
 // Types
 import { type TimestampedWord, type ChatMessage, type TrackItem } from "@/types";
@@ -213,6 +215,10 @@ const Index = () => {
   
   // Use the chat hook for both main chat and voice interface
   const { messages, sendMessage } = useChat();
+  
+  // Concurrent generation management
+  const concurrentGeneration = useConcurrentGeneration();
+  const { randomizeAll: randomizeFormOnly } = useRandomizeOnly();
   
   // Ref for chat input to maintain focus
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
@@ -831,43 +837,11 @@ const Index = () => {
   }
   async function randomizeAll() {
     if (busy) return;
-    const content = "Please generate a completely randomized song_request and output ONLY the JSON in a JSON fenced code block (```json ... ```). The lyrics must be a complete song containing Intro, Verse 1, Pre-Chorus, Chorus, Verse 2, Chorus, Bridge, and Outro. No extra text.";
-    setBusy(true);
-    try {
-      // Use a minimal, stateless prompt so we don't get follow-ups that could override fields
-      const minimal: ChatMessage[] = [{ role: "user", content }];
-      console.debug("[Dice] Sending randomize prompt. systemPrompt snippet:", systemPrompt.slice(0,120));
-      const [r1, r2] = await Promise.allSettled([
-        api.chat(minimal, systemPrompt),
-        api.chat(minimal, systemPrompt),
-      ]);
-      const msgs: string[] = [];
-      if (r1.status === "fulfilled") msgs.push(r1.value.content);
-      if (r2.status === "fulfilled") msgs.push(r2.value.content);
-      console.debug("[Dice] Received responses:", msgs.map(m => m.slice(0, 160)));
-      const extractions = msgs.map((m) => {
-        const parsed = parseSongRequest(m);
-        if (parsed) return convertToSongDetails(parsed);
-        return extractDetails(m);
-      }).filter(Boolean) as SongDetails[];
-      if (extractions.length === 0) {
-        console.debug("[Dice] Failed to parse any random song. First response preview:", msgs[0]?.slice(0, 300));
-        toast.message("Couldn't parse random song", { description: "Try again in a moment." });
-      } else {
-        const cleanedList = extractions.map((ex) => {
-          const finalStyle = sanitizeStyleSafe(ex.style);
-          return { ...ex, ...(finalStyle ? { style: finalStyle } : {}) } as SongDetails;
-        });
-        const merged = mergeNonEmpty(...cleanedList);
-        lastDiceAt.current = Date.now();
-        setDetails((d) => mergeNonEmpty(d, merged));
-        toast.success("Randomized song details ready");
-      }
-      // Do not alter chat history for the dice action
-    } catch (e: any) {
-      toast.error(e.message || "Randomize failed");
-    } finally {
-      setBusy(false);
+    
+    const randomized = await randomizeFormOnly();
+    if (randomized) {
+      lastDiceAt.current = Date.now();
+      setDetails((d) => mergeNonEmpty(d, randomized));
     }
   }
 
@@ -899,6 +873,14 @@ async function startGeneration() {
       toast.message("Add a few details first", { description: "Chat a bit more until I extract a song request." });
       return;
     }
+    
+    // Use concurrent generation system
+    const generationId = await concurrentGeneration.startGeneration(details);
+    if (!generationId) {
+      return; // Error already handled in concurrent generation
+    }
+    
+    // Legacy state reset (keep for backwards compatibility)
     setAudioUrl(null);
     setAudioUrls(null);
     setJobId(null);
@@ -1385,12 +1367,14 @@ async function startGeneration() {
     {/* Generate — same height as tray */}
     <button
       onClick={startGeneration}
-      disabled={busy || !canGenerate}
+      disabled={busy || !canGenerate || !concurrentGeneration.canStartNewGeneration()}
       className="h-9 w-full rounded-lg text-[13px] font-medium text-white bg-accent-primary hover:bg-accent-primary/90 disabled:bg-accent-primary/60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-      aria-disabled={busy || !canGenerate}
+      aria-disabled={busy || !canGenerate || !concurrentGeneration.canStartNewGeneration()}
     >
       <span className="text-sm leading-none">✦</span>
-      <span>Generate</span>
+      <span>
+        Generate {concurrentGeneration.getActiveCount() > 0 && `(${concurrentGeneration.getActiveCount()}/10)`}
+      </span>
     </button>
 
     {/* Icon tray — perfectly centered icons */}
@@ -1469,6 +1453,8 @@ async function startGeneration() {
               }}
               isGenerating={busy}
               generationProgress={generationProgress}
+              activeGenerations={concurrentGeneration.getActiveGenerationsArray()}
+              onCancelGeneration={concurrentGeneration.removeGeneration}
             />
           </div>
 
