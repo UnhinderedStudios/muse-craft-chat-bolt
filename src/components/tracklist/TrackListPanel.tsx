@@ -218,6 +218,7 @@ export default function TrackListPanel({
             {/* Show loading shells when generating */}
             {isGenerating && (
               <>
+                {console.log("TrackListPanel showing loading shells - isGenerating:", isGenerating)}
                 <TrackLoadingShell progress={generationProgress} trackNumber={tracks.length + 1} />
                 <TrackLoadingShell progress={Math.max(0, generationProgress - 25)} trackNumber={tracks.length + 2} />
               </>

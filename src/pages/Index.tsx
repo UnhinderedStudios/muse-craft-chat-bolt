@@ -834,6 +834,7 @@ const Index = () => {
     if (busy) return;
     const content = "Please generate a completely randomized song_request and output ONLY the JSON in a JSON fenced code block (```json ... ```). The lyrics must be a complete song containing Intro, Verse 1, Pre-Chorus, Chorus, Verse 2, Chorus, Bridge, and Outro. No extra text.";
     setBusy(true);
+    console.log("Dice clicked - isGeneratingMusic should be false", isGeneratingMusic);
     try {
       // Use a minimal, stateless prompt so we don't get follow-ups that could override fields
       const minimal: ChatMessage[] = [{ role: "user", content }];
