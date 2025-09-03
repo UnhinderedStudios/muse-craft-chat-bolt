@@ -1469,7 +1469,7 @@ async function startGeneration() {
                   )
                 );
               }}
-              isGenerating={busy}
+              isGenerating={isGeneratingMusic}
               generationProgress={generationProgress}
             />
           </div>
