@@ -909,7 +909,9 @@ async function startGeneration() {
     setLastProgressUpdate(Date.now());
     setAlbumCovers(null);
     setIsGeneratingCovers(false);
-    setBusy(true);
+     setBusy(true);
+     setIsGeneratingMusic(true);
+     console.log("🎵 Music generation started - isGeneratingMusic set to true");
     
     // Start album cover generation immediately in parallel
     if (details.title || details.lyrics || details.style) {
