@@ -898,9 +898,10 @@ const Index = () => {
     }
   }
 
-const startGeneration = async (details: SongDetails) => {
-    if (isMusicGenerating) return;
-    setIsMusicGenerating(true);
+  const startGeneration = async (details: SongDetails) => {
+    // Generate unique ID for this generation job
+    const generationId = `gen-${Date.now()}-${Math.random()}`;
+    console.log(`[Generation ${generationId}] Starting with details:`, details);
     setAudioUrl(null);
     setAudioUrls(null);
     setJobId(null);
@@ -1179,14 +1180,10 @@ const startGeneration = async (details: SongDetails) => {
       return;
     }
     
-    setActiveJobCount(prev => prev + 1);
-    
-    try {
-      if (!canGenerate) {
-        toast.message("Add a few details first", { description: "Chat a bit more until I extract a song request." });
-        return;
-      }
-      await startGeneration(details);
+      setActiveJobCount(prev => prev + 1);
+      
+      try {
+        await startGeneration(details);
     } finally {
       setActiveJobCount(prev => prev - 1);
     }
@@ -1407,7 +1404,13 @@ const startGeneration = async (details: SongDetails) => {
   <div className="shrink-0 w-[180px] flex flex-col gap-2">
     {/* Generate — same height as tray */}
     <button
-      onClick={() => startConcurrentGeneration({ ...details, style: sanitizeStyleSafe(details.style) })}
+      onClick={() => {
+        if (!canGenerate) {
+          toast.message("Add a few details first", { description: "Chat a bit more until I extract a song request." });
+          return;
+        }
+        startConcurrentGeneration({ ...details, style: sanitizeStyleSafe(details.style) });
+      }}
       disabled={activeJobCount >= 10 || !canGenerate}
       className="h-9 w-full rounded-lg text-[13px] font-medium text-white bg-accent-primary hover:bg-accent-primary/90 disabled:bg-accent-primary/60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
       aria-disabled={activeJobCount >= 10 || !canGenerate}
