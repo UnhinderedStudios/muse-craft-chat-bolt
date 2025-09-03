@@ -783,7 +783,7 @@ const Index = () => {
     setIsReadingText(hasTextAttachments || false);
     
     try {
-      const chatSystemPrompt = "You are a helpful assistant that helps users create and generate songs. Be creative, engaging, and provide detailed suggestions.";
+      const chatSystemPrompt = systemPrompt;
       console.debug("[Chat] Using systemPrompt (first 160 chars):", chatSystemPrompt.slice(0, 160));
       
       // Use the shared sendMessage function
