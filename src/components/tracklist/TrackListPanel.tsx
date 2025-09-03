@@ -69,8 +69,7 @@ export default function TrackListPanel({
   onTimeUpdate,
   onTrackTitleUpdate,
   isGenerating = false,
-  generationProgress = 0,
-  generationManager
+  generationProgress = 0
 }: Props) {
   const [audioCurrentTimes, setAudioCurrentTimes] = useState<number[]>([]);
   const [showQuickAlbumGenerator, setShowQuickAlbumGenerator] = useState(false);

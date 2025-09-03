@@ -204,7 +204,10 @@ const Index = () => {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
-  const [isGeneratingMusic, setIsGeneratingMusic] = useState(false);
+  
+  // Multi-generation system
+  const generationManager = useGenerationManager();
+  const isGeneratingMusic = generationManager.state.activeCount > 0;
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const [isReadingText, setIsReadingText] = useState(false);
   const [details, setDetails] = useState<SongDetails>({});
