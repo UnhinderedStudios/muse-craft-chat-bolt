@@ -943,6 +943,9 @@ const Index = () => {
     // Start album cover generation immediately in parallel
     console.log(`[Album Debug] Checking cover generation trigger for job ${wrapperJobId || 'direct'}: title="${songData.title}", lyrics="${songData.lyrics?.substring(0, 50)}...", style="${songData.style}"`);
     
+    // Declare album cover promise variable
+    let albumCoverPromise: Promise<any> = Promise.resolve(null);
+    
     if (songData.title || songData.lyrics || songData.style) {
       console.log(`[Album Debug] Starting cover generation for job ${wrapperJobId || 'direct'}`);
       
@@ -957,7 +960,8 @@ const Index = () => {
         setIsGeneratingCovers(true);
       }
       
-      api.generateAlbumCovers(songData)
+      // Start album cover generation (parallel to music generation) and store the promise
+      albumCoverPromise = api.generateAlbumCovers(songData)
         .then(covers => {
           console.log(`[Album Success] Generated covers for job ${wrapperJobId || 'direct'}:`, covers);
           
@@ -975,10 +979,12 @@ const Index = () => {
                 job.id === wrapperJobId ? { ...job, isGeneratingCovers: false } : job
               )
             );
+            return { cover1: covers.cover1, cover2: covers.cover2 };
           } else {
             // For non-concurrent generations, keep global state for backward compatibility
             setAlbumCovers(covers);
             setIsGeneratingCovers(false);
+            return covers;
           }
         })
         .catch(error => {
@@ -993,6 +999,7 @@ const Index = () => {
           } else {
             setIsGeneratingCovers(false);
           }
+          return null; // Return null on error
         });
     } else {
       console.log(`[Album Debug] Skipping cover generation - no title/lyrics/style for job ${wrapperJobId || 'direct'}`);
@@ -1223,8 +1230,18 @@ const Index = () => {
           const batchCreatedAt = Date.now();
           console.log(`[Generation] Adding ${updatedVersions.length} tracks for job ${wrapperJobId || 'direct'}`);
           
-          // Get appropriate album covers for this job
-          const coversForJob = wrapperJobId ? jobAlbumCovers.get(wrapperJobId) : albumCovers;
+          // Wait for album covers to be ready before creating tracks
+          console.log(`[Album Covers] Waiting for album cover generation to complete...`);
+          let coversForJob;
+          try {
+            const awaitedCovers = await albumCoverPromise;
+            console.log(`[Album Covers] Album cover generation completed:`, awaitedCovers);
+            coversForJob = wrapperJobId ? jobAlbumCovers.get(wrapperJobId) : awaitedCovers;
+          } catch (error) {
+            console.warn(`[Album Covers] Failed to get album covers:`, error);
+            coversForJob = wrapperJobId ? jobAlbumCovers.get(wrapperJobId) : albumCovers;
+          }
+          
           console.log(`[Track Creation] Job ${wrapperJobId || 'direct'} - jobAlbumCovers map size: ${jobAlbumCovers.size}, keys:`, Array.from(jobAlbumCovers.keys()));
           console.log(`[Track Creation] Retrieved covers for job ${wrapperJobId || 'direct'}:`, coversForJob ? 'found' : 'none', coversForJob);
           
