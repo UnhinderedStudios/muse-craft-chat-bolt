@@ -208,8 +208,14 @@ const Index = () => {
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const [isReadingText, setIsReadingText] = useState(false);
   
-  // Simple job counter for button display only
-  const [activeJobCount, setActiveJobCount] = useState(0);
+  // Per-job state management for concurrent generation
+  const [activeJobs, setActiveJobs] = useState<Array<{
+    id: string;
+    progress: number;
+    startTime: number;
+    isComplete: boolean;
+  }>>([]);
+  const activeJobCount = activeJobs.length;
   const [details, setDetails] = useState<SongDetails>({});
   const [styleTags, setStyleTags] = useState<string[]>([]);
   const { chatHeight, isResizing, handleMouseDown } = useResize();
@@ -1180,13 +1186,8 @@ const Index = () => {
       return;
     }
     
-      setActiveJobCount(prev => prev + 1);
-      
-      try {
-        await startGeneration(details);
-    } finally {
-      setActiveJobCount(prev => prev - 1);
-    }
+    // Job management is now handled inside startGeneration
+    await startGeneration(details);
   };
 
   
@@ -1496,6 +1497,7 @@ const Index = () => {
               isGenerating={isMusicGenerating}
               generationProgress={generationProgress}
               activeJobCount={activeJobCount}
+              activeJobs={activeJobs}
             />
           </div>
 
