@@ -207,6 +207,8 @@ const Index = () => {
   const [isMusicGenerating, setIsMusicGenerating] = useState(false);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const [isReadingText, setIsReadingText] = useState(false);
+  const [activeJobs, setActiveJobs] = useState<Array<{id: string, progress: number}>>([]);
+  const [jobCounter, setJobCounter] = useState(0);
   const [details, setDetails] = useState<SongDetails>({});
   const [styleTags, setStyleTags] = useState<string[]>([]);
   const { chatHeight, isResizing, handleMouseDown } = useResize();
@@ -1172,6 +1174,28 @@ async function startGeneration() {
     }
   }
 
+  const startConcurrentGeneration = async () => {
+    if (activeJobs.length >= 10) return;
+    
+    const jobId = `job-${jobCounter}`;
+    setJobCounter(prev => prev + 1);
+    setActiveJobs(prev => [{id: jobId, progress: 0}, ...prev]);
+    
+    // Track progress updates and sync with job
+    const progressInterval = setInterval(() => {
+      setActiveJobs(prev => prev.map(job => 
+        job.id === jobId ? {...job, progress: generationProgress} : job
+      ));
+    }, 200);
+    
+    try {
+      await startGeneration();
+    } finally {
+      clearInterval(progressInterval);
+      setActiveJobs(prev => prev.filter(job => job.id !== jobId));
+    }
+  };
+
   return (
     <div
       className="h-screen bg-[#0c0c0c] overflow-hidden flex flex-col"
@@ -1385,13 +1409,13 @@ async function startGeneration() {
   <div className="shrink-0 w-[180px] flex flex-col gap-2">
     {/* Generate — same height as tray */}
     <button
-      onClick={startGeneration}
-      disabled={isMusicGenerating || !canGenerate}
+      onClick={startConcurrentGeneration}
+      disabled={activeJobs.length >= 10 || !canGenerate}
       className="h-9 w-full rounded-lg text-[13px] font-medium text-white bg-accent-primary hover:bg-accent-primary/90 disabled:bg-accent-primary/60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-      aria-disabled={isMusicGenerating || !canGenerate}
+      aria-disabled={activeJobs.length >= 10 || !canGenerate}
     >
       <span className="text-sm leading-none">✦</span>
-      <span>Generate</span>
+      <span>{activeJobs.length > 0 ? `Generate (${activeJobs.length}/10)` : "Generate"}</span>
     </button>
 
     {/* Icon tray — perfectly centered icons */}
@@ -1468,8 +1492,7 @@ async function startGeneration() {
                   )
                 );
               }}
-              isGenerating={isMusicGenerating}
-              generationProgress={generationProgress}
+              activeJobs={activeJobs}
             />
           </div>
 

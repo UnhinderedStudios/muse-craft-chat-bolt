@@ -27,8 +27,7 @@ type Props = {
   setCurrentIndex: (index: number) => void;
   onTimeUpdate: (audio: HTMLAudioElement) => void;
   onTrackTitleUpdate?: (trackIndex: number, newTitle: string) => void;
-  isGenerating?: boolean;
-  generationProgress?: number;
+  activeJobs?: Array<{id: string, progress: number}>;
 };
 
 // Generate 20 test tracks for testing search functionality
@@ -68,8 +67,7 @@ export default function TrackListPanel({
   setCurrentIndex,
   onTimeUpdate,
   onTrackTitleUpdate,
-  isGenerating = false,
-  generationProgress = 0
+  activeJobs = []
 }: Props) {
   const [audioCurrentTimes, setAudioCurrentTimes] = useState<number[]>([]);
   const [showQuickAlbumGenerator, setShowQuickAlbumGenerator] = useState(false);
@@ -215,13 +213,13 @@ export default function TrackListPanel({
         <div ref={scrollRef} className="h-full overflow-y-auto overflow-x-hidden lyrics-scrollbar">
           <div className={`min-h-full flex flex-col justify-start gap-3 px-4 pt-2 pb-4`}>
             
-            {/* Show loading shells when generating */}
-            {isGenerating && (
-              <>
-                <TrackLoadingShell progress={generationProgress} trackNumber={tracks.length + 1} />
-                <TrackLoadingShell progress={Math.max(0, generationProgress - 25)} trackNumber={tracks.length + 2} />
-              </>
-            )}
+            {/* Show loading shells for concurrent jobs */}
+            {activeJobs.map((job, index) => (
+              <div key={job.id}>
+                <TrackLoadingShell progress={job.progress} trackNumber={tracks.length + (index * 2) + 1} />
+                <TrackLoadingShell progress={Math.max(0, job.progress - 25)} trackNumber={tracks.length + (index * 2) + 2} />
+              </div>
+            ))}
             
             {paginatedTracks.map((t, pageIndex) => {
           // Calculate the actual index in the full filtered tracks array
