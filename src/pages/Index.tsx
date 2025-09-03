@@ -204,7 +204,6 @@ const Index = () => {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
-  const [isGeneratingMusic, setIsGeneratingMusic] = useState(false);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const [isReadingText, setIsReadingText] = useState(false);
   const [details, setDetails] = useState<SongDetails>({});
@@ -834,7 +833,6 @@ const Index = () => {
     if (busy) return;
     const content = "Please generate a completely randomized song_request and output ONLY the JSON in a JSON fenced code block (```json ... ```). The lyrics must be a complete song containing Intro, Verse 1, Pre-Chorus, Chorus, Verse 2, Chorus, Bridge, and Outro. No extra text.";
     setBusy(true);
-    console.log("Dice clicked - isGeneratingMusic should be false", isGeneratingMusic);
     try {
       // Use a minimal, stateless prompt so we don't get follow-ups that could override fields
       const minimal: ChatMessage[] = [{ role: "user", content }];
@@ -909,9 +907,7 @@ async function startGeneration() {
     setLastProgressUpdate(Date.now());
     setAlbumCovers(null);
     setIsGeneratingCovers(false);
-     setBusy(true);
-     setIsGeneratingMusic(true);
-     console.log("🎵 Music generation started - isGeneratingMusic set to true");
+    setBusy(true);
     
     // Start album cover generation immediately in parallel
     if (details.title || details.lyrics || details.style) {
@@ -1172,7 +1168,6 @@ async function startGeneration() {
       toast.error(e.message || "Generation failed");
     } finally {
       setBusy(false);
-      setIsGeneratingMusic(false);
     }
   }
 
@@ -1472,7 +1467,7 @@ async function startGeneration() {
                   )
                 );
               }}
-              isGenerating={isGeneratingMusic}
+              isGenerating={busy}
               generationProgress={generationProgress}
             />
           </div>

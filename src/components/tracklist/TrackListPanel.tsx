@@ -216,13 +216,12 @@ export default function TrackListPanel({
           <div className={`min-h-full flex flex-col justify-start gap-3 px-4 pt-2 pb-4`}>
             
             {/* Show loading shells when generating */}
-        {isGenerating && (
-          <>
-            {console.log("TrackListPanel RENDERING loading shells - isGenerating:", isGenerating, "progress:", generationProgress)}
-            <TrackLoadingShell progress={generationProgress} trackNumber={tracks.length + 1} />
-            <TrackLoadingShell progress={Math.max(0, generationProgress - 25)} trackNumber={tracks.length + 2} />
-          </>
-        )}
+            {isGenerating && (
+              <>
+                <TrackLoadingShell progress={generationProgress} trackNumber={tracks.length + 1} />
+                <TrackLoadingShell progress={Math.max(0, generationProgress - 25)} trackNumber={tracks.length + 2} />
+              </>
+            )}
             
             {paginatedTracks.map((t, pageIndex) => {
           // Calculate the actual index in the full filtered tracks array
