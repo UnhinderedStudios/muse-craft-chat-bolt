@@ -1165,6 +1165,7 @@ const Index = () => {
           
           // Add tracks to the track list (newest first)
           const batchCreatedAt = Date.now();
+          console.log(`[Generation] Adding ${updatedVersions.length} tracks for job ${wrapperJobId || 'direct'}`);
           setTracks(prev => {
             const existing = new Set(prev.map(t => t.id));
             const fresh = updatedVersions.map((v, i) => ({
@@ -1178,8 +1179,15 @@ const Index = () => {
               hasTimestamps: v.hasTimestamps,
             })).filter(t => !existing.has(t.id));
             
+            console.log(`[Generation] Added ${fresh.length} new tracks, total tracks: ${fresh.length + prev.length}`);
             return [...fresh, ...prev]; // newest first
           });
+          
+          // Clean up job after successful track creation (for concurrent generations)
+          if (wrapperJobId) {
+            console.log(`[Generation] Cleaning up successful job ${wrapperJobId}`);
+            setActiveGenerations(prev => prev.filter(job => job.id !== wrapperJobId));
+          }
           
           // Set active track to first of new batch
           setCurrentTrackIndex(0);
@@ -1255,9 +1263,14 @@ const Index = () => {
     
     try {
       await startGenerationWithJobId(jobId, details);
-    } finally {
-      setActiveGenerations(prev => prev.filter(job => job.id !== jobId));
+    } catch (error) {
+      // Keep failed jobs visible with error state for 5 seconds
+      setTimeout(() => {
+        setActiveGenerations(prev => prev.filter(job => job.id !== jobId));
+      }, 5000);
+      throw error;
     }
+    // Note: Job cleanup now happens after successful track creation in startGenerationWithJobId
   }
 
   return (
