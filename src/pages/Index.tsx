@@ -398,6 +398,8 @@ const Index = () => {
       rawResponse: any;
     }
   } | null>(null);
+  // Job-specific album covers to prevent state pollution
+  const [jobAlbumCovers, setJobAlbumCovers] = useState<Map<string, { cover1: string; cover2: string; }>>(new Map());
   const [isGeneratingCovers, setIsGeneratingCovers] = useState(false);
   const [scrollTop, setScrollTop] = useState<number>(0);
   const [activeGenerations, setActiveGenerations] = useState<Array<{
@@ -933,7 +935,15 @@ const Index = () => {
       api.generateAlbumCovers(songData)
         .then(covers => {
           console.log("Album covers generated:", covers);
-          setAlbumCovers(covers);
+          
+          if (wrapperJobId) {
+            // Store covers per job to prevent state pollution
+            setJobAlbumCovers(prev => new Map(prev).set(wrapperJobId, { cover1: covers.cover1, cover2: covers.cover2 }));
+            console.log(`[Album] Stored covers for job ${wrapperJobId}`);
+          } else {
+            // For non-concurrent generations, keep global state for backward compatibility
+            setAlbumCovers(covers);
+          }
         })
         .catch(error => {
           console.error("Album cover generation failed:", error);
@@ -1166,13 +1176,18 @@ const Index = () => {
           // Add tracks to the track list (newest first)
           const batchCreatedAt = Date.now();
           console.log(`[Generation] Adding ${updatedVersions.length} tracks for job ${wrapperJobId || 'direct'}`);
+          
+          // Get appropriate album covers for this job
+          const coversForJob = wrapperJobId ? jobAlbumCovers.get(wrapperJobId) : albumCovers;
+          console.log(`[Generation] Using covers for job ${wrapperJobId || 'direct'}:`, coversForJob ? 'found' : 'none');
+          
           setTracks(prev => {
             const existing = new Set(prev.map(t => t.id));
             const fresh = updatedVersions.map((v, i) => ({
               id: v.audioId || `${sunoJobId}-${i}`,
               url: v.url,
               title: songData.title || "Song Title",
-              coverUrl: albumCovers ? (i === 1 ? albumCovers.cover2 : albumCovers.cover1) : undefined,
+              coverUrl: coversForJob ? (i === 1 ? coversForJob.cover2 : coversForJob.cover1) : undefined,
               createdAt: batchCreatedAt,
               params: styleTags,
               words: v.words,
@@ -1187,6 +1202,12 @@ const Index = () => {
           if (wrapperJobId) {
             console.log(`[Generation] Cleaning up successful job ${wrapperJobId}`);
             setActiveGenerations(prev => prev.filter(job => job.id !== wrapperJobId));
+            // Also clean up job-specific album covers after successful completion
+            setJobAlbumCovers(prev => {
+              const newMap = new Map(prev);
+              newMap.delete(wrapperJobId);
+              return newMap;
+            });
           }
           
           // Set active track to first of new batch
