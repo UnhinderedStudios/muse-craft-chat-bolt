@@ -15,12 +15,12 @@ export function TrackLoadingShell({ progress, trackNumber }: TrackLoadingShellPr
         </div>
         
         {/* Track info area */}
-        <div className="flex-1 min-w-0 pr-2">
+        <div className="flex-1 min-w-0 pr-4">
           {/* Title placeholder - pill shape */}
-          <div className="h-3 bg-white/15 rounded-full animate-pulse mb-1" style={{ width: 'calc(100% - 3rem)' }}></div>
+          <div className="h-3 bg-white/15 rounded-full animate-pulse w-full mb-1"></div>
           
           {/* Progress bar */}
-          <div className="relative h-1.5 bg-white/5 rounded overflow-hidden" style={{ width: 'calc(100% - 3rem)' }}>
+          <div className="relative h-1.5 bg-white/5 rounded overflow-hidden w-full">
             {/* Scanning animation background */}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-accent-primary/15 to-transparent animate-scanning"></div>
             {/* Actual progress */}
