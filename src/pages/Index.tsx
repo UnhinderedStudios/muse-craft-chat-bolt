@@ -37,7 +37,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { useChat } from "@/hooks/use-chat";
 import { useResize } from "@/hooks/use-resize";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { useSongGeneration } from "@/hooks/use-song-generation";
+import { useGenerationManager } from "@/hooks/use-generation-manager";
 
 // Types
 import { type TimestampedWord, type ChatMessage, type TrackItem } from "@/types";
