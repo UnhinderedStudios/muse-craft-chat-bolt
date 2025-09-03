@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Play, Pause, RotateCw, X, Heart, Shuffle, Repeat, MoreHorizontal, Search, Edit3 } from "lucide-react";
 import { TrackItem } from "@/types";
-import { ActiveGeneration } from "@/hooks/use-concurrent-generation";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useScrollDelegationHook } from "@/utils/scrollDelegation";
@@ -17,7 +16,6 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { TrackLoadingShell } from "./TrackLoadingShell";
-import { GenerationLoadingShell } from "./GenerationLoadingShell";
 
 type Props = {
   tracks: TrackItem[];
@@ -31,8 +29,6 @@ type Props = {
   onTrackTitleUpdate?: (trackIndex: number, newTitle: string) => void;
   isGenerating?: boolean;
   generationProgress?: number;
-  activeGenerations?: ActiveGeneration[];
-  onCancelGeneration?: (id: string) => void;
 };
 
 // Generate 20 test tracks for testing search functionality
@@ -73,9 +69,7 @@ export default function TrackListPanel({
   onTimeUpdate,
   onTrackTitleUpdate,
   isGenerating = false,
-  generationProgress = 0,
-  activeGenerations = [],
-  onCancelGeneration
+  generationProgress = 0
 }: Props) {
   const [audioCurrentTimes, setAudioCurrentTimes] = useState<number[]>([]);
   const [showQuickAlbumGenerator, setShowQuickAlbumGenerator] = useState(false);
@@ -118,9 +112,6 @@ export default function TrackListPanel({
         );
         return titleMatch || paramsMatch;
       });
-  
-  // Sort active generations by newest first
-  const sortedGenerations = [...activeGenerations].sort((a, b) => b.startTime - a.startTime);
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredTracks.length / tracksPerPage);
@@ -224,17 +215,8 @@ export default function TrackListPanel({
         <div ref={scrollRef} className="h-full overflow-y-auto overflow-x-hidden lyrics-scrollbar">
           <div className={`min-h-full flex flex-col justify-start gap-3 px-4 pt-2 pb-4`}>
             
-            {/* Active generation loading shells (newest first) */}
-            {sortedGenerations.map((generation) => (
-              <GenerationLoadingShell
-                key={generation.id}
-                generation={generation}
-                onCancel={onCancelGeneration}
-              />
-            ))}
-            
-            {/* Only show legacy loading shells if no concurrent generations and still generating */}
-            {isGenerating && sortedGenerations.length === 0 && (
+            {/* Show loading shells when generating */}
+            {isGenerating && (
               <>
                 <TrackLoadingShell progress={generationProgress} trackNumber={tracks.length + 1} />
                 <TrackLoadingShell progress={Math.max(0, generationProgress - 25)} trackNumber={tracks.length + 2} />
