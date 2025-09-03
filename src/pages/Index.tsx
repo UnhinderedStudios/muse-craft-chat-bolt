@@ -941,27 +941,22 @@ const Index = () => {
     }
     
     // Start album cover generation immediately in parallel
-    console.log(`[Album Debug] Checking cover generation trigger for job ${wrapperJobId || 'direct'}: title="${songData.title}", lyrics="${songData.lyrics?.substring(0, 50)}...", style="${songData.style}"`);
+    console.log(`[Album Debug] Starting cover generation for job ${wrapperJobId || 'direct'}: title="${songData.title}", lyrics="${songData.lyrics?.substring(0, 50)}...", style="${songData.style}"`);
     
-    // Declare album cover promise variable
-    let albumCoverPromise: Promise<any> = Promise.resolve(null);
+    // Always generate album covers - remove restrictive condition
+    if (wrapperJobId) {
+      // Update job-specific cover generation state
+      setActiveGenerations(prev => 
+        prev.map(job => 
+          job.id === wrapperJobId ? { ...job, isGeneratingCovers: true } : job
+        )
+      );
+    } else {
+      setIsGeneratingCovers(true);
+    }
     
-    if (songData.title || songData.lyrics || songData.style) {
-      console.log(`[Album Debug] Starting cover generation for job ${wrapperJobId || 'direct'}`);
-      
-      if (wrapperJobId) {
-        // Update job-specific cover generation state
-        setActiveGenerations(prev => 
-          prev.map(job => 
-            job.id === wrapperJobId ? { ...job, isGeneratingCovers: true } : job
-          )
-        );
-      } else {
-        setIsGeneratingCovers(true);
-      }
-      
-      // Start album cover generation (parallel to music generation) and store the promise
-      albumCoverPromise = api.generateAlbumCovers(songData)
+    // Start album cover generation (parallel to music generation) and store the promise
+    const albumCoverPromise = api.generateAlbumCovers(songData)
         .then(covers => {
           console.log(`[Album Success] Generated covers for job ${wrapperJobId || 'direct'}:`, covers);
           
@@ -1001,9 +996,6 @@ const Index = () => {
           }
           return null; // Return null on error
         });
-    } else {
-      console.log(`[Album Debug] Skipping cover generation - no title/lyrics/style for job ${wrapperJobId || 'direct'}`);
-    }
     
     try {
       const payload = { ...songData, style: sanitizeStyle(songData.style || "") };
