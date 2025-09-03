@@ -205,10 +205,17 @@ export function useConcurrentGeneration() {
 
       // Start polling
       const pollInterval = setInterval(() => {
-        const currentGen = state.activeGenerations.get(generationId);
-        if (currentGen && currentGen.status === 'generating') {
-          pollGeneration(currentGen);
-        }
+        setState(currentState => {
+          const currentGen = currentState.activeGenerations.get(generationId);
+          if (currentGen && currentGen.status === 'generating') {
+            pollGeneration(currentGen);
+          } else {
+            // Clear interval if generation is no longer active
+            clearInterval(pollInterval);
+            pollIntervals.current.delete(generationId);
+          }
+          return currentState;
+        });
       }, 5000);
 
       pollIntervals.current.set(generationId, pollInterval);

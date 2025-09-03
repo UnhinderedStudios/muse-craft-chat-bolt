@@ -233,8 +233,8 @@ export default function TrackListPanel({
               />
             ))}
             
-            {/* Legacy loading shells when generating */}
-            {isGenerating && (
+            {/* Only show legacy loading shells if no concurrent generations and still generating */}
+            {isGenerating && sortedGenerations.length === 0 && (
               <>
                 <TrackLoadingShell progress={generationProgress} trackNumber={tracks.length + 1} />
                 <TrackLoadingShell progress={Math.max(0, generationProgress - 25)} trackNumber={tracks.length + 2} />

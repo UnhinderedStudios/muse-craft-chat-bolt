@@ -838,10 +838,15 @@ const Index = () => {
   async function randomizeAll() {
     if (busy) return;
     
-    const randomized = await randomizeFormOnly();
-    if (randomized) {
-      lastDiceAt.current = Date.now();
-      setDetails((d) => mergeNonEmpty(d, randomized));
+    setBusy(true); // Show loading in chat
+    try {
+      const randomized = await randomizeFormOnly();
+      if (randomized) {
+        lastDiceAt.current = Date.now();
+        setDetails((d) => mergeNonEmpty(d, randomized));
+      }
+    } finally {
+      setBusy(false); // Hide loading in chat
     }
   }
 
@@ -880,10 +885,10 @@ async function startGeneration() {
       return; // Error already handled in concurrent generation
     }
     
-    // Legacy state reset (keep for backwards compatibility)
-    setAudioUrl(null);
-    setAudioUrls(null);
-    setJobId(null);
+    // Don't reset these states anymore since we have concurrent generations
+    // setAudioUrl(null);
+    // setAudioUrls(null);
+    // setJobId(null);
     setVersions([]);
     setGenerationProgress(0);
     setLastProgressUpdate(Date.now());
@@ -1367,9 +1372,9 @@ async function startGeneration() {
     {/* Generate — same height as tray */}
     <button
       onClick={startGeneration}
-      disabled={busy || !canGenerate || !concurrentGeneration.canStartNewGeneration()}
+      disabled={busy || !canGenerate}
       className="h-9 w-full rounded-lg text-[13px] font-medium text-white bg-accent-primary hover:bg-accent-primary/90 disabled:bg-accent-primary/60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-      aria-disabled={busy || !canGenerate || !concurrentGeneration.canStartNewGeneration()}
+      aria-disabled={busy || !canGenerate}
     >
       <span className="text-sm leading-none">✦</span>
       <span>
