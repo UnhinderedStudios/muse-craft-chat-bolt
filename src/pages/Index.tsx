@@ -407,7 +407,9 @@ const Index = () => {
     sunoJobId?: string,
     startTime: number,
     progress: number,
-    details: SongDetails
+    details: SongDetails,
+    isGeneratingMusic: boolean,
+    isGeneratingCovers: boolean
   }>>([]);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const audioRefs = useRef<HTMLAudioElement[]>([]);
@@ -920,18 +922,37 @@ const Index = () => {
     setJobId(null);
     if (!wrapperJobId) {
       setVersions([]);
-    }
-    if (!wrapperJobId) {
       setGenerationProgress(0);
       setLastProgressUpdate(Date.now());
+      setAlbumCovers(null);
+      setIsGeneratingCovers(false);
+      setIsMusicGenerating(true);
+    } else {
+      // For concurrent jobs, update job-specific state
+      setActiveGenerations(prev => 
+        prev.map(job => 
+          job.id === wrapperJobId ? { 
+            ...job, 
+            isGeneratingMusic: true, 
+            isGeneratingCovers: false 
+          } : job
+        )
+      );
     }
-    setAlbumCovers(null);
-    setIsGeneratingCovers(false);
-    setIsMusicGenerating(true);
     
     // Start album cover generation immediately in parallel
     if (songData.title || songData.lyrics || songData.style) {
-      setIsGeneratingCovers(true);
+      if (wrapperJobId) {
+        // Update job-specific cover generation state
+        setActiveGenerations(prev => 
+          prev.map(job => 
+            job.id === wrapperJobId ? { ...job, isGeneratingCovers: true } : job
+          )
+        );
+      } else {
+        setIsGeneratingCovers(true);
+      }
+      
       api.generateAlbumCovers(songData)
         .then(covers => {
           console.log("Album covers generated:", covers);
@@ -940,17 +961,30 @@ const Index = () => {
             // Store covers per job to prevent state pollution
             setJobAlbumCovers(prev => new Map(prev).set(wrapperJobId, { cover1: covers.cover1, cover2: covers.cover2 }));
             console.log(`[Album] Stored covers for job ${wrapperJobId}`);
+            // Update job-specific state
+            setActiveGenerations(prev => 
+              prev.map(job => 
+                job.id === wrapperJobId ? { ...job, isGeneratingCovers: false } : job
+              )
+            );
           } else {
             // For non-concurrent generations, keep global state for backward compatibility
             setAlbumCovers(covers);
+            setIsGeneratingCovers(false);
           }
         })
         .catch(error => {
           console.error("Album cover generation failed:", error);
           toast.error("Failed to generate album covers");
-        })
-        .finally(() => {
-          setIsGeneratingCovers(false);
+          if (wrapperJobId) {
+            setActiveGenerations(prev => 
+              prev.map(job => 
+                job.id === wrapperJobId ? { ...job, isGeneratingCovers: false } : job
+              )
+            );
+          } else {
+            setIsGeneratingCovers(false);
+          }
         });
     }
     
@@ -992,6 +1026,8 @@ const Index = () => {
         else if (statusRaw === "SUCCESS") statusProgress = 70;
         
         const newProgress = Math.max(baseProgress, statusProgress);
+        console.log(`[Generation] Job ${wrapperJobId || 'direct'} - Attempt ${completionAttempts}: Status=${statusRaw}, Progress=${newProgress}%`);
+        
         if (wrapperJobId) {
           updateJobProgress(wrapperJobId, newProgress);
         } else {
@@ -1198,16 +1234,22 @@ const Index = () => {
             return [...fresh, ...prev]; // newest first
           });
           
-          // Clean up job after successful track creation (for concurrent generations)
+          // Mark job as completed and clean up after successful track creation
           if (wrapperJobId) {
-            console.log(`[Generation] Cleaning up successful job ${wrapperJobId}`);
-            setActiveGenerations(prev => prev.filter(job => job.id !== wrapperJobId));
-            // Also clean up job-specific album covers after successful completion
-            setJobAlbumCovers(prev => {
-              const newMap = new Map(prev);
-              newMap.delete(wrapperJobId);
-              return newMap;
-            });
+            console.log(`[Generation] Marking job ${wrapperJobId} as completed, cleaning up in 1 second...`);
+            updateJobState(wrapperJobId, { isGeneratingMusic: false, isGeneratingCovers: false });
+            
+            // Delay cleanup to ensure tracks are fully added to UI first
+            setTimeout(() => {
+              console.log(`[Generation] Cleaning up successful job ${wrapperJobId}`);
+              setActiveGenerations(prev => prev.filter(job => job.id !== wrapperJobId));
+              // Clean up job-specific album covers after successful completion
+              setJobAlbumCovers(prev => {
+                const newMap = new Map(prev);
+                newMap.delete(wrapperJobId);
+                return newMap;
+              });
+            }, 1000);
           }
           
           // Set active track to first of new batch
@@ -1253,8 +1295,21 @@ const Index = () => {
     } catch (e: any) {
       console.error("[Generation] Error:", e);
       toast.error(e.message || "Generation failed");
-    } finally {
-      setIsMusicGenerating(false);
+      
+      if (wrapperJobId) {
+        // Mark job as failed but keep it visible for error state
+        setActiveGenerations(prev => 
+          prev.map(job => 
+            job.id === wrapperJobId ? { 
+              ...job, 
+              isGeneratingMusic: false, 
+              isGeneratingCovers: false 
+            } : job
+          )
+        );
+      } else {
+        setIsMusicGenerating(false);
+      }
     }
   }
 
@@ -1263,6 +1318,15 @@ const Index = () => {
     setActiveGenerations(prev => 
       prev.map(job => 
         job.id === jobId ? { ...job, progress: newProgress } : job
+      )
+    );
+  };
+
+  // Update job state helper (for music/cover generation states)
+  const updateJobState = (jobId: string, updates: Partial<{isGeneratingMusic: boolean, isGeneratingCovers: boolean}>) => {
+    setActiveGenerations(prev => 
+      prev.map(job => 
+        job.id === jobId ? { ...job, ...updates } : job
       )
     );
   };
@@ -1279,7 +1343,9 @@ const Index = () => {
       id: jobId, 
       startTime: Date.now(),
       progress: 0,
-      details: { ...details }
+      details: { ...details },
+      isGeneratingMusic: false,
+      isGeneratingCovers: false
     }]);
     
     try {
