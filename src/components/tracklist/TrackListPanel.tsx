@@ -219,9 +219,7 @@ export default function TrackListPanel({
             {isGenerating && (
               <>
                 <TrackLoadingShell progress={generationProgress} trackNumber={tracks.length + 1} />
-                {generationProgress > 50 && (
-                  <TrackLoadingShell progress={Math.max(0, generationProgress - 25)} trackNumber={tracks.length + 2} />
-                )}
+                <TrackLoadingShell progress={Math.max(0, generationProgress - 25)} trackNumber={tracks.length + 2} />
               </>
             )}
             
