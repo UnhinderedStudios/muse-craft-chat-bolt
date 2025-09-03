@@ -215,10 +215,17 @@ export default function TrackListPanel({
         <div ref={scrollRef} className="h-full overflow-y-auto overflow-x-hidden lyrics-scrollbar">
           <div className={`min-h-full flex flex-col justify-start gap-3 px-4 pt-2 pb-4`}>
             
-            {/* Loading shells - always visible for design editing */}
-            <TrackLoadingShell progress={45} trackNumber={1} />
-            <TrackLoadingShell progress={75} trackNumber={2} />
-        {paginatedTracks.map((t, pageIndex) => {
+            {/* Show loading shells when generating */}
+            {isGenerating && (
+              <>
+                <TrackLoadingShell progress={generationProgress} trackNumber={tracks.length + 1} />
+                {generationProgress > 50 && (
+                  <TrackLoadingShell progress={Math.max(0, generationProgress - 25)} trackNumber={tracks.length + 2} />
+                )}
+              </>
+            )}
+            
+            {paginatedTracks.map((t, pageIndex) => {
           // Calculate the actual index in the full filtered tracks array
           const actualIndex = filteredTracks.indexOf(t);
           const active = actualIndex === currentIndex;
