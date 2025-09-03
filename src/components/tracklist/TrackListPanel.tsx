@@ -224,17 +224,30 @@ export default function TrackListPanel({
             
             {/* Show loading shells for each active generation (newest first) */}
             {[...activeGenerations].reverse().map((generation, genIndex) => {
-              console.log(`TrackListPanel RENDERING shells for generation ${generation.id}:`, generation.progress, generation.progressText);
+              console.log(`🎵 TrackListPanel: Rendering shells for generation ${generation.id}:`, {
+                progress: generation.progress,
+                status: generation.status,
+                progressText: generation.progressText,
+                genIndex
+              });
+              
               const baseTrackNumber = tracks.length + (genIndex * 2) + 1;
+              
+              // Calculate different progress for second shell (delayed but smoother)
+              const shell1Progress = generation.progress;
+              const shell2Progress = Math.max(0, Math.min(95, generation.progress * 0.85 - 5)); // Slightly behind and slower
+              
               return (
                 <React.Fragment key={generation.id}>
                   <TrackLoadingShell 
-                    progress={generation.progress} 
-                    trackNumber={baseTrackNumber} 
+                    progress={shell1Progress} 
+                    trackNumber={baseTrackNumber}
+                    debug={true}
                   />
                   <TrackLoadingShell 
-                    progress={Math.max(0, generation.progress - 25)} 
-                    trackNumber={baseTrackNumber + 1} 
+                    progress={shell2Progress} 
+                    trackNumber={baseTrackNumber + 1}
+                    debug={true}
                   />
                 </React.Fragment>
               );
