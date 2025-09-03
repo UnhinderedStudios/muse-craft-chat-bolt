@@ -398,6 +398,9 @@ const Index = () => {
       rawResponse: any;
     }
   } | null>(null);
+  
+  // Track album covers per job ID to prevent sharing between concurrent generations
+  const [jobAlbumCovers, setJobAlbumCovers] = useState<Map<string, { cover1: string; cover2: string }>>(new Map());
   const [isGeneratingCovers, setIsGeneratingCovers] = useState(false);
   const [scrollTop, setScrollTop] = useState<number>(0);
   const [activeGenerations, setActiveGenerations] = useState<Array<{
@@ -932,8 +935,15 @@ const Index = () => {
       setIsGeneratingCovers(true);
       api.generateAlbumCovers(songData)
         .then(covers => {
-          console.log("Album covers generated:", covers);
-          setAlbumCovers(covers);
+          console.log(`Album covers generated for job ${wrapperJobId || 'direct'}:`, covers);
+          // Store covers per job ID to prevent sharing between concurrent generations
+          const jobId = wrapperJobId || 'direct';
+          setJobAlbumCovers(prev => new Map(prev.set(jobId, { cover1: covers.cover1, cover2: covers.cover2 })));
+          
+          // Only update global albumCovers for non-concurrent generations (backward compatibility)
+          if (!wrapperJobId) {
+            setAlbumCovers(covers);
+          }
         })
         .catch(error => {
           console.error("Album cover generation failed:", error);
@@ -1168,11 +1178,15 @@ const Index = () => {
           console.log(`[Generation] Adding ${updatedVersions.length} tracks for job ${wrapperJobId || 'direct'}`);
           setTracks(prev => {
             const existing = new Set(prev.map(t => t.id));
+            // Get the correct album covers for this specific job
+            const currentJobCovers = wrapperJobId ? jobAlbumCovers.get(wrapperJobId) : albumCovers;
+            console.log(`[Generation] Using covers for job ${wrapperJobId || 'direct'}:`, currentJobCovers);
+            
             const fresh = updatedVersions.map((v, i) => ({
               id: v.audioId || `${sunoJobId}-${i}`,
               url: v.url,
               title: songData.title || "Song Title",
-              coverUrl: albumCovers ? (i === 1 ? albumCovers.cover2 : albumCovers.cover1) : undefined,
+              coverUrl: currentJobCovers ? (i === 1 ? currentJobCovers.cover2 : currentJobCovers.cover1) : undefined,
               createdAt: batchCreatedAt,
               params: styleTags,
               words: v.words,
