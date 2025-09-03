@@ -1170,6 +1170,7 @@ async function startGeneration() {
       toast.error(e.message || "Generation failed");
     } finally {
       setBusy(false);
+      setIsGeneratingMusic(false);
     }
   }
 
