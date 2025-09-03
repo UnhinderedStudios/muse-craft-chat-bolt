@@ -282,9 +282,10 @@ export function useGenerationManager() {
       url,
       title: details.title || "Generated Song",
       createdAt,
-      params: details.style ? [details.style] : [],
+      params: details.style ? details.style.split(',').map(p => p.trim()) : [],
       words: [],
-      hasTimestamps: false
+      hasTimestamps: false,
+      coverUrl: '' // Will be populated when album covers are generated
     }));
   };
 
