@@ -222,8 +222,8 @@ export default function TrackListPanel({
         <div ref={scrollRef} className="h-full overflow-y-auto overflow-x-hidden lyrics-scrollbar">
           <div className={`min-h-full flex flex-col justify-start gap-3 px-4 pt-2 pb-4`}>
             
-            {/* Show loading shells for each active generation */}
-            {activeGenerations.map((generation, genIndex) => {
+            {/* Show loading shells for each active generation (newest first) */}
+            {[...activeGenerations].reverse().map((generation, genIndex) => {
               console.log(`TrackListPanel RENDERING shells for generation ${generation.id}:`, generation.progress, generation.progressText);
               const baseTrackNumber = tracks.length + (genIndex * 2) + 1;
               return (
