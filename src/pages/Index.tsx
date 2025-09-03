@@ -400,6 +400,7 @@ const Index = () => {
   } | null>(null);
   const [isGeneratingCovers, setIsGeneratingCovers] = useState(false);
   const [scrollTop, setScrollTop] = useState<number>(0);
+  const [activeGenerations, setActiveGenerations] = useState<Array<{id: string, startTime: number}>>([]);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const audioRefs = useRef<HTMLAudioElement[]>([]);
   const lastDiceAt = useRef<number>(0);
@@ -1172,6 +1173,23 @@ async function startGeneration() {
     }
   }
 
+  // Concurrent generation wrapper
+  async function startConcurrentGeneration() {
+    if (activeGenerations.length >= 10) {
+      toast.message("Maximum concurrent generations reached", { description: "Please wait for some to complete." });
+      return;
+    }
+    
+    const jobId = Date.now().toString();
+    setActiveGenerations(prev => [...prev, { id: jobId, startTime: Date.now() }]);
+    
+    try {
+      await startGeneration();
+    } finally {
+      setActiveGenerations(prev => prev.filter(job => job.id !== jobId));
+    }
+  }
+
   return (
     <div
       className="h-screen bg-[#0c0c0c] overflow-hidden flex flex-col"
@@ -1385,13 +1403,13 @@ async function startGeneration() {
   <div className="shrink-0 w-[180px] flex flex-col gap-2">
     {/* Generate — same height as tray */}
     <button
-      onClick={startGeneration}
-      disabled={isMusicGenerating || !canGenerate}
+      onClick={startConcurrentGeneration}
+      disabled={activeGenerations.length >= 10 || !canGenerate}
       className="h-9 w-full rounded-lg text-[13px] font-medium text-white bg-accent-primary hover:bg-accent-primary/90 disabled:bg-accent-primary/60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-      aria-disabled={isMusicGenerating || !canGenerate}
+      aria-disabled={activeGenerations.length >= 10 || !canGenerate}
     >
       <span className="text-sm leading-none">✦</span>
-      <span>Generate</span>
+      <span>Generate{activeGenerations.length > 0 ? ` (${activeGenerations.length}/10)` : ''}</span>
     </button>
 
     {/* Icon tray — perfectly centered icons */}
@@ -1470,6 +1488,7 @@ async function startGeneration() {
               }}
               isGenerating={isMusicGenerating}
               generationProgress={generationProgress}
+              activeJobCount={activeGenerations.length}
             />
           </div>
 
