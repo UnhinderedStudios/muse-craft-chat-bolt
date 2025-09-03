@@ -50,6 +50,7 @@
     "input-otp": "^1.4.2",
     "lucide-react": "^0.462.0",
     "mammoth": "^1.10.0",
+    "nanoid": "^5.1.5",
     "next-themes": "^0.3.0",
     "pdfjs-dist": "^5.4.54",
     "react": "^18.3.1",
