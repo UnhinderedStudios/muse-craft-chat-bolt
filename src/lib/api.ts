@@ -92,14 +92,24 @@ export const api = {
       rawResponse: any;
     }
   }> {
-    // Title-only prompt logic (strict)
-    const title = (songDetails.title || "").trim();
-    if (!title) {
-      throw new Error("Album cover generation requires a non-empty title.");
+    // Determine the source for the prompt in priority order: title > lyrics > style
+    let source = "fallback";
+    let content = "A cinematic, realistic musical album cover without humans or text";
+    let chatInstruction = "";
+
+    if (songDetails.title?.trim()) {
+      source = "title";
+      content = songDetails.title.trim();
+      chatInstruction = `Create a simple 1 sentence prompt for an image generation tool for a musical album cover based on this song title. Keep it cinematic and realistic, do not show humans or text in it. Do not use any parameter instructions such as AR16:9.\n\nSong Title: ${content}`;
+    } else if (songDetails.lyrics?.trim()) {
+      source = "lyrics";
+      content = songDetails.lyrics.trim();
+      chatInstruction = `Summarize the song lyrics into a simple 1 sentence prompt for an image generation tool for a musical album cover. Keep it cinematic and realistic, do not show humans or text in it. Do not use any parameter instructions such as AR16:9.\n\nSong Lyrics: ${content}`;
+    } else if (songDetails.style?.trim()) {
+      source = "style";
+      content = songDetails.style.trim();
+      chatInstruction = `Create a simple 1 sentence prompt for an image generation tool for a musical album cover based on this music style. Keep it cinematic and realistic, do not show humans or text in it. Do not use any parameter instructions such as AR16:9.\n\nMusic Style: ${content}`;
     }
-    const source = "title";
-    const content = title;
-    const chatInstruction = `Create a single, concise prompt for an image-generation model to produce a square musical album cover based ONLY on this song title. Cinematic and realistic. No humans, no typography, no logos.\n\nSong Title: ${content}`;
 
     console.log(`🎨 generateAlbumCovers - Using ${source}:`, content);
     
