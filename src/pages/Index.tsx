@@ -515,11 +515,8 @@ const Index = () => {
     if (!tracks.length) return;
     console.log(`[AudioPlay] Attempting to play track ${index}, current index: ${currentTrackIndex}, isPlaying: ${isPlaying}`);
     
-    // Prevent multiple rapid calls
-    if (busy) {
-      console.log(`[AudioPlay] Blocked - generation is busy`);
-      return;
-    }
+    // Don't block audio playback during generation (Fix Bug 2)
+    // Only block generation-specific actions, not playback
     
     // If same track is already playing, just toggle pause/play
     if (currentTrackIndex === index && isPlaying) {
@@ -870,6 +867,8 @@ const Index = () => {
       toast.error(e.message || "Randomize failed");
     } finally {
       setBusy(false);
+      setIsGeneratingMusic(false);
+      console.log("🎵 Music generation failed/cancelled - isGeneratingMusic set to false");
     }
   }
 
@@ -1012,7 +1011,13 @@ async function startGeneration() {
         if (status.status === "ready" && status.audioUrls?.length) {
           console.log("[Generation] Audio URLs ready:", status.audioUrls);
           setAudioUrls(status.audioUrls);
-          setAudioUrl(status.audioUrls[0]);
+          // Only auto-switch if no music is currently playing (Fix Bug 2)
+          if (!isPlaying) {
+            setAudioUrl(status.audioUrls[0]);
+            console.log("[Generation] Auto-switched to new track (no music was playing)");
+          } else {
+            console.log("[Generation] Music is playing, not auto-switching");
+          }
           
           // Create initial versions from audioUrls and sunoData with real IDs
           const newVersions = status.audioUrls.map((url, index) => {
@@ -1035,7 +1040,12 @@ async function startGeneration() {
           });
           
           console.log("[Generation] Created initial versions:", newVersions);
-          setVersions(newVersions);
+          // Make versions accumulative instead of replacing (Fix Bug 1)
+          setVersions(prevVersions => {
+            const combinedVersions = [...prevVersions, ...newVersions];
+            console.log("[Generation] Added new versions to existing:", combinedVersions.length, "total");
+            return combinedVersions;
+          });
           toast.success("Audio ready! Fetching karaoke lyrics...");
           
       // Phase B: Fetch timestamped lyrics for each version with retry logic
@@ -1171,7 +1181,9 @@ async function startGeneration() {
       console.error("[Generation] Error:", e);
       toast.error(e.message || "Generation failed");
     } finally {
-      setBusy(false);
+        setBusy(false);
+        setIsGeneratingMusic(false);
+        console.log("🎵 Music generation completed - isGeneratingMusic set to false");
       setIsGeneratingMusic(false);
     }
   }
