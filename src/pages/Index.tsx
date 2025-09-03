@@ -927,22 +927,7 @@ const Index = () => {
     setIsGeneratingCovers(false);
     setIsMusicGenerating(true);
     
-    // Start album cover generation immediately in parallel
-    if (songData.title || songData.lyrics || songData.style) {
-      setIsGeneratingCovers(true);
-      api.generateAlbumCovers(songData)
-        .then(covers => {
-          console.log("Album covers generated:", covers);
-          setAlbumCovers(covers);
-        })
-        .catch(error => {
-          console.error("Album cover generation failed:", error);
-          toast.error("Failed to generate album covers");
-        })
-        .finally(() => {
-          setIsGeneratingCovers(false);
-        });
-    }
+    // Individual album covers will be generated per track instead of batch generation
     
     try {
       const payload = { ...songData, style: sanitizeStyle(songData.style || "") };
@@ -1163,7 +1148,7 @@ const Index = () => {
             setVersions(updatedVersions);
           }
           
-          // Add tracks to the track list (newest first)
+          // Add tracks to the track list (newest first) and generate unique covers
           const batchCreatedAt = Date.now();
           console.log(`[Generation] Adding ${updatedVersions.length} tracks for job ${wrapperJobId || 'direct'}`);
           setTracks(prev => {
@@ -1172,7 +1157,7 @@ const Index = () => {
               id: v.audioId || `${sunoJobId}-${i}`,
               url: v.url,
               title: songData.title || "Song Title",
-              coverUrl: albumCovers ? (i % 2 === 0 ? albumCovers.cover1 : albumCovers.cover2) : undefined,
+              coverUrl: undefined, // Will be generated individually per track
               createdAt: batchCreatedAt,
               params: styleTags,
               words: v.words,
@@ -1180,6 +1165,39 @@ const Index = () => {
             })).filter(t => !existing.has(t.id));
             
             console.log(`[Generation] Added ${fresh.length} new tracks, total tracks: ${fresh.length + prev.length}`);
+            
+            // Generate unique album covers for each new track
+            fresh.forEach(async (track, index) => {
+              try {
+                setIsGeneratingCovers(true);
+                // Create unique song details for each track using track ID as seed
+                const uniqueSongData = {
+                  ...songData,
+                  title: `${songData.title || "Song Title"} (Version ${index + 1})`,
+                  // Add track-specific identifier to ensure uniqueness
+                  trackId: track.id
+                };
+                
+                console.log(`[CoverGen] Generating unique cover for track ${track.id}`);
+                const covers = await api.generateAlbumCovers(uniqueSongData);
+                
+                // Update the specific track with its unique cover
+                setTracks(currentTracks => 
+                  currentTracks.map(t => 
+                    t.id === track.id 
+                      ? { ...t, coverUrl: covers.cover1 } 
+                      : t
+                  )
+                );
+                
+                console.log(`[CoverGen] Generated unique cover for track ${track.id}`);
+              } catch (error) {
+                console.error(`[CoverGen] Failed to generate cover for track ${track.id}:`, error);
+              } finally {
+                setIsGeneratingCovers(false);
+              }
+            });
+            
             return [...fresh, ...prev]; // newest first
           });
           
