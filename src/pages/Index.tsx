@@ -847,8 +847,8 @@ const Index = () => {
       const minimal: ChatMessage[] = [{ role: "user", content }];
       console.debug("[Dice] Using RandomMusicForge v3 prompt");
       const [r1, r2] = await Promise.allSettled([
-        api.chat(minimal, RANDOM_MUSIC_FORGE_PROMPT),
-        api.chat(minimal, RANDOM_MUSIC_FORGE_PROMPT),
+        api.chat(minimal, { system: RANDOM_MUSIC_FORGE_PROMPT, temperature: 0.9, model: "gpt-4o-mini" }),
+        api.chat(minimal, { system: RANDOM_MUSIC_FORGE_PROMPT, temperature: 0.9, model: "gpt-4o-mini" }),
       ]);
       const msgs: string[] = [];
       if (r1.status === "fulfilled") msgs.push(r1.value.content);
