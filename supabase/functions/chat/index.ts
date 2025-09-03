@@ -21,7 +21,7 @@ serve(async (req) => {
       return cors(new Response(JSON.stringify({ error: "Missing OPENAI_API_KEY" }), { status: 500 }));
     }
 
-    const { messages, system } = await req.json();
+    const { messages, system, model, temperature } = await req.json();
     if (!Array.isArray(messages)) {
       return cors(new Response(JSON.stringify({ error: "messages must be an array" }), { status: 400 }));
     }
@@ -65,17 +65,34 @@ serve(async (req) => {
       }),
     ];
 
+    // Determine model and parameter compatibility
+    const modelToUse = typeof model === 'string' && model.trim().length > 0 ? model : "gpt-4.1-mini-2025-04-14";
+    const isNewModel = /gpt-5|gpt-4\.1|o3|o4/i.test(modelToUse);
+
+    const basePayload: any = {
+      model: modelToUse,
+      messages: openAiMessages,
+    };
+
+    if (isNewModel) {
+      basePayload.max_completion_tokens = 1500;
+      // Do NOT include temperature for newer models (it will error)
+    } else {
+      basePayload.max_tokens = 1500;
+      if (typeof temperature === 'number') {
+        // Clamp temperature to [0, 2]
+        const t = Math.max(0, Math.min(2, temperature));
+        basePayload.temperature = t;
+      }
+    }
+
     const resp = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "gpt-4.1-mini-2025-04-14",
-        messages: openAiMessages,
-        max_completion_tokens: 1500,
-      }),
+      body: JSON.stringify(basePayload),
     });
 
     if (!resp.ok) {

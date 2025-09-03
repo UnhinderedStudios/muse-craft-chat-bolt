@@ -22,11 +22,23 @@ async function handle(resp: Response) {
 }
 
 export const api = {
-  async chat(messages: ChatMessage[], system?: string): Promise<{ content: string }> {
+  async chat(
+    messages: ChatMessage[],
+    systemOrOptions?: string | { system?: string; model?: string; temperature?: number }
+  ): Promise<{ content: string }> {
+    const payload: any = { messages };
+    if (typeof systemOrOptions === 'string') {
+      payload.system = systemOrOptions;
+    } else if (typeof systemOrOptions === 'object' && systemOrOptions) {
+      if (systemOrOptions.system) payload.system = systemOrOptions.system;
+      if (systemOrOptions.model) payload.model = systemOrOptions.model;
+      if (typeof systemOrOptions.temperature === 'number') payload.temperature = systemOrOptions.temperature;
+    }
+
     const resp = await fetch(`${FUNCTIONS_BASE}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages, system }),
+      body: JSON.stringify(payload),
     });
     return handle(resp);
   },
