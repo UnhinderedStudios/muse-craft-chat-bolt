@@ -38,6 +38,7 @@ import { useChat } from "@/hooks/use-chat";
 import { useResize } from "@/hooks/use-resize";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useSongGeneration } from "@/hooks/use-song-generation";
+import { useConcurrentGeneration } from "@/hooks/use-concurrent-generation";
 
 // Types
 import { type TimestampedWord, type ChatMessage, type TrackItem } from "@/types";
@@ -207,8 +208,9 @@ const Index = () => {
   const [isMusicGenerating, setIsMusicGenerating] = useState(false);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const [isReadingText, setIsReadingText] = useState(false);
-  const [activeJobs, setActiveJobs] = useState<Array<{id: string, progress: number}>>([]);
-  const [jobCounter, setJobCounter] = useState(0);
+  
+  // Use concurrent generation hook
+  const { activeJobs, completedTracks, startGeneration: startConcurrentGen, canStartNewJob } = useConcurrentGeneration();
   const [details, setDetails] = useState<SongDetails>({});
   const [styleTags, setStyleTags] = useState<string[]>([]);
   const { chatHeight, isResizing, handleMouseDown } = useResize();
@@ -353,7 +355,7 @@ const Index = () => {
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentAudioIndex, setCurrentAudioIndex] = useState<number>(0);
-  // Placeholder tracks for design development - remove when ready for production
+  // Placeholder tracks for design development - remove when ready for production  
   const [tracks, setTracks] = useState<TrackItem[]>([
     {
       id: "placeholder-track-1",
@@ -376,15 +378,19 @@ const Index = () => {
       hasTimestamps: false
     }
   ]);
+  
+  // Merge completed tracks with existing tracks (completed tracks first)
+  const allTracks = [...completedTracks, ...tracks];
+  
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
   // Keep karaoke version selection in sync with the currently selected track
   useEffect(() => {
-    const currentTrack = tracks[currentTrackIndex];
+    const currentTrack = allTracks[currentTrackIndex];
     if (!currentTrack) { setCurrentAudioIndex(versions.length ? 0 : -1); return; }
     const idx = versions.findIndex(v => v.audioId === currentTrack.id);
     if (idx !== -1) setCurrentAudioIndex(idx);
     else setCurrentAudioIndex(-1);
-  }, [currentTrackIndex, tracks, versions]);
+  }, [currentTrackIndex, allTracks, versions]);
   const [showFullscreenKaraoke, setShowFullscreenKaraoke] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<number>(0);
   const [lastProgressUpdate, setLastProgressUpdate] = useState<number>(Date.now());
@@ -425,7 +431,7 @@ const Index = () => {
           e.preventDefault();
           
           // Toggle play/pause for current track
-          if (tracks.length > 0) {
+          if (allTracks.length > 0) {
             if (isPlaying) {
               handleAudioPause();
             } else {
@@ -1174,27 +1180,6 @@ async function startGeneration() {
     }
   }
 
-  const startConcurrentGeneration = async () => {
-    if (activeJobs.length >= 10) return;
-    
-    const jobId = `job-${jobCounter}`;
-    setJobCounter(prev => prev + 1);
-    setActiveJobs(prev => [{id: jobId, progress: 0}, ...prev]);
-    
-    // Track progress updates and sync with job
-    const progressInterval = setInterval(() => {
-      setActiveJobs(prev => prev.map(job => 
-        job.id === jobId ? {...job, progress: generationProgress} : job
-      ));
-    }, 200);
-    
-    try {
-      await startGeneration();
-    } finally {
-      clearInterval(progressInterval);
-      setActiveJobs(prev => prev.filter(job => job.id !== jobId));
-    }
-  };
 
   return (
     <div
@@ -1409,10 +1394,10 @@ async function startGeneration() {
   <div className="shrink-0 w-[180px] flex flex-col gap-2">
     {/* Generate — same height as tray */}
     <button
-      onClick={startConcurrentGeneration}
-      disabled={activeJobs.length >= 10 || !canGenerate}
+      onClick={() => startConcurrentGen({ ...details, style: sanitizeStyleSafe(details.style) })}
+      disabled={!canStartNewJob || !canGenerate}
       className="h-9 w-full rounded-lg text-[13px] font-medium text-white bg-accent-primary hover:bg-accent-primary/90 disabled:bg-accent-primary/60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-      aria-disabled={activeJobs.length >= 10 || !canGenerate}
+      aria-disabled={!canStartNewJob || !canGenerate}
     >
       <span className="text-sm leading-none">✦</span>
       <span>{activeJobs.length > 0 ? `Generate (${activeJobs.length}/10)` : "Generate"}</span>
@@ -1464,7 +1449,7 @@ async function startGeneration() {
           {/* Far-right Track List: spans both rows, bleeds to the right, sticky inner */}
           <div className="order-5 lg:order-4 md:col-span-8 lg:col-span-1 xl:col-span-1 lg:row-span-2 lg:self-stretch min-h-0 overflow-hidden">
             <TrackListPanel
-              tracks={tracks}
+              tracks={allTracks}
               currentIndex={currentTrackIndex}
               isPlaying={isPlaying}
               audioRefs={audioRefs}
@@ -1484,13 +1469,20 @@ async function startGeneration() {
               }}
               onTimeUpdate={handleTimeUpdate}
               onTrackTitleUpdate={(trackIndex, newTitle) => {
-                setTracks(prevTracks => 
-                  prevTracks.map((track, index) => 
-                    index === trackIndex 
-                      ? { ...track, title: newTitle }
-                      : track
-                  )
-                );
+                if (trackIndex < completedTracks.length) {
+                  // This is a completed track, we can't edit its title easily
+                  toast.message("Cannot edit generated track titles");
+                } else {
+                  // This is a placeholder track
+                  const placeholderIndex = trackIndex - completedTracks.length;
+                  setTracks(prevTracks => 
+                    prevTracks.map((track, index) => 
+                      index === placeholderIndex 
+                        ? { ...track, title: newTitle }
+                        : track
+                    )
+                  );
+                }
               }}
               activeJobs={activeJobs}
             />

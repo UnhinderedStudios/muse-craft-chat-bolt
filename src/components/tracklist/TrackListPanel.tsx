@@ -27,7 +27,7 @@ type Props = {
   setCurrentIndex: (index: number) => void;
   onTimeUpdate: (audio: HTMLAudioElement) => void;
   onTrackTitleUpdate?: (trackIndex: number, newTitle: string) => void;
-  activeJobs?: Array<{id: string, progress: number}>;
+  activeJobs?: Array<{id: string, progress: number, status?: string}>;
 };
 
 // Generate 20 test tracks for testing search functionality
