@@ -178,20 +178,20 @@ export function useGenerationManager() {
         
         // Calculate time-based progress (smoother progression)
         const elapsed = Date.now() - currentGeneration.startTime;
-        const timeProgressRatio = elapsed / (8 * 60 * 1000); // 8 minutes expected duration
-        const timeProgress = Math.min(timeProgressRatio * 85, 85); // Max 85% from time
+        const timeProgressRatio = elapsed / (4 * 60 * 1000); // 4 minutes expected duration
+        const timeProgress = Math.min(timeProgressRatio * 95, 95); // Max 95% from time
         
         // Calculate status-based progress (discrete jumps)
         let statusProgress = 5;
         switch (result.status) {
           case "pending":
-            statusProgress = 20;
+            statusProgress = 25;
             break;
           case "processing":
-            statusProgress = 45;
+            statusProgress = 60;
             break;
           case "ready":
-            statusProgress = 90;
+            statusProgress = 95;
             break;
           default:
             statusProgress = 10;
@@ -200,8 +200,15 @@ export function useGenerationManager() {
         // Use the higher of time-based or status-based progress for smooth progression
         const baseProgress = Math.max(timeProgress, statusProgress, currentGeneration.progress);
         
-        // Add small random increment for visual smoothness (1-3%)
-        const smoothProgress = Math.min(baseProgress + Math.random() * 2 + 1, 99);
+        // Add small random increment for visual smoothness (0.5-1.5%) but slow down near completion
+        let smoothProgress;
+        if (baseProgress >= 95) {
+          // Very slow progression from 95-99%
+          smoothProgress = Math.min(baseProgress + Math.random() * 0.3 + 0.1, 99);
+        } else {
+          // Normal progression
+          smoothProgress = Math.min(baseProgress + Math.random() * 1 + 0.5, 95);
+        }
         
         const stepIndex = Math.floor((smoothProgress / 100) * (GENERATION_STEPS.length - 1));
         const progressText = GENERATION_STEPS[stepIndex] || "Processing...";

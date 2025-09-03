@@ -912,11 +912,74 @@ async function startGeneration() {
      setBusy(true);
      
      // Use new concurrent generation system
-     const generationId = await generationManager.startSingleGeneration(details, (newTracks) => {
+     const generationId = await generationManager.startSingleGeneration(details, async (newTracks, generation) => {
+       // Add tracks to the beginning
        setTracks(prev => [...newTracks, ...prev]);
        if (!isPlaying) {
          setCurrentTrackIndex(0);
          setCurrentTime(0);
+       }
+       
+       // Generate album covers after successful generation
+       if (details.title || details.lyrics || details.style) {
+         setIsGeneratingCovers(true);
+         try {
+           const covers = await api.generateAlbumCovers(details);
+           console.log("Album covers generated:", covers);
+           setAlbumCovers(covers);
+           
+           // Update tracks with cover URLs
+           setTracks(prev => prev.map(track => 
+             newTracks.some(nt => nt.id === track.id) 
+               ? { ...track, coverUrl: covers.cover1 }
+               : track
+           ));
+         } catch (error) {
+           console.error("Album cover generation failed:", error);
+           toast.error("Failed to generate album covers");
+         } finally {
+           setIsGeneratingCovers(false);
+         }
+       }
+       
+       // Fetch timestamped lyrics for karaoke
+       if (generation.audioUrls) {
+         try {
+           console.log("[Karaoke] Fetching timestamps for new tracks...");
+           const updatedTracks = await Promise.all(
+             newTracks.map(async (track, index) => {
+               try {
+                 const result = await api.getTimestampedLyrics({
+                   taskId: generation.jobId,
+                   musicIndex: index
+                 });
+                 
+                 if (result.alignedWords && result.alignedWords.length > 0) {
+                   console.log(`[Karaoke] Got ${result.alignedWords.length} words for track ${index}`);
+                   const words: TimestampedWord[] = result.alignedWords.map((w: any) => ({
+                     word: w.word,
+                     start: w.start_s || w.start || 0,
+                     end: w.end_s || w.end || 0,
+                     success: true
+                   }));
+                   return { ...track, words, hasTimestamps: true };
+                 }
+               } catch (error) {
+                 console.warn(`[Karaoke] Failed to get timestamps for track ${index}:`, error);
+               }
+               return track;
+             })
+           );
+           
+           setTracks(prev => prev.map(track => {
+             const updated = updatedTracks.find(ut => ut.id === track.id);
+             return updated || track;
+           }));
+           
+           toast.success("Karaoke lyrics loaded!");
+         } catch (error) {
+           console.warn("[Karaoke] Failed to load timestamps:", error);
+         }
        }
      });
      
