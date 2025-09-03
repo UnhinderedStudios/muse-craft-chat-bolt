@@ -30,6 +30,7 @@ type Props = {
   isGenerating?: boolean;
   generationProgress?: number;
   activeJobCount?: number;
+  activeGenerations?: Array<{id: string, startTime: number, progress: number, details: any}>;
 };
 
 // Generate 20 test tracks for testing search functionality
@@ -71,7 +72,8 @@ export default function TrackListPanel({
   onTrackTitleUpdate,
   isGenerating = false,
   generationProgress = 0,
-  activeJobCount = 0
+  activeJobCount = 0,
+  activeGenerations = []
 }: Props) {
   const [audioCurrentTimes, setAudioCurrentTimes] = useState<number[]>([]);
   const [showQuickAlbumGenerator, setShowQuickAlbumGenerator] = useState(false);
@@ -221,10 +223,13 @@ export default function TrackListPanel({
             {activeJobCount > 0 && Array.from({ length: activeJobCount * 2 }, (_, i) => {
               const jobIndex = Math.floor(i / 2);
               const trackInJob = i % 2;
+              // Use job-specific progress from activeGenerations
+              const job = activeGenerations[jobIndex];
+              const jobProgress = job?.progress || 0;
               return (
                 <TrackLoadingShell 
                   key={`loading-${jobIndex}-${trackInJob}`}
-                  progress={trackInJob === 0 ? generationProgress : Math.max(0, generationProgress - 25)} 
+                  progress={trackInJob === 0 ? jobProgress : Math.max(0, jobProgress - 25)} 
                   trackNumber={tracks.length + i + 1} 
                 />
               );

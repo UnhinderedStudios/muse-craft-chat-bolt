@@ -400,7 +400,12 @@ const Index = () => {
   } | null>(null);
   const [isGeneratingCovers, setIsGeneratingCovers] = useState(false);
   const [scrollTop, setScrollTop] = useState<number>(0);
-  const [activeGenerations, setActiveGenerations] = useState<Array<{id: string, startTime: number}>>([]);
+  const [activeGenerations, setActiveGenerations] = useState<Array<{
+    id: string, 
+    startTime: number,
+    progress: number,
+    details: SongDetails
+  }>>([]);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const audioRefs = useRef<HTMLAudioElement[]>([]);
   const lastDiceAt = useRef<number>(0);
@@ -896,7 +901,13 @@ const Index = () => {
     }
   }
 
-async function startGeneration() {
+  async function startGeneration() {
+    return startGenerationWithJobId(null);
+  }
+
+  async function startGenerationWithJobId(jobId: string | null, inputDetails?: SongDetails) {
+    const songData = inputDetails || { ...details };
+    
     if (!canGenerate) {
       toast.message("Add a few details first", { description: "Chat a bit more until I extract a song request." });
       return;
@@ -904,7 +915,9 @@ async function startGeneration() {
     setAudioUrl(null);
     setAudioUrls(null);
     setJobId(null);
-    setVersions([]);
+    if (!jobId) {
+      setVersions([]);
+    }
     setGenerationProgress(0);
     setLastProgressUpdate(Date.now());
     setAlbumCovers(null);
@@ -912,9 +925,9 @@ async function startGeneration() {
     setIsMusicGenerating(true);
     
     // Start album cover generation immediately in parallel
-    if (details.title || details.lyrics || details.style) {
+    if (songData.title || songData.lyrics || songData.style) {
       setIsGeneratingCovers(true);
-      api.generateAlbumCovers(details)
+      api.generateAlbumCovers(songData)
         .then(covers => {
           console.log("Album covers generated:", covers);
           setAlbumCovers(covers);
@@ -929,9 +942,10 @@ async function startGeneration() {
     }
     
     try {
-      const payload = { ...details, style: sanitizeStyle(details.style || "") };
-      const { jobId } = await api.startSong(payload);
-      setJobId(jobId);
+      const payload = { ...songData, style: sanitizeStyle(songData.style || "") };
+      const { jobId: apiJobId } = await api.startSong(payload);
+      const currentJobId = apiJobId;
+      setJobId(currentJobId);
       toast.success("Song requested. Composing...");
 
       // Phase A: Wait for generation completion with status confirmation
@@ -956,13 +970,17 @@ async function startGeneration() {
         else if (statusRaw === "SUCCESS") statusProgress = 70;
         
         const newProgress = Math.max(baseProgress, statusProgress);
-        setGenerationProgress(current => {
-          if (newProgress > current) {
-            setLastProgressUpdate(Date.now());
-            return newProgress;
-          }
-          return current;
-        });
+        if (jobId) {
+          updateJobProgress(jobId, newProgress);
+        } else {
+          setGenerationProgress(current => {
+            if (newProgress > current) {
+              setLastProgressUpdate(Date.now());
+              return newProgress;
+            }
+            return current;
+          });
+        }
         
         const backoffDelay = Math.min(1500 + completionAttempts * 300, 4000);
         await new Promise((r) => setTimeout(r, backoffDelay));
@@ -977,10 +995,14 @@ async function startGeneration() {
           // Check for completion - accept SUCCESS but not intermediate states
           if (statusRaw === "SUCCESS" || statusRaw === "COMPLETE" || statusRaw === "ALL_SUCCESS") {
             console.log("[Generation] Phase A: Generation completed!");
-            setGenerationProgress(current => {
-              setLastProgressUpdate(Date.now());
-              return Math.max(current, 75);
-            });
+            if (jobId) {
+              updateJobProgress(jobId, 75);
+            } else {
+              setGenerationProgress(current => {
+                setLastProgressUpdate(Date.now());
+                return Math.max(current, 75);
+              });
+            }
             generationComplete = true;
             break;
           }
@@ -1005,7 +1027,7 @@ async function startGeneration() {
       
       while (audioAttempts++ < maxAudioAttempts) {
         await new Promise((r) => setTimeout(r, 2000));
-        const status = await api.pollSong(jobId);
+        const status = await api.pollSong(currentJobId);
         
         if (status.status === "ready" && status.audioUrls?.length) {
           console.log("[Generation] Audio URLs ready:", status.audioUrls);
@@ -1033,17 +1055,26 @@ async function startGeneration() {
           });
           
           console.log("[Generation] Created initial versions:", newVersions);
-          setVersions(newVersions);
+          if (jobId) {
+            // For concurrent: don't overwrite existing versions
+            setVersions(prev => [...newVersions, ...prev]);
+          } else {
+            setVersions(newVersions);
+          }
           toast.success("Audio ready! Fetching karaoke lyrics...");
           
       // Phase B: Fetch timestamped lyrics for each version with retry logic
       console.log("[Generation] Phase B: Fetching timestamped lyrics...");
       console.log("[Generation] Using newVersions for timestamp fetching:", newVersions);
       console.log("[Generation] newVersions.length:", newVersions.length);
-          setGenerationProgress(current => {
-            setLastProgressUpdate(Date.now());
-            return Math.max(current, 85);
-          });
+          if (jobId) {
+            updateJobProgress(jobId, 85);
+          } else {
+            setGenerationProgress(current => {
+              setLastProgressUpdate(Date.now());
+              return Math.max(current, 85);
+            });
+          }
           
           if (newVersions.length === 0) {
             console.warn("[Generation] No versions available for timestamp fetching");
@@ -1109,16 +1140,25 @@ async function startGeneration() {
           );
 
           console.log("[Generation] Final versions with timestamps:", updatedVersions);
-          setVersions(updatedVersions);
+          if (jobId) {
+            // For concurrent: update only the new versions, preserve existing ones
+            setVersions(prev => {
+              const newIds = new Set(newVersions.map(v => v.audioId));
+              const preserved = prev.filter(v => !newIds.has(v.audioId));
+              return [...updatedVersions, ...preserved];
+            });
+          } else {
+            setVersions(updatedVersions);
+          }
           
           // Add tracks to the track list (newest first)
           const batchCreatedAt = Date.now();
           setTracks(prev => {
             const existing = new Set(prev.map(t => t.id));
             const fresh = updatedVersions.map((v, i) => ({
-              id: v.audioId || `${jobId}-${i}`,
+              id: v.audioId || `${currentJobId}-${i}`,
               url: v.url,
-              title: details.title || "Song Title",
+              title: songData.title || "Song Title",
               coverUrl: albumCovers ? (i === 1 ? albumCovers.cover2 : albumCovers.cover1) : undefined,
               createdAt: batchCreatedAt,
               params: styleTags,
@@ -1144,8 +1184,12 @@ async function startGeneration() {
           }, 100);
           
           const successCount = updatedVersions.filter(v => v.hasTimestamps).length;
-          setGenerationProgress(100);
-          setLastProgressUpdate(Date.now());
+          if (jobId) {
+            updateJobProgress(jobId, 100);
+          } else {
+            setGenerationProgress(100);
+            setLastProgressUpdate(Date.now());
+          }
           if (successCount > 0) {
             toast.success(`Song ready with karaoke lyrics! (${successCount}/${updatedVersions.length} versions)`);
           } else {
@@ -1173,6 +1217,15 @@ async function startGeneration() {
     }
   }
 
+  // Update job progress helper
+  const updateJobProgress = (jobId: string, newProgress: number) => {
+    setActiveGenerations(prev => 
+      prev.map(job => 
+        job.id === jobId ? { ...job, progress: newProgress } : job
+      )
+    );
+  };
+
   // Concurrent generation wrapper
   async function startConcurrentGeneration() {
     if (activeGenerations.length >= 10) {
@@ -1181,10 +1234,15 @@ async function startGeneration() {
     }
     
     const jobId = Date.now().toString();
-    setActiveGenerations(prev => [...prev, { id: jobId, startTime: Date.now() }]);
+    setActiveGenerations(prev => [...prev, { 
+      id: jobId, 
+      startTime: Date.now(),
+      progress: 0,
+      details: { ...details }
+    }]);
     
     try {
-      await startGeneration();
+      await startGenerationWithJobId(jobId, details);
     } finally {
       setActiveGenerations(prev => prev.filter(job => job.id !== jobId));
     }
@@ -1489,6 +1547,7 @@ async function startGeneration() {
               isGenerating={isMusicGenerating}
               generationProgress={generationProgress}
               activeJobCount={activeGenerations.length}
+              activeGenerations={activeGenerations}
             />
           </div>
 
