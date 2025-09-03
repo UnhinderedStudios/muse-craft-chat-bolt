@@ -28,6 +28,10 @@ export function parseRandomMusicForgeOutput(text: string): SongDetails | null {
     const instrumentation = getParam(paramsBlock, "Instrumentation");
     const productionNotes = getParam(paramsBlock, "Production Notes");
     const hookTwist = getParam(paramsBlock, "Hook Twist");
+    
+    // New v3 parameters (conditional)
+    const rhymeScheme = getParam(paramsBlock, "Rhyme Scheme");
+    const vocalTechniques = getParam(paramsBlock, "Vocal Techniques");
 
     // Build a compact, producer-friendly style string
     const parts: string[] = [];
@@ -39,6 +43,8 @@ export function parseRandomMusicForgeOutput(text: string): SongDetails | null {
     if (energy) parts.push(energy);
     if (timeSig && timeSig !== "4/4") parts.push(timeSig);
     if (hookTwist) parts.push(`hook: ${hookTwist}`);
+    if (rhymeScheme) parts.push(`rhyme: ${rhymeScheme}`);
+    if (vocalTechniques) parts.push(`vocals: ${vocalTechniques}`);
     if (instrumentation) parts.push(instrumentation);
     if (productionNotes) parts.push(productionNotes);
     const style = parts.join(", ");

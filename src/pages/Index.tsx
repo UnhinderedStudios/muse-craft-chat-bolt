@@ -841,16 +841,14 @@ const Index = () => {
   }
   async function randomizeAll() {
     if (isChatBusy) return;
-    const content = "Dice roll: create a fresh, original song now. Follow the output format exactly (no extra commentary).";
+    const content = "Dice roll: create a fresh, original song now.";
     setIsChatBusy(true);
     try {
       const minimal: ChatMessage[] = [{ role: "user", content }];
-      console.debug("[Dice] Using RandomMusicForge prompt");
-      const t1 = 0.8 + Math.random() * 0.2;
-      const t2 = 0.8 + Math.random() * 0.2;
+      console.debug("[Dice] Using RandomMusicForge v3 prompt");
       const [r1, r2] = await Promise.allSettled([
-        api.chat(minimal, { system: RANDOM_MUSIC_FORGE_PROMPT, model: "gpt-4o-mini", temperature: t1 }),
-        api.chat(minimal, { system: RANDOM_MUSIC_FORGE_PROMPT, model: "gpt-4o-mini", temperature: t2 }),
+        api.chat(minimal, RANDOM_MUSIC_FORGE_PROMPT),
+        api.chat(minimal, RANDOM_MUSIC_FORGE_PROMPT),
       ]);
       const msgs: string[] = [];
       if (r1.status === "fulfilled") msgs.push(r1.value.content);
