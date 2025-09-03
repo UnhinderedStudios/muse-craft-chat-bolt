@@ -33,9 +33,14 @@ export function TrackLoadingShell({ progress, trackNumber }: TrackLoadingShellPr
           </div>
         </div>
         
-        {/* Play button area - small pink spinning loader */}
+        {/* Play button area - spinning ring loader */}
         <div className="shrink-0 w-8 h-8 flex items-center justify-center">
-          <div className="w-4 h-4 border-2 border-transparent border-t-accent-primary rounded-full animate-spin"></div>
+          <div className="relative w-4 h-4">
+            {/* Background ring */}
+            <div className="absolute inset-0 border-2 border-accent-primary/20 rounded-full"></div>
+            {/* Spinning bright segment */}
+            <div className="absolute inset-0 border-2 border-transparent border-t-accent-primary rounded-full animate-spin"></div>
+          </div>
         </div>
       </div>
     </div>
