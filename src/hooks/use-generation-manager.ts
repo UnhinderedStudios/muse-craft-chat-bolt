@@ -143,7 +143,7 @@ export function useGenerationManager() {
     }
   }, [state.canGenerate, updateGeneration, removeGeneration]);
 
-  const pollGeneration = useCallback(async (
+  const pollGeneration = useCallback((
     generationId: string,
     jobId: string,
     onComplete: (tracks: TrackItem[], generation: ActiveGeneration) => void
@@ -152,127 +152,116 @@ export function useGenerationManager() {
     
     const pollStep = async () => {
       try {
-        // Access current state directly to avoid stale closures
-        setState(currentState => {
-          const currentGeneration = currentState.activeGenerations.get(generationId);
-          
-          if (!currentGeneration) {
-            console.log(`⚠️ [${generationId}] Generation not found, stopping poll`);
-            return currentState;
-          }
-          
-          if (currentGeneration.status === 'complete' || currentGeneration.status === 'failed') {
-            console.log(`⚠️ [${generationId}] Generation already ${currentGeneration.status}, stopping poll`);
-            return currentState;
-          }
+        // Get current generation from state
+        const currentGeneration = state.activeGenerations.get(generationId);
+        
+        if (!currentGeneration) {
+          console.log(`⚠️ [${generationId}] Generation not found, stopping poll`);
+          return;
+        }
+        
+        if (currentGeneration.status === 'complete' || currentGeneration.status === 'failed') {
+          console.log(`⚠️ [${generationId}] Generation already ${currentGeneration.status}, stopping poll`);
+          return;
+        }
 
-          console.log(`🔄 [${generationId}] Polling step - current progress: ${currentGeneration.progress}%`);
-          
-          // Continue with polling async - return current state unchanged
-          (async () => {
-            try {
-              const result = await api.pollSong(jobId);
-              console.log(`📡 [${generationId}] API result:`, { status: result.status, hasAudio: !!result.audioUrls });
-              
-              // Calculate time-based progress (smoother progression)
-              const elapsed = Date.now() - currentGeneration.startTime;
-              const timeProgressRatio = elapsed / (8 * 60 * 1000); // 8 minutes expected duration
-              const timeProgress = Math.min(timeProgressRatio * 85, 85); // Max 85% from time
-              
-              // Calculate status-based progress (discrete jumps)
-              let statusProgress = 5;
-              switch (result.status) {
-                case "pending":
-                  statusProgress = 20;
-                  break;
-                case "processing":
-                  statusProgress = 45;
-                  break;
-                case "ready":
-                  statusProgress = 90;
-                  break;
-                default:
-                  statusProgress = 10;
-              }
-              
-              // Use the higher of time-based or status-based progress for smooth progression
-              const baseProgress = Math.max(timeProgress, statusProgress, currentGeneration.progress);
-              
-              // Add small random increment for visual smoothness (1-3%)
-              const smoothProgress = Math.min(baseProgress + Math.random() * 2 + 1, 99);
-              
-              const stepIndex = Math.floor((smoothProgress / 100) * (GENERATION_STEPS.length - 1));
-              const progressText = GENERATION_STEPS[stepIndex] || "Processing...";
-              
-              console.log(`📊 [${generationId}] Progress calculation:`, {
-                elapsed: `${(elapsed / 1000).toFixed(1)}s`,
-                timeProgress: timeProgress.toFixed(1),
-                statusProgress,
-                baseProgress: baseProgress.toFixed(1),
-                finalProgress: smoothProgress.toFixed(1),
-                progressText
-              });
-              
-              // Update generation progress
-              updateGeneration(generationId, {
-                progress: smoothProgress,
-                progressText,
-                status: 'polling'
-              });
-
-              // Handle completion
-              if (result.status === "ready" && result.audioUrls) {
-                console.log(`✅ [${generationId}] Generation complete! Audio URLs:`, result.audioUrls.length);
-                
-                updateGeneration(generationId, {
-                  status: 'complete',
-                  progress: 100,
-                  progressText: "Complete!",
-                  audioUrls: result.audioUrls
-                });
-
-                const tracks = await createTracksFromGeneration(generationId, result.audioUrls, currentGeneration.details);
-                
-                onComplete(tracks, currentGeneration);
-                addToCompletedQueue(generationId);
-                toast.success("Song generated successfully!");
-                
-                setTimeout(() => removeGeneration(generationId), 1000);
-                return;
-              }
-
-              // Handle errors
-              if (result.status === "error") {
-                throw new Error(result.error || "Generation failed");
-              }
-
-              // Continue polling
-              const timeout = setTimeout(pollStep, 3000); // Faster polling for smoother progress
-              pollingRefs.current.set(generationId, timeout);
-              
-            } catch (error) {
-              console.error(`❌ [${generationId}] Polling error:`, error);
-              updateGeneration(generationId, {
-                status: 'failed',
-                error: error instanceof Error ? error.message : 'Polling failed',
-                progressText: "Failed"
-              });
-              toast.error("Generation failed");
-              
-              setTimeout(() => removeGeneration(generationId), 3000);
-            }
-          })();
-          
-          return currentState;
+        console.log(`🔄 [${generationId}] Polling step - current progress: ${currentGeneration.progress}%`);
+        
+        const result = await api.pollSong(jobId);
+        console.log(`📡 [${generationId}] API result:`, { status: result.status, hasAudio: !!result.audioUrls });
+        
+        // Calculate time-based progress (smoother progression)
+        const elapsed = Date.now() - currentGeneration.startTime;
+        const timeProgressRatio = elapsed / (8 * 60 * 1000); // 8 minutes expected duration
+        const timeProgress = Math.min(timeProgressRatio * 85, 85); // Max 85% from time
+        
+        // Calculate status-based progress (discrete jumps)
+        let statusProgress = 5;
+        switch (result.status) {
+          case "pending":
+            statusProgress = 20;
+            break;
+          case "processing":
+            statusProgress = 45;
+            break;
+          case "ready":
+            statusProgress = 90;
+            break;
+          default:
+            statusProgress = 10;
+        }
+        
+        // Use the higher of time-based or status-based progress for smooth progression
+        const baseProgress = Math.max(timeProgress, statusProgress, currentGeneration.progress);
+        
+        // Add small random increment for visual smoothness (1-3%)
+        const smoothProgress = Math.min(baseProgress + Math.random() * 2 + 1, 99);
+        
+        const stepIndex = Math.floor((smoothProgress / 100) * (GENERATION_STEPS.length - 1));
+        const progressText = GENERATION_STEPS[stepIndex] || "Processing...";
+        
+        console.log(`📊 [${generationId}] Progress calculation:`, {
+          elapsed: `${(elapsed / 1000).toFixed(1)}s`,
+          timeProgress: timeProgress.toFixed(1),
+          statusProgress,
+          baseProgress: baseProgress.toFixed(1),
+          finalProgress: smoothProgress.toFixed(1),
+          progressText
         });
+        
+        // Update generation progress
+        updateGeneration(generationId, {
+          progress: smoothProgress,
+          progressText,
+          status: 'polling'
+        });
+
+        // Handle completion
+        if (result.status === "ready" && result.audioUrls) {
+          console.log(`✅ [${generationId}] Generation complete! Audio URLs:`, result.audioUrls.length);
+          
+          updateGeneration(generationId, {
+            status: 'complete',
+            progress: 100,
+            progressText: "Complete!",
+            audioUrls: result.audioUrls
+          });
+
+          const tracks = await createTracksFromGeneration(generationId, result.audioUrls, currentGeneration.details);
+          
+          onComplete(tracks, currentGeneration);
+          addToCompletedQueue(generationId);
+          toast.success("Song generated successfully!");
+          
+          setTimeout(() => removeGeneration(generationId), 1000);
+          return;
+        }
+
+        // Handle errors
+        if (result.status === "error") {
+          throw new Error(result.error || "Generation failed");
+        }
+
+        // Continue polling
+        const timeout = setTimeout(pollStep, 3000);
+        pollingRefs.current.set(generationId, timeout);
+        
       } catch (error) {
-        console.error(`❌ [${generationId}] Outer polling error:`, error);
+        console.error(`❌ [${generationId}] Polling error:`, error);
+        updateGeneration(generationId, {
+          status: 'failed',
+          error: error instanceof Error ? error.message : 'Polling failed',
+          progressText: "Failed"
+        });
+        toast.error("Generation failed");
+        
+        setTimeout(() => removeGeneration(generationId), 3000);
       }
     };
 
     // Start polling
     pollStep();
-  }, [updateGeneration, addToCompletedQueue, removeGeneration]);
+  }, [state.activeGenerations, updateGeneration, addToCompletedQueue, removeGeneration]);
 
   const createTracksFromGeneration = async (
     generationId: string,
