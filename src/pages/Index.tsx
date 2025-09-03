@@ -402,6 +402,7 @@ const Index = () => {
   const [scrollTop, setScrollTop] = useState<number>(0);
   const [activeGenerations, setActiveGenerations] = useState<Array<{
     id: string, 
+    sunoJobId?: string,
     startTime: number,
     progress: number,
     details: SongDetails
@@ -905,7 +906,7 @@ const Index = () => {
     return startGenerationWithJobId(null);
   }
 
-  async function startGenerationWithJobId(jobId: string | null, inputDetails?: SongDetails) {
+  async function startGenerationWithJobId(wrapperJobId: string | null, inputDetails?: SongDetails) {
     const songData = inputDetails || { ...details };
     
     if (!canGenerate) {
@@ -915,11 +916,13 @@ const Index = () => {
     setAudioUrl(null);
     setAudioUrls(null);
     setJobId(null);
-    if (!jobId) {
+    if (!wrapperJobId) {
       setVersions([]);
     }
-    setGenerationProgress(0);
-    setLastProgressUpdate(Date.now());
+    if (!wrapperJobId) {
+      setGenerationProgress(0);
+      setLastProgressUpdate(Date.now());
+    }
     setAlbumCovers(null);
     setIsGeneratingCovers(false);
     setIsMusicGenerating(true);
@@ -943,9 +946,18 @@ const Index = () => {
     
     try {
       const payload = { ...songData, style: sanitizeStyle(songData.style || "") };
-      const { jobId: apiJobId } = await api.startSong(payload);
-      const currentJobId = apiJobId;
-      setJobId(currentJobId);
+      const { jobId: sunoJobId } = await api.startSong(payload);
+      setJobId(sunoJobId);
+      
+      // Store the Suno job ID in the active generation for concurrent jobs
+      if (wrapperJobId) {
+        setActiveGenerations(prev => 
+          prev.map(job => 
+            job.id === wrapperJobId ? { ...job, sunoJobId } : job
+          )
+        );
+      }
+      
       toast.success("Song requested. Composing...");
 
       // Phase A: Wait for generation completion with status confirmation
@@ -970,8 +982,8 @@ const Index = () => {
         else if (statusRaw === "SUCCESS") statusProgress = 70;
         
         const newProgress = Math.max(baseProgress, statusProgress);
-        if (jobId) {
-          updateJobProgress(jobId, newProgress);
+        if (wrapperJobId) {
+          updateJobProgress(wrapperJobId, newProgress);
         } else {
           setGenerationProgress(current => {
             if (newProgress > current) {
@@ -986,7 +998,7 @@ const Index = () => {
         await new Promise((r) => setTimeout(r, backoffDelay));
         
         try {
-          const details = await api.getMusicGenerationDetails(jobId);
+          const details = await api.getMusicGenerationDetails(sunoJobId);
           statusRaw = details.statusRaw;
           sunoData = details.response?.sunoData || [];
           
@@ -995,8 +1007,8 @@ const Index = () => {
           // Check for completion - accept SUCCESS but not intermediate states
           if (statusRaw === "SUCCESS" || statusRaw === "COMPLETE" || statusRaw === "ALL_SUCCESS") {
             console.log("[Generation] Phase A: Generation completed!");
-            if (jobId) {
-              updateJobProgress(jobId, 75);
+            if (wrapperJobId) {
+              updateJobProgress(wrapperJobId, 75);
             } else {
               setGenerationProgress(current => {
                 setLastProgressUpdate(Date.now());
@@ -1027,7 +1039,7 @@ const Index = () => {
       
       while (audioAttempts++ < maxAudioAttempts) {
         await new Promise((r) => setTimeout(r, 2000));
-        const status = await api.pollSong(currentJobId);
+        const status = await api.pollSong(sunoJobId);
         
         if (status.status === "ready" && status.audioUrls?.length) {
           console.log("[Generation] Audio URLs ready:", status.audioUrls);
@@ -1055,7 +1067,7 @@ const Index = () => {
           });
           
           console.log("[Generation] Created initial versions:", newVersions);
-          if (jobId) {
+          if (wrapperJobId) {
             // For concurrent: don't overwrite existing versions
             setVersions(prev => [...newVersions, ...prev]);
           } else {
@@ -1067,8 +1079,8 @@ const Index = () => {
       console.log("[Generation] Phase B: Fetching timestamped lyrics...");
       console.log("[Generation] Using newVersions for timestamp fetching:", newVersions);
       console.log("[Generation] newVersions.length:", newVersions.length);
-          if (jobId) {
-            updateJobProgress(jobId, 85);
+          if (wrapperJobId) {
+            updateJobProgress(wrapperJobId, 85);
           } else {
             setGenerationProgress(current => {
               setLastProgressUpdate(Date.now());
@@ -1097,7 +1109,7 @@ const Index = () => {
                   console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}: Using audioId=${version.audioId}, musicIndex=${version.musicIndex}`);
                   
                   const result = await api.getTimestampedLyrics({
-                    taskId: jobId,
+                    taskId: sunoJobId,
                     audioId: version.audioId,
                     musicIndex: version.musicIndex
                   });
@@ -1140,7 +1152,7 @@ const Index = () => {
           );
 
           console.log("[Generation] Final versions with timestamps:", updatedVersions);
-          if (jobId) {
+          if (wrapperJobId) {
             // For concurrent: update only the new versions, preserve existing ones
             setVersions(prev => {
               const newIds = new Set(newVersions.map(v => v.audioId));
@@ -1156,7 +1168,7 @@ const Index = () => {
           setTracks(prev => {
             const existing = new Set(prev.map(t => t.id));
             const fresh = updatedVersions.map((v, i) => ({
-              id: v.audioId || `${currentJobId}-${i}`,
+              id: v.audioId || `${sunoJobId}-${i}`,
               url: v.url,
               title: songData.title || "Song Title",
               coverUrl: albumCovers ? (i === 1 ? albumCovers.cover2 : albumCovers.cover1) : undefined,
@@ -1184,8 +1196,8 @@ const Index = () => {
           }, 100);
           
           const successCount = updatedVersions.filter(v => v.hasTimestamps).length;
-          if (jobId) {
-            updateJobProgress(jobId, 100);
+          if (wrapperJobId) {
+            updateJobProgress(wrapperJobId, 100);
           } else {
             setGenerationProgress(100);
             setLastProgressUpdate(Date.now());
