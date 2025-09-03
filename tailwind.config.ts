@@ -193,6 +193,7 @@ export default {
 				'waveform-8': 'waveform-8 0.85s ease-in-out infinite',
 				'waveform-9': 'waveform-9 0.55s ease-in-out infinite',
 				'waveform-10': 'waveform-10 0.8s ease-in-out infinite',
+				'scanning': 'scanning 2s ease-in-out infinite',
 				
 			}
 		}
