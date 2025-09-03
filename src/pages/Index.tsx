@@ -941,7 +941,11 @@ const Index = () => {
     }
     
     // Start album cover generation immediately in parallel
+    console.log(`[Album Debug] Checking cover generation trigger for job ${wrapperJobId || 'direct'}: title="${songData.title}", lyrics="${songData.lyrics?.substring(0, 50)}...", style="${songData.style}"`);
+    
     if (songData.title || songData.lyrics || songData.style) {
+      console.log(`[Album Debug] Starting cover generation for job ${wrapperJobId || 'direct'}`);
+      
       if (wrapperJobId) {
         // Update job-specific cover generation state
         setActiveGenerations(prev => 
@@ -955,11 +959,15 @@ const Index = () => {
       
       api.generateAlbumCovers(songData)
         .then(covers => {
-          console.log("Album covers generated:", covers);
+          console.log(`[Album Success] Generated covers for job ${wrapperJobId || 'direct'}:`, covers);
           
           if (wrapperJobId) {
             // Store covers per job to prevent state pollution
-            setJobAlbumCovers(prev => new Map(prev).set(wrapperJobId, { cover1: covers.cover1, cover2: covers.cover2 }));
+            setJobAlbumCovers(prev => {
+              const newMap = new Map(prev).set(wrapperJobId, { cover1: covers.cover1, cover2: covers.cover2 });
+              console.log(`[Album Map] Updated jobAlbumCovers map, size: ${newMap.size}`, Array.from(newMap.keys()));
+              return newMap;
+            });
             console.log(`[Album] Stored covers for job ${wrapperJobId}`);
             // Update job-specific state
             setActiveGenerations(prev => 
@@ -986,6 +994,8 @@ const Index = () => {
             setIsGeneratingCovers(false);
           }
         });
+    } else {
+      console.log(`[Album Debug] Skipping cover generation - no title/lyrics/style for job ${wrapperJobId || 'direct'}`);
     }
     
     try {
@@ -1215,7 +1225,8 @@ const Index = () => {
           
           // Get appropriate album covers for this job
           const coversForJob = wrapperJobId ? jobAlbumCovers.get(wrapperJobId) : albumCovers;
-          console.log(`[Generation] Using covers for job ${wrapperJobId || 'direct'}:`, coversForJob ? 'found' : 'none');
+          console.log(`[Track Creation] Job ${wrapperJobId || 'direct'} - jobAlbumCovers map size: ${jobAlbumCovers.size}, keys:`, Array.from(jobAlbumCovers.keys()));
+          console.log(`[Track Creation] Retrieved covers for job ${wrapperJobId || 'direct'}:`, coversForJob ? 'found' : 'none', coversForJob);
           
           setTracks(prev => {
             const existing = new Set(prev.map(t => t.id));
