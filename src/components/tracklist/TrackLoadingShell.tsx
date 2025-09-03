@@ -17,7 +17,7 @@ export function TrackLoadingShell({ progress, trackNumber }: TrackLoadingShellPr
         {/* Track info area */}
         <div className="flex-1 min-w-0 pr-2">
           {/* Title placeholder - pill shape */}
-          <div className="h-3 bg-white/15 rounded-full animate-pulse max-w-[70%] mb-1"></div>
+          <div className="h-3 bg-white/15 rounded-full animate-pulse mb-1" style={{ width: 'calc(100% - 0.5rem)' }}></div>
           
           {/* Progress bar */}
           <div className="relative h-1.5 bg-white/5 rounded overflow-hidden max-w-full">
