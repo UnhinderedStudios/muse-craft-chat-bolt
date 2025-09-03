@@ -203,7 +203,8 @@ const Index = () => {
   const DOCK_H = 80; // px — reduced height to make container more compact
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [input, setInput] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [isChatBusy, setIsChatBusy] = useState(false);
+  const [isMusicGenerating, setIsMusicGenerating] = useState(false);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const [isReadingText, setIsReadingText] = useState(false);
   const [details, setDetails] = useState<SongDetails>({});
@@ -262,7 +263,7 @@ const Index = () => {
 
   // Build chat feed with synthetic status row when busy
   const chatFeed = useMemo(() => {
-    if (!busy) return messages;
+    if (!isChatBusy) return messages;
     const statusRow: StatusRow = {
       id: "__status__",
       type: "status",
@@ -270,7 +271,7 @@ const Index = () => {
       isReadingText,
     };
     return [...messages, statusRow as any];
-  }, [messages, busy, isAnalyzingImage, isReadingText]);
+  }, [messages, isChatBusy, isAnalyzingImage, isReadingText]);
 
   // Consolidate scroll-to-bottom behavior
   useEffect(() => {
@@ -278,9 +279,9 @@ const Index = () => {
     if (!el) return;
     el.scrollTo({
       top: el.scrollHeight,
-      behavior: (!busy && messages.length > 0) ? "smooth" : "auto",
+      behavior: (!isChatBusy && messages.length > 0) ? "smooth" : "auto",
     });
-  }, [chatFeed.length, chatHeight, footerH, busy, isAnalyzingImage, isReadingText]);
+  }, [chatFeed.length, chatHeight, footerH, isChatBusy, isAnalyzingImage, isReadingText]);
 
   // MAX the chat scroller can take while guaranteeing the form keeps MIN_FORM
   const MAX_SCROLLER = clamp(vh - MIN_FORM - RESERVED, MIN_SCROLLER, vh);
@@ -450,7 +451,7 @@ const Index = () => {
       clearInterval(progressIntervalRef.current);
     }
 
-    if (busy) {
+    if (isMusicGenerating) {
       progressIntervalRef.current = setInterval(() => {
         setGenerationProgress(current => {
           const now = Date.now();
@@ -487,7 +488,7 @@ const Index = () => {
         clearInterval(progressIntervalRef.current);
       }
     };
-  }, [busy, lastProgressUpdate]);
+  }, [isMusicGenerating, lastProgressUpdate]);
 
   // Ensure only one audio element plays at a time across the page
   useEffect(() => {
@@ -515,7 +516,7 @@ const Index = () => {
     console.log(`[AudioPlay] Attempting to play track ${index}, current index: ${currentTrackIndex}, isPlaying: ${isPlaying}`);
     
     // Prevent multiple rapid calls
-    if (busy) {
+    if (isMusicGenerating) {
       console.log(`[AudioPlay] Blocked - generation is busy`);
       return;
     }
@@ -633,7 +634,7 @@ const Index = () => {
   const handleRetryTimestamps = async (versionIndex: number) => {
     if (!jobId || !versions[versionIndex]) return;
     try {
-      setBusy(true);
+      setIsMusicGenerating(true);
       const { audioId, musicIndex } = versions[versionIndex];
 
       const res = await api.getTimestampedLyrics({
@@ -662,7 +663,7 @@ const Index = () => {
       setVersions(vs => vs.map((v, i) => i === versionIndex ? { ...v, timestampError: "Failed to load timestamps" } : v));
       toast.error("Failed to load karaoke timestamps");
     } finally {
-      setBusy(false);
+      setIsMusicGenerating(false);
     }
   };
 
@@ -752,7 +753,7 @@ const Index = () => {
     setInput("");
     setAttachedFiles([]); // Clear attachments after sending
 
-    setBusy(true);
+    setIsChatBusy(true);
     
     // Check attachment types to show appropriate loader
     const hasImageAttachments = fileAttachments?.some(file => file.type.startsWith('image/'));
@@ -811,7 +812,7 @@ const Index = () => {
     } catch (e: any) {
       toast.error(e.message || "Something went wrong");
     } finally {
-      setBusy(false);
+      setIsChatBusy(false);
       setIsAnalyzingImage(false);
       setIsReadingText(false);
       
@@ -830,9 +831,9 @@ const Index = () => {
     }
   }
   async function randomizeAll() {
-    if (busy) return;
+    if (isChatBusy) return;
     const content = "Please generate a completely randomized song_request and output ONLY the JSON in a JSON fenced code block (```json ... ```). The lyrics must be a complete song containing Intro, Verse 1, Pre-Chorus, Chorus, Verse 2, Chorus, Bridge, and Outro. No extra text.";
-    setBusy(true);
+    setIsChatBusy(true);
     try {
       // Use a minimal, stateless prompt so we don't get follow-ups that could override fields
       const minimal: ChatMessage[] = [{ role: "user", content }];
@@ -867,12 +868,12 @@ const Index = () => {
     } catch (e: any) {
       toast.error(e.message || "Randomize failed");
     } finally {
-      setBusy(false);
+      setIsChatBusy(false);
     }
   }
 
   async function testAlbumCoverWithLyrics() {
-    if (busy) return;
+    if (isMusicGenerating) return;
     setIsGeneratingCovers(true);
     setAlbumCovers(null);
     
@@ -907,7 +908,7 @@ async function startGeneration() {
     setLastProgressUpdate(Date.now());
     setAlbumCovers(null);
     setIsGeneratingCovers(false);
-    setBusy(true);
+    setIsMusicGenerating(true);
     
     // Start album cover generation immediately in parallel
     if (details.title || details.lyrics || details.style) {
@@ -1167,7 +1168,7 @@ async function startGeneration() {
       console.error("[Generation] Error:", e);
       toast.error(e.message || "Generation failed");
     } finally {
-      setBusy(false);
+      setIsMusicGenerating(false);
     }
   }
 
@@ -1365,12 +1366,12 @@ async function startGeneration() {
       placeholder="Type out your question here..."
       className="w-full bg-transparent border-0 pr-10 text-white placeholder-gray-500 focus:outline-none resize-none min-h-[48px] max-h-[200px] overflow-y-auto chat-input-scrollbar text-[15px] leading-6"
       onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSend(); } }}
-      disabled={busy}
+      disabled={isChatBusy}
       rows={1}
     />
     <button
       onClick={onSend}
-      disabled={busy || !input.trim()}
+      disabled={isChatBusy || !input.trim()}
       className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-white hover:text-accent-primary transition-colors disabled:opacity-50"
       aria-label="Send message"
     >
@@ -1385,9 +1386,9 @@ async function startGeneration() {
     {/* Generate — same height as tray */}
     <button
       onClick={startGeneration}
-      disabled={busy || !canGenerate}
+      disabled={isMusicGenerating || !canGenerate}
       className="h-9 w-full rounded-lg text-[13px] font-medium text-white bg-accent-primary hover:bg-accent-primary/90 disabled:bg-accent-primary/60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-      aria-disabled={busy || !canGenerate}
+      aria-disabled={isMusicGenerating || !canGenerate}
     >
       <span className="text-sm leading-none">✦</span>
       <span>Generate</span>
@@ -1395,10 +1396,10 @@ async function startGeneration() {
 
     {/* Icon tray — perfectly centered icons */}
     <div className="bg-[#040404] rounded-lg h-9 w-full grid grid-cols-4 place-items-center px-2 hover:shadow-[0_0_5px_rgba(255,255,255,0.25)] transition-shadow">
-      <button onClick={handleFileUpload} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Upload"><Upload size={18} /></button>
-      <button onClick={() => setShowMelodySpeech(true)} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Microphone"><Mic size={18} /></button>
-      <button onClick={randomizeAll} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="Randomize"><Dice5 size={18} /></button>
-      <button className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={busy} aria-label="List"><List size={18} /></button>
+      <button onClick={handleFileUpload} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={isChatBusy} aria-label="Upload"><Upload size={18} /></button>
+      <button onClick={() => setShowMelodySpeech(true)} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={isChatBusy} aria-label="Microphone"><Mic size={18} /></button>
+      <button onClick={randomizeAll} className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={isChatBusy} aria-label="Randomize"><Dice5 size={18} /></button>
+      <button className="w-8 h-8 grid place-items-center text-white hover:text-accent-primary disabled:opacity-50" disabled={isChatBusy} aria-label="List"><List size={18} /></button>
     </div>
   </div>
 </div>
@@ -1467,7 +1468,7 @@ async function startGeneration() {
                   )
                 );
               }}
-              isGenerating={busy}
+              isGenerating={isMusicGenerating}
               generationProgress={generationProgress}
             />
           </div>
@@ -1536,7 +1537,7 @@ async function startGeneration() {
             </div>
 
             {/* Progress bar */}
-            {busy && generationProgress > 0 && (
+            {isMusicGenerating && generationProgress > 0 && (
               <div className="space-y-2 pt-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-white/60">Generating...</span>
