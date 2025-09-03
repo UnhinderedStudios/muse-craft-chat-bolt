@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { SongDetails, TrackItem } from "@/types";
 import { ActiveGeneration, GenerationManagerState, MAX_CONCURRENT_GENERATIONS } from "@/types/generation";
 import { api } from "@/lib/api";
@@ -15,6 +15,12 @@ export function useGenerationManager() {
   });
 
   const pollingRefs = useRef<Map<string, NodeJS.Timeout>>(new Map());
+
+  // Always have the latest state available to polling loops
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   const generateId = () => `gen_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -153,7 +159,7 @@ export function useGenerationManager() {
     const pollStep = async () => {
       try {
         // Get current generation from state
-        const currentGeneration = state.activeGenerations.get(generationId);
+        const currentGeneration = stateRef.current.activeGenerations.get(generationId);
         
         if (!currentGeneration) {
           console.log(`⚠️ [${generationId}] Generation not found, stopping poll`);
@@ -259,9 +265,10 @@ export function useGenerationManager() {
       }
     };
 
-    // Start polling
-    pollStep();
-  }, [state.activeGenerations, updateGeneration, addToCompletedQueue, removeGeneration]);
+    // Start polling with slight delay to ensure state is committed
+    const initialTimeout = setTimeout(pollStep, 250);
+    pollingRefs.current.set(generationId, initialTimeout);
+  }, [updateGeneration, addToCompletedQueue, removeGeneration]);
 
   const createTracksFromGeneration = async (
     generationId: string,

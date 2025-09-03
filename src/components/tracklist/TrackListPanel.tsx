@@ -235,7 +235,7 @@ export default function TrackListPanel({
               
               // Calculate different progress for second shell (delayed but smoother)
               const shell1Progress = generation.progress;
-              const shell2Progress = Math.max(0, Math.min(95, generation.progress * 0.85 - 5)); // Slightly behind and slower
+              const shell2Progress = Math.min(97, Math.max(2, generation.progress * 0.8 - 3)); // Slightly behind and smoother
               
               return (
                 <React.Fragment key={generation.id}>
