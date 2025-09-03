@@ -1495,8 +1495,9 @@ async function startGeneration() {
                   )
                 );
               }}
-              isGenerating={isGeneratingMusic}
-              generationProgress={generationProgress}
+              isGenerating={generationManager.state.activeCount > 0}
+              generationProgress={generationManager.state.totalProgress}
+              activeGenerations={Array.from(generationManager.state.activeGenerations.values())}
             />
           </div>
 

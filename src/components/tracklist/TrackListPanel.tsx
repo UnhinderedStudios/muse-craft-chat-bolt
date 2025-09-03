@@ -29,6 +29,12 @@ type Props = {
   onTrackTitleUpdate?: (trackIndex: number, newTitle: string) => void;
   isGenerating?: boolean;
   generationProgress?: number;
+  activeGenerations?: Array<{
+    id: string;
+    progress: number;
+    progressText: string;
+    status: 'starting' | 'polling' | 'complete' | 'failed';
+  }>;
 };
 
 // Generate 20 test tracks for testing search functionality
