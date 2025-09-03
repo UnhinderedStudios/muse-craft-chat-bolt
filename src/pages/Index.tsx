@@ -10,7 +10,6 @@ import { Spinner } from "@/components/ui/spinner";
 import { ImageAnalysisLoader } from "@/components/ui/image-analysis-loader";
 import { toast } from "sonner";
 import { Dice5, Mic, Upload, Plus, List, Play, Pause, X, SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX, Music, Compass, Users, HelpCircle, BookOpen, MoreHorizontal } from "lucide-react";
-import { nanoid } from "nanoid";
 
 // Components
 import { CyberCard } from "@/components/cyber/CyberCard";
@@ -44,40 +43,6 @@ import { useSongGeneration } from "@/hooks/use-song-generation";
 import { type TimestampedWord, type ChatMessage, type TrackItem } from "@/types";
 
 import { parseSongRequest, convertToSongDetails } from "@/lib/parseSongRequest";
-
-// local helper
-const newRequestId = () => `req_${nanoid(10)}`;
-
-// Job types for concurrent generation
-type GenVersion = {
-  url: string;
-  audioId: string;
-  musicIndex: number;
-  words: TimestampedWord[];
-  hasTimestamps?: boolean;
-  timestampError?: string;
-};
-
-type Covers = {
-  cover1: string;
-  cover2: string;
-  debug?: any;
-};
-
-type GenJob = {
-  requestId: string;         // unique client id
-  jobId: string | null;      // server task id
-  details: SongDetails;      // snapshot at submission time
-  styleTags: string[];       // snapshot at submission time
-  createdAt: number;
-  progress: number;          // 0..100 per job
-  lastProgressUpdate: number;
-  isGeneratingCovers: boolean;
-  albumCovers: Covers | null;
-  versions: GenVersion[];    // filled when ready
-  status: "pending" | "running" | "ready" | "error";
-  error?: string;
-};
 
 const systemPrompt = `You are Melody Muse, a friendly creative assistant for songwriting.
 Your goal is to chat naturally and quickly gather two things only: (1) a unified Style description and (2) Lyrics.
@@ -371,11 +336,6 @@ const Index = () => {
     setStyleTags(tags);
     setDetails({ ...details, style: tags.join(", ") });
   };
-  
-  // Concurrent generation state
-  const [jobs, setJobs] = useState<GenJob[]>([]);
-  
-  // Legacy state (kept for compatibility)
   const [jobId, setJobId] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioUrls, setAudioUrls] = useState<string[] | null>(null);
@@ -484,25 +444,7 @@ const Index = () => {
     audioRefs.current = [];
   }, [audioUrls, audioUrl]);
 
-  // Per-job smooth progress system
-  useEffect(() => {
-    const id = setInterval(() => {
-      setJobs(prev => prev.map(j => {
-        if (!["pending","running"].includes(j.status)) return j;
-        const timeSince = Date.now() - j.lastProgressUpdate;
-        if (timeSince <= 3000 || j.progress >= 98) return j;
-        let creep = 0.5;
-        if (timeSince > 15000) creep = 1.5;
-        else if (timeSince > 5000) creep = 1;
-        if (j.progress > 85) creep *= (98 - j.progress) / 13;
-        const inc = creep + (Math.random() * 0.3 - 0.15);
-        return { ...j, progress: Math.min(j.progress + inc, 98) };
-      }));
-    }, 3000 + Math.random() * 2000);
-    return () => clearInterval(id);
-  }, []);
-
-  // Legacy smooth progress system (kept for compatibility)
+  // Smooth progress system that never goes backward and handles stagnation
   useEffect(() => {
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
@@ -687,45 +629,40 @@ const Index = () => {
   const playPrev = () => tracks.length && handleAudioPlay(Math.max(0, currentTrackIndex - 1));
   const playNext = () => tracks.length && handleAudioPlay(Math.min(tracks.length - 1, currentTrackIndex + 1));
 
-  // Handle retry timestamps for karaoke (updated for job-based system)
+  // Handle retry timestamps for karaoke
   const handleRetryTimestamps = async (versionIndex: number) => {
-    // Find the active track, then map back to its job/version
-    const activeTrack = tracks[currentTrackIndex];
-    if (!activeTrack) return;
-
-    const owningJob = jobs.find(j => j.versions.some(v => v.audioId === activeTrack.id));
-    if (!owningJob || !owningJob.jobId) return;
-
-    const vIdx = owningJob.versions.findIndex(v => v.audioId === activeTrack.id);
-    if (vIdx === -1) return;
-
+    if (!jobId || !versions[versionIndex]) return;
     try {
-      const result = await api.getTimestampedLyrics({
-        taskId: owningJob.jobId,
-        audioId: owningJob.versions[vIdx].audioId,
-        musicIndex: owningJob.versions[vIdx].musicIndex,
+      setBusy(true);
+      const { audioId, musicIndex } = versions[versionIndex];
+
+      const res = await api.getTimestampedLyrics({
+        taskId: jobId,
+        audioId,
+        musicIndex,
       });
-      const words = (result.alignedWords ?? []).map((w: any) => ({
+
+      const words = (res.alignedWords ?? []).map((w: any) => ({
         word: w.word,
         start: w.startS ?? w.start_s ?? w.start ?? 0,
         end:   w.endS   ?? w.end_s   ?? w.end   ?? 0,
         success: !!w.success,
         p_align: w.p_align ?? w.palign ?? 0,
       }));
-      if (!words.length) {
+
+      if (words.length) {
+        setVersions(vs => vs.map((v, i) => i === versionIndex ? { ...v, words, hasTimestamps: true, timestampError: undefined } : v));
+        setTracks(ts => ts.map(t => t.id === audioId ? { ...t, words, hasTimestamps: true, timestampError: undefined } : t));
+        toast.success("Karaoke timestamps loaded!");
+      } else {
+        setVersions(vs => vs.map((v, i) => i === versionIndex ? { ...v, timestampError: "No timestamps available" } : v));
         toast.error("No timestamps available for this version");
-        return;
       }
-      // Update the job
-      setJobs(prev => prev.map(j => j.requestId === owningJob.requestId
-        ? { ...j, versions: j.versions.map((v,i) => i === vIdx ? { ...v, words, hasTimestamps: true, timestampError: undefined } : v) }
-        : j
-      ));
-      // Update the track mirror
-      setTracks(ts => ts.map(t => t.id === activeTrack.id ? { ...t, words, hasTimestamps: true, timestampError: undefined } : t));
-      toast.success("Karaoke timestamps loaded!");
-    } catch {
+    } catch (e) {
+      setVersions(vs => vs.map((v, i) => i === versionIndex ? { ...v, timestampError: "Failed to load timestamps" } : v));
       toast.error("Failed to load karaoke timestamps");
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -893,6 +830,7 @@ const Index = () => {
     }
   }
   async function randomizeAll() {
+    if (busy) return;
     const content = "Please generate a completely randomized song_request and output ONLY the JSON in a JSON fenced code block (```json ... ```). The lyrics must be a complete song containing Intro, Verse 1, Pre-Chorus, Chorus, Verse 2, Chorus, Bridge, and Outro. No extra text.";
     setBusy(true);
     try {
@@ -925,9 +863,7 @@ const Index = () => {
         setDetails((d) => mergeNonEmpty(d, merged));
         toast.success("Randomized song details ready");
       }
-      // ensure no side-effects:
-      setJobId(null); // keep legacy field harmless
-      // DO NOT start album covers or startSong here
+      // Do not alter chat history for the dice action
     } catch (e: any) {
       toast.error(e.message || "Randomize failed");
     } finally {
@@ -963,190 +899,275 @@ async function startGeneration() {
       toast.message("Add a few details first", { description: "Chat a bit more until I extract a song request." });
       return;
     }
-
-    // Enforce max 10 concurrent (pending or running) jobs
-    const activeCount = jobs.filter(j => j.status === "pending" || j.status === "running").length;
-    if (activeCount >= 10) {
-      toast.message("Generation queue is full", { description: "Please wait for one to finish or stop a job." });
-      return;
-    }
-
-    // Snapshot the current form (do not mutate global details mid-flight)
-    const snapshotDetails: SongDetails = {
-      title: details.title,
-      style: sanitizeStyle(details.style || ""),
-      lyrics: details.lyrics
-    };
-    const snapshotTags = [...styleTags];
-
-    const requestId = newRequestId();
-    const createdAt = Date.now();
-
-    // Create the job with optimistic covers state
-    const newJob: GenJob = {
-      requestId,
-      jobId: null,
-      details: snapshotDetails,
-      styleTags: snapshotTags,
-      createdAt,
-      progress: 0,
-      lastProgressUpdate: Date.now(),
-      isGeneratingCovers: !!(snapshotDetails.title || snapshotDetails.lyrics || snapshotDetails.style),
-      albumCovers: null,
-      versions: [],
-      status: "pending"
-    };
-
-    setJobs(prev => [newJob, ...prev].slice(0, 20)); // keep some history; newest first
-
-    // Start covers in parallel (scoped to this job)
-    if (newJob.isGeneratingCovers) {
-      api.generateAlbumCovers(snapshotDetails)
+    setAudioUrl(null);
+    setAudioUrls(null);
+    setJobId(null);
+    setVersions([]);
+    setGenerationProgress(0);
+    setLastProgressUpdate(Date.now());
+    setAlbumCovers(null);
+    setIsGeneratingCovers(false);
+    setBusy(true);
+    
+    // Start album cover generation immediately in parallel
+    if (details.title || details.lyrics || details.style) {
+      setIsGeneratingCovers(true);
+      api.generateAlbumCovers(details)
         .then(covers => {
-          setJobs(prev => prev.map(j =>
-            j.requestId === requestId ? { ...j, albumCovers: covers, isGeneratingCovers: false } : j
-          ));
+          console.log("Album covers generated:", covers);
+          setAlbumCovers(covers);
         })
-        .catch(() => {
-          setJobs(prev => prev.map(j =>
-            j.requestId === requestId ? { ...j, isGeneratingCovers: false } : j
-          ));
+        .catch(error => {
+          console.error("Album cover generation failed:", error);
           toast.error("Failed to generate album covers");
+        })
+        .finally(() => {
+          setIsGeneratingCovers(false);
         });
     }
-
-    // Start song
-    setJobs(prev => prev.map(j => j.requestId === requestId ? { ...j, status: "running" } : j));
+    
     try {
-      const { jobId } = await api.startSong(snapshotDetails);
-      setJobs(prev => prev.map(j => j.requestId === requestId ? { ...j, jobId } : j));
+      const payload = { ...details, style: sanitizeStyle(details.style || "") };
+      const { jobId } = await api.startSong(payload);
+      setJobId(jobId);
+      toast.success("Song requested. Composing...");
 
-      // Phase A — wait for completion (scoped progress)
-      const PHASE_A_MAX_MS = 10 * 60 * 1000;
-      const startTs = Date.now();
+      // Phase A: Wait for generation completion with status confirmation
+      console.log("[Generation] Phase A: Waiting for completion...");
+      // Phase A: Wait up to 10 minutes for generation completion (time-based)
+      const PHASE_A_MAX_MS = 10 * 60 * 1000; // 10 minutes
+      const PHASE_A_START = Date.now();
+      let completionAttempts = 0;
       let statusRaw = "PENDING";
       let sunoData: any[] = [];
-      let attempts = 0;
+      let generationComplete = false;
 
-      while (Date.now() - startTs < PHASE_A_MAX_MS) {
-        attempts++;
-        const elapsed = Date.now() - startTs;
+      while (Date.now() - PHASE_A_START < PHASE_A_MAX_MS) {
+        completionAttempts++;
+        // Progress based on elapsed time (never goes backward)
+        const elapsed = Date.now() - PHASE_A_START;
         const baseProgress = Math.min((elapsed / PHASE_A_MAX_MS) * 40, 40);
-        const statusProgress =
-          statusRaw === "PENDING" ? 15 :
-          statusRaw === "FIRST_SUCCESS" ? 35 :
-          statusRaw === "TEXT_SUCCESS" ? 55 :
-          statusRaw === "SUCCESS" || statusRaw === "COMPLETE" || statusRaw === "ALL_SUCCESS" ? 70 :
-          5;
-
-        const next = Math.max(baseProgress, statusProgress);
-        setJobs(prev => prev.map(j =>
-          j.requestId === requestId
-            ? { ...j, progress: Math.max(j.progress, next), lastProgressUpdate: Date.now() }
-            : j
-        ));
-
-        const backoff = Math.min(1500 + attempts * 300, 4000);
-        await new Promise(r => setTimeout(r, backoff));
-
+        let statusProgress = 5;
+        if (statusRaw === "PENDING") statusProgress = 15;
+        else if (statusRaw === "FIRST_SUCCESS") statusProgress = 35;
+        else if (statusRaw === "TEXT_SUCCESS") statusProgress = 55;
+        else if (statusRaw === "SUCCESS") statusProgress = 70;
+        
+        const newProgress = Math.max(baseProgress, statusProgress);
+        setGenerationProgress(current => {
+          if (newProgress > current) {
+            setLastProgressUpdate(Date.now());
+            return newProgress;
+          }
+          return current;
+        });
+        
+        const backoffDelay = Math.min(1500 + completionAttempts * 300, 4000);
+        await new Promise((r) => setTimeout(r, backoffDelay));
+        
         try {
           const details = await api.getMusicGenerationDetails(jobId);
           statusRaw = details.statusRaw;
           sunoData = details.response?.sunoData || [];
-          if (["SUCCESS", "COMPLETE", "ALL_SUCCESS"].includes(statusRaw)) break;
-          if (statusRaw.includes("FAIL") || statusRaw.includes("ERROR")) throw new Error(statusRaw);
-        } catch {
-          // keep polling
+          
+          console.log(`[Generation] Attempt ${completionAttempts}: Status=${statusRaw}, Tracks=${sunoData.length}`);
+          
+          // Check for completion - accept SUCCESS but not intermediate states
+          if (statusRaw === "SUCCESS" || statusRaw === "COMPLETE" || statusRaw === "ALL_SUCCESS") {
+            console.log("[Generation] Phase A: Generation completed!");
+            setGenerationProgress(current => {
+              setLastProgressUpdate(Date.now());
+              return Math.max(current, 75);
+            });
+            generationComplete = true;
+            break;
+          }
+          
+          if (statusRaw.includes("FAIL") || statusRaw.includes("ERROR")) {
+            throw new Error(`Generation failed with status: ${statusRaw}`);
+          }
+        } catch (e) {
+          console.warn(`[Generation] Details polling error (attempt ${completionAttempts}):`, e);
+          // Continue polling even if details call fails
         }
       }
 
-      if (!["SUCCESS", "COMPLETE", "ALL_SUCCESS"].includes(statusRaw)) {
+      if (!generationComplete) {
         throw new Error("Generation timed out after 10 minutes");
       }
 
-      // Phase B — poll for audio URLs (scoped)
+      // Get audio URLs via regular polling
+      console.log("[Generation] Fetching audio URLs...");
       let audioAttempts = 0;
       const maxAudioAttempts = 15;
+      
       while (audioAttempts++ < maxAudioAttempts) {
-        await new Promise(r => setTimeout(r, 2000));
+        await new Promise((r) => setTimeout(r, 2000));
         const status = await api.pollSong(jobId);
+        
         if (status.status === "ready" && status.audioUrls?.length) {
-          const versions: GenVersion[] = status.audioUrls.map((url: string, index: number) => {
+          console.log("[Generation] Audio URLs ready:", status.audioUrls);
+          setAudioUrls(status.audioUrls);
+          setAudioUrl(status.audioUrls[0]);
+          
+          // Create initial versions from audioUrls and sunoData with real IDs
+          const newVersions = status.audioUrls.map((url, index) => {
             const trackData = sunoData[index];
-            const realAudioId = trackData?.id || `missing_id_${index}`;
-            return { url, audioId: realAudioId, musicIndex: index, words: [], hasTimestamps: false };
-          });
-
-          setJobs(prev => prev.map(j =>
-            j.requestId === requestId
-              ? { ...j, versions, progress: Math.max(j.progress, 85), lastProgressUpdate: Date.now() }
-              : j
-          ));
-
-          // Fetch timestamps per version (scoped retries)
-          const updated = await Promise.all(versions.map(async (v, i) => {
-            let tries = 0;
-            while (tries++ < 8) {
-              try {
-                if (tries > 1) await new Promise(r => setTimeout(r, Math.min(1000 * Math.pow(1.5, tries - 1), 8000)));
-                const res = await api.getTimestampedLyrics({ taskId: jobId, audioId: v.audioId, musicIndex: v.musicIndex });
-                const words = (res.alignedWords ?? []).map((w: any) => ({
-                  word: w.word,
-                  start: w.startS ?? w.start_s ?? w.start ?? 0,
-                  end:   w.endS   ?? w.end_s   ?? w.end   ?? 0,
-                  success: !!w.success,
-                  p_align: w.p_align ?? w.palign ?? 0,
-                }));
-                if (words.length) return { ...v, words, hasTimestamps: true };
-              } catch {}
+            const realAudioId = trackData?.id;
+            
+            if (!realAudioId || realAudioId.startsWith('track_')) {
+              console.warn(`[Generation] Version ${index}: Missing or invalid audioId, got: ${realAudioId}`);
+            } else {
+              console.log(`[Generation] Version ${index}: Using audioId: ${realAudioId}`);
             }
-            return { ...v, hasTimestamps: false, timestampError: "Timestamped lyrics not available after retries" };
-          }));
+            
+            return {
+              url,
+              audioId: realAudioId || `missing_id_${index}`,
+              musicIndex: index,
+              words: [] as TimestampedWord[],
+              hasTimestamps: false
+            };
+          });
+          
+          console.log("[Generation] Created initial versions:", newVersions);
+          setVersions(newVersions);
+          toast.success("Audio ready! Fetching karaoke lyrics...");
+          
+      // Phase B: Fetch timestamped lyrics for each version with retry logic
+      console.log("[Generation] Phase B: Fetching timestamped lyrics...");
+      console.log("[Generation] Using newVersions for timestamp fetching:", newVersions);
+      console.log("[Generation] newVersions.length:", newVersions.length);
+          setGenerationProgress(current => {
+            setLastProgressUpdate(Date.now());
+            return Math.max(current, 85);
+          });
+          
+          if (newVersions.length === 0) {
+            console.warn("[Generation] No versions available for timestamp fetching");
+            return;
+          }
 
-          setJobs(prev => prev.map(j =>
-            j.requestId === requestId
-              ? { ...j, versions: updated, progress: 100, lastProgressUpdate: Date.now(), status: "ready" }
-              : j
-          ));
+          const updatedVersions = await Promise.all(
+            newVersions.map(async (version, index) => {
+              let retryAttempts = 0;
+              const maxRetryAttempts = 8;
+              
+              while (retryAttempts++ < maxRetryAttempts) {
+                try {
+                  const exponentialBackoff = Math.min(1000 * Math.pow(1.5, retryAttempts - 1), 8000);
+                  if (retryAttempts > 1) {
+                    console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}, waiting ${exponentialBackoff}ms`);
+                    await new Promise(r => setTimeout(r, exponentialBackoff));
+                  }
 
-          // Push tracks to global list (newest first), **do not** steal playback if user is playing
+                  console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}: Using audioId=${version.audioId}, musicIndex=${version.musicIndex}`);
+                  
+                  const result = await api.getTimestampedLyrics({
+                    taskId: jobId,
+                    audioId: version.audioId,
+                    musicIndex: version.musicIndex
+                  });
+
+                  if (result.alignedWords && result.alignedWords.length > 0) {
+                    console.log(`[Timestamps] Version ${index + 1}: Success with ${result.alignedWords.length} words`);
+                    return {
+                      ...version,
+                      words: result.alignedWords.map((word: any) => {
+                        // Handle different API response formats
+                        const start = word.startS || word.start_s || word.start || 0;
+                        const end = word.endS || word.end_s || word.end || 0;
+                        console.log(`[Word mapping] "${word.word}" -> start: ${start}, end: ${end}`);
+                        return {
+                          word: word.word,
+                          start,
+                          end,
+                          success: !!word.success,
+                          p_align: word.p_align || word.palign || 0
+                        };
+                      }),
+                      hasTimestamps: true
+                    };
+                  } else {
+                    console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}: No aligned words yet`);
+                  }
+                } catch (e) {
+                  console.warn(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts} failed:`, e);
+                }
+              }
+
+              // All retries exhausted
+              console.warn(`[Timestamps] Version ${index + 1}: Failed after ${maxRetryAttempts} attempts`);
+              return {
+                ...version,
+                hasTimestamps: false,
+                timestampError: "Timestamped lyrics not available after retries"
+              };
+            })
+          );
+
+          console.log("[Generation] Final versions with timestamps:", updatedVersions);
+          setVersions(updatedVersions);
+          
+          // Add tracks to the track list (newest first)
           const batchCreatedAt = Date.now();
           setTracks(prev => {
             const existing = new Set(prev.map(t => t.id));
-            const covers = (jobs.find(x => x.requestId === requestId)?.albumCovers) || null;
-            const fresh = updated.map((v, i) => ({
-              id: v.audioId,
+            const fresh = updatedVersions.map((v, i) => ({
+              id: v.audioId || `${jobId}-${i}`,
               url: v.url,
-              title: snapshotDetails.title || "Song Title",
-              coverUrl: covers ? (i === 1 ? covers.cover2 : covers.cover1) : undefined,
+              title: details.title || "Song Title",
+              coverUrl: albumCovers ? (i === 1 ? albumCovers.cover2 : albumCovers.cover1) : undefined,
               createdAt: batchCreatedAt,
-              params: snapshotTags,
+              params: styleTags,
               words: v.words,
               hasTimestamps: v.hasTimestamps,
             })).filter(t => !existing.has(t.id));
-            return [...fresh, ...prev];
+            
+            return [...fresh, ...prev]; // newest first
           });
-
-          // Only auto-select the new batch if idle
+          
+          // Set active track to first of new batch
+          setCurrentTrackIndex(0);
+          setCurrentTime(0);
+          setIsPlaying(false);
+          
+          // Reset all audio elements to start position
           setTimeout(() => {
-            const isIdle = !isPlaying && !audioRefs.current.some(a => a && !a.paused);
-            if (isIdle) {
-              setCurrentTrackIndex(0);  // top is newest
-              setCurrentTime(0);
-              setIsPlaying(false);
-            }
-          }, 0);
+            audioRefs.current.forEach((audio) => {
+              if (audio) {
+                audio.currentTime = 0;
+              }
+            });
+          }, 100);
+          
+          const successCount = updatedVersions.filter(v => v.hasTimestamps).length;
+          setGenerationProgress(100);
+          setLastProgressUpdate(Date.now());
+          if (successCount > 0) {
+            toast.success(`Song ready with karaoke lyrics! (${successCount}/${updatedVersions.length} versions)`);
+          } else {
+            toast.success("Song ready! (Karaoke lyrics unavailable)");
+          }
 
-          toast.success(`Song ready${updated.some(u => u.hasTimestamps) ? " with karaoke" : ""}!`);
+          
           break;
         }
-        if (status.status === "error") throw new Error(status.error || "Audio generation failed");
+        
+        if (status.status === "error") {
+          throw new Error(status.error || "Audio generation failed");
+        }
       }
+
+      if (audioAttempts >= maxAudioAttempts) {
+        throw new Error("Timed out waiting for audio URLs");
+      }
+
     } catch (e: any) {
-      setJobs(prev => prev.map(j =>
-        j.requestId === requestId ? { ...j, status: "error", error: e?.message || "Generation failed" } : j
-      ));
-      toast.error(e?.message || "Generation failed");
+      console.error("[Generation] Error:", e);
+      toast.error(e.message || "Generation failed");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -1179,23 +1200,6 @@ async function startGeneration() {
 
           {/* Header Bar for Karaoke + TrackList */}
           <div className="order-1 lg:col-start-3 lg:col-span-2 h-5 bg-[#1e1e1e] rounded-2xl" />
-
-          {/* Minimal active jobs list (non-invasive) */}
-          {jobs.some(j => j.status === "pending" || j.status === "running") && (
-            <div className="order-3 md:col-span-6 lg:col-span-1 xl:col-span-1 mb-2 px-4">
-              <div className="space-y-2">
-                {jobs.filter(j => j.status === "pending" || j.status === "running").slice(0,10).map(j => (
-                  <div key={j.requestId} className="bg-[#1b1b1b] rounded-lg p-2">
-                    <div className="flex justify-between text-xs text-white/70">
-                      <span>{j.details.title || "Generating song..."}</span>
-                      <span>{Math.round(j.progress)}%</span>
-                    </div>
-                    <Progress value={j.progress} className="h-1.5 mt-1" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Row 1 - Left: Soundify Sidebar */}
           <div className="order-2 md:col-span-2 lg:col-span-1 lg:row-start-1 lg:row-span-2 xl:col-span-1 bg-[#1e1e1e] rounded-2xl p-4 flex flex-col h-full max-h-full overflow-hidden">
@@ -1381,12 +1385,12 @@ async function startGeneration() {
     {/* Generate — same height as tray */}
     <button
       onClick={startGeneration}
-      disabled={!canGenerate}
+      disabled={busy || !canGenerate}
       className="h-9 w-full rounded-lg text-[13px] font-medium text-white bg-accent-primary hover:bg-accent-primary/90 disabled:bg-accent-primary/60 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-      aria-disabled={!canGenerate}
+      aria-disabled={busy || !canGenerate}
     >
       <span className="text-sm leading-none">✦</span>
-      <span>Generate {jobs.filter(j => j.status === "pending" || j.status === "running").length > 0 ? `(${jobs.filter(j => j.status === "pending" || j.status === "running").length}/10 active)` : ""}</span>
+      <span>Generate</span>
     </button>
 
     {/* Icon tray — perfectly centered icons */}
