@@ -43,6 +43,8 @@ import { useSongGeneration } from "@/hooks/use-song-generation";
 import { type TimestampedWord, type ChatMessage, type TrackItem } from "@/types";
 
 import { parseSongRequest, convertToSongDetails } from "@/lib/parseSongRequest";
+import { RANDOM_MUSIC_FORGE_PROMPT } from "@/utils/prompts";
+import { parseRandomMusicForgeOutput } from "@/lib/parseRandomMusicForge";
 
 const systemPrompt = `You are Melody Muse, a friendly creative assistant for songwriting.
 Your goal is to chat naturally and quickly gather two things only: (1) a unified Style description and (2) Lyrics.
@@ -839,21 +841,22 @@ const Index = () => {
   }
   async function randomizeAll() {
     if (isChatBusy) return;
-    const content = "Please generate a completely randomized song_request and output ONLY the JSON in a JSON fenced code block (```json ... ```). The lyrics must be a complete song containing Intro, Verse 1, Pre-Chorus, Chorus, Verse 2, Chorus, Bridge, and Outro. No extra text.";
+    const content = "Dice roll: create a fresh, original song now. Follow the output format exactly (no extra commentary).";
     setIsChatBusy(true);
     try {
-      // Use a minimal, stateless prompt so we don't get follow-ups that could override fields
       const minimal: ChatMessage[] = [{ role: "user", content }];
-      console.debug("[Dice] Sending randomize prompt. systemPrompt snippet:", systemPrompt.slice(0,120));
+      console.debug("[Dice] Using RandomMusicForge prompt");
       const [r1, r2] = await Promise.allSettled([
-        api.chat(minimal, systemPrompt),
-        api.chat(minimal, systemPrompt),
+        api.chat(minimal, RANDOM_MUSIC_FORGE_PROMPT),
+        api.chat(minimal, RANDOM_MUSIC_FORGE_PROMPT),
       ]);
       const msgs: string[] = [];
       if (r1.status === "fulfilled") msgs.push(r1.value.content);
       if (r2.status === "fulfilled") msgs.push(r2.value.content);
       console.debug("[Dice] Received responses:", msgs.map(m => m.slice(0, 160)));
       const extractions = msgs.map((m) => {
+        const rmf = parseRandomMusicForgeOutput(m);
+        if (rmf) return rmf;
         const parsed = parseSongRequest(m);
         if (parsed) return convertToSongDetails(parsed);
         return extractDetails(m);
