@@ -37,7 +37,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { useChat } from "@/hooks/use-chat";
 import { useResize } from "@/hooks/use-resize";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { useGenerationManager } from "@/hooks/use-generation-manager";
+import { useSongGeneration } from "@/hooks/use-song-generation";
 
 // Types
 import { type TimestampedWord, type ChatMessage, type TrackItem } from "@/types";
@@ -204,10 +204,7 @@ const Index = () => {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
-  
-  // Multi-generation system
-  const generationManager = useGenerationManager();
-  const isGeneratingMusic = generationManager.state.activeCount > 0;
+  const [isGeneratingMusic, setIsGeneratingMusic] = useState(false);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
   const [isReadingText, setIsReadingText] = useState(false);
   const [details, setDetails] = useState<SongDetails>({});
@@ -518,8 +515,11 @@ const Index = () => {
     if (!tracks.length) return;
     console.log(`[AudioPlay] Attempting to play track ${index}, current index: ${currentTrackIndex}, isPlaying: ${isPlaying}`);
     
-    // Don't block audio playback during generation (Fix Bug 2)
-    // Only block generation-specific actions, not playback
+    // Prevent multiple rapid calls
+    if (busy) {
+      console.log(`[AudioPlay] Blocked - generation is busy`);
+      return;
+    }
     
     // If same track is already playing, just toggle pause/play
     if (currentTrackIndex === index && isPlaying) {
@@ -910,88 +910,8 @@ async function startGeneration() {
     setAlbumCovers(null);
     setIsGeneratingCovers(false);
      setBusy(true);
-     
-     // Use new concurrent generation system
-     const generationId = await generationManager.startSingleGeneration(details, async (newTracks, generation) => {
-       // Add tracks to the beginning
-       setTracks(prev => [...newTracks, ...prev]);
-       if (!isPlaying) {
-         setCurrentTrackIndex(0);
-         setCurrentTime(0);
-       }
-       
-       // Generate album covers after successful generation
-       if (details.title || details.lyrics || details.style) {
-         setIsGeneratingCovers(true);
-         try {
-           const covers = await api.generateAlbumCovers(details);
-           console.log("Album covers generated:", covers);
-           setAlbumCovers(covers);
-           
-            // Update tracks with unique cover URLs - alternate between cover1 and cover2
-            setTracks(prev => prev.map(track => {
-              const trackIndex = newTracks.findIndex(nt => nt.id === track.id);
-              if (trackIndex !== -1) {
-                const coverUrl = trackIndex % 2 === 0 ? covers.cover1 : covers.cover2;
-                return { ...track, coverUrl };
-              }
-              return track;
-            }));
-         } catch (error) {
-           console.error("Album cover generation failed:", error);
-           toast.error("Failed to generate album covers");
-         } finally {
-           setIsGeneratingCovers(false);
-         }
-       }
-       
-       // Fetch timestamped lyrics for karaoke
-       if (generation.audioUrls) {
-         try {
-           console.log("[Karaoke] Fetching timestamps for new tracks...");
-           const updatedTracks = await Promise.all(
-             newTracks.map(async (track, index) => {
-               try {
-                  const result = await api.getTimestampedLyrics({
-                    taskId: generation.jobId,
-                    audioId: generation.audioUrls?.[index],
-                    musicIndex: index
-                  });
-                  
-                  if (result.alignedWords && result.alignedWords.length > 0) {
-                    console.log(`[Karaoke] Got ${result.alignedWords.length} words for track ${index}`);
-                    const words: TimestampedWord[] = result.alignedWords.map((w: any) => ({
-                      word: w.word,
-                      start: w.startS || w.start_s || w.start || 0,
-                      end: w.endS || w.end_s || w.end || 0,
-                      success: true
-                    }));
-                    return { ...track, words, hasTimestamps: true };
-                  }
-               } catch (error) {
-                 console.warn(`[Karaoke] Failed to get timestamps for track ${index}:`, error);
-               }
-               return track;
-             })
-           );
-           
-           setTracks(prev => prev.map(track => {
-             const updated = updatedTracks.find(ut => ut.id === track.id);
-             return updated || track;
-           }));
-           
-           toast.success("Karaoke lyrics loaded!");
-         } catch (error) {
-           console.warn("[Karaoke] Failed to load timestamps:", error);
-         }
-       }
-     });
-     
-     if (generationId) {
-       toast.success("Generation started! You can start another one.");
-     }
-     setBusy(false);
-     return;
+     setIsGeneratingMusic(true);
+     console.log("🎵 Music generation started - isGeneratingMusic set to true");
     
     // Start album cover generation immediately in parallel
     if (details.title || details.lyrics || details.style) {
@@ -1092,13 +1012,7 @@ async function startGeneration() {
         if (status.status === "ready" && status.audioUrls?.length) {
           console.log("[Generation] Audio URLs ready:", status.audioUrls);
           setAudioUrls(status.audioUrls);
-          // Only auto-switch if no music is currently playing (Fix Bug 2)
-          if (!isPlaying) {
-            setAudioUrl(status.audioUrls[0]);
-            console.log("[Generation] Auto-switched to new track (no music was playing)");
-          } else {
-            console.log("[Generation] Music is playing, not auto-switching");
-          }
+          setAudioUrl(status.audioUrls[0]);
           
           // Create initial versions from audioUrls and sunoData with real IDs
           const newVersions = status.audioUrls.map((url, index) => {
@@ -1121,12 +1035,7 @@ async function startGeneration() {
           });
           
           console.log("[Generation] Created initial versions:", newVersions);
-          // Make versions accumulative instead of replacing (Fix Bug 1)
-          setVersions(prevVersions => {
-            const combinedVersions = [...prevVersions, ...newVersions];
-            console.log("[Generation] Added new versions to existing:", combinedVersions.length, "total");
-            return combinedVersions;
-          });
+          setVersions(newVersions);
           toast.success("Audio ready! Fetching karaoke lyrics...");
           
       // Phase B: Fetch timestamped lyrics for each version with retry logic
@@ -1262,7 +1171,8 @@ async function startGeneration() {
       console.error("[Generation] Error:", e);
       toast.error(e.message || "Generation failed");
     } finally {
-        setBusy(false);
+      setBusy(false);
+      setIsGeneratingMusic(false);
     }
   }
 
@@ -1562,9 +1472,8 @@ async function startGeneration() {
                   )
                 );
               }}
-              isGenerating={generationManager.state.activeCount > 0}
-              generationProgress={generationManager.state.totalProgress}
-              activeGenerations={Array.from(generationManager.state.activeGenerations.values())}
+              isGenerating={isGeneratingMusic}
+              generationProgress={generationProgress}
             />
           </div>
 

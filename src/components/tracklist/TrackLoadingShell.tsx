@@ -3,10 +3,9 @@ import React from "react";
 interface TrackLoadingShellProps {
   progress: number;
   trackNumber: number;
-  debug?: boolean;
 }
 
-export function TrackLoadingShell({ progress, trackNumber, debug = false }: TrackLoadingShellProps) {
+export function TrackLoadingShell({ progress, trackNumber }: TrackLoadingShellProps) {
   return (
     <div className="animate-fade-in">
       <div className="bg-[#1e1e1e] rounded-xl p-4 flex items-center gap-4 min-h-[56px] hover:bg-[#252525] transition-colors">
