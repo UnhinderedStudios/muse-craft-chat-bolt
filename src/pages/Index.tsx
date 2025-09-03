@@ -1172,7 +1172,7 @@ const Index = () => {
               id: v.audioId || `${sunoJobId}-${i}`,
               url: v.url,
               title: songData.title || "Song Title",
-              coverUrl: albumCovers ? (i === 1 ? albumCovers.cover2 : albumCovers.cover1) : undefined,
+              coverUrl: albumCovers ? (i % 2 === 0 ? albumCovers.cover1 : albumCovers.cover2) : undefined,
               createdAt: batchCreatedAt,
               params: styleTags,
               words: v.words,
