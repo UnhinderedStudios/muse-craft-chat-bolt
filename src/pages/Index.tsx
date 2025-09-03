@@ -1495,6 +1495,7 @@ const Index = () => {
               }}
               isGenerating={isMusicGenerating}
               generationProgress={generationProgress}
+              activeJobCount={activeJobCount}
             />
           </div>
 
