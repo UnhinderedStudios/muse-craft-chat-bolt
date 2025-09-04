@@ -1216,35 +1216,24 @@ const Index = () => {
           console.log(`[Generation] Adding ${updatedVersions.length} tracks for job ${wrapperJobId || 'direct'}`);
           setTracks(prev => {
             const existing = new Set(prev.map(t => t.id));
+            
+            // Get pre-generated covers for this job
+            const jobCovers = wrapperJobId ? activeGenerations.find(job => job.id === wrapperJobId)?.covers : undefined;
+            
             const fresh = updatedVersions.map((v, i) => ({
               id: v.audioId || `${sunoJobId}-${i}`,
               url: v.url,
               title: songData.title || "Song Title",
-              coverUrl: undefined, // Will be generated individually per track
+              coverUrl: jobCovers ? (i === 0 ? jobCovers.cover1 : jobCovers.cover2) : undefined,
               createdAt: batchCreatedAt,
               params: styleTags,
               words: v.words,
               hasTimestamps: v.hasTimestamps,
             })).filter(t => !existing.has(t.id));
             
-            console.log(`[Generation] Added ${fresh.length} new tracks, total tracks: ${fresh.length + prev.length}`);
-            
-            // Assign pre-generated covers to tracks (cover1 to first track, cover2 to second track)
-            if (wrapperJobId) {
-              const jobCovers = activeGenerations.find(job => job.id === wrapperJobId)?.covers;
-              if (jobCovers) {
-                fresh.forEach((track, index) => {
-                  const coverUrl = index === 0 ? jobCovers.cover1 : jobCovers.cover2;
-                  setTracks(currentTracks => 
-                    currentTracks.map(t => 
-                      t.id === track.id 
-                        ? { ...t, coverUrl } 
-                        : t
-                    )
-                  );
-                });
-                console.log(`[CoverGen] Assigned pre-generated covers to ${fresh.length} tracks`);
-              }
+            console.log(`[Generation] Added ${fresh.length} new tracks with covers, total tracks: ${fresh.length + prev.length}`);
+            if (jobCovers) {
+              console.log(`[CoverGen] Assigned pre-generated covers directly during track creation`);
             }
             
             return [...fresh, ...prev]; // newest first
