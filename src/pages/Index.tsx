@@ -559,11 +559,7 @@ const Index = () => {
     if (!tracks.length) return;
     console.log(`[AudioPlay] Attempting to play track ${index}, current index: ${currentTrackIndex}, isPlaying: ${isPlaying}`);
     
-    // Prevent multiple rapid calls
-    if (isMusicGenerating) {
-      console.log(`[AudioPlay] Blocked - generation is busy`);
-      return;
-    }
+    // Allow playing tracks during generation - users should be able to listen while songs generate
     
     // If same track is already playing, just toggle pause/play
     if (currentTrackIndex === index && isPlaying) {
@@ -1318,26 +1314,22 @@ const Index = () => {
             const hadRealTrackSelected = currentlySelectedTrackId && !currentlySelectedTrackId.startsWith('placeholder-');
             const currentSelectedTrack = hadRealTrackSelected ? prev.find(t => t.id === currentlySelectedTrackId) : null;
             
-            // If we had a real track selected, find its new index after insertion
-            if (hadRealTrackSelected) {
+            // Preserve playback state - only update indices if user isn't actively playing
+            if (!wasPlaying && hadRealTrackSelected) {
               const newIndex = newTracks.findIndex(track => track.id === currentlySelectedTrackId);
               if (newIndex !== -1 && newIndex !== currentTrackIndex) {
                 console.log(`[Index Preservation] Moving currentTrackIndex from ${currentTrackIndex} to ${newIndex} for track ${currentlySelectedTrackId}`);
-                setCurrentTrackIndex(newIndex); // Update synchronously to avoid race conditions
+                setCurrentTrackIndex(newIndex);
               }
             } else if (!wasPlaying && !hadRealTrackSelected) {
-              // Only auto-select if: not playing AND no real track was selected
+              // Only auto-select if no user activity
               const hasOnlyPlaceholders = prev.every(t => t.id.startsWith('placeholder-'));
               if (hasOnlyPlaceholders || currentTrackIndex < 0) {
-                console.log('[Auto-select] Selecting first new track (no interference with user state)');
+                console.log('[Auto-select] Selecting first new track');
                 setCurrentTrackIndex(0);
-                setCurrentTime(0);
-                setIsPlaying(false);
-              } else {
-                console.log('[Auto-select] Skipping - user has established selection');
               }
             } else {
-              console.log('[Auto-select] Skipping - user is playing or has real track selected');
+              console.log('[Playback Preserved] User is playing - no track switching');
             }
             
             return newTracks;
@@ -1352,14 +1344,7 @@ const Index = () => {
             }, 3000); // 3 second delay to ensure covers are properly transferred
           }
           
-          // Only reset audio elements that are not currently playing
-          setTimeout(() => {
-            audioRefs.current.forEach((audio, index) => {
-              if (audio && index !== currentTrackIndex) {
-                audio.currentTime = 0;
-              }
-            });
-          }, 100);
+          // Audio elements reset naturally when src changes - no manual reset needed
           
           const successCount = updatedVersions.filter(v => v.hasTimestamps).length;
           if (wrapperJobId) {
