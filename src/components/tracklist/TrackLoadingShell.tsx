@@ -14,18 +14,15 @@ export function TrackLoadingShell({ progress, trackNumber, coverUrl, title }: Tr
       <div className="bg-[#1e1e1e] rounded-xl p-4 flex items-center gap-4 min-h-[56px] hover:bg-[#252525] transition-colors">
         {/* Album art placeholder with scanning animation */}
         <div className="relative shrink-0 w-10 h-10 rounded-md bg-black/30 overflow-hidden">
-          {coverUrl ? (
-            <>
-              <img 
-                src={coverUrl} 
-                alt="Album cover" 
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning"></div>
-            </>
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-accent-primary/15 to-transparent animate-scanning"></div>
+          {coverUrl && (
+            <img 
+              src={coverUrl} 
+              alt="Album cover" 
+              className="w-full h-full object-cover"
+            />
           )}
+          {/* Persistent scanning animation overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-accent-primary/15 to-transparent animate-scanning"></div>
         </div>
         
         {/* Track info area */}
