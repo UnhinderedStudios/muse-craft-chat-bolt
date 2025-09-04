@@ -1213,27 +1213,57 @@ const Index = () => {
           
           // Add tracks to the track list (newest first) and generate unique covers
           const batchCreatedAt = Date.now();
-          console.log(`[Generation] Adding ${updatedVersions.length} tracks for job ${wrapperJobId || 'direct'}`);
+          console.log(`[Generation] ===== TRACK CREATION DEBUG =====`);
+          console.log(`[Generation] Job ID: ${wrapperJobId || 'direct'}`);
+          console.log(`[Generation] Updated versions count: ${updatedVersions.length}`);
+          console.log(`[Generation] ActiveGenerations array:`, activeGenerations);
+          console.log(`[Generation] ActiveGenerations length:`, activeGenerations.length);
+          
           setTracks(prev => {
             const existing = new Set(prev.map(t => t.id));
             
             // Get pre-generated covers for this job
-            const jobCovers = wrapperJobId ? activeGenerations.find(job => job.id === wrapperJobId)?.covers : undefined;
+            const targetJob = wrapperJobId ? activeGenerations.find(job => job.id === wrapperJobId) : undefined;
+            const jobCovers = targetJob?.covers;
             
-            const fresh = updatedVersions.map((v, i) => ({
-              id: v.audioId || `${sunoJobId}-${i}`,
-              url: v.url,
-              title: songData.title || "Song Title",
-              coverUrl: jobCovers ? (i === 0 ? jobCovers.cover1 : jobCovers.cover2) : undefined,
-              createdAt: batchCreatedAt,
-              params: styleTags,
-              words: v.words,
-              hasTimestamps: v.hasTimestamps,
-            })).filter(t => !existing.has(t.id));
+            console.log(`[Generation] Target job found:`, targetJob);
+            console.log(`[Generation] Job covers extracted:`, jobCovers);
+            console.log(`[Generation] Job covers type:`, typeof jobCovers);
+            console.log(`[Generation] Cover1:`, jobCovers?.cover1?.substring(0, 100));
+            console.log(`[Generation] Cover2:`, jobCovers?.cover2?.substring(0, 100));
             
-            console.log(`[Generation] Added ${fresh.length} new tracks with covers, total tracks: ${fresh.length + prev.length}`);
+            const fresh = updatedVersions.map((v, i) => {
+              const assignedCover = jobCovers ? (i === 0 ? jobCovers.cover1 : jobCovers.cover2) : undefined;
+              console.log(`[Generation] Track ${i}: 
+                - ID: ${v.audioId || `${sunoJobId}-${i}`}
+                - URL: ${v.url?.substring(0, 50)}...
+                - CoverURL: ${assignedCover ? assignedCover.substring(0, 50) + '...' : 'UNDEFINED'}
+                - Title: ${songData.title || "Song Title"}`);
+              
+              const track = {
+                id: v.audioId || `${sunoJobId}-${i}`,
+                url: v.url,
+                title: songData.title || "Song Title",
+                coverUrl: assignedCover,
+                createdAt: batchCreatedAt,
+                params: styleTags,
+                words: v.words,
+                hasTimestamps: v.hasTimestamps,
+              };
+              
+              console.log(`[Generation] Created track object:`, track);
+              return track;
+            }).filter(t => !existing.has(t.id));
+            
+            console.log(`[Generation] ===== FINAL TRACK SUMMARY =====`);
+            console.log(`[Generation] Fresh tracks created: ${fresh.length}`);
+            console.log(`[Generation] Fresh tracks with covers: ${fresh.filter(t => t.coverUrl).length}`);
+            console.log(`[Generation] Fresh tracks coverUrls:`, fresh.map(t => ({ id: t.id, hasCover: !!t.coverUrl, coverPreview: t.coverUrl?.substring(0, 50) })));
+            
             if (jobCovers) {
-              console.log(`[CoverGen] Assigned pre-generated covers directly during track creation`);
+              console.log(`[CoverGen] ✅ Successfully assigned pre-generated covers during track creation`);
+            } else {
+              console.log(`[CoverGen] ❌ NO COVERS FOUND - tracks will have no covers!`);
             }
             
             return [...fresh, ...prev]; // newest first
