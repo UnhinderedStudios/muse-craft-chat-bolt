@@ -1322,18 +1322,16 @@ const Index = () => {
               const newIndex = newTracks.findIndex(track => track.id === currentlySelectedTrackId);
               if (newIndex !== -1 && newIndex !== currentTrackIndex) {
                 console.log(`[Index Preservation] Moving currentTrackIndex from ${currentTrackIndex} to ${newIndex} for track ${currentlySelectedTrackId}`);
-                setTimeout(() => setCurrentTrackIndex(newIndex), 0); // Update after state settles
+                setCurrentTrackIndex(newIndex); // Update synchronously to avoid race conditions
               }
             } else if (!wasPlaying && !hadRealTrackSelected) {
               // Only auto-select if: not playing AND no real track was selected
               const hasOnlyPlaceholders = prev.every(t => t.id.startsWith('placeholder-'));
               if (hasOnlyPlaceholders || currentTrackIndex < 0) {
                 console.log('[Auto-select] Selecting first new track (no interference with user state)');
-                setTimeout(() => {
-                  setCurrentTrackIndex(0);
-                  setCurrentTime(0);
-                  setIsPlaying(false);
-                }, 0);
+                setCurrentTrackIndex(0);
+                setCurrentTime(0);
+                setIsPlaying(false);
               } else {
                 console.log('[Auto-select] Skipping - user has established selection');
               }
@@ -1353,10 +1351,10 @@ const Index = () => {
             }, 3000); // 3 second delay to ensure covers are properly transferred
           }
           
-          // Reset all audio elements to start position
+          // Only reset audio elements that are not currently playing
           setTimeout(() => {
-            audioRefs.current.forEach((audio) => {
-              if (audio) {
+            audioRefs.current.forEach((audio, index) => {
+              if (audio && index !== currentTrackIndex) {
                 audio.currentTime = 0;
               }
             });
