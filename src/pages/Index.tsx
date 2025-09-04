@@ -482,7 +482,7 @@ const Index = () => {
 
   useEffect(() => {
     // Smart cleanup: only remove refs for tracks that no longer exist
-    const totalTracks = audioUrls.length + (audioUrl ? 1 : 0);
+    const totalTracks = (audioUrls?.length || 0) + (audioUrl ? 1 : 0);
     if (audioRefs.current && audioRefs.current.length > totalTracks) {
       // Only trim excess refs, preserve existing active elements
       audioRefs.current = audioRefs.current.slice(0, totalTracks);
