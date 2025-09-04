@@ -24,7 +24,7 @@ export const PlaceholderOrb: React.FC<PlaceholderOrbProps> = ({ className }) => 
         <div 
           className="absolute inset-0 rounded-full"
           style={{
-            backgroundColor: 'rgb(36, 36, 36)',
+            backgroundColor: '#1e1e1e',
             filter: 'blur(10px)'
           }}
         />
