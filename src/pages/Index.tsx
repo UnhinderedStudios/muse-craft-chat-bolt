@@ -993,18 +993,25 @@ const Index = () => {
       const { jobId: sunoJobId } = sunoResult.value;
       setJobId(sunoJobId);
       
-      // Store covers and Suno job ID in the active generation
-      if (wrapperJobId) {
-        setActiveGenerations(prev => 
-          prev.map(job => 
-            job.id === wrapperJobId ? { 
-              ...job, 
-              sunoJobId,
-              covers: coversResult.status === 'fulfilled' ? coversResult.value : null
-            } : job
-          )
-        );
-      }
+       // Store covers locally and in active generation
+       const coverData = coversResult.status === 'fulfilled' ? coversResult.value : null;
+       console.log(`[CoverGen] 🎨 Generated covers for job ${wrapperJobId}:`, coverData);
+       
+       if (wrapperJobId) {
+         setActiveGenerations(prev => {
+           const updated = prev.map(job => 
+             job.id === wrapperJobId ? { 
+               ...job, 
+               sunoJobId,
+               covers: coverData
+             } : job
+           );
+           console.log(`[CoverGen] 📦 Updated activeGenerations:`, updated);
+           return updated;
+         });
+       } else {
+         console.warn(`[CoverGen] ⚠️ No wrapperJobId found, covers will not be stored!`);
+       }
       
       toast.success("Song requested. Composing...");
 
@@ -1222,9 +1229,9 @@ const Index = () => {
           setTracks(prev => {
             const existing = new Set(prev.map(t => t.id));
             
-            // Get pre-generated covers for this job
+            // Get pre-generated covers for this job (use locally stored covers to avoid race condition)
             const targetJob = wrapperJobId ? activeGenerations.find(job => job.id === wrapperJobId) : undefined;
-            const jobCovers = targetJob?.covers;
+            const jobCovers = targetJob?.covers || coverData;
             
             console.log(`[Generation] Target job found:`, targetJob);
             console.log(`[Generation] Job covers extracted:`, jobCovers);
@@ -1343,12 +1350,17 @@ const Index = () => {
     }
     
     const jobId = Date.now().toString();
-    setActiveGenerations(prev => [...prev, { 
-      id: jobId, 
-      startTime: Date.now(),
-      progress: 0,
-      details: { ...details }
-    }]);
+    console.log(`[Generation] 🆕 Creating new job ${jobId} and adding to activeGenerations`);
+    setActiveGenerations(prev => {
+      const updated = [...prev, { 
+        id: jobId, 
+        startTime: Date.now(),
+        progress: 0,
+        details: { ...details }
+      }];
+      console.log(`[Generation] 📋 ActiveGenerations after job creation:`, updated);
+      return updated;
+    });
     
     try {
       await startGenerationWithJobId(jobId, details);
