@@ -38,7 +38,7 @@ export default function PlayerDock({
   onFullscreenKaraoke,
   onTitleUpdate,
 }: Props) {
-  const audio = audioRefs.current?.[currentAudioIndex];
+  const audio = audioRefs.current[currentAudioIndex];
   const duration = audio?.duration ?? 0;
   const progress = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
 
@@ -76,7 +76,7 @@ export default function PlayerDock({
       <div className="h-[28px] bg-transparent">
         {/* Bar Waveform - tall sticks, edge to edge */}
         <BarWaveform
-          audio={audioRefs.current?.[currentAudioIndex] || null}
+          audio={audioRefs.current[currentAudioIndex] || null}
           currentTime={currentTime}
           onSeek={onSeek}
           accent={accent}

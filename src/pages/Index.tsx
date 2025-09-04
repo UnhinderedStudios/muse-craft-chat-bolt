@@ -481,12 +481,8 @@ const Index = () => {
 
 
   useEffect(() => {
-    // Smart cleanup: only remove refs for tracks that no longer exist
-    const totalTracks = (audioUrls?.length || 0) + (audioUrl ? 1 : 0);
-    if (audioRefs.current && audioRefs.current.length > totalTracks) {
-      // Only trim excess refs, preserve existing active elements
-      audioRefs.current = audioRefs.current.slice(0, totalTracks);
-    }
+    // reset audio refs when result list changes
+    audioRefs.current = [];
   }, [audioUrls, audioUrl]);
 
   // Smooth progress system that never goes backward and handles stagnation
@@ -576,7 +572,7 @@ const Index = () => {
 
     // STEP 1: Immediately pause ALL audio elements
     console.log(`[AudioPlay] Stopping all audio and switching to ${index}, isSwitchingTracks: ${isSwitchingTracks}`);
-    audioRefs.current?.forEach((audio, i) => {
+    audioRefs.current.forEach((audio, i) => {
       if (audio) {
         try {
           if (!audio.paused) {
@@ -603,7 +599,7 @@ const Index = () => {
     
     // STEP 3: Small delay to ensure state has updated before playing new audio
     setTimeout(() => {
-      const audioElement = audioRefs.current?.[index];
+      const audioElement = audioRefs.current[index];
       if (audioElement) {
         try {
           // Reset to start only when switching tracks or if audio already ended
@@ -638,7 +634,7 @@ const Index = () => {
 
   const handleAudioPause = () => {
     // Actually pause the current audio
-    const audioElement = audioRefs.current?.[currentTrackIndex];
+    const audioElement = audioRefs.current[currentTrackIndex];
     if (audioElement && !audioElement.paused) {
       try {
         audioElement.pause();
@@ -651,7 +647,7 @@ const Index = () => {
 
   const handleTimeUpdate = (audio: HTMLAudioElement) => {
     // Only update time for the currently active track
-    const activeIndex = audioRefs.current?.findIndex(ref => ref === audio) ?? -1;
+    const activeIndex = audioRefs.current.findIndex(ref => ref === audio);
     if (activeIndex === currentTrackIndex) {
       const newTime = audio.currentTime;
       setCurrentTime(newTime);
@@ -660,7 +656,7 @@ const Index = () => {
   };
 
   const handleSeek = (time: number) => {
-    const audioElement = audioRefs.current?.[currentTrackIndex];
+    const audioElement = audioRefs.current[currentTrackIndex];
     if (audioElement) {
       try {
         audioElement.currentTime = time;
@@ -1313,28 +1309,33 @@ const Index = () => {
             
             const newTracks = [...fresh, ...prev]; // newest first
             
-            // Check REAL current state at the moment of insertion
-            const currentIsPlaying = isPlaying;
-            const currentHasRealTrack = currentlySelectedTrackId && !currentlySelectedTrackId.startsWith('placeholder-');
+            // Store current state before making decisions
+            const wasPlaying = isPlaying;
+            const hadRealTrackSelected = currentlySelectedTrackId && !currentlySelectedTrackId.startsWith('placeholder-');
+            const currentSelectedTrack = hadRealTrackSelected ? prev.find(t => t.id === currentlySelectedTrackId) : null;
             
-            console.log(`[State Check] At insertion: playing=${currentIsPlaying}, hasRealTrack=${currentHasRealTrack}, currentIndex=${currentTrackIndex}`);
-            
-            // Decision logic: ONLY auto-select if user has completely empty state
-            if (currentHasRealTrack) {
-              // User has a real track selected - preserve its index after insertion
+            // If we had a real track selected, find its new index after insertion
+            if (hadRealTrackSelected) {
               const newIndex = newTracks.findIndex(track => track.id === currentlySelectedTrackId);
               if (newIndex !== -1 && newIndex !== currentTrackIndex) {
-                console.log(`[Index Preservation] Updating currentTrackIndex from ${currentTrackIndex} to ${newIndex} for track ${currentlySelectedTrackId}`);
-                setCurrentTrackIndex(newIndex); // No setTimeout - synchronous update
+                console.log(`[Index Preservation] Moving currentTrackIndex from ${currentTrackIndex} to ${newIndex} for track ${currentlySelectedTrackId}`);
+                setTimeout(() => setCurrentTrackIndex(newIndex), 0); // Update after state settles
               }
-            } else if (!currentIsPlaying && currentTrackIndex < 0) {
-              // Only auto-select if user has NO selection and is NOT playing
-              console.log('[Auto-select] Selecting first new track (completely empty state)');
-              setCurrentTrackIndex(0);
-              setCurrentTime(0);
-              setIsPlaying(false);
+            } else if (!wasPlaying && !hadRealTrackSelected) {
+              // Only auto-select if: not playing AND no real track was selected
+              const hasOnlyPlaceholders = prev.every(t => t.id.startsWith('placeholder-'));
+              if (hasOnlyPlaceholders || currentTrackIndex < 0) {
+                console.log('[Auto-select] Selecting first new track (no interference with user state)');
+                setTimeout(() => {
+                  setCurrentTrackIndex(0);
+                  setCurrentTime(0);
+                  setIsPlaying(false);
+                }, 0);
+              } else {
+                console.log('[Auto-select] Skipping - user has established selection');
+              }
             } else {
-              console.log(`[Auto-select] SKIPPING - preserving user state (playing: ${currentIsPlaying}, hasRealTrack: ${currentHasRealTrack}, currentIndex: ${currentTrackIndex})`);
+              console.log('[Auto-select] Skipping - user is playing or has real track selected');
             }
             
             return newTracks;
@@ -1351,7 +1352,7 @@ const Index = () => {
           
           // Reset all audio elements to start position
           setTimeout(() => {
-            audioRefs.current?.forEach((audio) => {
+            audioRefs.current.forEach((audio) => {
               if (audio) {
                 audio.currentTime = 0;
               }

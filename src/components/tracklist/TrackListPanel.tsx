@@ -295,7 +295,7 @@ export default function TrackListPanel({
                       onClick={(e) => {
                         e.stopPropagation();
                         
-                        const audio = audioRefs.current?.[actualIndex];
+                        const audio = audioRefs.current[actualIndex];
                         if (!audio || !audio.duration) return;
                         const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
                         const pct = (e.clientX - rect.left) / rect.width;
@@ -313,7 +313,7 @@ export default function TrackListPanel({
                          className="h-full bg-white/70 rounded"
                          style={{
                             width: (() => {
-                               const a = audioRefs.current?.[actualIndex];
+                              const a = audioRefs.current[actualIndex];
                               if (!a || !a.duration) return "0%";
                               const time = audioCurrentTimes[actualIndex] || 0;
                               return `${(time / a.duration) * 100}%`;
@@ -415,7 +415,7 @@ export default function TrackListPanel({
                           onClick={(e) => {
                             e.stopPropagation();
                             
-                            const audio = audioRefs.current?.[actualIndex];
+                            const audio = audioRefs.current[actualIndex];
                             if (!audio || !audio.duration) return;
                             const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
                             const pct = (e.clientX - rect.left) / rect.width;
@@ -428,7 +428,7 @@ export default function TrackListPanel({
                              className="h-full bg-white/70 rounded"
                              style={{
                                width: (() => {
-                              const a = audioRefs.current?.[actualIndex];
+                              const a = audioRefs.current[actualIndex];
                               if (!a || !a.duration) return "0%";
                               const time = audioCurrentTimes[actualIndex] || 0;
                               return `${(time / a.duration) * 100}%`;
@@ -477,7 +477,7 @@ export default function TrackListPanel({
                  preload="auto"
                  className="hidden"
                  crossOrigin="anonymous"
-                  ref={(el) => { if (el && audioRefs.current) audioRefs.current[actualIndex] = el; }}
+                  ref={(el) => { if (el) audioRefs.current[actualIndex] = el; }}
                   onTimeUpdate={(e) => {
                     const audio = e.currentTarget;
                     // Only update progress for the currently active track
