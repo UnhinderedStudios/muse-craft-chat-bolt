@@ -1239,10 +1239,13 @@ const Index = () => {
             return [...fresh, ...prev]; // newest first
           });
           
-          // Clean up job after successful track creation (for concurrent generations)
+          // Clean up job after successful track creation (delayed to ensure covers are preserved)
           if (wrapperJobId) {
-            console.log(`[Generation] Cleaning up successful job ${wrapperJobId}`);
-            setActiveGenerations(prev => prev.filter(job => job.id !== wrapperJobId));
+            console.log(`[Generation] Scheduling cleanup for job ${wrapperJobId} in 3 seconds to preserve covers`);
+            setTimeout(() => {
+              console.log(`[Generation] Cleaning up job ${wrapperJobId} after delay`);
+              setActiveGenerations(prev => prev.filter(job => job.id !== wrapperJobId));
+            }, 3000); // 3 second delay to ensure covers are properly transferred
           }
           
           // Set active track to first of new batch
