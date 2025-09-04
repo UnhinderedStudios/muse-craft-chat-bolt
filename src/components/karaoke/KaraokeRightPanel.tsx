@@ -20,6 +20,7 @@ interface KaraokeRightPanelProps {
   currentTime: number;
   isPlaying: boolean;
   albumCovers: { cover1: string; cover2: string } | null;
+  currentTrackCoverUrl?: string;
   isGeneratingCovers: boolean;
   audioRefs: React.MutableRefObject<HTMLAudioElement[]>;
   onPlayPause: (index: number) => void;
@@ -36,6 +37,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   currentTime,
   isPlaying,
   albumCovers,
+  currentTrackCoverUrl,
   isGeneratingCovers,
   audioRefs,
   onPlayPause,
@@ -46,7 +48,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
 }) => {
   const hasContent = versions.length > 0;
   const currentVersion = hasContent && currentAudioIndex >= 0 && currentAudioIndex < versions.length ? versions[currentAudioIndex] : null;
-  const currentAlbumCover = hasContent && currentAudioIndex >= 0 && (currentAudioIndex === 0 ? albumCovers?.cover1 : albumCovers?.cover2) || null;
+  const currentAlbumCover = currentTrackCoverUrl;
   const audioElement = audioRefs.current[currentTrackIndex] || null;
   const duration = audioElement?.duration || 0;
 

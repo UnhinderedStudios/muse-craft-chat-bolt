@@ -1629,6 +1629,7 @@ const Index = () => {
               currentTime={currentTime}
               isPlaying={isPlaying}
               albumCovers={albumCovers}
+              currentTrackCoverUrl={tracks[currentTrackIndex]?.coverUrl}
               isGeneratingCovers={isGeneratingCovers}
               audioRefs={audioRefs}
               onPlayPause={handleAudioPlay}
