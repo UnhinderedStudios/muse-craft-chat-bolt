@@ -33,7 +33,7 @@ Outro:
 Produce 10–14 DISTINCT tags per roll. Use FRESH wording every time. Include AT LEAST these REQUIRED categories, plus any extras you like:
 
 REQUIRED (exactly one unless noted)
-• Main Genre (1–2): Pop, R&B, Hip-Hop, Rock, Afrobeats, Amapiano, Reggaeton, Country, Indie, Folk, Latin Pop, EDM, House, Techno, Trance, Dubstep, DnB, Trap, Drill, Boom-Bap, Alt Rock, Pop-Punk
+• Main Genre (1–2): Pop, R&B, Hip-Hop, Rock, Afrobeats, Amapiano, Reggaeton, Country, Folk, Latin Pop, EDM, House, Techno, Trance, Dubstep, DnB, Trap, Drill, Boom-Bap, Alt Rock, Pop-Punk
 • BPM (exact): e.g., 125bpm, 092bpm, 174bpm  ← must fit genre tempo
 • Key/Mode: e.g., A Minor, D Major, F# Dorian, G Mixolydian
 • Time Signature: e.g., 4/4 Time, 3/4 Waltz, 6/8 Flow
@@ -61,7 +61,7 @@ VARIETY (EACH ROLL — STATELESS)
 
 TEMPO GUARDRAILS (choose BPM accordingly)
 - R&B 70–95; Hip-Hop 80–100 or 140–160; Pop 95–125; Rock 90–160;
-- Afrobeats 100–116; Amapiano 110–119; Reggaeton 90–105; Country 70–110; Indie/Folk 70–110;
+- Afrobeats 100–116; Amapiano 110–119; Reggaeton 90–105; Country 70–110; Folk 70–110;
 - House 120–128; Techno 125–135; Trance 130–140; Dubstep 140; DnB 170–176; Trap/Drill/Boom-Bap per Hip-Hop.
 
 LYRIC STYLE (MAINSTREAM)

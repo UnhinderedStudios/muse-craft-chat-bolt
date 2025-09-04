@@ -879,7 +879,34 @@ const Index = () => {
         
         // Sort by diversity score (higher is more diverse)
         scoredExtractions.sort((a, b) => b.diversityScore - a.diversityScore);
-        const bestExtraction = scoredExtractions[0].songDetails;
+        let bestExtraction = scoredExtractions[0].songDetails;
+        
+        // First roll enforcement: if Rock is chosen, try to pick another option or re-roll
+        if (diceMemory.history?.length === 0) {
+          const currentGenre = diceMemory.extractGenre(bestExtraction.style || "");
+          if (currentGenre && currentGenre.toLowerCase().includes("rock")) {
+            // Try to find a non-Rock alternative
+            const nonRockOption = scoredExtractions.find(ex => {
+              const genre = diceMemory.extractGenre(ex.songDetails.style || "");
+              return !genre || !genre.toLowerCase().includes("rock");
+            });
+            if (nonRockOption) {
+              bestExtraction = nonRockOption.songDetails;
+            } else {
+              // If both are Rock, re-roll once with explicit constraint
+              try {
+                const retryContent = "Dice roll: create a fresh, original song now.\n\nDIVERSITY CONSTRAINTS:\nNever use Indie as a Main Genre (exclude the tag 'Indie' in Parameters).\nDo not choose Rock as the Main Genre.";
+                const retryResponse = await api.chat([{ role: "user", content: retryContent }], { system: RANDOM_MUSIC_FORGE_PROMPT, temperature: 0.9, model: "gpt-4o-mini" });
+                const retryExtraction = parseRandomMusicForgeOutput(retryResponse.content) || extractDetails(retryResponse.content);
+                if (retryExtraction) {
+                  bestExtraction = retryExtraction;
+                }
+              } catch (error) {
+                console.log("Retry failed, proceeding with original:", error);
+              }
+            }
+          }
+        }
         
         const finalStyle = sanitizeStyleSafe(bestExtraction.style);
         const cleaned: SongDetails = { ...bestExtraction, ...(finalStyle ? { style: finalStyle } : {}) };

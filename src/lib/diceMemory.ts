@@ -10,12 +10,12 @@ export interface DiceRoll {
 }
 
 class DiceMemoryManager {
-  private history: DiceRoll[] = [];
+  public history: DiceRoll[] = [];
   private maxHistory = 3;
 
   extractGenre(parameters: string): string | undefined {
     const tags = parameters.split(',').map(t => t.trim());
-    const genres = ['Pop', 'R&B', 'Hip-Hop', 'Rock', 'Afrobeats', 'Amapiano', 'Reggaeton', 'Country', 'Indie', 'Folk', 'Latin Pop', 'EDM', 'House', 'Techno', 'Trance', 'Dubstep', 'DnB', 'Trap', 'Drill', 'Boom-Bap', 'Alt Rock', 'Pop-Punk'];
+    const genres = ['Pop', 'R&B', 'Hip-Hop', 'Rock', 'Afrobeats', 'Amapiano', 'Reggaeton', 'Country', 'Folk', 'Latin Pop', 'EDM', 'House', 'Techno', 'Trance', 'Dubstep', 'DnB', 'Trap', 'Drill', 'Boom-Bap', 'Alt Rock', 'Pop-Punk'];
     return tags.find(tag => genres.some(genre => tag.includes(genre)));
   }
 
@@ -58,9 +58,17 @@ class DiceMemoryManager {
   }
 
   generateConstraints(): string {
-    if (this.history.length === 0) return "";
-
     const constraints: string[] = [];
+    
+    // Always exclude Indie
+    constraints.push("Never use Indie as a Main Genre (exclude the tag 'Indie' in Parameters).");
+    
+    // For first roll, also exclude Rock
+    if (this.history.length === 0) {
+      constraints.push("Do not choose Rock as the Main Genre.");
+      return constraints.length > 0 ? `\n\nDIVERSITY CONSTRAINTS:\n${constraints.join('\n')}` : "";
+    }
+
     const recentGenres = this.history.map(r => r.genre).filter(Boolean);
     const recentVoices = this.history.map(r => r.leadVoice).filter(Boolean);
     const recentTitles = this.history.map(r => r.title).filter(Boolean);
