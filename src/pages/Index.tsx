@@ -408,7 +408,8 @@ const Index = () => {
     sunoJobId?: string,
     startTime: number,
     progress: number,
-    details: SongDetails
+    details: SongDetails,
+    covers?: { cover1: string; cover2: string } | null
   }>>([]);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const audioRefs = useRef<HTMLAudioElement[]>([]);
@@ -978,14 +979,29 @@ const Index = () => {
     
     try {
       const payload = { ...songData, style: sanitizeStyle(songData.style || "") };
-      const { jobId: sunoJobId } = await api.startSong(payload);
+      
+      // Start both audio generation and cover generation in parallel
+      const [sunoResult, coversResult] = await Promise.allSettled([
+        api.startSong(payload),
+        api.generateAlbumCovers(payload)
+      ]);
+      
+      if (sunoResult.status === 'rejected') {
+        throw sunoResult.reason;
+      }
+      
+      const { jobId: sunoJobId } = sunoResult.value;
       setJobId(sunoJobId);
       
-      // Store the Suno job ID in the active generation for concurrent jobs
+      // Store covers and Suno job ID in the active generation
       if (wrapperJobId) {
         setActiveGenerations(prev => 
           prev.map(job => 
-            job.id === wrapperJobId ? { ...job, sunoJobId } : job
+            job.id === wrapperJobId ? { 
+              ...job, 
+              sunoJobId,
+              covers: coversResult.status === 'fulfilled' ? coversResult.value : null
+            } : job
           )
         );
       }
@@ -1213,37 +1229,23 @@ const Index = () => {
             
             console.log(`[Generation] Added ${fresh.length} new tracks, total tracks: ${fresh.length + prev.length}`);
             
-            // Generate unique album covers for each new track
-            fresh.forEach(async (track, index) => {
-              try {
-                setIsGeneratingCovers(true);
-                // Create unique song details for each track using track ID as seed
-                const uniqueSongData = {
-                  ...songData,
-                  title: `${songData.title || "Song Title"} (Version ${index + 1})`,
-                  // Add track-specific identifier to ensure uniqueness
-                  trackId: track.id
-                };
-                
-                console.log(`[CoverGen] Generating unique cover for track ${track.id}`);
-                const covers = await api.generateAlbumCovers(uniqueSongData);
-                
-                // Update the specific track with its unique cover
-                setTracks(currentTracks => 
-                  currentTracks.map(t => 
-                    t.id === track.id 
-                      ? { ...t, coverUrl: covers.cover1 } 
-                      : t
-                  )
-                );
-                
-                console.log(`[CoverGen] Generated unique cover for track ${track.id}`);
-              } catch (error) {
-                console.error(`[CoverGen] Failed to generate cover for track ${track.id}:`, error);
-              } finally {
-                setIsGeneratingCovers(false);
+            // Assign pre-generated covers to tracks (cover1 to first track, cover2 to second track)
+            if (wrapperJobId) {
+              const jobCovers = activeGenerations.find(job => job.id === wrapperJobId)?.covers;
+              if (jobCovers) {
+                fresh.forEach((track, index) => {
+                  const coverUrl = index === 0 ? jobCovers.cover1 : jobCovers.cover2;
+                  setTracks(currentTracks => 
+                    currentTracks.map(t => 
+                      t.id === track.id 
+                        ? { ...t, coverUrl } 
+                        : t
+                    )
+                  );
+                });
+                console.log(`[CoverGen] Assigned pre-generated covers to ${fresh.length} tracks`);
               }
-            });
+            }
             
             return [...fresh, ...prev]; // newest first
           });
