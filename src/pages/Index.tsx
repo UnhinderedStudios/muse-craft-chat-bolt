@@ -408,13 +408,14 @@ const Index = () => {
   ]);
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
   // Keep karaoke version selection in sync with the currently selected track
+  // Only update when user explicitly changes track selection, not when new tracks are added
   useEffect(() => {
     const currentTrack = tracks[currentTrackIndex];
     if (!currentTrack) { setCurrentAudioIndex(versions.length ? 0 : -1); return; }
     const idx = versions.findIndex(v => v.audioId === currentTrack.id);
     if (idx !== -1) setCurrentAudioIndex(idx);
     else setCurrentAudioIndex(-1);
-  }, [currentTrackIndex, tracks, versions]);
+  }, [currentTrackIndex]); // Removed tracks and versions dependencies to prevent auto-switching
   const [showFullscreenKaraoke, setShowFullscreenKaraoke] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<number>(0);
   const [lastProgressUpdate, setLastProgressUpdate] = useState<number>(Date.now());
