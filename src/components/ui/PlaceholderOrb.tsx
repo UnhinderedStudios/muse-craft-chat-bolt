@@ -7,7 +7,7 @@ interface PlaceholderOrbProps {
 
 export const PlaceholderOrb: React.FC<PlaceholderOrbProps> = ({ className }) => {
   return (
-    <div className={cn("flex items-center justify-center w-full h-full -mt-4", className)}>
+    <div className={cn("flex items-center justify-center w-full h-full -mt-4", className)} style={{ backgroundColor: '#1e1e1e' }}>
       <div className="relative w-14 h-14">
         {/* Spinning gradient orb with blur and glow */}
         <div 
