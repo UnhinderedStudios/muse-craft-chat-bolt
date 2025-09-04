@@ -37,7 +37,7 @@ REQUIRED (exactly one unless noted)
 • BPM (exact): e.g., 125bpm, 092bpm, 174bpm  ← must fit genre tempo
 • Key/Mode: e.g., A Minor, D Major, F# Dorian, G Mixolydian
 • Time Signature: e.g., 4/4 Time, 3/4 Waltz, 6/8 Flow
-• Lead Voice: e.g., Soft Female Voice, Male Baritone, Nonbinary Tenor, Duet Vocals, Rap Lead
+• Lead Voice: e.g., Soft Female Voice, Male Baritone, Angelic Female Voice, Deep Male Voice, Duet Vocals, Rap Lead
 • Mood: e.g., Romantic, Heartbreak, Confident, Party Energy, Melancholic
 • Energy: e.g., High Energy, Slow-Burn Build, Verse Intimate
 • Rhythm/Feel: e.g., Four-On-The-Floor, Dembow Groove, Boom-Bap Swing, Half-Time Bounce, Shuffle Feel
@@ -55,7 +55,7 @@ BANNED PARAMETER TYPES
 - No vague filler (e.g., Catchy Melodies, Polished Production).
 
 VARIETY (EACH ROLL — STATELESS)
-- Randomize genre, BPM bracket, key quality (major vs minor/modes), lead voice (rotate Female/Male/Nonbinary/Duet/Rap), mood, energy, rhythm feel, instruments, and arrangement.
+- Randomize genre, BPM bracket, key quality (major vs minor/modes), lead voice (rotate Female/Male/Duet/Rap), mood, energy, rhythm feel, instruments, and arrangement.
 - Do not repeat any exact tag text within the same Parameters line.
 - Use concrete, song-building phrases only.
 

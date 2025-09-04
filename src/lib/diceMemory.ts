@@ -22,7 +22,7 @@ class DiceMemoryManager {
   extractLeadVoice(parameters: string): string | undefined {
     const tags = parameters.split(',').map(t => t.trim().toLowerCase());
     for (const tag of tags) {
-      if (tag.includes('female') || tag.includes('male') || tag.includes('nonbinary') || tag.includes('duet') || tag.includes('rap lead')) {
+      if (tag.includes('female') || tag.includes('male') || tag.includes('duet') || tag.includes('rap lead')) {
         return tag;
       }
     }
