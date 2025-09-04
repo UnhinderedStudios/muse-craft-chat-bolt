@@ -45,6 +45,7 @@ import { type TimestampedWord, type ChatMessage, type TrackItem } from "@/types"
 import { parseSongRequest, convertToSongDetails } from "@/lib/parseSongRequest";
 import { RANDOM_MUSIC_FORGE_PROMPT } from "@/utils/prompts";
 import { parseRandomMusicForgeOutput } from "@/lib/parseRandomMusicForge";
+import { diceMemory } from "@/lib/diceMemory";
 
 const systemPrompt = `You are Melody Muse, a friendly creative assistant for songwriting.
 Your goal is to chat naturally and quickly gather two things only: (1) a unified Style description and (2) Lyrics.
@@ -841,11 +842,15 @@ const Index = () => {
   }
   async function randomizeAll() {
     if (isChatBusy) return;
-    const content = "Dice roll: create a fresh, original song now.";
+    
+    // Generate diversity constraints based on recent rolls
+    const constraints = diceMemory.generateConstraints();
+    const content = "Dice roll: create a fresh, original song now." + constraints;
+    
     setIsChatBusy(true);
     try {
       const minimal: ChatMessage[] = [{ role: "user", content }];
-      console.debug("[Dice] Using RandomMusicForge v3 prompt");
+      console.debug("[Dice] Using RandomMusicForge v7 prompt with constraints:", constraints.slice(0, 100));
       const [r1, r2] = await Promise.allSettled([
         api.chat(minimal, { system: RANDOM_MUSIC_FORGE_PROMPT, temperature: 0.9, model: "gpt-4o-mini" }),
         api.chat(minimal, { system: RANDOM_MUSIC_FORGE_PROMPT, temperature: 0.9, model: "gpt-4o-mini" }),
@@ -861,17 +866,29 @@ const Index = () => {
         if (parsed) return convertToSongDetails(parsed);
         return extractDetails(m);
       }).filter(Boolean) as SongDetails[];
+      
       if (extractions.length === 0) {
         console.debug("[Dice] Failed to parse any random song. First response preview:", msgs[0]?.slice(0, 300));
         toast.message("Couldn't parse random song", { description: "Try again in a moment." });
       } else {
-        const cleanedList = extractions.map((ex) => {
-          const finalStyle = sanitizeStyleSafe(ex.style);
-          return { ...ex, ...(finalStyle ? { style: finalStyle } : {}) } as SongDetails;
-        });
-        const merged = mergeNonEmpty(...cleanedList);
+        // Score extractions for diversity and pick the best one
+        const scoredExtractions = extractions.map(ex => ({
+          songDetails: ex,
+          diversityScore: diceMemory.scoresDiversity(ex)
+        }));
+        
+        // Sort by diversity score (higher is more diverse)
+        scoredExtractions.sort((a, b) => b.diversityScore - a.diversityScore);
+        const bestExtraction = scoredExtractions[0].songDetails;
+        
+        const finalStyle = sanitizeStyleSafe(bestExtraction.style);
+        const cleaned: SongDetails = { ...bestExtraction, ...(finalStyle ? { style: finalStyle } : {}) };
+        
+        // Add to memory for future diversity
+        diceMemory.addRoll(cleaned);
+        
         lastDiceAt.current = Date.now();
-        setDetails((d) => mergeNonEmpty(d, merged));
+        setDetails((d) => mergeNonEmpty(d, cleaned));
         toast.success("Randomized song details ready");
       }
       // Do not alter chat history for the dice action
