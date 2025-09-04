@@ -228,19 +228,31 @@ const Index = () => {
   
   // Helper function to determine if we should auto-select a new track
   const shouldAutoSelectTrack = () => {
+    console.log('[Auto-select] Checking conditions:', {
+      isPlaying,
+      currentTrackIndex,
+      currentTrack: tracks[currentTrackIndex],
+      hasRealTracks: tracks.some(t => !t.id.startsWith('placeholder-'))
+    });
+    
     // Don't auto-select if user is actively playing something
-    if (isPlaying) return false;
-    
-    // Don't auto-select if user has already selected a real track (not placeholder)
-    if (hasUserSelectedTrack) return false;
-    
-    // Don't auto-select if user has a track selected and it's not a placeholder
-    if (currentTrackIndex >= 0 && tracks[currentTrackIndex] && !tracks[currentTrackIndex].id.startsWith('placeholder-')) {
+    if (isPlaying) {
+      console.log('[Auto-select] Blocked: User is playing');
       return false;
     }
     
-    // Auto-select if it's a fresh session (no real tracks selected yet)
-    return true;
+    // Don't auto-select if user has a real track selected (not placeholder)
+    if (currentTrackIndex >= 0 && tracks[currentTrackIndex] && !tracks[currentTrackIndex].id.startsWith('placeholder-')) {
+      console.log('[Auto-select] Blocked: User has real track selected');
+      return false;
+    }
+    
+    // Only auto-select if we're in a truly fresh state (no real tracks or only placeholders selected)
+    const hasOnlyPlaceholders = tracks.every(t => t.id.startsWith('placeholder-'));
+    const shouldSelect = hasOnlyPlaceholders || currentTrackIndex < 0;
+    
+    console.log('[Auto-select] Decision:', shouldSelect ? 'ALLOW' : 'BLOCK');
+    return shouldSelect;
   };
 
   // constants that already exist visually in your layout
@@ -395,7 +407,6 @@ const Index = () => {
     }
   ]);
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
-  const [hasUserSelectedTrack, setHasUserSelectedTrack] = useState<boolean>(false);
   // Keep karaoke version selection in sync with the currently selected track
   useEffect(() => {
     const currentTrack = tracks[currentTrackIndex];
@@ -1305,10 +1316,12 @@ const Index = () => {
           
           // Smart auto-selection: only select if appropriate
           if (shouldAutoSelectTrack()) {
+            console.log('[Auto-select] Selecting first new track');
             setCurrentTrackIndex(0);
             setCurrentTime(0);
             setIsPlaying(false);
-            setHasUserSelectedTrack(true); // Mark that we've now selected a real track
+          } else {
+            console.log('[Auto-select] Skipping auto-selection');
           }
           
           // Reset all audio elements to start position
@@ -1678,12 +1691,9 @@ const Index = () => {
               onSeek={handleSeek}
               setCurrentIndex={(idx) => {
                 if (idx !== currentTrackIndex) {
+                  console.log('[Manual selection] User selected track:', idx, tracks[idx]);
                   setCurrentTrackIndex(idx);
                   setCurrentTime(0);
-                  // Mark that user has manually selected a track
-                  if (tracks[idx] && !tracks[idx].id.startsWith('placeholder-')) {
-                    setHasUserSelectedTrack(true);
-                  }
                 }
               }}
               onTimeUpdate={handleTimeUpdate}
