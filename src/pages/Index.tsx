@@ -481,8 +481,12 @@ const Index = () => {
 
 
   useEffect(() => {
-    // reset audio refs when result list changes
-    audioRefs.current = [];
+    // Smart cleanup: only remove refs for tracks that no longer exist
+    const totalTracks = audioUrls.length + (audioUrl ? 1 : 0);
+    if (audioRefs.current.length > totalTracks) {
+      // Only trim excess refs, preserve existing active elements
+      audioRefs.current = audioRefs.current.slice(0, totalTracks);
+    }
   }, [audioUrls, audioUrl]);
 
   // Smooth progress system that never goes backward and handles stagnation
