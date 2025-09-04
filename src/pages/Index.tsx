@@ -408,7 +408,8 @@ const Index = () => {
     sunoJobId?: string,
     startTime: number,
     progress: number,
-    details: SongDetails
+    details: SongDetails,
+    covers?: { cover1: string; cover2: string; }
   }>>([]);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const audioRefs = useRef<HTMLAudioElement[]>([]);
@@ -974,10 +975,17 @@ const Index = () => {
     setIsGeneratingCovers(false);
     setIsMusicGenerating(true);
     
-    // Individual album covers will be generated per track instead of batch generation
+    // Album covers are now generated in parallel with music generation for better UX
     
     try {
       const payload = { ...songData, style: sanitizeStyle(songData.style || "") };
+      
+      // Start cover generation in parallel with music generation
+      const coverPromise = wrapperJobId ? api.generateAlbumCovers(payload).catch(error => {
+        console.error("[CoverGen] Failed to generate covers:", error);
+        return null;
+      }) : null;
+      
       const { jobId: sunoJobId } = await api.startSong(payload);
       setJobId(sunoJobId);
       
@@ -988,6 +996,20 @@ const Index = () => {
             job.id === wrapperJobId ? { ...job, sunoJobId } : job
           )
         );
+        
+        // When covers are ready, update the job with covers
+        if (coverPromise) {
+          coverPromise.then(covers => {
+            if (covers) {
+              setActiveGenerations(prev => 
+                prev.map(job => 
+                  job.id === wrapperJobId ? { ...job, covers } : job
+                )
+              );
+              console.log("[CoverGen] Pre-generated covers ready for job", wrapperJobId);
+            }
+          });
+        }
       }
       
       toast.success("Song requested. Composing...");
@@ -1195,16 +1217,22 @@ const Index = () => {
             setVersions(updatedVersions);
           }
           
-          // Add tracks to the track list (newest first) and generate unique covers
+          // Add tracks to the track list (newest first) and assign pre-generated covers
           const batchCreatedAt = Date.now();
           console.log(`[Generation] Adding ${updatedVersions.length} tracks for job ${wrapperJobId || 'direct'}`);
+          
+          // Get pre-generated covers for this job
+          const jobCovers = wrapperJobId ? 
+            activeGenerations.find(job => job.id === wrapperJobId)?.covers : 
+            null;
+          
           setTracks(prev => {
             const existing = new Set(prev.map(t => t.id));
             const fresh = updatedVersions.map((v, i) => ({
               id: v.audioId || `${sunoJobId}-${i}`,
               url: v.url,
               title: songData.title || "Song Title",
-              coverUrl: undefined, // Will be generated individually per track
+              coverUrl: jobCovers ? (i === 0 ? jobCovers.cover1 : jobCovers.cover2) : undefined,
               createdAt: batchCreatedAt,
               params: styleTags,
               words: v.words,
@@ -1212,38 +1240,7 @@ const Index = () => {
             })).filter(t => !existing.has(t.id));
             
             console.log(`[Generation] Added ${fresh.length} new tracks, total tracks: ${fresh.length + prev.length}`);
-            
-            // Generate unique album covers for each new track
-            fresh.forEach(async (track, index) => {
-              try {
-                setIsGeneratingCovers(true);
-                // Create unique song details for each track using track ID as seed
-                const uniqueSongData = {
-                  ...songData,
-                  title: `${songData.title || "Song Title"} (Version ${index + 1})`,
-                  // Add track-specific identifier to ensure uniqueness
-                  trackId: track.id
-                };
-                
-                console.log(`[CoverGen] Generating unique cover for track ${track.id}`);
-                const covers = await api.generateAlbumCovers(uniqueSongData);
-                
-                // Update the specific track with its unique cover
-                setTracks(currentTracks => 
-                  currentTracks.map(t => 
-                    t.id === track.id 
-                      ? { ...t, coverUrl: covers.cover1 } 
-                      : t
-                  )
-                );
-                
-                console.log(`[CoverGen] Generated unique cover for track ${track.id}`);
-              } catch (error) {
-                console.error(`[CoverGen] Failed to generate cover for track ${track.id}:`, error);
-              } finally {
-                setIsGeneratingCovers(false);
-              }
-            });
+            console.log("[Generation] Using pre-generated covers:", jobCovers ? "Yes" : "No");
             
             return [...fresh, ...prev]; // newest first
           });
