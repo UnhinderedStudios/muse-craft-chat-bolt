@@ -481,9 +481,12 @@ const Index = () => {
 
 
   useEffect(() => {
-    // reset audio refs when result list changes
-    audioRefs.current = [];
-  }, [audioUrls, audioUrl]);
+    // Smart audio refs management - only adjust size, preserve existing elements
+    if (audioRefs.current.length !== tracks.length) {
+      // Only resize array if needed, preserving existing elements
+      audioRefs.current.length = tracks.length;
+    }
+  }, [audioUrls, audioUrl, tracks.length]);
 
   // Smooth progress system that never goes backward and handles stagnation
   useEffect(() => {
