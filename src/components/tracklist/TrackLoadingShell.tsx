@@ -3,21 +3,15 @@ import React from "react";
 interface TrackLoadingShellProps {
   progress: number;
   trackNumber: number;
-  coverUrl?: string;
 }
 
-export function TrackLoadingShell({ progress, trackNumber, coverUrl }: TrackLoadingShellProps) {
+export function TrackLoadingShell({ progress, trackNumber }: TrackLoadingShellProps) {
   return (
     <div className="animate-fade-in">
       <div className="bg-[#1e1e1e] rounded-xl p-4 flex items-center gap-4 min-h-[56px] hover:bg-[#252525] transition-colors">
         {/* Album art placeholder with scanning animation */}
         <div className="relative shrink-0 w-10 h-10 rounded-md bg-black/30 overflow-hidden">
-          {coverUrl ? (
-            <img src={coverUrl} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20" />
-          )}
-          <div className={`absolute inset-0 bg-gradient-to-r from-transparent ${coverUrl ? 'via-white/15' : 'via-accent-primary/15'} to-transparent animate-scanning`}></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-accent-primary/15 to-transparent animate-scanning"></div>
         </div>
         
         {/* Track info area */}

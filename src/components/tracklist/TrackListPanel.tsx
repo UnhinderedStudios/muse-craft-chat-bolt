@@ -30,7 +30,7 @@ type Props = {
   isGenerating?: boolean;
   generationProgress?: number;
   activeJobCount?: number;
-  activeGenerations?: Array<{id: string, startTime: number, progress: number, details: any, covers?: { cover1: string; cover2: string; }}>;
+  activeGenerations?: Array<{id: string, startTime: number, progress: number, details: any}>;
 };
 
 // Generate 20 test tracks for testing search functionality
@@ -226,13 +226,11 @@ export default function TrackListPanel({
               // Use job-specific progress from activeGenerations
               const job = activeGenerations[jobIndex];
               const jobProgress = job?.progress || 0;
-              const coverUrl = job?.covers ? (trackInJob === 0 ? job.covers.cover1 : job.covers.cover2) : undefined;
               return (
                 <TrackLoadingShell 
                   key={`loading-${jobIndex}-${trackInJob}`}
                   progress={trackInJob === 0 ? jobProgress : Math.max(0, jobProgress - 25)} 
-                  trackNumber={tracks.length + i + 1}
-                  coverUrl={coverUrl}
+                  trackNumber={tracks.length + i + 1} 
                 />
               );
             })}
