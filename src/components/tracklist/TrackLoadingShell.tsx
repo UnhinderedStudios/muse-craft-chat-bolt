@@ -1,12 +1,14 @@
 import React from "react";
+import EllipsisMarquee from "@/components/ui/EllipsisMarquee";
 
 interface TrackLoadingShellProps {
   progress: number;
   trackNumber: number;
   coverUrl?: string;
+  title?: string;
 }
 
-export function TrackLoadingShell({ progress, trackNumber, coverUrl }: TrackLoadingShellProps) {
+export function TrackLoadingShell({ progress, trackNumber, coverUrl, title }: TrackLoadingShellProps) {
   return (
     <div className="animate-fade-in">
       <div className="bg-[#1e1e1e] rounded-xl p-4 flex items-center gap-4 min-h-[56px] hover:bg-[#252525] transition-colors">
@@ -28,8 +30,15 @@ export function TrackLoadingShell({ progress, trackNumber, coverUrl }: TrackLoad
         
         {/* Track info area */}
         <div className="flex-1 min-w-0 pr-2">
-          {/* Title placeholder - pill shape */}
-          <div className="h-3 bg-white/15 rounded-full animate-pulse w-full mb-1"></div>
+          {/* Title with marquee animation */}
+          <div className="h-3 mb-1 flex items-center">
+            <EllipsisMarquee
+              text={`No Artist – ${title || "Loading..."}`}
+              className="text-xs text-white/60 animate-pulse"
+              speedPxPerSec={70}
+              gapPx={32}
+            />
+          </div>
           
           {/* Progress bar */}
           <div className="relative h-1.5 bg-white/5 rounded overflow-hidden w-full">

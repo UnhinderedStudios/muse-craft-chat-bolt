@@ -233,6 +233,7 @@ export default function TrackListPanel({
                   progress={trackInJob === 0 ? jobProgress : Math.max(0, jobProgress - 25)} 
                   trackNumber={tracks.length + i + 1}
                   coverUrl={coverUrl}
+                  title={job?.details?.title}
                 />
               );
             })}
