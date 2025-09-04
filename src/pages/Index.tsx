@@ -225,6 +225,23 @@ const Index = () => {
 
   // utils
   const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+  
+  // Helper function to determine if we should auto-select a new track
+  const shouldAutoSelectTrack = () => {
+    // Don't auto-select if user is actively playing something
+    if (isPlaying) return false;
+    
+    // Don't auto-select if user has already selected a real track (not placeholder)
+    if (hasUserSelectedTrack) return false;
+    
+    // Don't auto-select if user has a track selected and it's not a placeholder
+    if (currentTrackIndex >= 0 && tracks[currentTrackIndex] && !tracks[currentTrackIndex].id.startsWith('placeholder-')) {
+      return false;
+    }
+    
+    // Auto-select if it's a fresh session (no real tracks selected yet)
+    return true;
+  };
 
   // constants that already exist visually in your layout
   const RESERVED = 144;     // header + grid gaps + card paddings (your existing comment)
@@ -378,6 +395,7 @@ const Index = () => {
     }
   ]);
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
+  const [hasUserSelectedTrack, setHasUserSelectedTrack] = useState<boolean>(false);
   // Keep karaoke version selection in sync with the currently selected track
   useEffect(() => {
     const currentTrack = tracks[currentTrackIndex];
@@ -1285,10 +1303,13 @@ const Index = () => {
             }, 3000); // 3 second delay to ensure covers are properly transferred
           }
           
-          // Set active track to first of new batch
-          setCurrentTrackIndex(0);
-          setCurrentTime(0);
-          setIsPlaying(false);
+          // Smart auto-selection: only select if appropriate
+          if (shouldAutoSelectTrack()) {
+            setCurrentTrackIndex(0);
+            setCurrentTime(0);
+            setIsPlaying(false);
+            setHasUserSelectedTrack(true); // Mark that we've now selected a real track
+          }
           
           // Reset all audio elements to start position
           setTimeout(() => {
@@ -1659,6 +1680,10 @@ const Index = () => {
                 if (idx !== currentTrackIndex) {
                   setCurrentTrackIndex(idx);
                   setCurrentTime(0);
+                  // Mark that user has manually selected a track
+                  if (tracks[idx] && !tracks[idx].id.startsWith('placeholder-')) {
+                    setHasUserSelectedTrack(true);
+                  }
                 }
               }}
               onTimeUpdate={handleTimeUpdate}
