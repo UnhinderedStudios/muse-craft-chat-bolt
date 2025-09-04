@@ -481,11 +481,9 @@ const Index = () => {
 
 
   useEffect(() => {
-    // Only reset audio refs if no audio is currently playing
-    if (!isPlaying) {
-      audioRefs.current = [];
-    }
-  }, [audioUrls, audioUrl, isPlaying]);
+    // reset audio refs when result list changes
+    audioRefs.current = [];
+  }, [audioUrls, audioUrl]);
 
   // Smooth progress system that never goes backward and handles stagnation
   useEffect(() => {
