@@ -1309,33 +1309,28 @@ const Index = () => {
             
             const newTracks = [...fresh, ...prev]; // newest first
             
-            // Store current state before making decisions
-            const wasPlaying = isPlaying;
-            const hadRealTrackSelected = currentlySelectedTrackId && !currentlySelectedTrackId.startsWith('placeholder-');
-            const currentSelectedTrack = hadRealTrackSelected ? prev.find(t => t.id === currentlySelectedTrackId) : null;
+            // Check REAL current state at the moment of insertion
+            const currentIsPlaying = isPlaying;
+            const currentHasRealTrack = currentlySelectedTrackId && !currentlySelectedTrackId.startsWith('placeholder-');
             
-            // If we had a real track selected, find its new index after insertion
-            if (hadRealTrackSelected) {
+            console.log(`[State Check] At insertion: playing=${currentIsPlaying}, hasRealTrack=${currentHasRealTrack}, currentIndex=${currentTrackIndex}`);
+            
+            // Decision logic: ONLY auto-select if user has completely empty state
+            if (currentHasRealTrack) {
+              // User has a real track selected - preserve its index after insertion
               const newIndex = newTracks.findIndex(track => track.id === currentlySelectedTrackId);
               if (newIndex !== -1 && newIndex !== currentTrackIndex) {
-                console.log(`[Index Preservation] Moving currentTrackIndex from ${currentTrackIndex} to ${newIndex} for track ${currentlySelectedTrackId}`);
-                setTimeout(() => setCurrentTrackIndex(newIndex), 0); // Update after state settles
+                console.log(`[Index Preservation] Updating currentTrackIndex from ${currentTrackIndex} to ${newIndex} for track ${currentlySelectedTrackId}`);
+                setCurrentTrackIndex(newIndex); // No setTimeout - synchronous update
               }
-            } else if (!wasPlaying && !hadRealTrackSelected) {
-              // Only auto-select if: not playing AND no real track was selected
-              const hasOnlyPlaceholders = prev.every(t => t.id.startsWith('placeholder-'));
-              if (hasOnlyPlaceholders || currentTrackIndex < 0) {
-                console.log('[Auto-select] Selecting first new track (no interference with user state)');
-                setTimeout(() => {
-                  setCurrentTrackIndex(0);
-                  setCurrentTime(0);
-                  setIsPlaying(false);
-                }, 0);
-              } else {
-                console.log('[Auto-select] Skipping - user has established selection');
-              }
+            } else if (!currentIsPlaying && currentTrackIndex < 0) {
+              // Only auto-select if user has NO selection and is NOT playing
+              console.log('[Auto-select] Selecting first new track (completely empty state)');
+              setCurrentTrackIndex(0);
+              setCurrentTime(0);
+              setIsPlaying(false);
             } else {
-              console.log('[Auto-select] Skipping - user is playing or has real track selected');
+              console.log(`[Auto-select] SKIPPING - preserving user state (playing: ${currentIsPlaying}, hasRealTrack: ${currentHasRealTrack}, currentIndex: ${currentTrackIndex})`);
             }
             
             return newTracks;
