@@ -88,7 +88,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   return (
     <div ref={panelRef} className="h-full min-h-0 bg-[#151515] rounded-2xl flex flex-col overflow-hidden">
       {/* Album Art Section - Made 10% taller (115px -> 127px) */}
-      <div className="relative h-[127px] bg-muted/10 rounded-t-2xl overflow-hidden flex-shrink-0">
+      <div className="relative h-[127px] rounded-t-2xl overflow-hidden flex-shrink-0" style={{ backgroundColor: '#1e1e1e' }}>
         {currentAlbumCover ? (
           <div
             className="absolute inset-0 bg-cover bg-center opacity-50"
