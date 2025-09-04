@@ -576,7 +576,7 @@ const Index = () => {
 
     // STEP 1: Immediately pause ALL audio elements
     console.log(`[AudioPlay] Stopping all audio and switching to ${index}, isSwitchingTracks: ${isSwitchingTracks}`);
-    audioRefs.current.forEach((audio, i) => {
+    audioRefs.current?.forEach((audio, i) => {
       if (audio) {
         try {
           if (!audio.paused) {
@@ -603,7 +603,7 @@ const Index = () => {
     
     // STEP 3: Small delay to ensure state has updated before playing new audio
     setTimeout(() => {
-      const audioElement = audioRefs.current[index];
+      const audioElement = audioRefs.current?.[index];
       if (audioElement) {
         try {
           // Reset to start only when switching tracks or if audio already ended
@@ -638,7 +638,7 @@ const Index = () => {
 
   const handleAudioPause = () => {
     // Actually pause the current audio
-    const audioElement = audioRefs.current[currentTrackIndex];
+    const audioElement = audioRefs.current?.[currentTrackIndex];
     if (audioElement && !audioElement.paused) {
       try {
         audioElement.pause();
@@ -651,7 +651,7 @@ const Index = () => {
 
   const handleTimeUpdate = (audio: HTMLAudioElement) => {
     // Only update time for the currently active track
-    const activeIndex = audioRefs.current.findIndex(ref => ref === audio);
+    const activeIndex = audioRefs.current?.findIndex(ref => ref === audio) ?? -1;
     if (activeIndex === currentTrackIndex) {
       const newTime = audio.currentTime;
       setCurrentTime(newTime);
@@ -660,7 +660,7 @@ const Index = () => {
   };
 
   const handleSeek = (time: number) => {
-    const audioElement = audioRefs.current[currentTrackIndex];
+    const audioElement = audioRefs.current?.[currentTrackIndex];
     if (audioElement) {
       try {
         audioElement.currentTime = time;
@@ -1351,7 +1351,7 @@ const Index = () => {
           
           // Reset all audio elements to start position
           setTimeout(() => {
-            audioRefs.current.forEach((audio) => {
+            audioRefs.current?.forEach((audio) => {
               if (audio) {
                 audio.currentTime = 0;
               }

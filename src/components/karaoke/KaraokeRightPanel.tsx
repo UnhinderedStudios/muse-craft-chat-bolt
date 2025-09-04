@@ -49,7 +49,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   const hasContent = versions.length > 0;
   const currentVersion = hasContent && currentAudioIndex >= 0 && currentAudioIndex < versions.length ? versions[currentAudioIndex] : null;
   const currentAlbumCover = currentTrackCoverUrl;
-  const audioElement = audioRefs.current[currentTrackIndex] || null;
+  const audioElement = audioRefs.current?.[currentTrackIndex] || null;
   const duration = audioElement?.duration || 0;
 
   // Scroll delegation for the main panel

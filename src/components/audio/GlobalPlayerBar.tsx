@@ -33,7 +33,7 @@ export const GlobalPlayerBar = ({
   const waveRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<any>(null);
 
-  const audioEl = audioRefs.current[currentAudioIndex];
+  const audioEl = audioRefs.current?.[currentAudioIndex];
   const duration = audioEl?.duration ?? 0;
 
   const fmt = (sec: number) => {
