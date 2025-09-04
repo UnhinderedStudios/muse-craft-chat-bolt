@@ -1247,6 +1247,10 @@ const Index = () => {
             setVersions(updatedVersions);
           }
           
+          // Store currently selected track before adding new ones
+          const currentlySelectedTrack = tracks[currentTrackIndex];
+          const currentlySelectedTrackId = currentlySelectedTrack?.id;
+          
           // Add tracks to the track list (newest first) and generate unique covers
           const batchCreatedAt = Date.now();
           console.log(`[Generation] ===== TRACK CREATION DEBUG =====`);
@@ -1254,6 +1258,7 @@ const Index = () => {
           console.log(`[Generation] Updated versions count: ${updatedVersions.length}`);
           console.log(`[Generation] ActiveGenerations array:`, activeGenerations);
           console.log(`[Generation] ActiveGenerations length:`, activeGenerations.length);
+          console.log(`[Index Preservation] Current track before insertion:`, currentlySelectedTrackId);
           
           setTracks(prev => {
             const existing = new Set(prev.map(t => t.id));
@@ -1302,7 +1307,18 @@ const Index = () => {
               console.log(`[CoverGen] ❌ NO COVERS FOUND - tracks will have no covers!`);
             }
             
-            return [...fresh, ...prev]; // newest first
+            const newTracks = [...fresh, ...prev]; // newest first
+            
+            // If we had a real track selected, find its new index after insertion
+            if (currentlySelectedTrackId && !currentlySelectedTrackId.startsWith('placeholder-')) {
+              const newIndex = newTracks.findIndex(track => track.id === currentlySelectedTrackId);
+              if (newIndex !== -1 && newIndex !== currentTrackIndex) {
+                console.log(`[Index Preservation] Moving currentTrackIndex from ${currentTrackIndex} to ${newIndex} for track ${currentlySelectedTrackId}`);
+                setTimeout(() => setCurrentTrackIndex(newIndex), 0); // Update after state settles
+              }
+            }
+            
+            return newTracks;
           });
           
           // Clean up job after successful track creation (delayed to ensure covers are preserved)
