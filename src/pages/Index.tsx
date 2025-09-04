@@ -1309,52 +1309,13 @@ const Index = () => {
             
             const newTracks = [...fresh, ...prev]; // newest first
             
-            // Handle track index preservation and auto-selection with updated state
-            let shouldUpdateIndex = false;
-            let newIndexToSet = currentTrackIndex;
-            
             // If we had a real track selected, find its new index after insertion
             if (currentlySelectedTrackId && !currentlySelectedTrackId.startsWith('placeholder-')) {
               const newIndex = newTracks.findIndex(track => track.id === currentlySelectedTrackId);
-              if (newIndex !== -1) {
-                newIndexToSet = newIndex;
-                shouldUpdateIndex = true;
-                console.log(`[Index Preservation] Will move currentTrackIndex from ${currentTrackIndex} to ${newIndex} for track ${currentlySelectedTrackId}`);
+              if (newIndex !== -1 && newIndex !== currentTrackIndex) {
+                console.log(`[Index Preservation] Moving currentTrackIndex from ${currentTrackIndex} to ${newIndex} for track ${currentlySelectedTrackId}`);
+                setTimeout(() => setCurrentTrackIndex(newIndex), 0); // Update after state settles
               }
-            } else {
-              // Determine if we should auto-select based on the NEW track state
-              const wasPlayingRealTrack = isPlaying && currentlySelectedTrack && !currentlySelectedTrack.id.startsWith('placeholder-');
-              const hadRealTrackSelected = currentlySelectedTrack && !currentlySelectedTrack.id.startsWith('placeholder-');
-              const hadOnlyPlaceholders = prev.every(t => t.id.startsWith('placeholder-'));
-              
-              console.log(`[Auto-select] Checking with NEW state:`, {
-                wasPlayingRealTrack,
-                hadRealTrackSelected,
-                hadOnlyPlaceholders,
-                currentTrackIndex,
-                prevTracksLength: prev.length,
-                newTracksLength: newTracks.length
-              });
-              
-              // Only auto-select if user had no real tracks or was on placeholders
-              if (!wasPlayingRealTrack && !hadRealTrackSelected && (hadOnlyPlaceholders || currentTrackIndex < 0)) {
-                newIndexToSet = 0; // Select first new track
-                shouldUpdateIndex = true;
-                console.log('[Auto-select] Will auto-select first new track');
-                
-                // Also reset playback state for auto-selection
-                setTimeout(() => {
-                  setCurrentTime(0);
-                  setIsPlaying(false);
-                }, 0);
-              } else {
-                console.log('[Auto-select] Skipping auto-selection - user has real content');
-              }
-            }
-            
-            // Update index if needed
-            if (shouldUpdateIndex && newIndexToSet !== currentTrackIndex) {
-              setTimeout(() => setCurrentTrackIndex(newIndexToSet), 0);
             }
             
             return newTracks;
@@ -1367,6 +1328,16 @@ const Index = () => {
               console.log(`[Generation] Cleaning up job ${wrapperJobId} after delay`);
               setActiveGenerations(prev => prev.filter(job => job.id !== wrapperJobId));
             }, 3000); // 3 second delay to ensure covers are properly transferred
+          }
+          
+          // Smart auto-selection: only select if appropriate
+          if (shouldAutoSelectTrack()) {
+            console.log('[Auto-select] Selecting first new track');
+            setCurrentTrackIndex(0);
+            setCurrentTime(0);
+            setIsPlaying(false);
+          } else {
+            console.log('[Auto-select] Skipping auto-selection');
           }
           
           // Reset all audio elements to start position
