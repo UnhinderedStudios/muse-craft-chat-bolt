@@ -1352,12 +1352,12 @@ const Index = () => {
     const jobId = Date.now().toString();
     console.log(`[Generation] 🆕 Creating new job ${jobId} and adding to activeGenerations`);
     setActiveGenerations(prev => {
-      const updated = [...prev, { 
+      const updated = [{ 
         id: jobId, 
         startTime: Date.now(),
         progress: 0,
         details: { ...details }
-      }];
+      }, ...prev];
       console.log(`[Generation] 📋 ActiveGenerations after job creation:`, updated);
       return updated;
     });
