@@ -1362,15 +1362,18 @@ const Index = () => {
                 setCurrentTrackIndex(0);
               }
             } else {
-              console.log('[Playback Preserved] User is playing - preserving track indices and updating playing track index');
-              // Update playingTrackIndex to maintain visual tracking during active playback
-              if (playingTrackId) {
-                const newPlayingIndex = newTracks.findIndex(track => track.id === playingTrackId);
-                if (newPlayingIndex !== -1 && newPlayingIndex !== playingTrackIndex) {
-                  console.log(`[Playing Index Update] Updating playingTrackIndex from ${playingTrackIndex} to ${newPlayingIndex} for playing track ${playingTrackId}`);
-                  setPlayingTrackIndex(newPlayingIndex);
+                console.log('[Playback Preserved] User is playing - preserving track indices and updating playing track index');
+                // Update playingTrackIndex to maintain visual tracking during active playback
+                if (playingTrackId) {
+                  const newPlayingIndex = newTracks.findIndex(track => track.id === playingTrackId);
+                  if (newPlayingIndex !== -1 && newPlayingIndex !== playingTrackIndex) {
+                    console.log(`[Playing Index Update] Updating playingTrackIndex from ${playingTrackIndex} to ${newPlayingIndex} for playing track ${playingTrackId}`);
+                    setPlayingTrackIndex(newPlayingIndex);
+                  }
                 }
-              }
+                
+                // CRITICAL: Prevent any automatic playback when new tracks are added
+                // This ensures that new songs don't auto-play when generation completes
             }
             
             return newTracks;
@@ -1715,9 +1718,12 @@ const Index = () => {
               currentAudioIndex={karaokeAudioIndex}
               currentTrackIndex={currentTrackIndex}
               currentTime={currentTime}
-              isPlaying={isPlaying}
+              isPlaying={isPlaying && karaokeTrackId === playingTrackId}
               albumCovers={albumCovers}
-              currentTrackCoverUrl={tracks.find(t => t.id === karaokeTrackId)?.coverUrl}
+              currentTrackCoverUrl={(() => {
+                const karaokeTrack = tracks.find(t => t.id === karaokeTrackId);
+                return karaokeTrack?.coverUrl;
+              })()}
               isGeneratingCovers={isGeneratingCovers}
               audioRefs={audioRefs}
               onPlayPause={handleAudioPlay}
@@ -1919,31 +1925,33 @@ const Index = () => {
           "
           style={{ paddingBottom: `env(safe-area-inset-bottom, 0px)` }}
         >
+        {tracks.length > 0 && playingTrackIndex >= 0 && (
           <PlayerDock
-            title={tracks[currentTrackIndex]?.title || "No track yet"}
+            title={tracks[playingTrackIndex]?.title || "No track yet"}
             audioRefs={audioRefs}
-            currentAudioIndex={currentTrackIndex}
+            currentAudioIndex={playingTrackIndex}
             isPlaying={isPlaying}
             currentTime={currentTime}
             onPrev={playPrev}
             onNext={playNext}
-            onPlay={() => handleAudioPlay(currentTrackIndex)}
+            onPlay={() => handleAudioPlay(playingTrackIndex)}
             onPause={handleAudioPause}
             onSeek={(t) => handleSeek(t)}
             accent="#f92c8f"
-            disabled={!tracks[currentTrackIndex]}
-            albumCoverUrl={tracks[currentTrackIndex]?.coverUrl}
+            disabled={!tracks[playingTrackIndex]}
+            albumCoverUrl={tracks[playingTrackIndex]?.coverUrl}
             onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
             onTitleUpdate={(newTitle) => {
               setTracks(prevTracks => 
                 prevTracks.map((track, index) => 
-                  index === currentTrackIndex 
+                  index === playingTrackIndex 
                     ? { ...track, title: newTitle }
                     : track
                 )
               );
             }}
           />
+        )}
         </div>
       </footer>
     </div>
