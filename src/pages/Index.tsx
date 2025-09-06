@@ -407,15 +407,26 @@ const Index = () => {
     }
   ]);
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
-  // Keep karaoke version selection in sync with the currently selected track
-  // Only update when user explicitly changes track selection, not when new tracks are added
+  
+  // Independent karaoke state - tracks what's displayed in karaoke panel
+  const [karaokeTrackId, setKaraokeTrackId] = useState<string>("");
+  const [karaokeAudioIndex, setKaraokeAudioIndex] = useState<number>(-1);
+  
+  // Sync karaoke version selection with karaoke track (smarter version dependency)
   useEffect(() => {
-    const currentTrack = tracks[currentTrackIndex];
-    if (!currentTrack) { setCurrentAudioIndex(versions.length ? 0 : -1); return; }
-    const idx = versions.findIndex(v => v.audioId === currentTrack.id);
-    if (idx !== -1) setCurrentAudioIndex(idx);
-    else setCurrentAudioIndex(-1);
-  }, [currentTrackIndex]); // Removed tracks and versions dependencies to prevent auto-switching
+    if (!karaokeTrackId) {
+      setKaraokeAudioIndex(versions.length ? 0 : -1);
+      return;
+    }
+    
+    const idx = versions.findIndex(v => v.audioId === karaokeTrackId);
+    if (idx !== -1) {
+      setKaraokeAudioIndex(idx);
+    } else {
+      // Keep existing karaoke audio index if track versions haven't updated yet
+      setKaraokeAudioIndex(prev => prev >= 0 && prev < versions.length ? prev : -1);
+    }
+  }, [karaokeTrackId, versions]);
   const [showFullscreenKaraoke, setShowFullscreenKaraoke] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<number>(0);
   const [lastProgressUpdate, setLastProgressUpdate] = useState<number>(Date.now());
@@ -560,6 +571,12 @@ const Index = () => {
     console.log(`[AudioPlay] Attempting to play track ${index}, current index: ${currentTrackIndex}, isPlaying: ${isPlaying}`);
     
     // Allow playing tracks during generation - users should be able to listen while songs generate
+    
+    // Update karaoke state when user actually starts playing a track
+    const playingTrack = tracks[index];
+    if (playingTrack) {
+      setKaraokeTrackId(playingTrack.id);
+    }
     
     // If same track is already playing, just toggle pause/play
     if (currentTrackIndex === index && isPlaying) {
@@ -1671,12 +1688,12 @@ const Index = () => {
           <div className="order-4 md:col-span-8 lg:col-span-1 xl:col-span-1 min-w-0 min-h-0">
             <KaraokeRightPanel
               versions={versions}
-              currentAudioIndex={currentAudioIndex}
+              currentAudioIndex={karaokeAudioIndex}
               currentTrackIndex={currentTrackIndex}
               currentTime={currentTime}
               isPlaying={isPlaying}
               albumCovers={albumCovers}
-              currentTrackCoverUrl={tracks[currentTrackIndex]?.coverUrl}
+              currentTrackCoverUrl={tracks.find(t => t.id === karaokeTrackId)?.coverUrl}
               isGeneratingCovers={isGeneratingCovers}
               audioRefs={audioRefs}
               onPlayPause={handleAudioPlay}
