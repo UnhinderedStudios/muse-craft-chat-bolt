@@ -34,32 +34,6 @@ type Props = {
   activeGenerations?: Array<{id: string, startTime: number, progress: number, details: any, covers?: { cover1: string; cover2: string } | null}>;
 };
 
-// Generate 20 test tracks for testing search functionality
-const generateTestTracks = (): TrackItem[] => {
-  const testTracks: TrackItem[] = [
-    { id: "test-1", title: "Midnight Dreams", url: "", coverUrl: "", createdAt: Date.now() - 86400000, params: ["electronic", "ambient", "chill", "night"] },
-    { id: "test-2", title: "Summer Vibes", url: "", coverUrl: "", createdAt: Date.now() - 86300000, params: ["pop", "upbeat", "sunny", "dance"] },
-    { id: "test-3", title: "Rainy Day Blues", url: "", coverUrl: "", createdAt: Date.now() - 86200000, params: ["blues", "melancholy", "rain", "guitar"] },
-    { id: "test-4", title: "Mountain High", url: "", coverUrl: "", createdAt: Date.now() - 86100000, params: ["rock", "epic", "adventure", "powerful"] },
-    { id: "test-5", title: "Ocean Waves", url: "", coverUrl: "", createdAt: Date.now() - 86000000, params: ["ambient", "relaxing", "nature", "peaceful"] },
-    { id: "test-6", title: "Neon Lights", url: "", coverUrl: "", createdAt: Date.now() - 85900000, params: ["synthwave", "retro", "80s", "neon"] },
-    { id: "test-7", title: "Forest Walk", url: "", coverUrl: "", createdAt: Date.now() - 85800000, params: ["acoustic", "folk", "nature", "calm"] },
-    { id: "test-8", title: "City Rush", url: "", coverUrl: "", createdAt: Date.now() - 85700000, params: ["urban", "fast", "energy", "modern"] },
-    { id: "test-9", title: "Starlight Serenade", url: "", coverUrl: "", createdAt: Date.now() - 85600000, params: ["romantic", "jazz", "smooth", "night"] },
-    { id: "test-10", title: "Thunder Storm", url: "", coverUrl: "", createdAt: Date.now() - 85500000, params: ["dramatic", "orchestral", "intense", "storm"] },
-    { id: "test-11", title: "Sunrise Hope", url: "", coverUrl: "", createdAt: Date.now() - 85400000, params: ["inspiring", "orchestral", "morning", "hope"] },
-    { id: "test-12", title: "Digital Dreams", url: "", coverUrl: "", createdAt: Date.now() - 85300000, params: ["electronic", "futuristic", "cyber", "digital"] },
-    { id: "test-13", title: "Desert Wind", url: "", coverUrl: "", createdAt: Date.now() - 85200000, params: ["world", "ethnic", "mystical", "desert"] },
-    { id: "test-14", title: "Jazz Cafe", url: "", coverUrl: "", createdAt: Date.now() - 85100000, params: ["jazz", "coffee", "smooth", "relaxing"] },
-    { id: "test-15", title: "Rock Anthem", url: "", coverUrl: "", createdAt: Date.now() - 85000000, params: ["rock", "anthem", "powerful", "guitar"] },
-    { id: "test-16", title: "Moonlight Waltz", url: "", coverUrl: "", createdAt: Date.now() - 84900000, params: ["classical", "waltz", "elegant", "moonlight"] },
-    { id: "test-17", title: "Hip Hop Beats", url: "", coverUrl: "", createdAt: Date.now() - 84800000, params: ["hip-hop", "beats", "rhythm", "urban"] },
-    { id: "test-18", title: "Country Road", url: "", coverUrl: "", createdAt: Date.now() - 84700000, params: ["country", "road", "guitar", "storytelling"] },
-    { id: "test-19", title: "Electric Pulse", url: "", coverUrl: "", createdAt: Date.now() - 84600000, params: ["edm", "pulse", "electronic", "dance"] },
-    { id: "test-20", title: "Peaceful Mind", url: "", coverUrl: "", createdAt: Date.now() - 84500000, params: ["meditation", "peaceful", "zen", "mindful"] }
-  ];
-  return testTracks;
-};
 
 export default function TrackListPanel({
   tracks,
@@ -104,8 +78,8 @@ export default function TrackListPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
   useScrollDelegationHook(scrollRef);
   
-  // Combine original tracks with test tracks for demo
-  const allTracks = [...tracks, ...generateTestTracks()];
+  // Sort real tracks by newest first
+  const allTracks = [...tracks].sort((a, b) => b.createdAt - a.createdAt);
   
   // Filter tracks based on search query
   const filteredTracks = searchQuery.trim() === "" 
@@ -241,8 +215,8 @@ export default function TrackListPanel({
             })}
             
             {paginatedTracks.map((t, pageIndex) => {
-          // Calculate the actual index in the full filtered tracks array
-          const actualIndex = filteredTracks.indexOf(t);
+          // Calculate the actual index in the original tracks array
+          const actualIndex = tracks.findIndex(track => track.id === t.id);
           const active = actualIndex === currentIndex;
           return (
             <div
