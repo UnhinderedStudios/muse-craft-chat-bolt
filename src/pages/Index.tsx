@@ -1925,26 +1925,27 @@ const Index = () => {
           "
           style={{ paddingBottom: `env(safe-area-inset-bottom, 0px)` }}
         >
-        {tracks.length > 0 && playingTrackIndex >= 0 && (
+        {tracks.length > 0 && currentTrackIndex >= 0 && (
           <PlayerDock
-            title={tracks[playingTrackIndex]?.title || "No track yet"}
+            title={tracks[playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex]?.title || "No track yet"}
             audioRefs={audioRefs}
-            currentAudioIndex={playingTrackIndex}
+            currentAudioIndex={playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex}
             isPlaying={isPlaying}
             currentTime={currentTime}
             onPrev={playPrev}
             onNext={playNext}
-            onPlay={() => handleAudioPlay(playingTrackIndex)}
+            onPlay={() => handleAudioPlay(playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex)}
             onPause={handleAudioPause}
             onSeek={(t) => handleSeek(t)}
             accent="#f92c8f"
-            disabled={!tracks[playingTrackIndex]}
-            albumCoverUrl={tracks[playingTrackIndex]?.coverUrl}
+            disabled={!tracks[playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex]}
+            albumCoverUrl={tracks[playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex]?.coverUrl}
             onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
             onTitleUpdate={(newTitle) => {
+              const targetIndex = playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex;
               setTracks(prevTracks => 
                 prevTracks.map((track, index) => 
-                  index === playingTrackIndex 
+                  index === targetIndex 
                     ? { ...track, title: newTitle }
                     : track
                 )
