@@ -52,12 +52,19 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
     return nonSungPatterns.some(pattern => pattern.test(cleanWord));
   };
 
-  // Reset when words change or when switching between songs 
+  // Reset only when lyrics content actually changes (not just reference)
+  const wordsContentRef = useRef<string>('');
   useEffect(() => {
-    console.log('[Karaoke Reset] Words changed, resetting to top');
-    setHighlightedIndex(-1);
-    if (containerRef.current) {
-      containerRef.current.scrollTop = 0;
+    const currentContent = words.map(w => w.word).join('');
+    if (currentContent !== wordsContentRef.current && currentContent.length > 0) {
+      console.log('[Karaoke Reset] Lyrics content changed, resetting to top');
+      wordsContentRef.current = currentContent;
+      setHighlightedIndex(-1);
+      if (containerRef.current) {
+        containerRef.current.scrollTop = 0;
+      }
+    } else if (currentContent === wordsContentRef.current && currentContent.length > 0) {
+      console.log('[Karaoke Reset] Same lyrics content, preserving state');
     }
   }, [words]);
 
