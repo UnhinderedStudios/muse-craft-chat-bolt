@@ -1360,38 +1360,28 @@ const Index = () => {
               console.log(`[CoverGen] ❌ NO COVERS FOUND - tracks will have no covers!`);
             }
             
-            // Insert newest tracks at position after template tracks (position 20)
-            const TEMPLATE_COUNT = 20; // Number of template tracks in TrackListPanel
-            const realTracks = prev.slice(TEMPLATE_COUNT); // Get existing real tracks
-            const newTracks = [...prev.slice(0, TEMPLATE_COUNT), ...fresh, ...realTracks]; // Templates + newest + older real tracks
+            const newTracks = [...prev, ...fresh]; // append new tracks, preserve existing indices
             
             // Store current state before making decisions
             const wasPlaying = isPlaying;
             const hadRealTrackSelected = currentlySelectedTrackId && !currentlySelectedTrackId.startsWith('placeholder-');
             const currentSelectedTrack = hadRealTrackSelected ? prev.find(t => t.id === currentlySelectedTrackId) : null;
             
-            // With new ordering (templates + newest + older), need to adjust index calculations
+            // With append order, indices stay stable - only need to handle new track selection
             if (!wasPlaying && hadRealTrackSelected) {
-              // Find the selected track in the new array and update index
-              const selectedTrackNewIndex = newTracks.findIndex(t => t.id === currentlySelectedTrackId);
-              if (selectedTrackNewIndex >= 0) {
-                console.log(`[Index Preservation] Updated currentTrackIndex from ${currentTrackIndex} to ${selectedTrackNewIndex}`);
-                setCurrentTrackIndex(selectedTrackNewIndex);
-              }
+              // Current track index should remain the same since we append
+              console.log(`[Index Preservation] Indices preserved due to append order, currentTrackIndex: ${currentTrackIndex}`);
             } else if (!wasPlaying && !hadRealTrackSelected) {
-              // Auto-select first new track (right after templates)
+              // Only auto-select if no user activity - select first NEW track (at end of array)
               const hasOnlyPlaceholders = prev.every(t => t.id.startsWith('placeholder-'));
               if (hasOnlyPlaceholders || currentTrackIndex < 0) {
-                console.log('[Auto-select] Selecting first new track after templates');
-                setCurrentTrackIndex(TEMPLATE_COUNT); // First new track position after templates
+                console.log('[Auto-select] Selecting first new track at end of array');
+                setCurrentTrackIndex(prev.length); // First new track position
               }
             } else {
-              console.log('[Playback Preserved] User is playing - updating index to match new order');
-              // Find current playing track in new array
-              const playingTrackNewIndex = newTracks.findIndex(t => t.id === currentlySelectedTrackId);
-              if (playingTrackNewIndex >= 0) {
-                setCurrentTrackIndex(playingTrackNewIndex);
-              }
+              console.log('[Playback Preserved] User is playing - indices preserved due to append order');
+              // CRITICAL: Prevent any automatic playback when new tracks are added
+              // This ensures that new songs don't auto-play when generation completes
             }
             
             return newTracks;
