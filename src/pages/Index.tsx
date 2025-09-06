@@ -630,6 +630,10 @@ const Index = () => {
             audioElement.currentTime = 0;
           }
           console.log(`[AudioPlay] Starting playback for track ${index}`);
+          
+          // CRITICAL: Ensure no auto-play and explicit dual-player prevention
+          audioElement.autoplay = false;
+          
           // Start playing the new audio
           const playPromise = audioElement.play();
           if (playPromise) {
@@ -656,6 +660,8 @@ const Index = () => {
   }
 
   const handleAudioPause = () => {
+    console.log(`[AUDIO DEBUG] Pausing playback, playingTrackIndex: ${playingTrackIndex}`);
+    
     // Pause the actually playing audio, not just the selected one
     const audioElement = audioRefs.current[playingTrackIndex];
     if (audioElement && !audioElement.paused) {
@@ -665,16 +671,30 @@ const Index = () => {
         console.error('Error pausing audio:', error);
       }
     }
+    
+    // Also pause any other potentially playing audio elements as safety measure
+    audioRefs.current.forEach((audio, index) => {
+      if (audio && !audio.paused) {
+        console.log(`[AUDIO DEBUG] Safety pause for audio at index ${index}`);
+        audio.pause();
+      }
+    });
+    
     setIsPlaying(false);
   };
 
   const handleTimeUpdate = (audio: HTMLAudioElement) => {
-    // Update time for the actually playing track (independent of currentTrackIndex)
-    const activeIndex = audioRefs.current.findIndex(ref => ref === audio);
-    if (activeIndex === playingTrackIndex && activeIndex >= 0) {
+    // CRITICAL: Only update if this is the currently playing audio AND actually playing
+    const audioIndex = audioRefs.current.findIndex(ref => ref === audio);
+    const isCurrentlyPlaying = playingTrackIndex >= 0 && audioIndex === playingTrackIndex && isPlaying && !audio.paused;
+    
+    if (isCurrentlyPlaying) {
       const newTime = audio.currentTime;
       setCurrentTime(newTime);
-      console.log('[Audio Debug] Time update:', newTime.toFixed(2), 'for playing track', activeIndex);
+    } else if (audioIndex !== playingTrackIndex && !audio.paused) {
+      // Safety: pause any non-current audio that's somehow playing
+      console.log(`[AUDIO DEBUG] Safety pausing audio at index ${audioIndex} (current playing: ${playingTrackIndex})`);
+      audio.pause();
     }
   };
 

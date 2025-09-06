@@ -475,21 +475,40 @@ export default function TrackListPanel({
                <audio
                  src={t.url}
                  preload="auto"
+                 autoPlay={false}
+                 muted={false}
                  className="hidden"
                  crossOrigin="anonymous"
-                  ref={(el) => { if (el) audioRefs.current[actualIndex] = el; }}
+                  ref={(el) => { 
+                    if (el) {
+                      audioRefs.current[actualIndex] = el;
+                      // CRITICAL: Ensure no auto-play when element is created
+                      el.autoplay = false;
+                      console.log(`[AUDIO DEBUG] Created audio element at index ${actualIndex}, autoplay disabled`);
+                    }
+                  }}
                   onTimeUpdate={(e) => {
                     const audio = e.currentTarget;
-                    // Only update progress for the currently active track
-                    if (actualIndex === currentIndex) {
+                    // CRITICAL: Only update if this is the currently playing track AND playing
+                    if (actualIndex === currentIndex && isPlaying && !audio.paused) {
                       setAudioCurrentTimes(prev => {
                         const newTimes = [...prev];
                         newTimes[actualIndex] = audio.currentTime;
                         return newTimes;
                       });
+                      // Call the original onTimeUpdate only for playing track
+                      onTimeUpdate(audio);
                     }
-                    // Call the original onTimeUpdate
-                    onTimeUpdate(audio);
+                  }}
+                  onPlay={(e) => {
+                    // Pause all other audio elements when this one starts playing
+                    const currentAudio = e.currentTarget;
+                    audioRefs.current.forEach((audio, index) => {
+                      if (audio && audio !== currentAudio && !audio.paused) {
+                        console.log(`[AUDIO DEBUG] Pausing conflicting audio at index ${index}`);
+                        audio.pause();
+                      }
+                    });
                   }}
                />
             </div>
