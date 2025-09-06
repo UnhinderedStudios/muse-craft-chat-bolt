@@ -1360,25 +1360,23 @@ const Index = () => {
               console.log(`[CoverGen] ❌ NO COVERS FOUND - tracks will have no covers!`);
             }
             
-            const newTracks = [...fresh, ...prev]; // prepend new tracks (newest first)
+            const newTracks = [...prev, ...fresh]; // append new tracks, preserve existing indices
             
             // Store current state before making decisions
             const wasPlaying = isPlaying;
             const hadRealTrackSelected = currentlySelectedTrackId && !currentlySelectedTrackId.startsWith('placeholder-');
             const currentSelectedTrack = hadRealTrackSelected ? prev.find(t => t.id === currentlySelectedTrackId) : null;
             
-            // With prepend order, need to adjust existing indices
-            if (!wasPlaying && hadRealTrackSelected && currentSelectedTrack) {
-              // Adjust current track index since new tracks are prepended
-              const newIndex = newTracks.findIndex(t => t.id === currentSelectedTrack.id);
-              console.log(`[Index Preservation] Adjusted index from ${currentTrackIndex} to ${newIndex} due to prepend order`);
-              setCurrentTrackIndex(newIndex);
+            // With append order, indices stay stable - only need to handle new track selection
+            if (!wasPlaying && hadRealTrackSelected) {
+              // Current track index should remain the same since we append
+              console.log(`[Index Preservation] Indices preserved due to append order, currentTrackIndex: ${currentTrackIndex}`);
             } else if (!wasPlaying && !hadRealTrackSelected) {
-              // Only auto-select if no user activity - select first NEW track (at beginning of array)
+              // Only auto-select if no user activity - select first NEW track (at end of array)
               const hasOnlyPlaceholders = prev.every(t => t.id.startsWith('placeholder-'));
               if (hasOnlyPlaceholders || currentTrackIndex < 0) {
-                console.log('[Auto-select] Selecting first new track at beginning of array');
-                setCurrentTrackIndex(0); // First new track position
+                console.log('[Auto-select] Selecting first new track at end of array');
+                setCurrentTrackIndex(prev.length); // First new track position
               }
             } else {
               console.log('[Playback Preserved] User is playing - indices preserved due to append order');
