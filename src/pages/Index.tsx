@@ -1360,40 +1360,28 @@ const Index = () => {
               console.log(`[CoverGen] ❌ NO COVERS FOUND - tracks will have no covers!`);
             }
             
-            const newTracks = [...fresh, ...prev]; // newest first
+            const newTracks = [...prev, ...fresh]; // append new tracks, preserve existing indices
             
             // Store current state before making decisions
             const wasPlaying = isPlaying;
             const hadRealTrackSelected = currentlySelectedTrackId && !currentlySelectedTrackId.startsWith('placeholder-');
             const currentSelectedTrack = hadRealTrackSelected ? prev.find(t => t.id === currentlySelectedTrackId) : null;
             
-            // Preserve playback state - never change currentTrackIndex during active playback
+            // With append order, indices stay stable - only need to handle new track selection
             if (!wasPlaying && hadRealTrackSelected) {
-              const newIndex = newTracks.findIndex(track => track.id === currentlySelectedTrackId);
-              if (newIndex !== -1 && newIndex !== currentTrackIndex) {
-                console.log(`[Index Preservation] Moving currentTrackIndex from ${currentTrackIndex} to ${newIndex} for track ${currentlySelectedTrackId}`);
-                setCurrentTrackIndex(newIndex);
-              }
+              // Current track index should remain the same since we append
+              console.log(`[Index Preservation] Indices preserved due to append order, currentTrackIndex: ${currentTrackIndex}`);
             } else if (!wasPlaying && !hadRealTrackSelected) {
-              // Only auto-select if no user activity
+              // Only auto-select if no user activity - select first NEW track (at end of array)
               const hasOnlyPlaceholders = prev.every(t => t.id.startsWith('placeholder-'));
               if (hasOnlyPlaceholders || currentTrackIndex < 0) {
-                console.log('[Auto-select] Selecting first new track');
-                setCurrentTrackIndex(0);
+                console.log('[Auto-select] Selecting first new track at end of array');
+                setCurrentTrackIndex(prev.length); // First new track position
               }
             } else {
-                console.log('[Playback Preserved] User is playing - preserving track indices and updating playing track index');
-                // Update playingTrackIndex to maintain visual tracking during active playback
-                if (playingTrackId) {
-                  const newPlayingIndex = newTracks.findIndex(track => track.id === playingTrackId);
-                  if (newPlayingIndex !== -1 && newPlayingIndex !== playingTrackIndex) {
-                    console.log(`[Playing Index Update] Updating playingTrackIndex from ${playingTrackIndex} to ${newPlayingIndex} for playing track ${playingTrackId}`);
-                    setPlayingTrackIndex(newPlayingIndex);
-                  }
-                }
-                
-                // CRITICAL: Prevent any automatic playback when new tracks are added
-                // This ensures that new songs don't auto-play when generation completes
+              console.log('[Playback Preserved] User is playing - indices preserved due to append order');
+              // CRITICAL: Prevent any automatic playback when new tracks are added
+              // This ensures that new songs don't auto-play when generation completes
             }
             
             return newTracks;
@@ -1759,6 +1747,7 @@ const Index = () => {
             <TrackListPanel
               tracks={tracks}
               currentIndex={currentTrackIndex}
+              playingTrackIndex={playingTrackIndex}
               isPlaying={isPlaying}
               audioRefs={audioRefs}
               onPlayPause={(idx) => {

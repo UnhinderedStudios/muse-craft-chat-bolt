@@ -20,6 +20,7 @@ import { TrackLoadingShell } from "./TrackLoadingShell";
 type Props = {
   tracks: TrackItem[];
   currentIndex: number;
+  playingTrackIndex: number;
   isPlaying: boolean;
   audioRefs: React.MutableRefObject<HTMLAudioElement[]>;
   onPlayPause: (index: number) => void;
@@ -63,6 +64,7 @@ const generateTestTracks = (): TrackItem[] => {
 export default function TrackListPanel({
   tracks,
   currentIndex,
+  playingTrackIndex,
   isPlaying,
   audioRefs,
   onPlayPause,
@@ -490,7 +492,7 @@ export default function TrackListPanel({
                   onTimeUpdate={(e) => {
                     const audio = e.currentTarget;
                     // CRITICAL: Only update if this is the currently playing track AND playing
-                    if (actualIndex === currentIndex && isPlaying && !audio.paused) {
+                    if (actualIndex === playingTrackIndex && isPlaying && !audio.paused) {
                       setAudioCurrentTimes(prev => {
                         const newTimes = [...prev];
                         newTimes[actualIndex] = audio.currentTime;
