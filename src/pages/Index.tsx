@@ -412,6 +412,10 @@ const Index = () => {
   const [karaokeTrackId, setKaraokeTrackId] = useState<string>("");
   const [karaokeAudioIndex, setKaraokeAudioIndex] = useState<number>(-1);
   
+  // Track what's actually playing (independent of UI selection)
+  const [playingTrackId, setPlayingTrackId] = useState<string>("");
+  const [playingTrackIndex, setPlayingTrackIndex] = useState<number>(-1);
+  
   // Sync karaoke version selection with karaoke track (smarter version dependency)
   useEffect(() => {
     if (!karaokeTrackId) {
@@ -572,10 +576,12 @@ const Index = () => {
     
     // Allow playing tracks during generation - users should be able to listen while songs generate
     
-    // Update karaoke state when user actually starts playing a track
+    // Update both karaoke and playing track state when user actually starts playing
     const playingTrack = tracks[index];
     if (playingTrack) {
       setKaraokeTrackId(playingTrack.id);
+      setPlayingTrackId(playingTrack.id);
+      setPlayingTrackIndex(index);
     }
     
     // If same track is already playing, just toggle pause/play
@@ -650,8 +656,8 @@ const Index = () => {
   }
 
   const handleAudioPause = () => {
-    // Actually pause the current audio
-    const audioElement = audioRefs.current[currentTrackIndex];
+    // Pause the actually playing audio, not just the selected one
+    const audioElement = audioRefs.current[playingTrackIndex];
     if (audioElement && !audioElement.paused) {
       try {
         audioElement.pause();
@@ -663,17 +669,17 @@ const Index = () => {
   };
 
   const handleTimeUpdate = (audio: HTMLAudioElement) => {
-    // Only update time for the currently active track
+    // Update time for the actually playing track (independent of currentTrackIndex)
     const activeIndex = audioRefs.current.findIndex(ref => ref === audio);
-    if (activeIndex === currentTrackIndex) {
+    if (activeIndex === playingTrackIndex && activeIndex >= 0) {
       const newTime = audio.currentTime;
       setCurrentTime(newTime);
-      console.log('[Audio Debug] Time update:', newTime.toFixed(2), 'for track', activeIndex);
+      console.log('[Audio Debug] Time update:', newTime.toFixed(2), 'for playing track', activeIndex);
     }
   };
 
   const handleSeek = (time: number) => {
-    const audioElement = audioRefs.current[currentTrackIndex];
+    const audioElement = audioRefs.current[playingTrackIndex];
     if (audioElement) {
       try {
         audioElement.currentTime = time;
@@ -684,8 +690,18 @@ const Index = () => {
     }
   };
 
-  const playPrev = () => tracks.length && handleAudioPlay(Math.max(0, currentTrackIndex - 1));
-  const playNext = () => tracks.length && handleAudioPlay(Math.min(tracks.length - 1, currentTrackIndex + 1));
+  const playPrev = () => {
+    if (tracks.length) {
+      const targetIndex = playingTrackIndex >= 0 ? Math.max(0, playingTrackIndex - 1) : Math.max(0, currentTrackIndex - 1);
+      handleAudioPlay(targetIndex);
+    }
+  };
+  const playNext = () => {
+    if (tracks.length) {
+      const targetIndex = playingTrackIndex >= 0 ? Math.min(tracks.length - 1, playingTrackIndex + 1) : Math.min(tracks.length - 1, currentTrackIndex + 1);
+      handleAudioPlay(targetIndex);
+    }
+  };
 
   // Handle retry timestamps for karaoke
   const handleRetryTimestamps = async (versionIndex: number) => {
@@ -1331,7 +1347,7 @@ const Index = () => {
             const hadRealTrackSelected = currentlySelectedTrackId && !currentlySelectedTrackId.startsWith('placeholder-');
             const currentSelectedTrack = hadRealTrackSelected ? prev.find(t => t.id === currentlySelectedTrackId) : null;
             
-            // Preserve playback state - only update indices if user isn't actively playing
+            // Preserve playback state - never change currentTrackIndex during active playback
             if (!wasPlaying && hadRealTrackSelected) {
               const newIndex = newTracks.findIndex(track => track.id === currentlySelectedTrackId);
               if (newIndex !== -1 && newIndex !== currentTrackIndex) {
@@ -1346,7 +1362,15 @@ const Index = () => {
                 setCurrentTrackIndex(0);
               }
             } else {
-              console.log('[Playback Preserved] User is playing - no track switching');
+              console.log('[Playback Preserved] User is playing - preserving track indices and updating playing track index');
+              // Update playingTrackIndex to maintain visual tracking during active playback
+              if (playingTrackId) {
+                const newPlayingIndex = newTracks.findIndex(track => track.id === playingTrackId);
+                if (newPlayingIndex !== -1 && newPlayingIndex !== playingTrackIndex) {
+                  console.log(`[Playing Index Update] Updating playingTrackIndex from ${playingTrackIndex} to ${newPlayingIndex} for playing track ${playingTrackId}`);
+                  setPlayingTrackIndex(newPlayingIndex);
+                }
+              }
             }
             
             return newTracks;
