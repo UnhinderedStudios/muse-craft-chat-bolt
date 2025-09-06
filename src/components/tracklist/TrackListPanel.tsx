@@ -104,8 +104,8 @@ export default function TrackListPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
   useScrollDelegationHook(scrollRef);
   
-  // Combine original tracks with test tracks for demo
-  const allTracks = [...tracks, ...generateTestTracks()];
+  // Combine original tracks with test tracks for demo and sort by creation time (newest first)
+  const allTracks = [...tracks, ...generateTestTracks()].sort((a, b) => b.createdAt - a.createdAt);
   
   // Filter tracks based on search query
   const filteredTracks = searchQuery.trim() === "" 
