@@ -510,23 +510,23 @@ export default function TrackListPanel({
                             className="text-white/60 hover:text-white transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setOpenDeleteOverlayTrackId(openDeleteOverlayTrackId === t.id ? null : t.id);
-                              setOpenMenuTrackId(null);
-                              setOpenAddOverlayTrackId(null);
-                            }}
-                          >
-                            <Download className="w-4 h-4" />
-                          </button>
-                          <button 
-                            className="text-white/60 hover:text-white transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
                               setOpenAddOverlayTrackId(openAddOverlayTrackId === t.id ? null : t.id);
                               setOpenMenuTrackId(null);
                               setOpenDeleteOverlayTrackId(null);
                             }}
                           >
                             <Plus className="w-4 h-4" />
+                          </button>
+                          <button 
+                            className="text-white/60 hover:text-white transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenDeleteOverlayTrackId(openDeleteOverlayTrackId === t.id ? null : t.id);
+                              setOpenMenuTrackId(null);
+                              setOpenAddOverlayTrackId(null);
+                            }}
+                          >
+                            <Download className="w-4 h-4" />
                           </button>
                           <button 
                             className="text-white/60 hover:text-white transition-colors"
