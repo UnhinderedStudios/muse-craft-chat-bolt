@@ -319,7 +319,7 @@ export default function TrackListPanel({
                   {/* First row: Album art + Content */}
                   <div className="flex">
                     {/* Album art - flush with container left edge, only top-left corner rounded */}
-                    <div className="shrink-0 w-16 h-16 bg-black/30 overflow-hidden rounded-tl-xl relative group">
+                    <div className="shrink-0 w-16 h-16 bg-black/30 overflow-hidden rounded-tl-xl rounded-br-xl relative group">
                       {t.coverUrl ? (
                         <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
                       ) : (
