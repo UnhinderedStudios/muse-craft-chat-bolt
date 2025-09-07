@@ -564,9 +564,9 @@ export default function TrackListPanel({
                             setOpenAddOverlayTrackId(null);
                           }}
                         >
-                          <div className="h-full flex flex-col p-3">
+                          <div className="h-full flex flex-col">
                             {/* Search Bar */}
-                            <div className="flex justify-center mb-3">
+                            <div className="flex justify-center p-3 pb-2">
                               <div className="relative w-4/5">
                                 <input
                                   type="text"
@@ -579,7 +579,7 @@ export default function TrackListPanel({
                             </div>
 
                             {/* Playlists List */}
-                            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lyrics-scrollbar pb-3">
+                            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pb-3">
                               <div className="space-y-2">
                                 {/* Mock Playlists */}
                                 {[
