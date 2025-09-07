@@ -250,7 +250,7 @@ export default function TrackListPanel({
                 /* Regular track row */
                 <div 
                   className={cn(
-                    "flex items-center gap-3",
+                    "flex items-center gap-3 relative",
                     dragStartTrack?.track.id === t.id && "track-detaching"
                   )}
                   onMouseDown={(e) => {
@@ -267,6 +267,15 @@ export default function TrackListPanel({
                     setDragStartTrack(null);
                   }}
                 >
+                  {/* New track indicator - pink glowing ball */}
+                  {t.createdAt && Date.now() - t.createdAt < 24 * 60 * 60 * 1000 && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-pink-500 z-10" 
+                         style={{
+                           boxShadow: '0 0 8px rgba(236, 72, 153, 0.6), 0 0 4px rgba(236, 72, 153, 0.8)',
+                           animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+                         }} />
+                  )}
+                  
                   <div className="shrink-0 w-10 h-10 rounded-md bg-black/30 overflow-hidden">
                     {t.coverUrl ? (
                       <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
