@@ -346,9 +346,12 @@ serve(async (req) => {
         console.log("[suno] WAV callback received:", JSON.stringify(body, null, 2));
 
         const wavJobId: string | undefined = body?.data?.taskId || body?.taskId || body?.data?.task_id || body?.task_id;
-        const wavUrl: string | undefined = body?.data?.wav_url || body?.data?.wavUrl || body?.data?.file_url || body?.data?.fileUrl || 
-                                          body?.data?.download_url || body?.data?.downloadUrl || body?.wav_url || body?.wavUrl || 
-                                          body?.file_url || body?.fileUrl || body?.download_url || body?.downloadUrl;
+        const wavUrl: string | undefined =
+          body?.data?.wav_url || body?.data?.wavUrl || body?.data?.file_url || body?.data?.fileUrl ||
+          body?.data?.download_url || body?.data?.downloadUrl ||
+          body?.data?.response?.audioWavUrl || body?.data?.response?.audio_wav_url ||
+          body?.response?.audioWavUrl || body?.response?.audio_wav_url ||
+          body?.wav_url || body?.wavUrl || body?.file_url || body?.fileUrl || body?.download_url || body?.downloadUrl;
         
         if (wavJobId && wavUrl) {
           try {
@@ -416,44 +419,47 @@ serve(async (req) => {
       const st: string = String(data.status || data.taskStatus || "PENDING").toUpperCase();
       console.log("[suno] WAV job status:", st);
       
-      if (st.includes("SUCCESS") || st.includes("COMPLETE")) {
-        // Extract WAV URL from various possible fields
-        const wavUrl = data.wav_url || data.wavUrl || data.file_url || data.fileUrl || 
-                      data.download_url || data.downloadUrl || data.audio_url || data.audioUrl ||
-                      data.response?.wav_url || data.response?.wavUrl || 
-                      data.response?.file_url || data.response?.fileUrl ||
-                      data.response?.audioWavUrl;
-        
-        console.log("[suno] WAV conversion complete, wavUrl:", wavUrl);
-        
-        if (wavUrl) {
-          try {
-            // Stream the WAV file directly to the client
-            console.log("[suno] Fetching WAV content from:", wavUrl);
-            const wavResp = await fetch(wavUrl);
-            if (!wavResp.ok) {
-              throw new Error(`Failed to fetch WAV: ${wavResp.status} ${wavResp.statusText}`);
-            }
-            
-            const wavContent = await wavResp.arrayBuffer();
-            console.log("[suno] Streaming WAV file, size:", wavContent.byteLength);
-            
-            return new Response(wavContent, {
-              headers: {
-                ...corsHeaders,
-                'Content-Type': 'audio/wav',
-                'Content-Disposition': `attachment; filename="track-${wavJobId}.wav"`,
-                'Content-Length': String(wavContent.byteLength),
-              },
-            });
-          } catch (e) {
-            console.error("[suno] Failed to stream WAV:", e);
-            return json({ status: "error", error: "Failed to download WAV file" });
+      // Try to short-circuit if provider already returned a WAV URL, regardless of status
+      const wavUrl =
+        data.wav_url || data.wavUrl || data.file_url || data.fileUrl ||
+        data.download_url || data.downloadUrl || data.audio_url || data.audioUrl ||
+        data.response?.wav_url || data.response?.wavUrl ||
+        data.response?.file_url || data.response?.fileUrl ||
+        data.response?.audioWavUrl || data.response?.audio_wav_url ||
+        (Array.isArray(data.response?.data) && (data.response.data[0]?.audioWavUrl || data.response.data[0]?.audio_wav_url)) ||
+        (Array.isArray(data.data) && (data.data[0]?.audioWavUrl || data.data[0]?.audio_wav_url));
+      
+      console.log("[suno] WAV URL probe (any status):", wavUrl);
+      
+      if (wavUrl) {
+        try {
+          // Stream the WAV file directly to the client
+          console.log("[suno] Fetching WAV content from:", wavUrl);
+          const wavResp = await fetch(wavUrl);
+          if (!wavResp.ok) {
+            throw new Error(`Failed to fetch WAV: ${wavResp.status} ${wavResp.statusText}`);
           }
-        } else {
-          console.warn("[suno] WAV conversion complete but no WAV URL found");
-          return json({ status: "error", error: "No WAV URL in response" });
+          
+          const wavContent = await wavResp.arrayBuffer();
+          console.log("[suno] Streaming WAV file, size:", wavContent.byteLength);
+          
+          return new Response(wavContent, {
+            headers: {
+              ...corsHeaders,
+              'Content-Type': 'audio/wav',
+              'Content-Disposition': `attachment; filename="track-${wavJobId}.wav"`,
+              'Content-Length': String(wavContent.byteLength),
+            },
+          });
+        } catch (e) {
+          console.error("[suno] Failed to stream WAV:", e);
+          return json({ status: "error", error: "Failed to download WAV file" });
         }
+      }
+
+      if (st.includes("SUCCESS") || st.includes("COMPLETE") || st.includes("FINISH") || st.includes("DONE")) {
+        console.warn("[suno] WAV conversion marked complete but no URL returned yet");
+        return json({ status: "error", error: "No WAV URL in response" });
       }
       
       if (st.includes("FAIL") || st.includes("ERROR")) {
