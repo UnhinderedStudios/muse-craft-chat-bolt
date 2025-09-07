@@ -5,6 +5,7 @@ import { Playlist } from "./TemplatePanel";
 import EllipsisMarquee from "@/components/ui/EllipsisMarquee";
 import { useDrag } from "@/contexts/DragContext";
 import { TrackItem } from "@/types";
+import { useSessionPlaylists } from "@/hooks/use-session-playlists";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +30,7 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(playlist.name);
   const { dragState, setActiveDropZone, endDrag } = useDrag();
+  const { addTrackToPlaylist } = useSessionPlaylists();
   
   const handleMenuAction = (action: string) => {
     onMenuAction(playlist.id, action);
@@ -36,7 +38,7 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
 
   const handleTitleClick = () => {
     // Don't allow editing of Favourites playlist
-    if (playlist.id === "fav") return;
+    if (playlist.id === "favourites") return;
     setIsEditing(true);
     setEditTitle(playlist.name);
   };
@@ -102,7 +104,8 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
         console.log('✨ Drop success state set to true for playlist:', playlist.name);
         
         // Call the track add handler
-        onTrackAdd(playlist.id, dragState.draggedTrack);
+        addTrackToPlaylist(playlist.id, dragState.draggedTrack);
+        onTrackAdd?.(playlist.id, dragState.draggedTrack);
         console.log('🎵 onTrackAdd called successfully');
         
         // End drag immediately - no delay

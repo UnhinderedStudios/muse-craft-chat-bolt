@@ -8,6 +8,7 @@ import { CreatePlaylistPrompt } from "./CreatePlaylistPrompt";
 import { PlaylistOverlay } from "./PlaylistOverlay";
 import { TrackItem } from "@/types";
 import { toast } from "sonner";
+import { useSessionPlaylists, SessionPlaylist } from "@/hooks/use-session-playlists";
 import {
   Pagination,
   PaginationContent,
@@ -26,161 +27,11 @@ export interface Song {
   duration: number; // in seconds
 }
 
-export interface Playlist {
-  id: string;
-  name: string;
-  songCount: number;
-  isFavorited?: boolean;
-  createdAt: number;
-  songs: Song[];
-}
+export interface Playlist extends SessionPlaylist {}
 
 interface TemplatePanelProps {
   className?: string;
 }
-
-// Mock songs data
-const mockSongs: Song[] = [
-  { id: "song1", title: "Midnight Dreams", artist: "Synthwave Master", albumArt: "/placeholder.svg", dateCreated: Date.now() - 86400000, duration: 240 },
-  { id: "song2", title: "Electric Nights", artist: "Neon Pulse", albumArt: "/placeholder.svg", dateCreated: Date.now() - 172800000, duration: 195 },
-  { id: "song3", title: "Cosmic Journey", artist: "Space Echo", albumArt: "/placeholder.svg", dateCreated: Date.now() - 259200000, duration: 320 },
-  { id: "song4", title: "Digital Rain", artist: "Cyber Dreams", albumArt: "/placeholder.svg", dateCreated: Date.now() - 345600000, duration: 280 },
-  { id: "song5", title: "Neon Glow", artist: "Retro Wave", albumArt: "/placeholder.svg", dateCreated: Date.now() - 432000000, duration: 215 },
-  { id: "song6", title: "Chrome Hearts", artist: "Synthwave Master", albumArt: "/placeholder.svg", dateCreated: Date.now() - 518400000, duration: 255 },
-  { id: "song7", title: "Virtual Reality", artist: "Tech Noir", albumArt: "/placeholder.svg", dateCreated: Date.now() - 604800000, duration: 305 },
-  { id: "song8", title: "City Lights", artist: "Urban Dreams", albumArt: "/placeholder.svg", dateCreated: Date.now() - 691200000, duration: 188 },
-];
-
-// Mock data for development
-const mockPlaylists: Playlist[] = [
-  { 
-    id: "fav", 
-    name: "Favourites", 
-    songCount: 12, 
-    isFavorited: false, 
-    createdAt: Date.now() - 86400000, 
-    songs: mockSongs.slice(0, 4) 
-  },
-  { 
-    id: "chill", 
-    name: "Chill Vibes", 
-    songCount: 8, 
-    createdAt: Date.now() - 172800000, 
-    songs: mockSongs.slice(1, 4) 
-  },
-  { 
-    id: "workout", 
-    name: "Workout Mix", 
-    songCount: 15, 
-    createdAt: Date.now() - 259200000, 
-    songs: mockSongs.slice(0, 6) 
-  },
-  { 
-    id: "study", 
-    name: "Study Focus", 
-    songCount: 6, 
-    createdAt: Date.now() - 345600000, 
-    songs: mockSongs.slice(2, 5) 
-  },
-  { 
-    id: "party", 
-    name: "Party Hits", 
-    songCount: 22, 
-    createdAt: Date.now() - 432000000, 
-    songs: mockSongs 
-  },
-  { 
-    id: "road-trip", 
-    name: "Road Trip Classics", 
-    songCount: 18, 
-    createdAt: Date.now() - 518400000, 
-    songs: mockSongs.slice(0, 7) 
-  },
-  { 
-    id: "morning", 
-    name: "Morning Coffee", 
-    songCount: 11, 
-    createdAt: Date.now() - 604800000, 
-    songs: mockSongs.slice(1, 6) 
-  },
-  { 
-    id: "late-night", 
-    name: "Late Night Vibes", 
-    songCount: 9, 
-    createdAt: Date.now() - 691200000, 
-    songs: mockSongs.slice(0, 3) 
-  },
-  { 
-    id: "rock", 
-    name: "Rock Anthems", 
-    songCount: 24, 
-    createdAt: Date.now() - 777600000, 
-    songs: mockSongs.slice(2, 8) 
-  },
-  { 
-    id: "jazz", 
-    name: "Smooth Jazz", 
-    songCount: 13, 
-    createdAt: Date.now() - 864000000, 
-    songs: mockSongs.slice(0, 5) 
-  },
-  { 
-    id: "electronic", 
-    name: "Electronic Beats", 
-    songCount: 16, 
-    createdAt: Date.now() - 950400000, 
-    songs: mockSongs.slice(1, 7) 
-  },
-  { 
-    id: "indie", 
-    name: "Indie Discoveries", 
-    songCount: 7, 
-    createdAt: Date.now() - 1036800000, 
-    songs: mockSongs.slice(0, 4) 
-  },
-  { 
-    id: "pop", 
-    name: "Pop Hits 2024", 
-    songCount: 20, 
-    createdAt: Date.now() - 1123200000, 
-    songs: mockSongs 
-  },
-  { 
-    id: "acoustic", 
-    name: "Acoustic Sessions", 
-    songCount: 14, 
-    createdAt: Date.now() - 1209600000, 
-    songs: mockSongs.slice(2, 7) 
-  },
-  { 
-    id: "hip-hop", 
-    name: "Hip Hop Essentials", 
-    songCount: 19, 
-    createdAt: Date.now() - 1296000000, 
-    songs: mockSongs.slice(0, 6) 
-  },
-  { 
-    id: "classical", 
-    name: "Classical Favorites", 
-    songCount: 10, 
-    createdAt: Date.now() - 1382400000, 
-    songs: mockSongs.slice(1, 5) 
-  },
-  { 
-    id: "country", 
-    name: "Country Roads", 
-    songCount: 17, 
-    createdAt: Date.now() - 1468800000, 
-    songs: mockSongs.slice(0, 7) 
-  },
-  { 
-    id: "blues", 
-    name: "Blues Collection", 
-    songCount: 12, 
-    createdAt: Date.now() - 1555200000, 
-    songs: mockSongs.slice(2, 6) 
-  },
-];
 
 const mockArtists = [
   { id: "artist1", name: "Synthwave Master", songCount: 5, createdAt: Date.now() - 86400000, songs: [] },
@@ -193,8 +44,20 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [showCreatePrompt, setShowCreatePrompt] = useState(false);
-  const [playlists, setPlaylists] = useState<Playlist[]>(mockPlaylists);
   const [artists, setArtists] = useState<Playlist[]>(mockArtists);
+  
+  // Use session-based playlists
+  const {
+    playlists,
+    createPlaylist,
+    addTrackToPlaylist,
+    removeTrackFromPlaylist,
+    toggleFavourite,
+    isTrackInFavourites,
+    renamePlaylist,
+    deletePlaylist,
+    togglePlaylistFavourite
+  } = useSessionPlaylists();
   
   // Overlay state
   const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
@@ -250,29 +113,28 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
 
   // Create new playlist
   const handleCreatePlaylist = (name: string) => {
-    const newPlaylist: Playlist = {
-      id: `playlist_${Date.now()}`,
-      name,
-      songCount: 0,
-      createdAt: Date.now(),
-      songs: []
-    };
-    setPlaylists(prev => [...prev, newPlaylist]);
+    createPlaylist(name);
     clearSearch();
   };
 
   // Handle playlist menu actions
   const handlePlaylistAction = (playlistId: string, action: string) => {
-    console.log(`Action ${action} on playlist ${playlistId}`);
-    // Add playlist management logic here
+    switch (action) {
+      case "favorite":
+        togglePlaylistFavourite(playlistId);
+        break;
+      case "delete":
+        deletePlaylist(playlistId);
+        break;
+      default:
+        console.log(`Action ${action} on playlist ${playlistId}`);
+    }
   };
 
   // Handle playlist title editing
   const handlePlaylistTitleEdit = (playlistId: string, newTitle: string) => {
     if (viewMode === "playlists") {
-      setPlaylists(prev => prev.map(p => 
-        p.id === playlistId ? { ...p, name: newTitle } : p
-      ));
+      renamePlaylist(playlistId, newTitle);
     } else {
       setArtists(prev => prev.map(a => 
         a.id === playlistId ? { ...a, name: newTitle } : a
@@ -295,13 +157,8 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
   const handleTrackAdd = (playlistId: string, track: TrackItem) => {
     const playlist = playlists.find(p => p.id === playlistId);
     if (playlist) {
-      setPlaylists(prev => prev.map(p => 
-        p.id === playlistId 
-          ? { ...p, songCount: p.songCount + 1 }
-          : p
-      ));
-      
-      toast.success(`Added "${track.title}" to "${playlist.name}"`);
+      addTrackToPlaylist(playlistId, track);
+      toast.success(`Added "${track.title || "Song"}" to "${playlist.name}"`);
     }
   };
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { X, Search, Filter, MoreVertical, Play, Clock } from "lucide-react";
-import { Playlist, Song } from "./TemplatePanel";
+import { SessionPlaylist } from "@/hooks/use-session-playlists";
+import { TrackItem } from "@/types";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,7 +21,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface PlaylistOverlayProps {
-  playlist: Playlist | null;
+  playlist: SessionPlaylist | null;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -64,31 +65,23 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
 
   // Filter and sort songs
   const filteredSongs = playlist.songs.filter(song =>
-    song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    song.artist.toLowerCase().includes(searchQuery.toLowerCase())
+    (song.title || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const sortedSongs = [...filteredSongs].sort((a, b) => {
     switch (sortBy) {
       case "newest":
-        return b.dateCreated - a.dateCreated;
+        return b.createdAt - a.createdAt;
       case "oldest":
-        return a.dateCreated - b.dateCreated;
+        return a.createdAt - b.createdAt;
       case "title":
-        return a.title.localeCompare(b.title);
+        return (a.title || "").localeCompare(b.title || "");
       case "artist":
-        return a.artist.localeCompare(b.artist);
+        return 0; // No artist field in TrackItem
       default:
         return 0;
     }
   });
-
-  // Format duration helper
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
 
   // Format date helper
   const formatDate = (timestamp: number) => {
@@ -222,8 +215,8 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                     <div className="flex lg:contents items-center gap-3">
                       {/* Album Art */}
                       <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center shrink-0">
-                        <img 
-                          src={song.albumArt} 
+                        <img
+                          src={song.coverUrl || "/placeholder.svg"}
                           alt={`${song.title} cover`}
                           className="w-full h-full object-cover"
                           onError={(e) => {
@@ -237,31 +230,31 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                       {/* Title & Artist - Mobile */}
                       <div className="flex-1 min-w-0 lg:contents">
                         <div className="lg:flex lg:flex-col lg:justify-center lg:min-w-0">
-                          <div className="text-white font-medium truncate">{song.title}</div>
-                          <div className="text-white/60 text-sm lg:hidden truncate">{song.artist}</div>
+                          <div className="text-white font-medium truncate">{song.title || "Untitled"}</div>
+                          <div className="text-white/60 text-sm lg:hidden truncate">Generated Song</div>
                         </div>
                         
                         {/* Artist - Desktop */}
                         <div className="hidden lg:flex lg:items-center text-white/60 truncate">
-                          {song.artist}
+                          Generated Song
                         </div>
 
                         {/* Date - Desktop */}
                         <div className="hidden lg:flex lg:items-center text-white/60 text-sm">
-                          {formatDate(song.dateCreated)}
+                          {formatDate(song.createdAt)}
                         </div>
 
                         {/* Duration - Desktop */}
                         <div className="hidden lg:flex lg:items-center text-white/60 text-sm">
-                          {formatDuration(song.duration)}
+                          --:--
                         </div>
                       </div>
 
                       {/* Mobile metadata */}
                       <div className="flex lg:hidden items-center gap-3 text-white/60 text-xs">
-                        <span>{formatDuration(song.duration)}</span>
+                        <span>--:--</span>
                         <span>•</span>
-                        <span>{formatDate(song.dateCreated)}</span>
+                        <span>{formatDate(song.createdAt)}</span>
                       </div>
 
                       {/* Actions */}
