@@ -323,13 +323,28 @@ export default function TrackListPanel({
                   <div className="flex relative">
                     {/* Top-right menu icon */}
                     <button 
-                      className="absolute top-2 right-2 text-white/60 hover:text-white transition-colors z-10"
+                      className="absolute top-2 right-2 text-white/60 hover:text-white transition-colors z-10 w-6 h-6 flex items-center justify-center"
                       onClick={(e) => {
                         e.stopPropagation();
                         setOpenMenuTrackId(openMenuTrackId === t.id ? null : t.id);
                       }}
                     >
-                      <MoreVertical className="w-4 h-4" />
+                      <div className="relative w-4 h-4">
+                        <MoreVertical 
+                          className={`w-4 h-4 absolute transition-all duration-200 ease-in-out ${
+                            openMenuTrackId === t.id 
+                              ? 'opacity-0 rotate-90 scale-75' 
+                              : 'opacity-100 rotate-0 scale-100'
+                          }`}
+                        />
+                        <X 
+                          className={`w-4 h-4 absolute transition-all duration-200 ease-in-out ${
+                            openMenuTrackId === t.id 
+                              ? 'opacity-100 rotate-0 scale-100' 
+                              : 'opacity-0 rotate-90 scale-75'
+                          }`}
+                        />
+                      </div>
                     </button>
                     {/* Album art - flush with container left edge, only top-left corner rounded */}
                     <div className="shrink-0 w-16 h-16 bg-black/30 overflow-hidden rounded-tl-xl rounded-br-xl relative group">
@@ -467,27 +482,27 @@ export default function TrackListPanel({
                          setOpenMenuTrackId(null);
                        }}
                      >
-                       <div className="space-y-1.5 max-h-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
-                         {[
-                           { label: "Edit Track", action: () => console.log("Edit Track") },
-                           { label: "Add to Playlist", action: () => console.log("Add to Playlist") },
-                           { label: "Share", action: () => console.log("Share") },
-                           { label: "Download", action: () => console.log("Download") },
-                           { label: "Delete", action: () => console.log("Delete") }
-                         ].map((item, index) => (
-                           <button
-                             key={index}
-                             className="w-full py-2 px-3 text-white hover:text-white/80 transition-colors text-left text-sm font-medium border border-white/20 rounded-lg hover:border-white/40 bg-black/20"
-                             onClick={(e) => {
-                               e.stopPropagation();
-                               item.action();
-                               setOpenMenuTrackId(null);
-                             }}
-                           >
-                             {item.label}
-                           </button>
-                         ))}
-                       </div>
+                        <div className="flex flex-col space-y-2 max-h-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                          {[
+                            "Action One",
+                            "Action Two", 
+                            "Action Three",
+                            "Action Four",
+                            "Action Five"
+                          ].map((label, index) => (
+                            <button
+                              key={index}
+                              className="w-full py-3 px-4 text-white hover:text-white/90 transition-all duration-200 text-center font-medium border border-white/20 rounded-lg hover:border-white/40 hover:bg-white/10 bg-black/20 hover:scale-[1.02]"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log(`${label} clicked`);
+                                setOpenMenuTrackId(null);
+                              }}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
                      </div>
                    )}
                 </div>
