@@ -315,7 +315,7 @@ export default function TrackListPanel({
               ) : (
                 /* Active track - album art hugs left edge */
                 <div 
-                  className="bg-[#1e1e1e] rounded-xl flex flex-col"
+                  className="bg-[#1e1e1e] rounded-xl flex flex-col relative"
                   onMouseEnter={() => setHoveredTracks(prev => ({ ...prev, [t.id]: true }))}
                   onMouseLeave={() => setHoveredTracks(prev => ({ ...prev, [t.id]: false }))}
                 >
