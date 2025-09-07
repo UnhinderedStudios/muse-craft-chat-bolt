@@ -181,35 +181,78 @@ serve(async (req) => {
     // Handle WAV conversion with retry logic
     if (req.method === "POST" && pathname.endsWith("/wav")) {
       const details = await req.json().catch(() => ({} as any));
-      const audioId = details.audioId;
-      const taskId = details.taskId;
-      const musicIndex = details.musicIndex;
+      let audioId: string | undefined = details.audioId;
+      const taskId: string | undefined = details.taskId;
+      const musicIndex: number | undefined = typeof details.musicIndex === 'number' ? details.musicIndex : undefined;
 
       if (!audioId && !taskId) {
         return json({ error: "Missing audioId or taskId" }, { status: 400 });
       }
 
-      // Try different parameter combinations until one works
+      // If audioId is missing but taskId is provided, resolve the provider track id from taskId
+      if (!audioId && taskId) {
+        try {
+          console.log("[suno] Resolving audioId from taskId before WAV generate", { taskId, musicIndex });
+          const statusResp = await fetch(`${API_BASE}/generate/record-info?taskId=${encodeURIComponent(taskId)}`, {
+            headers: { Authorization: `Bearer ${apiKey}` },
+          });
+          const statusJson = await statusResp.json().catch(() => ({}));
+
+          if (statusResp.ok && typeof statusJson?.data !== "undefined") {
+            const data = statusJson.data as any;
+            // Normalize possible track arrays
+            let tracks: any[] = [];
+            if (Array.isArray(data.response?.data)) {
+              tracks = data.response.data;
+            } else if (Array.isArray(data.response?.sunoData)) {
+              tracks = data.response.sunoData;
+            } else if (Array.isArray(data.sunoData)) {
+              tracks = data.sunoData;
+            } else if (Array.isArray(data.data)) {
+              tracks = data.data;
+            } else if (Array.isArray(data)) {
+              tracks = data;
+            }
+
+            const idx = typeof musicIndex === 'number' && musicIndex >= 0 && musicIndex < tracks.length ? musicIndex : 0;
+            const candidate = tracks[idx] || tracks[0];
+            const resolved = candidate?.id || candidate?.audio_id || candidate?.audioId;
+            if (resolved) {
+              audioId = String(resolved);
+              console.log("[suno] Resolved audioId from taskId:", { taskId, resolved: audioId, idx, total: tracks.length });
+            } else {
+              console.warn("[suno] Could not resolve audioId from taskId; proceeding with taskId only");
+            }
+          } else {
+            const msg = statusJson?.msg || (await statusResp.text().catch(() => "")) || statusResp.statusText;
+            console.warn("[suno] record-info did not return data while resolving audioId:", msg);
+          }
+        } catch (e) {
+          console.warn("[suno] Failed to resolve audioId from taskId:", e);
+        }
+      }
+
+      // Try different parameter combinations until one works. Start with official fields per docs.
       const attempts = [
-        // Most likely correct: use 'id' parameter for track ID
-        () => {
-          const body: Record<string, unknown> = {};
-          if (audioId) body.id = audioId;
-          if (taskId) body.taskId = taskId;
-          if (typeof musicIndex === 'number') body.musicIndex = musicIndex;
-          console.log(`[suno] WAV attempt 1 params:`, { id: audioId, taskId, musicIndex });
-          return body;
-        },
-        // Original parameters
+        // Attempt 1: Official params exactly as documented
         () => {
           const body: Record<string, unknown> = {};
           if (audioId) body.audioId = audioId;
           if (taskId) body.taskId = taskId;
           if (typeof musicIndex === 'number') body.musicIndex = musicIndex;
-          console.log(`[suno] WAV attempt 2 params:`, { audioId, taskId, musicIndex });
+          console.log(`[suno] WAV attempt 1 (official) params:`, { audioId, taskId, musicIndex });
           return body;
         },
-        // Try musicId instead of audioId
+        // Attempt 2: Use 'id' instead of audioId
+        () => {
+          const body: Record<string, unknown> = {};
+          if (audioId) body.id = audioId;
+          if (taskId) body.taskId = taskId;
+          if (typeof musicIndex === 'number') body.musicIndex = musicIndex;
+          console.log(`[suno] WAV attempt 2 params:`, { id: audioId, taskId, musicIndex });
+          return body;
+        },
+        // Attempt 3: musicId alias
         () => {
           const body: Record<string, unknown> = {};
           if (audioId) body.musicId = audioId;
@@ -218,7 +261,7 @@ serve(async (req) => {
           console.log(`[suno] WAV attempt 3 params:`, { musicId: audioId, taskId, musicIndex });
           return body;
         },
-        // Try index instead of musicIndex
+        // Attempt 4: index instead of musicIndex
         () => {
           const body: Record<string, unknown> = {};
           if (audioId) body.audioId = audioId;
@@ -227,55 +270,18 @@ serve(async (req) => {
           console.log(`[suno] WAV attempt 4 params:`, { audioId, taskId, index: musicIndex });
           return body;
         },
-        // Try musicId + index
-        () => {
-          const body: Record<string, unknown> = {};
-          if (audioId) body.musicId = audioId;
-          if (taskId) body.taskId = taskId;
-          if (typeof musicIndex === 'number') body.index = musicIndex;
-          console.log(`[suno] WAV attempt 5 params:`, { musicId: audioId, taskId, index: musicIndex });
-          return body;
-        },
-        // Try snake_case variants
+        // Attempt 5: snake_case variants
         () => {
           const body: Record<string, unknown> = {};
           if (audioId) body.music_id = audioId;
           if (taskId) body.task_id = taskId;
           if (typeof musicIndex === 'number') body.music_index = musicIndex;
-          console.log(`[suno] WAV attempt 6 params:`, { music_id: audioId, task_id: taskId, music_index: musicIndex });
-          return body;
-        },
-        // Try clip/song variants
-        () => {
-          const body: Record<string, unknown> = {};
-          if (audioId) body.clip_id = audioId;
-          if (taskId) body.taskId = taskId;
-          if (typeof musicIndex === 'number') body.index = musicIndex;
-          console.log(`[suno] WAV attempt 7 params:`, { clip_id: audioId, taskId, index: musicIndex });
-          return body;
-        },
-        // Try song_id variant
-        () => {
-          const body: Record<string, unknown> = {};
-          if (audioId) body.song_id = audioId;
-          if (taskId) body.taskId = taskId;
-          if (typeof musicIndex === 'number') body.index = musicIndex;
-          console.log(`[suno] WAV attempt 8 params:`, { song_id: audioId, taskId, index: musicIndex });
-          return body;
-        },
-        // Try track_id variant
-        () => {
-          const body: Record<string, unknown> = {};
-          if (audioId) body.track_id = audioId;
-          if (taskId) body.taskId = taskId;
-          if (typeof musicIndex === 'number') body.track_index = musicIndex;
-          console.log(`[suno] WAV attempt 9 params:`, { track_id: audioId, taskId, track_index: musicIndex });
+          console.log(`[suno] WAV attempt 5 params:`, { music_id: audioId, task_id: taskId, music_index: musicIndex });
           return body;
         }
       ];
 
       let lastError = "Unknown error";
-      
       for (let i = 0; i < attempts.length; i++) {
         const body = attempts[i]();
         console.log(`[suno] WAV conversion attempt ${i + 1}:`, body);
@@ -291,35 +297,31 @@ serve(async (req) => {
           });
 
           const wavJson = await wavResp.json().catch(() => ({}));
-          
-          // Log detailed response for debugging
           console.log(`[suno] WAV attempt ${i + 1} response:`, {
             status: wavResp.status,
             ok: wavResp.ok,
             code: wavJson?.code,
             data: wavJson?.data,
-            msg: wavJson?.msg
+            msg: wavJson?.msg,
           });
-          
+
           if (wavResp.ok && wavJson?.code === 200) {
             const wavJobId = wavJson?.data?.taskId;
             if (!wavJobId) return json({ error: "No WAV taskId returned" }, { status: 500 });
-            
             console.log(`[suno] WAV conversion started successfully on attempt ${i + 1}`);
             return json({ jobId: wavJobId });
           }
-          
+
           const msg = wavJson?.msg || (await wavResp.text().catch(() => "")) || wavResp.statusText;
           lastError = msg;
           console.log(`[suno] WAV attempt ${i + 1} failed:`, msg);
-          
-          // Don't retry if it's a "record does not exist" or "music id" error
-          if (msg.toLowerCase().includes("record does not exist") || 
+
+          // If it's a missing record/id style error, try next permutation; otherwise fail fast
+          if (msg.toLowerCase().includes("record does not exist") ||
               msg.toLowerCase().includes("music id") ||
               msg.toLowerCase().includes("not found")) {
-            continue; // Try next parameter combination
+            continue;
           } else {
-            // For other errors, fail immediately
             return json({ error: msg }, { status: 500 });
           }
         } catch (networkError) {

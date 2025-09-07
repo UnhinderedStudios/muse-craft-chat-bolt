@@ -282,53 +282,20 @@ export default function TrackListPanel({
 
     toast({ title: "Converting to WAV...", description: "This may take a few moments" });
     
-    // Get WAV conversion refs from registry
-    const wavRefs = wavRegistry.get(track.id);
-    console.log(`[WAV] Track ${track.id} refs:`, wavRefs);
+    // Get WAV conversion refs from registry and pass ALL known refs in one call
+    const refs = wavRegistry.get(track.id) || {};
+    const params: { audioId?: string; taskId?: string; musicIndex?: number } = {};
+    if (refs.audioId) params.audioId = refs.audioId;
+    if (refs.taskId) params.taskId = refs.taskId;
+    if (typeof refs.musicIndex === 'number') params.musicIndex = refs.musicIndex;
+
+    // Fallback: try using the track.id as audioId
+    if (Object.keys(params).length === 0) {
+      params.audioId = track.id;
+    }
     
     try {
-      let wavUrl: string | null = null;
-      
-      // Always try provider's audioId first - let the server decide if it's valid
-      console.log(`[WAV] Using provider audioId from registry: ${wavRefs?.audioId}`);
-      
-      // Try with audioId first (only if valid)
-      if (wavRefs?.audioId) {
-        try {
-          console.log(`[WAV] Attempting conversion with valid audioId: ${wavRefs.audioId}`);
-          wavUrl = await api.convertToWav({ audioId: wavRefs.audioId });
-        } catch (audioIdError) {
-          console.warn(`[WAV] audioId conversion failed:`, audioIdError);
-          
-          // If audioId fails and we have taskId + musicIndex, try with those
-          if (wavRefs.taskId !== undefined && wavRefs.musicIndex !== undefined) {
-            console.log(`[WAV] Retrying with taskId: ${wavRefs.taskId}, musicIndex: ${wavRefs.musicIndex}`);
-            try {
-              wavUrl = await api.convertToWav({ 
-                taskId: wavRefs.taskId, 
-                musicIndex: wavRefs.musicIndex 
-              });
-            } catch (taskIdError) {
-              console.error(`[WAV] taskId conversion also failed:`, taskIdError);
-              throw audioIdError; // Throw original error
-            }
-          } else {
-            throw audioIdError;
-          }
-        }
-      } else if (wavRefs?.taskId !== undefined && wavRefs?.musicIndex !== undefined) {
-        // No valid audioId, go directly to taskId + musicIndex
-        console.log(`[WAV] Using taskId: ${wavRefs.taskId}, musicIndex: ${wavRefs.musicIndex}`);
-        wavUrl = await api.convertToWav({ 
-          taskId: wavRefs.taskId, 
-          musicIndex: wavRefs.musicIndex 
-        });
-      } else {
-        // Last resort: try track.id as audioId (may be valid)
-        console.log(`[WAV] No registry data, using track.id as audioId: ${track.id}`);
-        wavUrl = await api.convertToWav({ audioId: track.id });
-      }
-      
+      const wavUrl = await api.convertToWav(params);
       if (wavUrl) {
         const filename = `${(track.title || 'song').replace(/[^a-zA-Z0-9\s-_]/g, '')}.wav`;
         const success = await downloadFile(wavUrl, filename);
@@ -374,30 +341,15 @@ export default function TrackListPanel({
         try {
           toast({ title: "Converting to WAV...", description: "Adding WAV to download package" });
           
-          // Use same WAV conversion logic as handleDownloadWAV
-          const wavRefs = wavRegistry.get(track.id);
-          let wavUrl: string | null = null;
-          
-          if (wavRefs?.audioId) {
-            try {
-              wavUrl = await api.convertToWav({ audioId: wavRefs.audioId });
-            } catch (audioIdError) {
-              if (wavRefs.taskId !== undefined && wavRefs.musicIndex !== undefined) {
-                try {
-                  wavUrl = await api.convertToWav({ 
-                    taskId: wavRefs.taskId, 
-                    musicIndex: wavRefs.musicIndex 
-                  });
-                } catch (taskIdError) {
-                  throw audioIdError;
-                }
-              } else {
-                throw audioIdError;
-              }
-            }
-          } else {
-            wavUrl = await api.convertToWav({ audioId: track.id });
-          }
+          // Build params with all known refs in one call
+          const refs = wavRegistry.get(track.id) || {};
+          const params: { audioId?: string; taskId?: string; musicIndex?: number } = {};
+          if (refs.audioId) params.audioId = refs.audioId;
+          if (refs.taskId) params.taskId = refs.taskId;
+          if (typeof refs.musicIndex === 'number') params.musicIndex = refs.musicIndex;
+          if (Object.keys(params).length === 0) params.audioId = track.id;
+
+          const wavUrl = await api.convertToWav(params);
           
           if (wavUrl) {
             const wavResponse = await fetch(wavUrl);
