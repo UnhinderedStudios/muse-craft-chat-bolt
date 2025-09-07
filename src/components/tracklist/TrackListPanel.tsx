@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Play, Pause, RotateCw, X, Heart, Shuffle, Repeat, MoreHorizontal, Search, Edit3, ChevronDown } from "lucide-react";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Play, Pause, RotateCw, X, Heart, Shuffle, Repeat, MoreHorizontal, Search, Edit3 } from "lucide-react";
 import { TrackItem } from "@/types";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -58,7 +57,6 @@ export default function TrackListPanel({
   
   // Search functionality state
   const [searchQuery, setSearchQuery] = useState("");
-  const [expandedParams, setExpandedParams] = useState<Record<string, boolean>>({});
   const [isSearchMode, setIsSearchMode] = useState(false);
   
   // Pagination state
@@ -434,32 +432,17 @@ export default function TrackListPanel({
                     </div>
                   </div>
 
-                  {/* Parameters Toggle Button */}
-                  <div className="flex justify-center -mt-1 mb-2">
-                    <Collapsible 
-                      open={expandedParams[t.id] || false} 
-                      onOpenChange={(open) => setExpandedParams(prev => ({ ...prev, [t.id]: open }))}
-                    >
-                      <CollapsibleTrigger asChild>
-                        <button className="flex items-center justify-center w-8 h-6 rounded-t-lg bg-white/20 hover:bg-white/30 transition-colors group">
-                          <ChevronDown className={`w-4 h-4 text-white/60 group-hover:text-white transition-all duration-200 ${expandedParams[t.id] ? 'rotate-180' : ''}`} />
-                        </button>
-                      </CollapsibleTrigger>
-                      
-                      <CollapsibleContent className="overflow-hidden">
-                        <div className="pr-1 pt-1">
-                          <div className="max-h-[120px] overflow-y-auto lyrics-scrollbar">
-                            <div className="flex flex-wrap gap-x-1.5 gap-y-1.5 px-2 pb-2">
-                              {(t.params || ["ambient", "chill", "electronic"]).map((p, idx) => (
-                                <div key={idx} className="px-3 py-1.5 rounded-full bg-white/25 text-[12px] text-black font-semibold text-center whitespace-nowrap">
-                                  {p}
-                                </div>
-                              ))}
-                            </div>
+                  {/* Second row: Parameters - full width from album art left edge */}
+                  <div className="-mt-0.5 pr-1">
+                    <div className="max-h-[120px] overflow-y-auto lyrics-scrollbar">
+                      <div className="flex flex-wrap gap-x-1.5 gap-y-1.5 px-2 pb-2">
+                        {(t.params || ["ambient", "chill", "electronic"]).map((p, idx) => (
+                          <div key={idx} className="px-3 py-1.5 rounded-full bg-white/25 text-[12px] text-black font-semibold text-center whitespace-nowrap">
+                            {p}
                           </div>
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
