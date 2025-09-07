@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Play, Pause, RotateCw, X, Heart, Download, Plus, Trash2, Search, Edit3, MoreVertical, Music, Check } from "lucide-react";
+import { Play, Pause, RotateCw, X, Heart, Download, Plus, Trash2, Search, Edit3, MoreVertical, Music, Check, FileDown, Image, FileText, Info, AlertCircle } from "lucide-react";
 import { TrackItem } from "@/types";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -74,9 +74,10 @@ export default function TrackListPanel({
   // Menu overlay state
   const [openMenuTrackId, setOpenMenuTrackId] = useState<string | null>(null);
   
-  // Delete and Add overlay states
+  // Delete, Add, and Download overlay states
   const [openDeleteOverlayTrackId, setOpenDeleteOverlayTrackId] = useState<string | null>(null);
   const [openAddOverlayTrackId, setOpenAddOverlayTrackId] = useState<string | null>(null);
+  const [openDownloadOverlayTrackId, setOpenDownloadOverlayTrackId] = useState<string | null>(null);
   
   // Playlist search state
   const [playlistSearchQuery, setPlaylistSearchQuery] = useState("");
@@ -354,11 +355,12 @@ export default function TrackListPanel({
                       className="absolute top-1 right-2 text-white/60 hover:text-white transition-colors z-30 w-6 h-6 flex items-center justify-center"
                        onClick={(e) => {
                          e.stopPropagation();
-                         // If any overlay is open, close all overlays
-                         if (openMenuTrackId === t.id || openDeleteOverlayTrackId === t.id || openAddOverlayTrackId === t.id) {
-                           setOpenMenuTrackId(null);
-                           setOpenDeleteOverlayTrackId(null);
-                           setOpenAddOverlayTrackId(null);
+                          // If any overlay is open, close all overlays
+                          if (openMenuTrackId === t.id || openDeleteOverlayTrackId === t.id || openAddOverlayTrackId === t.id || openDownloadOverlayTrackId === t.id) {
+                            setOpenMenuTrackId(null);
+                            setOpenDeleteOverlayTrackId(null);
+                            setOpenAddOverlayTrackId(null);
+                            setOpenDownloadOverlayTrackId(null);
                          } else {
                            // If no overlays are open, toggle the menu
                            setOpenMenuTrackId(openMenuTrackId === t.id ? null : t.id);
@@ -521,9 +523,10 @@ export default function TrackListPanel({
                             className="text-white/60 hover:text-white transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setOpenDeleteOverlayTrackId(openDeleteOverlayTrackId === t.id ? null : t.id);
+                              setOpenDownloadOverlayTrackId(openDownloadOverlayTrackId === t.id ? null : t.id);
                               setOpenMenuTrackId(null);
                               setOpenAddOverlayTrackId(null);
+                              setOpenDeleteOverlayTrackId(null);
                             }}
                           >
                             <Download className="w-4 h-4" />
@@ -535,6 +538,7 @@ export default function TrackListPanel({
                               setOpenDeleteOverlayTrackId(openDeleteOverlayTrackId === t.id ? null : t.id);
                               setOpenMenuTrackId(null);
                               setOpenAddOverlayTrackId(null);
+                              setOpenDownloadOverlayTrackId(null);
                             }}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -756,7 +760,186 @@ export default function TrackListPanel({
                             </div>
                           </div>
                         </div>
-                      )}
+                       )}
+                </div>
+              )}
+
+              {/* Download Overlay */}
+              {openDownloadOverlayTrackId === t.id && (
+                <div 
+                  className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
+                  style={{ backgroundColor: '#151515CC' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenDownloadOverlayTrackId(null);
+                  }}
+                >
+                  <div className="h-full flex flex-col p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-white text-sm font-medium">Download Options</h3>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenDownloadOverlayTrackId(null);
+                        }}
+                        className="text-white/40 hover:text-white/60 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                    
+                    <div className="flex-1 space-y-2">
+                      {/* Available Downloads */}
+                      <div className="space-y-2">
+                        {/* MP3 Download */}
+                        <button
+                          className="w-full flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const link = document.createElement('a');
+                            link.href = t.url;
+                            link.download = `${t.title || 'song'}.mp3`;
+                            link.click();
+                          }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <FileDown className="w-4 h-4 text-green-400" />
+                            <div className="text-left">
+                              <p className="text-white text-sm">Final mix (MP3)</p>
+                              <p className="text-white/40 text-xs">Original Suno quality</p>
+                            </div>
+                          </div>
+                        </button>
+
+                        {/* WAV Conversion */}
+                        <div className="relative">
+                          <button
+                            className="w-full flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // TODO: Implement client-side MP3 to WAV conversion
+                              console.log('WAV conversion not implemented yet');
+                            }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <FileDown className="w-4 h-4 text-blue-400" />
+                              <div className="text-left">
+                                <p className="text-white text-sm">Export as WAV</p>
+                                <p className="text-white/40 text-xs">Converted from MP3</p>
+                              </div>
+                            </div>
+                          </button>
+                          <div className="absolute top-0 right-2 flex items-center h-full">
+                            <Info className="w-3 h-3 text-orange-400" />
+                          </div>
+                        </div>
+
+                        {/* Cover Downloads */}
+                        {t.coverUrl && (
+                          <button
+                            className="w-full flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const link = document.createElement('a');
+                              link.href = t.coverUrl;
+                              link.download = `${t.title || 'song'}_cover.jpg`;
+                              link.click();
+                            }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <Image className="w-4 h-4 text-purple-400" />
+                              <div className="text-left">
+                                <p className="text-white text-sm">Album cover</p>
+                                <p className="text-white/40 text-xs">High resolution image</p>
+                              </div>
+                            </div>
+                          </button>
+                        )}
+
+                        {/* Lyrics Export */}
+                        {(t.words && t.words.length > 0) && (
+                          <button
+                            className="w-full flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (t.words) {
+                                const lyricsText = t.words.map(w => w.word).join(' ');
+                                const blob = new Blob([lyricsText], { type: 'text/plain' });
+                                const url = URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = `${t.title || 'song'}_lyrics.txt`;
+                                link.click();
+                                URL.revokeObjectURL(url);
+                              }
+                            }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <FileText className="w-4 h-4 text-cyan-400" />
+                              <div className="text-left">
+                                <p className="text-white text-sm">Lyrics (plain text)</p>
+                                <p className="text-white/40 text-xs">Export as .txt file</p>
+                              </div>
+                            </div>
+                          </button>
+                        )}
+
+                        {(t.words && t.hasTimestamps) && (
+                          <button
+                            className="w-full flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (t.words) {
+                                const lrcContent = t.words.map(w => 
+                                  `[${Math.floor(w.start / 60).toString().padStart(2, '0')}:${(w.start % 60).toFixed(2).padStart(5, '0')}]${w.word}`
+                                ).join('\n');
+                                const blob = new Blob([lrcContent], { type: 'text/plain' });
+                                const url = URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.download = `${t.title || 'song'}_lyrics.lrc`;
+                                link.click();
+                                URL.revokeObjectURL(url);
+                              }
+                            }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <FileText className="w-4 h-4 text-cyan-400" />
+                              <div className="text-left">
+                                <p className="text-white text-sm">Timestamped lyrics</p>
+                                <p className="text-white/40 text-xs">Export as .lrc file</p>
+                              </div>
+                            </div>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Unavailable Options */}
+                      <div className="border-t border-white/10 pt-3 mt-3">
+                        <p className="text-white/40 text-xs mb-2">Not available via Suno API:</p>
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] opacity-60">
+                            <div className="flex items-center gap-3">
+                              <AlertCircle className="w-4 h-4 text-red-400" />
+                              <div className="text-left">
+                                <p className="text-white/60 text-sm">Stems separation</p>
+                                <p className="text-white/30 text-xs">Vocals, instruments, etc.</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] opacity-60">
+                            <div className="flex items-center gap-3">
+                              <AlertCircle className="w-4 h-4 text-red-400" />
+                              <div className="text-left">
+                                <p className="text-white/60 text-sm">Original WAV/FLAC</p>
+                                <p className="text-white/30 text-xs">Lossless quality formats</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
