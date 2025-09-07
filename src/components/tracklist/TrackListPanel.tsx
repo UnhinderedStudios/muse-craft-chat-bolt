@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Play, Pause, RotateCw, X, Heart, Redo2, Plus, Trash2, Search, Edit3, MoreVertical, Music } from "lucide-react";
+import { Play, Pause, RotateCw, X, Heart, Redo2, Plus, Trash2, Search, Edit3, MoreVertical, Music, Check } from "lucide-react";
 import { TrackItem } from "@/types";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -279,18 +279,37 @@ export default function TrackListPanel({
                     {t.coverUrl ? (
                       <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20" />
+                      <div className="w-full h-full bg-gradient-to-br from-pink-500/20 to-rose-500/20" />
                     )}
                   </div>
 
-                  <div className="flex-1 min-w-0">
-                    <EllipsisMarquee
-                      text={`No Artist – ${t.title || "Song Title"}`}
-                      className="text-xs text-white/60"
-                      speedPxPerSec={70}
-                      gapPx={32}
-                      isActive={hoveredTracks[t.id]}
-                    />
+                  <div className="flex-1 min-w-0 flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <EllipsisMarquee
+                        text={`No Artist – ${t.title || "Song Title"}`}
+                        className="text-xs text-white/60"
+                        speedPxPerSec={70}
+                        gapPx={32}
+                        isActive={hoveredTracks[t.id]}
+                      />
+                    </div>
+                    
+                    {/* Always visible plus icon */}
+                    <button 
+                      className="text-white/40 hover:text-white hover:scale-110 transition-all duration-200 ml-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenAddOverlayTrackId(openAddOverlayTrackId === t.id ? null : t.id);
+                        setOpenMenuTrackId(null);
+                        setOpenDeleteOverlayTrackId(null);
+                      }}
+                    >
+                      {openAddOverlayTrackId === t.id ? (
+                        <Check className="w-4 h-4 text-green-400" />
+                      ) : (
+                        <Plus className="w-4 h-4" />
+                      )}
+                    </button>
                     <div
                       className="mt-1 h-1.5 bg-white/10 rounded cursor-pointer"
                       onClick={(e) => {
@@ -381,7 +400,7 @@ export default function TrackListPanel({
                       {t.coverUrl ? (
                         <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20" />
+                        <div className="w-full h-full bg-gradient-to-br from-pink-500/20 to-rose-500/20" />
                       )}
                       <div 
                         className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
