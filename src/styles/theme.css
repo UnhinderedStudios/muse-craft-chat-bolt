@@ -64,7 +64,7 @@
   border: 1px solid hsl(var(--teal-chip) / 0.4);
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar with Fade */
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px;
 }
@@ -76,10 +76,17 @@
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #282828;
   border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  opacity: 1;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #383838;
+  opacity: 1;
 }
 
 /* Lyrics Scrollbar - Different color */
