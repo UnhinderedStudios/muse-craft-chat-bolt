@@ -506,7 +506,15 @@ export default function TrackListPanel({
                           >
                             <Heart className={`w-4 h-4 ${favoritedTracks.has(t.id) ? 'fill-current' : ''}`} />
                           </button>
-                          <button className="text-white/60 hover:text-white transition-colors">
+                          <button 
+                            className="text-white/60 hover:text-white transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenDeleteOverlayTrackId(openDeleteOverlayTrackId === t.id ? null : t.id);
+                              setOpenMenuTrackId(null);
+                              setOpenAddOverlayTrackId(null);
+                            }}
+                          >
                             <Download className="w-4 h-4" />
                           </button>
                           <button 
