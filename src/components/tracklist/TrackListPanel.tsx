@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import JSZip from "jszip";
 import { api } from "@/lib/api";
 import { wavRegistry, isValidSunoAudioId } from "@/lib/wavRegistry";
+import { usePlaylists } from "@/hooks/use-playlists";
 import {
   Pagination,
   PaginationContent,
@@ -92,11 +93,11 @@ export default function TrackListPanel({
   // Track which playlists have been clicked (show checkmark)
   const [clickedPlaylists, setClickedPlaylists] = useState<Set<string>>(new Set());
   
-  // Track favorited songs
-  const [favoritedTracks, setFavoritedTracks] = useState<Set<string>>(new Set());
-  
   // Drag functionality
   const { startDrag, dragState } = useDrag();
+
+  // Playlist functionality
+  const { playlists, favoritedTracks, toggleFavorite, addTrackToPlaylist } = usePlaylists();
   
   // Scroll delegation
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -731,23 +732,9 @@ export default function TrackListPanel({
                                 ? 'text-pink-500 hover:text-pink-400' 
                                 : 'text-white/60 hover:text-white'
                             }`}
-                            onClick={(e) => {
+                            onClick={async (e) => {
                               e.stopPropagation();
-                              setFavoritedTracks(prev => {
-                                const newSet = new Set(prev);
-                                if (newSet.has(t.id)) {
-                                  newSet.delete(t.id);
-                                } else {
-                                  newSet.add(t.id);
-                                  // Auto-add to Favourites playlist when favoriting
-                                  setClickedPlaylists(prevClicked => {
-                                    const newClickedSet = new Set(prevClicked);
-                                    newClickedSet.add("fav");
-                                    return newClickedSet;
-                                  });
-                                }
-                                return newSet;
-                              });
+                              await toggleFavorite(t);
                             }}
                           >
                             <Heart className={`w-4 h-4 ${favoritedTracks.has(t.id) ? 'fill-current' : ''}`} />
@@ -966,16 +953,9 @@ export default function TrackListPanel({
                               <div className="flex justify-center">
                                 <div className="w-4/5 text-xs text-white/40 px-3 pb-2">
                                   {(() => {
-                                    const mockPlaylists = [
-                                      { id: "fav", name: "Favourites", songCount: 12 },
-                                      { id: "chill", name: "Chill Vibes", songCount: 8 },
-                                      { id: "workout", name: "Workout Mix", songCount: 15 },
-                                      { id: "focus", name: "Deep Focus", songCount: 6 },
-                                      { id: "party", name: "Party Hits", songCount: 24 }
-                                    ];
                                     const filteredPlaylists = playlistSearchQuery.trim() === ""
-                                      ? mockPlaylists
-                                      : mockPlaylists.filter(playlist =>
+                                      ? playlists
+                                      : playlists.filter(playlist =>
                                           playlist.name.toLowerCase().includes(playlistSearchQuery.toLowerCase())
                                         );
                                     return `${filteredPlaylists.length} playlist${filteredPlaylists.length !== 1 ? 's' : ''} found`;
@@ -989,17 +969,9 @@ export default function TrackListPanel({
                               <div className="space-y-2">
                                 {/* Filter playlists based on search */}
                                 {(() => {
-                                  const mockPlaylists = [
-                                    { id: "fav", name: "Favourites", songCount: 12 },
-                                    { id: "chill", name: "Chill Vibes", songCount: 8 },
-                                    { id: "workout", name: "Workout Mix", songCount: 15 },
-                                    { id: "focus", name: "Deep Focus", songCount: 6 },
-                                    { id: "party", name: "Party Hits", songCount: 24 }
-                                  ];
-                                  
                                   const filteredPlaylists = playlistSearchQuery.trim() === ""
-                                    ? mockPlaylists
-                                    : mockPlaylists.filter(playlist =>
+                                    ? playlists
+                                    : playlists.filter(playlist =>
                                         playlist.name.toLowerCase().includes(playlistSearchQuery.toLowerCase())
                                       );
                                   
@@ -1027,7 +999,7 @@ export default function TrackListPanel({
                                       </div>
                                       <div className="flex-1 min-w-0">
                                         <p className="text-white text-sm font-medium truncate">{playlist.name}</p>
-                                        <p className="text-white/40 text-xs">{playlist.songCount} songs</p>
+                                        <p className="text-white/40 text-xs">{playlist.song_count || 0} songs</p>
                                       </div>
                                     </div>
                                      <button
@@ -1044,12 +1016,12 @@ export default function TrackListPanel({
                                            }
                                            return newSet;
                                          });
-                                         // TODO: Add/remove song to/from playlist
-                                         console.log(`${clickedPlaylists.has(playlist.id) ? 'Removing' : 'Adding'} song "${t.title}" ${clickedPlaylists.has(playlist.id) ? 'from' : 'to'} playlist "${playlist.name}"`);
+                                          // Add song to playlist
+                                          addTrackToPlaylist(playlist.id, t);
                                        }}
                                      >
                                        <div className="relative w-4 h-4">
-                                          {clickedPlaylists.has(playlist.id) || (playlist.id === "fav" && favoritedTracks.has(t.id)) ? (
+                                          {clickedPlaylists.has(playlist.id) || (playlist.is_favorites && favoritedTracks.has(t.id)) ? (
                                             <Check className="w-4 h-4 text-green-400 animate-scale-in" />
                                           ) : (
                                             <Plus className="w-4 h-4 animate-scale-in" />

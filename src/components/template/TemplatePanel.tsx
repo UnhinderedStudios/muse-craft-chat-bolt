@@ -8,6 +8,7 @@ import { CreatePlaylistPrompt } from "./CreatePlaylistPrompt";
 import { PlaylistOverlay } from "./PlaylistOverlay";
 import { TrackItem } from "@/types";
 import { toast } from "sonner";
+import { usePlaylists, DbPlaylist } from "@/hooks/use-playlists";
 import {
   Pagination,
   PaginationContent,
@@ -17,187 +18,34 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-export interface Song {
-  id: string;
-  title: string;
-  artist: string;
-  albumArt: string;
-  dateCreated: number;
-  duration: number; // in seconds
-}
-
+// Legacy interface for compatibility - now using DbPlaylist from hook
 export interface Playlist {
   id: string;
   name: string;
   songCount: number;
   isFavorited?: boolean;
   createdAt: number;
-  songs: Song[];
 }
 
 interface TemplatePanelProps {
   className?: string;
 }
 
-// Mock songs data
-const mockSongs: Song[] = [
-  { id: "song1", title: "Midnight Dreams", artist: "Synthwave Master", albumArt: "/placeholder.svg", dateCreated: Date.now() - 86400000, duration: 240 },
-  { id: "song2", title: "Electric Nights", artist: "Neon Pulse", albumArt: "/placeholder.svg", dateCreated: Date.now() - 172800000, duration: 195 },
-  { id: "song3", title: "Cosmic Journey", artist: "Space Echo", albumArt: "/placeholder.svg", dateCreated: Date.now() - 259200000, duration: 320 },
-  { id: "song4", title: "Digital Rain", artist: "Cyber Dreams", albumArt: "/placeholder.svg", dateCreated: Date.now() - 345600000, duration: 280 },
-  { id: "song5", title: "Neon Glow", artist: "Retro Wave", albumArt: "/placeholder.svg", dateCreated: Date.now() - 432000000, duration: 215 },
-  { id: "song6", title: "Chrome Hearts", artist: "Synthwave Master", albumArt: "/placeholder.svg", dateCreated: Date.now() - 518400000, duration: 255 },
-  { id: "song7", title: "Virtual Reality", artist: "Tech Noir", albumArt: "/placeholder.svg", dateCreated: Date.now() - 604800000, duration: 305 },
-  { id: "song8", title: "City Lights", artist: "Urban Dreams", albumArt: "/placeholder.svg", dateCreated: Date.now() - 691200000, duration: 188 },
-];
-
-// Mock data for development
-const mockPlaylists: Playlist[] = [
-  { 
-    id: "fav", 
-    name: "Favourites", 
-    songCount: 12, 
-    isFavorited: false, 
-    createdAt: Date.now() - 86400000, 
-    songs: mockSongs.slice(0, 4) 
-  },
-  { 
-    id: "chill", 
-    name: "Chill Vibes", 
-    songCount: 8, 
-    createdAt: Date.now() - 172800000, 
-    songs: mockSongs.slice(1, 4) 
-  },
-  { 
-    id: "workout", 
-    name: "Workout Mix", 
-    songCount: 15, 
-    createdAt: Date.now() - 259200000, 
-    songs: mockSongs.slice(0, 6) 
-  },
-  { 
-    id: "study", 
-    name: "Study Focus", 
-    songCount: 6, 
-    createdAt: Date.now() - 345600000, 
-    songs: mockSongs.slice(2, 5) 
-  },
-  { 
-    id: "party", 
-    name: "Party Hits", 
-    songCount: 22, 
-    createdAt: Date.now() - 432000000, 
-    songs: mockSongs 
-  },
-  { 
-    id: "road-trip", 
-    name: "Road Trip Classics", 
-    songCount: 18, 
-    createdAt: Date.now() - 518400000, 
-    songs: mockSongs.slice(0, 7) 
-  },
-  { 
-    id: "morning", 
-    name: "Morning Coffee", 
-    songCount: 11, 
-    createdAt: Date.now() - 604800000, 
-    songs: mockSongs.slice(1, 6) 
-  },
-  { 
-    id: "late-night", 
-    name: "Late Night Vibes", 
-    songCount: 9, 
-    createdAt: Date.now() - 691200000, 
-    songs: mockSongs.slice(0, 3) 
-  },
-  { 
-    id: "rock", 
-    name: "Rock Anthems", 
-    songCount: 24, 
-    createdAt: Date.now() - 777600000, 
-    songs: mockSongs.slice(2, 8) 
-  },
-  { 
-    id: "jazz", 
-    name: "Smooth Jazz", 
-    songCount: 13, 
-    createdAt: Date.now() - 864000000, 
-    songs: mockSongs.slice(0, 5) 
-  },
-  { 
-    id: "electronic", 
-    name: "Electronic Beats", 
-    songCount: 16, 
-    createdAt: Date.now() - 950400000, 
-    songs: mockSongs.slice(1, 7) 
-  },
-  { 
-    id: "indie", 
-    name: "Indie Discoveries", 
-    songCount: 7, 
-    createdAt: Date.now() - 1036800000, 
-    songs: mockSongs.slice(0, 4) 
-  },
-  { 
-    id: "pop", 
-    name: "Pop Hits 2024", 
-    songCount: 20, 
-    createdAt: Date.now() - 1123200000, 
-    songs: mockSongs 
-  },
-  { 
-    id: "acoustic", 
-    name: "Acoustic Sessions", 
-    songCount: 14, 
-    createdAt: Date.now() - 1209600000, 
-    songs: mockSongs.slice(2, 7) 
-  },
-  { 
-    id: "hip-hop", 
-    name: "Hip Hop Essentials", 
-    songCount: 19, 
-    createdAt: Date.now() - 1296000000, 
-    songs: mockSongs.slice(0, 6) 
-  },
-  { 
-    id: "classical", 
-    name: "Classical Favorites", 
-    songCount: 10, 
-    createdAt: Date.now() - 1382400000, 
-    songs: mockSongs.slice(1, 5) 
-  },
-  { 
-    id: "country", 
-    name: "Country Roads", 
-    songCount: 17, 
-    createdAt: Date.now() - 1468800000, 
-    songs: mockSongs.slice(0, 7) 
-  },
-  { 
-    id: "blues", 
-    name: "Blues Collection", 
-    songCount: 12, 
-    createdAt: Date.now() - 1555200000, 
-    songs: mockSongs.slice(2, 6) 
-  },
-];
-
-const mockArtists = [
-  { id: "artist1", name: "Synthwave Master", songCount: 5, createdAt: Date.now() - 86400000, songs: [] },
-  { id: "artist2", name: "Jazz Ensemble", songCount: 9, createdAt: Date.now() - 172800000, songs: [] },
-  { id: "artist3", name: "Rock Legend", songCount: 12, createdAt: Date.now() - 259200000, songs: [] },
+// Mock artists for artists view (keeping for now)
+const mockArtists: Playlist[] = [
+  { id: "artist1", name: "Synthwave Master", songCount: 5, createdAt: Date.now() - 86400000 },
+  { id: "artist2", name: "Jazz Ensemble", songCount: 9, createdAt: Date.now() - 172800000 },
+  { id: "artist3", name: "Rock Legend", songCount: 12, createdAt: Date.now() - 259200000 },
 ];
 
 export function TemplatePanel({ className }: TemplatePanelProps) {
   const [viewMode, setViewMode] = useState<"playlists" | "artists">("playlists");
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchMode, setIsSearchMode] = useState(false);
-  const [showCreatePrompt, setShowCreatePrompt] = useState(false);
-  const [playlists, setPlaylists] = useState<Playlist[]>(mockPlaylists);
   const [artists, setArtists] = useState<Playlist[]>(mockArtists);
   
   // Overlay state
-  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<DbPlaylist | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
   
   // Pagination state
@@ -206,7 +54,19 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
   
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const currentData = viewMode === "playlists" ? playlists : artists;
+  // Use playlist hook for real data
+  const { playlists, isLoading, createPlaylist, renamePlaylist, deletePlaylist, addTrackToPlaylist } = usePlaylists();
+
+  // Convert DbPlaylist to legacy Playlist format for compatibility
+  const convertedPlaylists: Playlist[] = playlists.map(p => ({
+    id: p.id,
+    name: p.name,
+    songCount: p.song_count || 0,
+    isFavorited: p.is_favorites,
+    createdAt: new Date(p.created_at).getTime()
+  }));
+
+  const currentData = viewMode === "playlists" ? convertedPlaylists : artists;
   
   // Filter data based on search query
   const filteredData = searchQuery.trim() === "" 
@@ -224,7 +84,6 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
     setIsSearchMode(value.trim() !== "");
-    setShowCreatePrompt(shouldShowCreatePrompt);
     setCurrentPage(1); // Reset to first page when searching
   };
 
@@ -232,7 +91,6 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
   const clearSearch = () => {
     setSearchQuery("");
     setIsSearchMode(false);
-    setShowCreatePrompt(false);
     setCurrentPage(1);
   };
 
@@ -249,30 +107,33 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
   }, [viewMode]);
 
   // Create new playlist
-  const handleCreatePlaylist = (name: string) => {
-    const newPlaylist: Playlist = {
-      id: `playlist_${Date.now()}`,
-      name,
-      songCount: 0,
-      createdAt: Date.now(),
-      songs: []
-    };
-    setPlaylists(prev => [...prev, newPlaylist]);
+  const handleCreatePlaylist = async (name: string) => {
+    await createPlaylist(name);
     clearSearch();
   };
 
   // Handle playlist menu actions
-  const handlePlaylistAction = (playlistId: string, action: string) => {
-    console.log(`Action ${action} on playlist ${playlistId}`);
-    // Add playlist management logic here
+  const handlePlaylistAction = async (playlistId: string, action: string) => {
+    const playlist = playlists.find(p => p.id === playlistId);
+    if (!playlist) return;
+
+    switch (action) {
+      case 'delete':
+        if (playlist.is_favorites) {
+          toast.error('Cannot delete Favourites playlist');
+          return;
+        }
+        await deletePlaylist(playlistId);
+        break;
+      default:
+        console.log(`Action ${action} on playlist ${playlistId}`);
+    }
   };
 
   // Handle playlist title editing
-  const handlePlaylistTitleEdit = (playlistId: string, newTitle: string) => {
+  const handlePlaylistTitleEdit = async (playlistId: string, newTitle: string) => {
     if (viewMode === "playlists") {
-      setPlaylists(prev => prev.map(p => 
-        p.id === playlistId ? { ...p, name: newTitle } : p
-      ));
+      await renamePlaylist(playlistId, newTitle);
     } else {
       setArtists(prev => prev.map(a => 
         a.id === playlistId ? { ...a, name: newTitle } : a
@@ -282,8 +143,11 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
 
   // Handle playlist click to show overlay
   const handlePlaylistClick = (playlist: Playlist) => {
-    setSelectedPlaylist(playlist);
-    setShowOverlay(true);
+    const dbPlaylist = playlists.find(p => p.id === playlist.id);
+    if (dbPlaylist) {
+      setSelectedPlaylist(dbPlaylist);
+      setShowOverlay(true);
+    }
   };
 
   const handleCloseOverlay = () => {
@@ -292,17 +156,8 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
   };
 
   // Handle track added to playlist
-  const handleTrackAdd = (playlistId: string, track: TrackItem) => {
-    const playlist = playlists.find(p => p.id === playlistId);
-    if (playlist) {
-      setPlaylists(prev => prev.map(p => 
-        p.id === playlistId 
-          ? { ...p, songCount: p.songCount + 1 }
-          : p
-      ));
-      
-      toast.success(`Added "${track.title}" to "${playlist.name}"`);
-    }
+  const handleTrackAdd = async (playlistId: string, track: TrackItem) => {
+    await addTrackToPlaylist(playlistId, track);
   };
 
   // Get sorted playlists (Favourited always first unless searching)
@@ -404,8 +259,15 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
               />
             ))}
 
+            {/* Loading State */}
+            {isLoading && viewMode === "playlists" && (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="text-white/60 mb-2">Loading playlists...</div>
+              </div>
+            )}
+
             {/* Empty State */}
-            {!shouldShowCreatePrompt && sortedData.length === 0 && (
+            {!isLoading && !shouldShowCreatePrompt && sortedData.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="text-white/60 mb-2">
                   {isSearchMode ? 
@@ -418,7 +280,6 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
                     onClick={() => {
                       setSearchQuery("New Playlist");
                       setIsSearchMode(true);
-                      setShowCreatePrompt(true);
                       setTimeout(() => searchInputRef.current?.focus(), 100);
                     }}
                     className="text-sm text-accent-primary hover:text-accent-primary/80 transition-colors flex items-center gap-1"
