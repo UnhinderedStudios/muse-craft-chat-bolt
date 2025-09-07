@@ -342,7 +342,7 @@ export default function TrackListPanel({
                     </div>
 
                      {/* Content area next to album art */}
-                     <div className="flex-1 ml-3 mr-8 flex flex-col justify-start min-w-0">
+                     <div className="flex-1 ml-3 mr-3 flex flex-col justify-start min-w-0">
                       {/* Title above controls */}
                       <div className="mb-1 mt-1">
                         {isEditingTitle ? (
