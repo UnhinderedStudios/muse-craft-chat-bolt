@@ -476,7 +476,8 @@ export default function TrackListPanel({
                     {/* Overlay Menu */}
                     {openMenuTrackId === t.id && (
                       <div 
-                        className="absolute inset-0 bg-black/70 backdrop-blur-sm rounded-xl border border-white/15 z-20"
+                        className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.08] z-20"
+                        style={{ backgroundColor: '#151515CC' }}
                         onClick={(e) => {
                           e.stopPropagation();
                           setOpenMenuTrackId(null);
