@@ -580,17 +580,13 @@ export default function TrackListPanel({
                          <div 
                            className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
                            style={{ backgroundColor: '#151515CC' }}
-                           onClick={(e) => {
-                             // Only close if clicking directly on the backdrop
-                             if (e.target === e.currentTarget) {
-                               setOpenAddOverlayTrackId(null);
-                               setClickedPlaylists(new Set()); // Reset clicked state when closing
-                             }
+                           onClick={() => {
+                             setOpenAddOverlayTrackId(null);
+                             setClickedPlaylists(new Set());
                            }}
                          >
                            <div 
                              className="h-full flex flex-col"
-                             onClick={(e) => e.stopPropagation()}
                            >
                             {/* Search Bar */}
                             <div className="flex justify-center p-3 pb-2">
@@ -645,7 +641,7 @@ export default function TrackListPanel({
                             )}
 
                             {/* Playlists List */}
-                            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pb-3">
+                            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pb-3" onClick={(e) => e.stopPropagation()}>
                               <div className="space-y-2">
                                 {/* Filter playlists based on search */}
                                 {(() => {
