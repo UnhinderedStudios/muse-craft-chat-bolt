@@ -289,11 +289,8 @@ export default function TrackListPanel({
     try {
       let wavUrl: string | null = null;
       
-      // Check if we should skip audioId (invalid/fallback ID)
-      if (wavRefs?.audioId && !isValidSunoAudioId(wavRefs.audioId)) {
-        console.log(`[WAV] Skipping invalid audioId: ${wavRefs.audioId}, going directly to taskId/musicIndex`);
-        wavRefs.audioId = undefined; // Remove invalid audioId to skip it
-      }
+      // Always try provider's audioId first - let the server decide if it's valid
+      console.log(`[WAV] Using provider audioId from registry: ${wavRefs?.audioId}`);
       
       // Try with audioId first (only if valid)
       if (wavRefs?.audioId) {

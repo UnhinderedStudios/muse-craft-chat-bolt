@@ -1196,10 +1196,10 @@ const Index = () => {
             const trackData = sunoData[index];
             const realAudioId = trackData?.id;
             
-            if (!realAudioId || realAudioId.startsWith('track_')) {
-              console.warn(`[Generation] Version ${index}: Missing or invalid audioId, got: ${realAudioId}`);
+            if (!realAudioId) {
+              console.warn(`[Generation] Version ${index}: Missing audioId`);
             } else {
-              console.log(`[Generation] Version ${index}: Using audioId: ${realAudioId}`);
+              console.log(`[Generation] Version ${index}: Using provider audioId: ${realAudioId}`);
             }
             
             return {
@@ -1356,17 +1356,18 @@ const Index = () => {
               };
               
               // Store WAV refs for potential future conversion
-              // Only store audioId if it's a valid Suno ID (not a fallback)
+              // Always store the provider's audioId - let the conversion attempt decide if it's valid
               const refs: any = {
                 taskId: sunoJobId,
                 musicIndex: i
               };
               
-              if (isValidSunoAudioId(v.audioId)) {
+              // Always store the audioId from the provider, even if it looks unusual
+              if (v.audioId) {
                 refs.audioId = v.audioId;
-                console.log(`[WAV Registry] Storing valid audioId: ${v.audioId}`);
+                console.log(`[WAV Registry] Storing provider audioId: ${v.audioId}`);
               } else {
-                console.log(`[WAV Registry] Skipping invalid audioId: ${v.audioId}, will use taskId/musicIndex`);
+                console.log(`[WAV Registry] No audioId from provider, using taskId/musicIndex only`);
               }
               
               wavRegistry.set(trackId, refs);
