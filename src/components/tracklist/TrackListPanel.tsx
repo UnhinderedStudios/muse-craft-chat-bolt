@@ -473,38 +473,17 @@ export default function TrackListPanel({
                      </div>
                    </div>
 
-                   {/* Overlay Menu */}
-                   {openMenuTrackId === t.id && (
-                     <div 
-                       className="absolute inset-0 bg-black/30 backdrop-blur-sm rounded-xl z-20 flex flex-col justify-center p-3"
-                       onClick={(e) => {
-                         e.stopPropagation();
-                         setOpenMenuTrackId(null);
-                       }}
-                     >
-                        <div className="flex flex-col space-y-2 max-h-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
-                          {[
-                            "Action One",
-                            "Action Two", 
-                            "Action Three",
-                            "Action Four",
-                            "Action Five"
-                          ].map((label, index) => (
-                            <button
-                              key={index}
-                              className="w-full py-3 px-4 text-white hover:text-white/90 transition-all duration-200 text-center font-medium border border-white/20 rounded-lg hover:border-white/40 hover:bg-white/10 bg-black/20 hover:scale-[1.02]"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                console.log(`${label} clicked`);
-                                setOpenMenuTrackId(null);
-                              }}
-                            >
-                              {label}
-                            </button>
-                          ))}
-                        </div>
-                     </div>
-                   )}
+                    {/* Overlay Menu */}
+                    {openMenuTrackId === t.id && (
+                      <div 
+                        className="absolute inset-0 bg-black/30 backdrop-blur-sm rounded-xl border border-white/10 z-20"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenMenuTrackId(null);
+                        }}
+                      >
+                      </div>
+                    )}
                 </div>
               )}
 
