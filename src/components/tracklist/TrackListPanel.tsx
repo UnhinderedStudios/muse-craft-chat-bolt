@@ -360,7 +360,7 @@ export default function TrackListPanel({
                             className="cursor-pointer group/title w-full overflow-hidden"
                           >
                              <div className="flex items-baseline gap-1 w-full min-w-0">
-                               <div className="flex-1 min-w-0">
+                               <div className="flex-1 min-w-0 w-[90%] flex items-baseline">
                                  <EllipsisMarquee
                                    text={t.title || "Song Title"}
                                    className="text-sm text-white font-medium"
@@ -368,8 +368,8 @@ export default function TrackListPanel({
                                    gapPx={32}
                                    isActive={hoveredTracks[t.id]}
                                  />
+                                 <Edit3 className="w-3 h-3 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0 ml-1" />
                                </div>
-                               <Edit3 className="w-3 h-3 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0 ml-1" />
                              </div>
                           </div>
                         )}
