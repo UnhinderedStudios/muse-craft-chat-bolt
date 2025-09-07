@@ -78,6 +78,9 @@ export default function TrackListPanel({
   const [openDeleteOverlayTrackId, setOpenDeleteOverlayTrackId] = useState<string | null>(null);
   const [openAddOverlayTrackId, setOpenAddOverlayTrackId] = useState<string | null>(null);
   
+  // Playlist search state
+  const [playlistSearchQuery, setPlaylistSearchQuery] = useState("");
+  
   // Drag functionality
   const { startDrag, dragState } = useDrag();
   
@@ -119,6 +122,13 @@ export default function TrackListPanel({
     setIsSearchMode(false);
     setCurrentPage(1);
   };
+
+  // Clear playlist search when overlay closes
+  useEffect(() => {
+    if (!openAddOverlayTrackId) {
+      setPlaylistSearchQuery("");
+    }
+  }, [openAddOverlayTrackId]);
 
   // Handle page changes
   const handlePageChange = (page: number) => {
@@ -570,25 +580,67 @@ export default function TrackListPanel({
                               <div className="relative w-4/5">
                                 <input
                                   type="text"
+                                  value={playlistSearchQuery}
+                                  onChange={(e) => setPlaylistSearchQuery(e.target.value)}
                                   placeholder="Search playlists..."
-                                  className="w-full bg-[#1e1e1e] border-0 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-white/20"
+                                  className="w-full bg-[#1e1e1e] border-0 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-white/20 pr-10"
                                   onClick={(e) => e.stopPropagation()}
                                 />
-                                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (playlistSearchQuery) {
+                                      setPlaylistSearchQuery("");
+                                    }
+                                  }}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
+                                >
+                                  {playlistSearchQuery ? (
+                                    <X className="w-4 h-4" />
+                                  ) : (
+                                    <Search className="w-4 h-4" />
+                                  )}
+                                </button>
                               </div>
                             </div>
 
                             {/* Playlists List */}
                             <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pb-3">
                               <div className="space-y-2">
-                                {/* Mock Playlists */}
-                                {[
-                                  { id: "fav", name: "Favourites", songCount: 12 },
-                                  { id: "chill", name: "Chill Vibes", songCount: 8 },
-                                  { id: "workout", name: "Workout Mix", songCount: 15 },
-                                  { id: "focus", name: "Deep Focus", songCount: 6 },
-                                  { id: "party", name: "Party Hits", songCount: 24 }
-                                ].map((playlist) => (
+                                {/* Filter playlists based on search */}
+                                {(() => {
+                                  const mockPlaylists = [
+                                    { id: "fav", name: "Favourites", songCount: 12 },
+                                    { id: "chill", name: "Chill Vibes", songCount: 8 },
+                                    { id: "workout", name: "Workout Mix", songCount: 15 },
+                                    { id: "focus", name: "Deep Focus", songCount: 6 },
+                                    { id: "party", name: "Party Hits", songCount: 24 }
+                                  ];
+                                  
+                                  const filteredPlaylists = playlistSearchQuery.trim() === ""
+                                    ? mockPlaylists
+                                    : mockPlaylists.filter(playlist =>
+                                        playlist.name.toLowerCase().includes(playlistSearchQuery.toLowerCase())
+                                      );
+                                  
+                                  if (filteredPlaylists.length === 0) {
+                                    return (
+                                      <div className="text-center py-8">
+                                        <Music className="w-8 h-8 text-white/20 mx-auto mb-2" />
+                                        <p className="text-white/40 text-sm">No playlists found</p>
+                                        <p className="text-white/20 text-xs mt-1">Try a different search term</p>
+                                      </div>
+                                    );
+                                  }
+                                  
+                                  return (
+                                    <>
+                                      {playlistSearchQuery && (
+                                        <div className="text-xs text-white/40 px-2 pb-2">
+                                          {filteredPlaylists.length} playlist{filteredPlaylists.length !== 1 ? 's' : ''} found
+                                        </div>
+                                      )}
+                                      {filteredPlaylists.map((playlist) => (
                                   <div
                                     key={playlist.id}
                                     className="flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors cursor-pointer group"
@@ -614,8 +666,11 @@ export default function TrackListPanel({
                                     >
                                       <Plus className="w-3 h-3 text-accent-primary" />
                                     </button>
-                                  </div>
-                                ))}
+                                        </div>
+                                      ))}
+                                    </>
+                                  );
+                                })()}
                               </div>
                             </div>
                           </div>
