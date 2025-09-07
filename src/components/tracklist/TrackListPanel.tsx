@@ -692,7 +692,7 @@ export default function TrackListPanel({
                                          e.stopPropagation();
                                          // TODO: Add song to playlist
                                          console.log(`Adding song "${t.title}" to playlist "${playlist.name}"`);
-                                         setOpenAddOverlayTrackId(null);
+                                         // Don't close overlay - let user add to multiple playlists
                                        }}
                                      >
                                        <Plus className="w-4 h-4" />
