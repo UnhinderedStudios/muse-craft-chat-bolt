@@ -328,22 +328,25 @@ export default function TrackListPanel({
                     {/* Top-right menu icon */}
                     <button 
                       className="absolute top-2 right-2 text-white/60 hover:text-white transition-colors z-30 w-6 h-6 flex items-center justify-center"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOpenMenuTrackId(openMenuTrackId === t.id ? null : t.id);
-                      }}
+                       onClick={(e) => {
+                         e.stopPropagation();
+                         // Close all overlays when clicking the X
+                         setOpenMenuTrackId(null);
+                         setOpenDeleteOverlayTrackId(null);
+                         setOpenAddOverlayTrackId(null);
+                       }}
                     >
                       <div className="relative w-4 h-4">
                         <MoreVertical 
                           className={`w-4 h-4 absolute transition-all duration-200 ease-in-out ${
-                            openMenuTrackId === t.id 
+                            openMenuTrackId === t.id || openDeleteOverlayTrackId === t.id || openAddOverlayTrackId === t.id
                               ? 'opacity-0 rotate-90 scale-75' 
                               : 'opacity-100 rotate-0 scale-100'
                           }`}
                         />
                         <X 
                           className={`w-4 h-4 absolute transition-all duration-200 ease-in-out ${
-                            openMenuTrackId === t.id 
+                            openMenuTrackId === t.id || openDeleteOverlayTrackId === t.id || openAddOverlayTrackId === t.id
                               ? 'opacity-100 rotate-0 scale-100' 
                               : 'opacity-0 rotate-90 scale-75'
                           }`}
@@ -496,7 +499,7 @@ export default function TrackListPanel({
                      {/* Overlay Menu */}
                      {openMenuTrackId === t.id && (
                        <div 
-                         className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.08] z-20"
+                          className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
                          style={{ backgroundColor: '#151515CC' }}
                          onClick={(e) => {
                            e.stopPropagation();
@@ -509,7 +512,7 @@ export default function TrackListPanel({
                      {/* Delete Overlay */}
                      {openDeleteOverlayTrackId === t.id && (
                        <div 
-                         className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.08] z-20"
+                          className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
                          style={{ backgroundColor: '#151515CC' }}
                          onClick={(e) => {
                            e.stopPropagation();
@@ -546,7 +549,7 @@ export default function TrackListPanel({
                      {/* Add Overlay */}
                      {openAddOverlayTrackId === t.id && (
                        <div 
-                         className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.08] z-20"
+                         className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
                          style={{ backgroundColor: '#151515CC' }}
                          onClick={(e) => {
                            e.stopPropagation();
