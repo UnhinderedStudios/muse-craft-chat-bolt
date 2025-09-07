@@ -564,30 +564,33 @@ export default function TrackListPanel({
                            setOpenAddOverlayTrackId(null);
                          }}
                        >
-                         <div className="h-full flex items-center justify-center gap-3 px-4">
-                           <button
-                             className="relative h-12 px-4 rounded-xl bg-gray-500/20 text-white hover:text-white transition-all duration-200 font-medium flex-1 overflow-hidden group"
-                             onClick={(e) => {
-                               e.stopPropagation();
-                               // TODO: Handle add to playlist functionality
-                               setOpenAddOverlayTrackId(null);
-                             }}
-                           >
-                             <div className="absolute inset-0 bg-blue-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                             <span className="relative z-10">Add to Playlist</span>
-                           </button>
-                           <button
-                             className="relative h-12 px-4 rounded-xl bg-gray-500/20 text-white hover:text-white transition-all duration-200 font-medium flex-1 overflow-hidden group"
-                             onClick={(e) => {
-                               e.stopPropagation();
-                               // TODO: Handle favorite functionality
-                               setOpenAddOverlayTrackId(null);
-                             }}
-                           >
-                             <div className="absolute inset-0 bg-green-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                             <span className="relative z-10">Favorite</span>
-                           </button>
-                         </div>
+                          <div className="h-full flex flex-col items-center justify-center gap-2 px-4">
+                            <p className="text-gray-400 text-xs mb-1">Caution: Deletion is permanent</p>
+                            <div className="flex gap-3 w-full mt-2">
+                              <button
+                                className="relative h-6 px-4 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // TODO: Handle add to playlist functionality
+                                  setOpenAddOverlayTrackId(null);
+                                }}
+                              >
+                                <div className="absolute inset-0 bg-blue-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                                <span className="relative z-10">Add to Playlist</span>
+                              </button>
+                              <button
+                                className="relative h-6 px-4 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // TODO: Handle favorite functionality
+                                  setOpenAddOverlayTrackId(null);
+                                }}
+                              >
+                                <div className="absolute inset-0 bg-green-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                                <span className="relative z-10">Favorite</span>
+                              </button>
+                            </div>
+                          </div>
                        </div>
                      )}
                 </div>
