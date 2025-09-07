@@ -7,6 +7,8 @@ import { useScrollDelegationHook } from "@/utils/scrollDelegation";
 import EllipsisMarquee from "@/components/ui/EllipsisMarquee";
 import { useDrag } from "@/contexts/DragContext";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import JSZip from "jszip";
 import {
   Pagination,
   PaginationContent,
@@ -51,6 +53,7 @@ export default function TrackListPanel({
   activeJobCount = 0,
   activeGenerations = []
 }: Props) {
+  const { toast } = useToast();
   const [audioCurrentTimes, setAudioCurrentTimes] = useState<number[]>([]);
   const [showQuickAlbumGenerator, setShowQuickAlbumGenerator] = useState(false);
   const [selectedTrackForRegen, setSelectedTrackForRegen] = useState<TrackItem | null>(null);
@@ -165,6 +168,157 @@ export default function TrackListPanel({
     } else if (e.key === 'Escape') {
       setEditTitle(filteredTracks[trackIndex]?.title || "");
       setIsEditingTitle(false);
+    }
+  };
+
+  // Download utility functions
+  const downloadFile = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      return true;
+    } catch (error) {
+      console.error('Download failed:', error);
+      return false;
+    }
+  };
+
+  const downloadTextFile = (content: string, filename: string) => {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const generateLyricsContent = (track: TrackItem) => {
+    if (!track.words || track.words.length === 0) {
+      return `Lyrics for: ${track.title || 'Unknown Song'}\n\nNo timestamped lyrics available for this track.`;
+    }
+
+    let content = `Lyrics for: ${track.title || 'Unknown Song'}\nGenerated on: ${new Date().toLocaleString()}\n\n`;
+    content += "=== TIMESTAMPED LYRICS ===\n\n";
+    
+    track.words.forEach((word, index) => {
+      const startTime = Math.floor(word.start / 60) + ':' + (word.start % 60).toFixed(2).padStart(5, '0');
+      const endTime = Math.floor(word.end / 60) + ':' + (word.end % 60).toFixed(2).padStart(5, '0');
+      content += `[${startTime} - ${endTime}] ${word.word}\n`;
+    });
+
+    content += "\n=== PLAIN TEXT ===\n\n";
+    content += track.words.map(w => w.word).join(' ');
+
+    return content;
+  };
+
+  const handleDownloadMP3 = async (track: TrackItem) => {
+    toast({ title: "Downloading MP3...", description: `Starting download of ${track.title}` });
+    
+    const filename = `${track.title || 'song'}.mp3`;
+    const success = await downloadFile(track.url, filename);
+    
+    if (success) {
+      toast({ title: "Download Complete", description: `${track.title} has been downloaded` });
+    } else {
+      toast({ title: "Download Failed", description: "Could not download the MP3 file", variant: "destructive" });
+    }
+  };
+
+  const handleDownloadLyrics = (track: TrackItem) => {
+    const content = generateLyricsContent(track);
+    const filename = `${track.title || 'song'}_lyrics.txt`;
+    downloadTextFile(content, filename);
+    
+    toast({ 
+      title: "Lyrics Downloaded", 
+      description: `Lyrics with timestamps saved as ${filename}` 
+    });
+  };
+
+  const handleDownloadArt = async (track: TrackItem) => {
+    if (!track.coverUrl) {
+      toast({ title: "No Album Art", description: "This track doesn't have album art available", variant: "destructive" });
+      return;
+    }
+
+    toast({ title: "Downloading Album Art...", description: `Starting download for ${track.title}` });
+    
+    const filename = `${track.title || 'song'}_cover.jpg`;
+    const success = await downloadFile(track.coverUrl, filename);
+    
+    if (success) {
+      toast({ title: "Download Complete", description: "Album art has been downloaded" });
+    } else {
+      toast({ title: "Download Failed", description: "Could not download the album art", variant: "destructive" });
+    }
+  };
+
+  const handleDownloadAll = async (track: TrackItem) => {
+    toast({ title: "Preparing Download...", description: "Creating zip file with all content" });
+    
+    try {
+      const zip = new JSZip();
+      const folderName = track.title || 'song';
+      
+      // Add MP3 file
+      try {
+        const audioResponse = await fetch(track.url);
+        if (audioResponse.ok) {
+          const audioBlob = await audioResponse.blob();
+          zip.file(`${folderName}/${folderName}.mp3`, audioBlob);
+        }
+      } catch (error) {
+        console.error('Could not add MP3 to zip:', error);
+      }
+      
+      // Add lyrics file
+      const lyricsContent = generateLyricsContent(track);
+      zip.file(`${folderName}/${folderName}_lyrics.txt`, lyricsContent);
+      
+      // Add album art if available
+      if (track.coverUrl) {
+        try {
+          const artResponse = await fetch(track.coverUrl);
+          if (artResponse.ok) {
+            const artBlob = await artResponse.blob();
+            const extension = track.coverUrl.includes('.png') ? 'png' : 'jpg';
+            zip.file(`${folderName}/${folderName}_cover.${extension}`, artBlob);
+          }
+        } catch (error) {
+          console.error('Could not add album art to zip:', error);
+        }
+      }
+      
+      // Generate and download zip
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = window.URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${folderName}_complete.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast({ title: "Download Complete", description: `${folderName}_complete.zip has been downloaded` });
+    } catch (error) {
+      console.error('Failed to create zip:', error);
+      toast({ title: "Download Failed", description: "Could not create zip file", variant: "destructive" });
     }
   };
 
@@ -591,12 +745,11 @@ export default function TrackListPanel({
                                  <div className="flex gap-2 w-full">
                                    <button
                                      className="relative h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group flex items-center justify-center gap-1"
-                                     onClick={(e) => {
-                                       e.stopPropagation();
-                                       // TODO: Download MP3
-                                       console.log('Downloading MP3 for track:', t.title);
-                                       setOpenDeleteOverlayTrackId(null);
-                                     }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDownloadMP3(t);
+                                        setOpenDeleteOverlayTrackId(null);
+                                      }}
                                    >
                                      <div className="absolute inset-0 bg-blue-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
                                      <FileMusic className="w-3 h-3 relative z-10" />
@@ -604,12 +757,16 @@ export default function TrackListPanel({
                                    </button>
                                    <button
                                      className="relative h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group flex items-center justify-center gap-1"
-                                     onClick={(e) => {
-                                       e.stopPropagation();
-                                       // TODO: Download WAV
-                                       console.log('Downloading WAV for track:', t.title);
-                                       setOpenDeleteOverlayTrackId(null);
-                                     }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        // WAV conversion would require server-side processing
+                                        toast({ 
+                                          title: "WAV Not Available", 
+                                          description: "WAV conversion is not supported yet. Use MP3 instead.", 
+                                          variant: "destructive" 
+                                        });
+                                        setOpenDeleteOverlayTrackId(null);
+                                      }}
                                    >
                                      <div className="absolute inset-0 bg-purple-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
                                      <FileAudio className="w-3 h-3 relative z-10" />
@@ -619,12 +776,11 @@ export default function TrackListPanel({
                                  <div className="flex gap-2 w-full">
                                    <button
                                      className="relative h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group flex items-center justify-center gap-1"
-                                     onClick={(e) => {
-                                       e.stopPropagation();
-                                       // TODO: Download Lyrics
-                                       console.log('Downloading Lyrics for track:', t.title);
-                                       setOpenDeleteOverlayTrackId(null);
-                                     }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDownloadLyrics(t);
+                                        setOpenDeleteOverlayTrackId(null);
+                                      }}
                                    >
                                      <div className="absolute inset-0 bg-green-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
                                      <FileText className="w-3 h-3 relative z-10" />
@@ -632,12 +788,11 @@ export default function TrackListPanel({
                                    </button>
                                    <button
                                      className="relative h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group flex items-center justify-center gap-1"
-                                     onClick={(e) => {
-                                       e.stopPropagation();
-                                       // TODO: Download Art
-                                       console.log('Downloading Art for track:', t.title);
-                                       setOpenDeleteOverlayTrackId(null);
-                                     }}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDownloadArt(t);
+                                        setOpenDeleteOverlayTrackId(null);
+                                      }}
                                    >
                                      <div className="absolute inset-0 bg-orange-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
                                      <ImageIcon className="w-3 h-3 relative z-10" />
@@ -646,12 +801,11 @@ export default function TrackListPanel({
                                  </div>
                                  <button
                                    className="relative h-6 px-4 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs w-full overflow-hidden group flex items-center justify-center gap-1"
-                                   onClick={(e) => {
-                                     e.stopPropagation();
-                                     // TODO: Download All
-                                     console.log('Downloading All for track:', t.title);
-                                     setOpenDeleteOverlayTrackId(null);
-                                   }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDownloadAll(t);
+                                      setOpenDeleteOverlayTrackId(null);
+                                    }}
                                  >
                                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/80 to-purple-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
                                    <Package className="w-3 h-3 relative z-10" />
