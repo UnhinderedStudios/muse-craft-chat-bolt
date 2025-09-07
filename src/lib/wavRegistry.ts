@@ -11,6 +11,19 @@ export interface WavRefs {
   musicIndex?: number;
 }
 
+// Helper to detect if an audioId is a valid Suno ID vs a fallback
+export function isValidSunoAudioId(audioId?: string): boolean {
+  if (!audioId) return false;
+  
+  // Detect fallback patterns
+  if (audioId.startsWith('missing_id_')) return false;
+  if (audioId.includes('-') && audioId.split('-').length === 6) return false; // taskId-index pattern
+  
+  // Valid Suno audioIds are UUIDs (36 chars with hyphens)
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidPattern.test(audioId);
+}
+
 const STORAGE_KEY = 'wavRegistry';
 
 class WavRegistry {

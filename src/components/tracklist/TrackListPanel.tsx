@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import JSZip from "jszip";
 import { api } from "@/lib/api";
-import { wavRegistry } from "@/lib/wavRegistry";
+import { wavRegistry, isValidSunoAudioId } from "@/lib/wavRegistry";
 import {
   Pagination,
   PaginationContent,
@@ -289,10 +289,16 @@ export default function TrackListPanel({
     try {
       let wavUrl: string | null = null;
       
-      // Try with audioId first (preferred)
+      // Check if we should skip audioId (invalid/fallback ID)
+      if (wavRefs?.audioId && !isValidSunoAudioId(wavRefs.audioId)) {
+        console.log(`[WAV] Skipping invalid audioId: ${wavRefs.audioId}, going directly to taskId/musicIndex`);
+        wavRefs.audioId = undefined; // Remove invalid audioId to skip it
+      }
+      
+      // Try with audioId first (only if valid)
       if (wavRefs?.audioId) {
         try {
-          console.log(`[WAV] Attempting conversion with audioId: ${wavRefs.audioId}`);
+          console.log(`[WAV] Attempting conversion with valid audioId: ${wavRefs.audioId}`);
           wavUrl = await api.convertToWav({ audioId: wavRefs.audioId });
         } catch (audioIdError) {
           console.warn(`[WAV] audioId conversion failed:`, audioIdError);
@@ -313,8 +319,15 @@ export default function TrackListPanel({
             throw audioIdError;
           }
         }
+      } else if (wavRefs?.taskId !== undefined && wavRefs?.musicIndex !== undefined) {
+        // No valid audioId, go directly to taskId + musicIndex
+        console.log(`[WAV] Using taskId: ${wavRefs.taskId}, musicIndex: ${wavRefs.musicIndex}`);
+        wavUrl = await api.convertToWav({ 
+          taskId: wavRefs.taskId, 
+          musicIndex: wavRefs.musicIndex 
+        });
       } else {
-        // Fallback to track.id if no registry data
+        // Last resort: try track.id as audioId (may be valid)
         console.log(`[WAV] No registry data, using track.id as audioId: ${track.id}`);
         wavUrl = await api.convertToWav({ audioId: track.id });
       }

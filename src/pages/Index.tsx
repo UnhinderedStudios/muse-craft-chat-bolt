@@ -46,7 +46,7 @@ import { parseSongRequest, convertToSongDetails } from "@/lib/parseSongRequest";
 import { RANDOM_MUSIC_FORGE_PROMPT } from "@/utils/prompts";
 import { parseRandomMusicForgeOutput } from "@/lib/parseRandomMusicForge";
 import { diceMemory } from "@/lib/diceMemory";
-import { wavRegistry } from "@/lib/wavRegistry";
+import { wavRegistry, isValidSunoAudioId } from "@/lib/wavRegistry";
 
 const systemPrompt = `You are Melody Muse, a friendly creative assistant for songwriting.
 Your goal is to chat naturally and quickly gather two things only: (1) a unified Style description and (2) Lyrics.
@@ -1356,11 +1356,20 @@ const Index = () => {
               };
               
               // Store WAV refs for potential future conversion
-              wavRegistry.set(trackId, {
-                audioId: v.audioId,
+              // Only store audioId if it's a valid Suno ID (not a fallback)
+              const refs: any = {
                 taskId: sunoJobId,
                 musicIndex: i
-              });
+              };
+              
+              if (isValidSunoAudioId(v.audioId)) {
+                refs.audioId = v.audioId;
+                console.log(`[WAV Registry] Storing valid audioId: ${v.audioId}`);
+              } else {
+                console.log(`[WAV Registry] Skipping invalid audioId: ${v.audioId}, will use taskId/musicIndex`);
+              }
+              
+              wavRegistry.set(trackId, refs);
               
               console.log(`[Generation] Created track object:`, track);
               console.log(`[WAV Registry] Stored refs for track ${trackId}:`, { audioId: v.audioId, taskId: sunoJobId, musicIndex: i });

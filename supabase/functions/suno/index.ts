@@ -178,7 +178,7 @@ serve(async (req) => {
       return json({ jobId: taskId });
     }
 
-    // Handle WAV conversion
+    // Handle WAV conversion with retry logic
     if (req.method === "POST" && pathname.endsWith("/wav")) {
       const details = await req.json().catch(() => ({} as any));
       const audioId = details.audioId;
@@ -189,33 +189,89 @@ serve(async (req) => {
         return json({ error: "Missing audioId or taskId" }, { status: 400 });
       }
 
-      const body: Record<string, unknown> = {};
-      if (audioId) body.audioId = audioId;
-      if (taskId) body.taskId = taskId;
-      if (typeof musicIndex === 'number') body.musicIndex = musicIndex;
-
-      console.log("[suno] Starting WAV conversion", body);
-
-      const wavResp = await fetch(`${API_BASE}/wav/generate`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
+      // Try different parameter combinations until one works
+      const attempts = [
+        // Original parameters
+        () => {
+          const body: Record<string, unknown> = {};
+          if (audioId) body.audioId = audioId;
+          if (taskId) body.taskId = taskId;
+          if (typeof musicIndex === 'number') body.musicIndex = musicIndex;
+          return body;
         },
-        body: JSON.stringify(body),
-      });
+        // Try musicId instead of audioId
+        () => {
+          const body: Record<string, unknown> = {};
+          if (audioId) body.musicId = audioId;
+          if (taskId) body.taskId = taskId;
+          if (typeof musicIndex === 'number') body.musicIndex = musicIndex;
+          return body;
+        },
+        // Try index instead of musicIndex
+        () => {
+          const body: Record<string, unknown> = {};
+          if (audioId) body.audioId = audioId;
+          if (taskId) body.taskId = taskId;
+          if (typeof musicIndex === 'number') body.index = musicIndex;
+          return body;
+        },
+        // Try musicId + index
+        () => {
+          const body: Record<string, unknown> = {};
+          if (audioId) body.musicId = audioId;
+          if (taskId) body.taskId = taskId;
+          if (typeof musicIndex === 'number') body.index = musicIndex;
+          return body;
+        }
+      ];
 
-      const wavJson = await wavResp.json().catch(() => ({}));
-      if (!wavResp.ok || wavJson?.code !== 200) {
-        const msg = wavJson?.msg || (await wavResp.text().catch(() => "")) || wavResp.statusText;
-        console.error("[suno] WAV conversion error:", msg);
-        return json({ error: msg }, { status: 500 });
+      let lastError = "Unknown error";
+      
+      for (let i = 0; i < attempts.length; i++) {
+        const body = attempts[i]();
+        console.log(`[suno] WAV conversion attempt ${i + 1}:`, body);
+
+        try {
+          const wavResp = await fetch(`${API_BASE}/wav/generate`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(body),
+          });
+
+          const wavJson = await wavResp.json().catch(() => ({}));
+          
+          if (wavResp.ok && wavJson?.code === 200) {
+            const wavJobId = wavJson?.data?.taskId;
+            if (!wavJobId) return json({ error: "No WAV taskId returned" }, { status: 500 });
+            
+            console.log(`[suno] WAV conversion started successfully on attempt ${i + 1}`);
+            return json({ jobId: wavJobId });
+          }
+          
+          const msg = wavJson?.msg || (await wavResp.text().catch(() => "")) || wavResp.statusText;
+          lastError = msg;
+          console.log(`[suno] WAV attempt ${i + 1} failed:`, msg);
+          
+          // Don't retry if it's a "record does not exist" or "music id" error
+          if (msg.toLowerCase().includes("record does not exist") || 
+              msg.toLowerCase().includes("music id") ||
+              msg.toLowerCase().includes("not found")) {
+            continue; // Try next parameter combination
+          } else {
+            // For other errors, fail immediately
+            return json({ error: msg }, { status: 500 });
+          }
+        } catch (networkError) {
+          lastError = `Network error: ${networkError}`;
+          console.log(`[suno] WAV attempt ${i + 1} network error:`, networkError);
+        }
       }
 
-      const wavJobId = wavJson?.data?.taskId;
-      if (!wavJobId) return json({ error: "No WAV taskId returned" }, { status: 500 });
-
-      return json({ jobId: wavJobId });
+      console.error("[suno] All WAV conversion attempts failed");
+      return json({ error: `WAV conversion failed after ${attempts.length} attempts. Last error: ${lastError}` }, { status: 500 });
     }
 
     // Handle WAV status polling
