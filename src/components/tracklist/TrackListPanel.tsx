@@ -564,22 +564,9 @@ export default function TrackListPanel({
                             setOpenAddOverlayTrackId(null);
                           }}
                         >
-                          <div className="h-full flex flex-col">
-                            {/* Search Bar */}
-                            <div className="flex justify-center p-3 pb-2">
-                              <div className="relative w-4/5">
-                                <input
-                                  type="text"
-                                  placeholder="Search playlists..."
-                                  className="w-full bg-[#1e1e1e] border-0 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-white/20"
-                                  onClick={(e) => e.stopPropagation()}
-                                />
-                                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-                              </div>
-                            </div>
-
-                            {/* Playlists List */}
-                            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pb-3">
+                          <div className="h-full flex flex-col relative">
+                            {/* Playlists List - Full Height */}
+                            <div className="h-full overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pt-16 pb-3">
                               <div className="space-y-2">
                                 {/* Mock Playlists */}
                                 {[
@@ -616,6 +603,19 @@ export default function TrackListPanel({
                                     </button>
                                   </div>
                                 ))}
+                              </div>
+                            </div>
+
+                            {/* Search Bar - Overlaid at top */}
+                            <div className="absolute top-0 left-0 right-0 z-10 px-3 pt-3 pb-2" style={{ backgroundColor: '#151515CC' }}>
+                              <div className="relative">
+                                <input
+                                  type="text"
+                                  placeholder="Search playlists..."
+                                  className="w-full bg-[#1e1e1e] border-0 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-white/20"
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                               </div>
                             </div>
                           </div>
