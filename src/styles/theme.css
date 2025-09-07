@@ -64,7 +64,7 @@
   border: 1px solid hsl(var(--teal-chip) / 0.4);
 }
 
-/* Custom Scrollbar with Fade */
+/* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px;
 }
@@ -76,20 +76,13 @@
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: #282828;
   border-radius: 4px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.custom-scrollbar:hover::-webkit-scrollbar-thumb {
-  opacity: 1;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #383838;
-  opacity: 1;
 }
 
-/* Lyrics Scrollbar with Fade */
+/* Lyrics Scrollbar - Different color */
 .lyrics-scrollbar::-webkit-scrollbar {
   width: 8px;
 }
@@ -101,20 +94,13 @@
 .lyrics-scrollbar::-webkit-scrollbar-thumb {
   background: #282828;
   border-radius: 4px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.lyrics-scrollbar:hover::-webkit-scrollbar-thumb {
-  opacity: 1;
 }
 
 .lyrics-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #383838;
-  opacity: 1;
 }
 
-/* Chat Input Scrollbar with Fade */
+/* Chat Input Scrollbar - Positioned at far right edge */
 .chat-input-scrollbar::-webkit-scrollbar {
   width: 8px;
 }
@@ -126,20 +112,13 @@
 .chat-input-scrollbar::-webkit-scrollbar-thumb {
   background: #282828;
   border-radius: 4px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.chat-input-scrollbar:hover::-webkit-scrollbar-thumb {
-  opacity: 1;
 }
 
 .chat-input-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #383838;
-  opacity: 1;
 }
 
-/* Song Parameters Scrollbar with Fade */
+/* Song Parameters Scrollbar - Darker color */
 .song-params-scrollbar::-webkit-scrollbar {
   width: 8px;
 }
@@ -151,15 +130,8 @@
 .song-params-scrollbar::-webkit-scrollbar-thumb {
   background: #464646;
   border-radius: 4px;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.song-params-scrollbar:hover::-webkit-scrollbar-thumb {
-  opacity: 1;
 }
 
 .song-params-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #565656;
-  opacity: 1;
 }

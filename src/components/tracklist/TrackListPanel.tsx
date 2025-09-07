@@ -557,19 +557,29 @@ export default function TrackListPanel({
                       {/* Add Overlay */}
                       {openAddOverlayTrackId === t.id && (
                         <div 
-                          className="absolute top-0 left-0 right-0 bottom-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
+                          className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
                           style={{ backgroundColor: '#151515CC' }}
                           onClick={(e) => {
                             e.stopPropagation();
                             setOpenAddOverlayTrackId(null);
                           }}
                         >
-                          <div className="h-full flex flex-col relative">
-                            {/* Playlists List - Constrained Height */}
-                            <div 
-                              className="overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pt-8 pb-3"
-                              style={{ height: 'calc(100% - 0px)' }}
-                            >
+                          <div className="h-full flex flex-col">
+                            {/* Search Bar */}
+                            <div className="flex justify-center p-3 pb-2">
+                              <div className="relative w-4/5">
+                                <input
+                                  type="text"
+                                  placeholder="Search playlists..."
+                                  className="w-full bg-[#1e1e1e] border-0 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-white/20"
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                              </div>
+                            </div>
+
+                            {/* Playlists List */}
+                            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pb-3">
                               <div className="space-y-2">
                                 {/* Mock Playlists */}
                                 {[
@@ -606,21 +616,6 @@ export default function TrackListPanel({
                                     </button>
                                   </div>
                                 ))}
-                              </div>
-                            </div>
-
-                            {/* Search Bar - Overlaid at top */}
-                            <div 
-                              className="absolute top-0 left-0 right-0 z-10 px-3 pt-1.5 pb-1 backdrop-blur-sm rounded-t-xl transition-colors bg-[#151515CC] focus-within:bg-[#2a2a2aCC]" 
-                            >
-                              <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-                                <input
-                                  type="text"
-                                  placeholder="Search playlists..."
-                                  className="w-full bg-transparent border-0 text-white placeholder:text-white/40 rounded-lg pl-10 pr-3 py-1 text-sm focus:outline-none"
-                                  onClick={(e) => e.stopPropagation()}
-                                />
                               </div>
                             </div>
                           </div>
