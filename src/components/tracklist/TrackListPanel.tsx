@@ -774,170 +774,75 @@ export default function TrackListPanel({
                     setOpenDownloadOverlayTrackId(null);
                   }}
                 >
-                  <div className="h-full flex flex-col p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-white text-sm font-medium">Download Options</h3>
+                  <div className="h-full flex flex-col items-center justify-center gap-2 px-4">
+                    <p className="text-gray-400 text-xs mb-1">Download Options</p>
+                    <div className="flex flex-col gap-1.5 w-full">
+                      {/* MP3 Download */}
                       <button
+                        className="relative h-6 px-3 rounded-xl bg-green-500/20 text-green-300 hover:text-white transition-all duration-200 text-xs flex items-center justify-center overflow-hidden group"
                         onClick={(e) => {
                           e.stopPropagation();
+                          const link = document.createElement('a');
+                          link.href = t.url;
+                          link.download = `${t.title || 'song'}.mp3`;
+                          link.click();
                           setOpenDownloadOverlayTrackId(null);
                         }}
-                        className="text-white/40 hover:text-white/60 transition-colors"
                       >
-                        <X className="w-4 h-4" />
+                        <div className="absolute inset-0 bg-green-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                        <span className="relative z-10 flex items-center gap-1">
+                          <FileDown className="w-3 h-3" />
+                          MP3
+                        </span>
                       </button>
-                    </div>
-                    
-                    <div className="flex-1 space-y-2">
-                      {/* Available Downloads */}
-                      <div className="space-y-2">
-                        {/* MP3 Download */}
+
+                      {/* Cover Download */}
+                      {t.coverUrl && (
                         <button
-                          className="w-full flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors"
+                          className="relative h-6 px-3 rounded-xl bg-purple-500/20 text-purple-300 hover:text-white transition-all duration-200 text-xs flex items-center justify-center overflow-hidden group"
                           onClick={(e) => {
                             e.stopPropagation();
                             const link = document.createElement('a');
-                            link.href = t.url;
-                            link.download = `${t.title || 'song'}.mp3`;
+                            link.href = t.coverUrl;
+                            link.download = `${t.title || 'song'}_cover.jpg`;
                             link.click();
+                            setOpenDownloadOverlayTrackId(null);
                           }}
                         >
-                          <div className="flex items-center gap-3">
-                            <FileDown className="w-4 h-4 text-green-400" />
-                            <div className="text-left">
-                              <p className="text-white text-sm">Final mix (MP3)</p>
-                              <p className="text-white/40 text-xs">Original Suno quality</p>
-                            </div>
-                          </div>
+                          <div className="absolute inset-0 bg-purple-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                          <span className="relative z-10 flex items-center gap-1">
+                            <Image className="w-3 h-3" />
+                            Cover
+                          </span>
                         </button>
+                      )}
 
-                        {/* WAV Conversion */}
-                        <div className="relative">
-                          <button
-                            className="w-full flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              // TODO: Implement client-side MP3 to WAV conversion
-                              console.log('WAV conversion not implemented yet');
-                            }}
-                          >
-                            <div className="flex items-center gap-3">
-                              <FileDown className="w-4 h-4 text-blue-400" />
-                              <div className="text-left">
-                                <p className="text-white text-sm">Export as WAV</p>
-                                <p className="text-white/40 text-xs">Converted from MP3</p>
-                              </div>
-                            </div>
-                          </button>
-                          <div className="absolute top-0 right-2 flex items-center h-full">
-                            <Info className="w-3 h-3 text-orange-400" />
-                          </div>
-                        </div>
-
-                        {/* Cover Downloads */}
-                        {t.coverUrl && (
-                          <button
-                            className="w-full flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
+                      {/* Lyrics Download */}
+                      {(t.words && t.words.length > 0) && (
+                        <button
+                          className="relative h-6 px-3 rounded-xl bg-cyan-500/20 text-cyan-300 hover:text-white transition-all duration-200 text-xs flex items-center justify-center overflow-hidden group"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (t.words) {
+                              const lyricsText = t.words.map(w => w.word).join(' ');
+                              const blob = new Blob([lyricsText], { type: 'text/plain' });
+                              const url = URL.createObjectURL(blob);
                               const link = document.createElement('a');
-                              link.href = t.coverUrl;
-                              link.download = `${t.title || 'song'}_cover.jpg`;
+                              link.href = url;
+                              link.download = `${t.title || 'song'}_lyrics.txt`;
                               link.click();
-                            }}
-                          >
-                            <div className="flex items-center gap-3">
-                              <Image className="w-4 h-4 text-purple-400" />
-                              <div className="text-left">
-                                <p className="text-white text-sm">Album cover</p>
-                                <p className="text-white/40 text-xs">High resolution image</p>
-                              </div>
-                            </div>
-                          </button>
-                        )}
-
-                        {/* Lyrics Export */}
-                        {(t.words && t.words.length > 0) && (
-                          <button
-                            className="w-full flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (t.words) {
-                                const lyricsText = t.words.map(w => w.word).join(' ');
-                                const blob = new Blob([lyricsText], { type: 'text/plain' });
-                                const url = URL.createObjectURL(blob);
-                                const link = document.createElement('a');
-                                link.href = url;
-                                link.download = `${t.title || 'song'}_lyrics.txt`;
-                                link.click();
-                                URL.revokeObjectURL(url);
-                              }
-                            }}
-                          >
-                            <div className="flex items-center gap-3">
-                              <FileText className="w-4 h-4 text-cyan-400" />
-                              <div className="text-left">
-                                <p className="text-white text-sm">Lyrics (plain text)</p>
-                                <p className="text-white/40 text-xs">Export as .txt file</p>
-                              </div>
-                            </div>
-                          </button>
-                        )}
-
-                        {(t.words && t.hasTimestamps) && (
-                          <button
-                            className="w-full flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (t.words) {
-                                const lrcContent = t.words.map(w => 
-                                  `[${Math.floor(w.start / 60).toString().padStart(2, '0')}:${(w.start % 60).toFixed(2).padStart(5, '0')}]${w.word}`
-                                ).join('\n');
-                                const blob = new Blob([lrcContent], { type: 'text/plain' });
-                                const url = URL.createObjectURL(blob);
-                                const link = document.createElement('a');
-                                link.href = url;
-                                link.download = `${t.title || 'song'}_lyrics.lrc`;
-                                link.click();
-                                URL.revokeObjectURL(url);
-                              }
-                            }}
-                          >
-                            <div className="flex items-center gap-3">
-                              <FileText className="w-4 h-4 text-cyan-400" />
-                              <div className="text-left">
-                                <p className="text-white text-sm">Timestamped lyrics</p>
-                                <p className="text-white/40 text-xs">Export as .lrc file</p>
-                              </div>
-                            </div>
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Unavailable Options */}
-                      <div className="border-t border-white/10 pt-3 mt-3">
-                        <p className="text-white/40 text-xs mb-2">Not available via Suno API:</p>
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] opacity-60">
-                            <div className="flex items-center gap-3">
-                              <AlertCircle className="w-4 h-4 text-red-400" />
-                              <div className="text-left">
-                                <p className="text-white/60 text-sm">Stems separation</p>
-                                <p className="text-white/30 text-xs">Vocals, instruments, etc.</p>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] opacity-60">
-                            <div className="flex items-center gap-3">
-                              <AlertCircle className="w-4 h-4 text-red-400" />
-                              <div className="text-left">
-                                <p className="text-white/60 text-sm">Original WAV/FLAC</p>
-                                <p className="text-white/30 text-xs">Lossless quality formats</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                              URL.revokeObjectURL(url);
+                            }
+                            setOpenDownloadOverlayTrackId(null);
+                          }}
+                        >
+                          <div className="absolute inset-0 bg-cyan-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                          <span className="relative z-10 flex items-center gap-1">
+                            <FileText className="w-3 h-3" />
+                            Lyrics
+                          </span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
