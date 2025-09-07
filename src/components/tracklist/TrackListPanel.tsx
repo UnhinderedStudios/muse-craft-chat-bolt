@@ -557,16 +557,19 @@ export default function TrackListPanel({
                       {/* Add Overlay */}
                       {openAddOverlayTrackId === t.id && (
                         <div 
-                          className="absolute top-0 left-0 right-0 bottom-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20 max-h-full"
+                          className="absolute top-0 left-0 right-0 bottom-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
                           style={{ backgroundColor: '#151515CC' }}
                           onClick={(e) => {
                             e.stopPropagation();
                             setOpenAddOverlayTrackId(null);
                           }}
                         >
-                          <div className="h-full flex flex-col relative max-h-full">
-                            {/* Playlists List - Full Height */}
-                            <div className="flex-1 overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pt-8 pb-3 max-h-full">
+                          <div className="h-full flex flex-col relative">
+                            {/* Playlists List - Constrained Height */}
+                            <div 
+                              className="overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pt-8 pb-3"
+                              style={{ height: 'calc(100% - 0px)' }}
+                            >
                               <div className="space-y-2">
                                 {/* Mock Playlists */}
                                 {[
