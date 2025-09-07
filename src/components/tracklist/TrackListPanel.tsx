@@ -609,13 +609,13 @@ export default function TrackListPanel({
                             {/* Search Bar - Overlaid at top */}
                             <div className="absolute top-0 left-0 right-0 z-10 px-3 pt-1.5 pb-1 backdrop-blur-sm rounded-t-xl" style={{ backgroundColor: '#151515CC' }}>
                               <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                                 <input
                                   type="text"
                                   placeholder="Search playlists..."
-                                  className="w-full bg-transparent border-0 text-white placeholder:text-white/40 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-white/20"
+                                  className="w-full bg-transparent focus:bg-white/10 border-0 text-white placeholder:text-white/40 rounded-lg pl-10 pr-3 py-1 text-sm focus:outline-none transition-colors"
                                   onClick={(e) => e.stopPropagation()}
                                 />
-                                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                               </div>
                             </div>
                           </div>
