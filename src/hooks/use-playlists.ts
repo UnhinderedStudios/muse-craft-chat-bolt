@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { TrackItem } from "@/types";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 
 export interface DbPlaylist {
   id: string;
@@ -28,7 +28,7 @@ export function usePlaylists() {
   const [playlistItems, setPlaylistItems] = useState<{ [playlistId: string]: DbPlaylistItem[] }>({});
   const [favoritedTracks, setFavoritedTracks] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
-
+  const { toast } = useToast();
   // Get current user
   const getCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -60,13 +60,25 @@ export function usePlaylists() {
 
       if (playlistsError) throw playlistsError;
 
-      // Transform data to include song_count
-      const playlistsWithCounts = playlistsData?.map(playlist => ({
-        ...playlist,
-        song_count: Array.isArray(playlist.playlist_items) 
-          ? playlist.playlist_items.length 
-          : (playlist.playlist_items as any)?.count || 0
-      })) || [];
+      // Transform data to DbPlaylist with song_count
+      const playlistsWithCounts: DbPlaylist[] = (playlistsData || []).map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        is_favorites: p.is_favorites,
+        created_at: p.created_at,
+        updated_at: p.updated_at,
+        song_count: Array.isArray(p.playlist_items) ? p.playlist_items.length : (p.playlist_items as any)?.count || 0,
+      }));
+      if (!playlistsWithCounts.some(p => p.is_favorites)) {
+        const { data: createdFav, error: favErr } = await supabase
+          .from('playlists')
+          .insert([{ user_id: user.id, name: 'Favourites', is_favorites: true }])
+          .select()
+          .single();
+        if (!favErr && createdFav) {
+          playlistsWithCounts.unshift({ ...createdFav, song_count: 0 });
+        }
+      }
 
       setPlaylists(playlistsWithCounts);
 
@@ -85,7 +97,7 @@ export function usePlaylists() {
 
     } catch (error) {
       console.error('Error loading playlists:', error);
-      toast.error('Failed to load playlists');
+      toast({ title: 'Failed to load playlists', variant: 'destructive' });
     } finally {
       setIsLoading(false);
     }
@@ -110,7 +122,7 @@ export function usePlaylists() {
       return data || [];
     } catch (error) {
       console.error('Error loading playlist items:', error);
-      toast.error('Failed to load playlist items');
+      toast({ title: 'Failed to load playlist items', variant: 'destructive' });
       return [];
     }
   };
@@ -119,7 +131,10 @@ export function usePlaylists() {
   const createPlaylist = async (name: string) => {
     try {
       const user = await getCurrentUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user) {
+        toast({ title: 'Please log in to create playlists', variant: 'destructive' });
+        return null;
+      }
 
       const { data, error } = await supabase
         .from('playlists')
@@ -135,12 +150,12 @@ export function usePlaylists() {
 
       const newPlaylist = { ...data, song_count: 0 };
       setPlaylists(prev => [...prev, newPlaylist]);
-      toast.success(`Created playlist "${name}"`);
+      toast({ title: `Created playlist "${name}"` });
       
       return newPlaylist;
     } catch (error) {
       console.error('Error creating playlist:', error);
-      toast.error('Failed to create playlist');
+      toast({ title: 'Failed to create playlist', variant: 'destructive' });
       return null;
     }
   };
@@ -148,6 +163,12 @@ export function usePlaylists() {
   // Add track to playlist
   const addTrackToPlaylist = async (playlistId: string, track: TrackItem) => {
     try {
+      const user = await getCurrentUser();
+      if (!user) {
+        toast({ title: 'Please log in to add tracks to playlists', variant: 'destructive' });
+        return false;
+      }
+
       const { error } = await supabase
         .from('playlist_items')
         .insert([{
@@ -160,8 +181,8 @@ export function usePlaylists() {
         }]);
 
       if (error) {
-        if (error.code === '23505') {
-          toast.error('Track is already in this playlist');
+        if ((error as any).code === '23505') {
+          toast({ title: 'Track is already in this playlist', variant: 'destructive' });
           return false;
         }
         throw error;
@@ -194,12 +215,12 @@ export function usePlaylists() {
       }
 
       const playlist = playlists.find(p => p.id === playlistId);
-      toast.success(`Added "${track.title}" to "${playlist?.name}"`);
+      toast({ title: `Added "${track.title}" to "${playlist?.name}"` });
       
       return true;
     } catch (error) {
       console.error('Error adding track to playlist:', error);
-      toast.error('Failed to add track to playlist');
+      toast({ title: 'Failed to add track to playlist', variant: 'destructive' });
       return false;
     }
   };
@@ -230,19 +251,38 @@ export function usePlaylists() {
         }));
       }
 
-      toast.success('Track removed from playlist');
+      toast({ title: 'Track removed from playlist' });
       return true;
     } catch (error) {
       console.error('Error removing track from playlist:', error);
-      toast.error('Failed to remove track from playlist');
+      toast({ title: 'Failed to remove track from playlist', variant: 'destructive' });
       return false;
     }
   };
 
   // Toggle favorite
   const toggleFavorite = async (track: TrackItem) => {
-    const favoritesPlaylist = playlists.find(p => p.is_favorites);
-    if (!favoritesPlaylist) return false;
+    let favoritesPlaylist = playlists.find(p => p.is_favorites);
+
+    if (!favoritesPlaylist) {
+      const user = await getCurrentUser();
+      if (!user) {
+        toast({ title: 'Please log in to use Favourites', variant: 'destructive' });
+        return false;
+      }
+      const { data: createdFav, error: favErr } = await supabase
+        .from('playlists')
+        .insert([{ user_id: user.id, name: 'Favourites', is_favorites: true }])
+        .select()
+        .single();
+      if (favErr || !createdFav) {
+        toast({ title: 'Failed to create Favourites playlist', variant: 'destructive' });
+        return false;
+      }
+      const favDb: DbPlaylist = { ...createdFav, song_count: 0 };
+      setPlaylists(prev => [favDb, ...prev]);
+      favoritesPlaylist = favDb;
+    }
 
     const isFavorited = favoritedTracks.has(track.id);
 
@@ -279,11 +319,11 @@ export function usePlaylists() {
         p.id === playlistId ? { ...p, name: newName } : p
       ));
 
-      toast.success(`Playlist renamed to "${newName}"`);
+      toast({ title: `Playlist renamed to "${newName}"` });
       return true;
     } catch (error) {
       console.error('Error renaming playlist:', error);
-      toast.error('Failed to rename playlist');
+      toast({ title: 'Failed to rename playlist', variant: 'destructive' });
       return false;
     }
   };
@@ -293,7 +333,7 @@ export function usePlaylists() {
     try {
       const playlist = playlists.find(p => p.id === playlistId);
       if (playlist?.is_favorites) {
-        toast.error('Cannot delete Favourites playlist');
+        toast({ title: 'Cannot delete Favourites playlist', variant: 'destructive' });
         return false;
       }
 
@@ -311,11 +351,11 @@ export function usePlaylists() {
         return newItems;
       });
 
-      toast.success('Playlist deleted');
+      toast({ title: 'Playlist deleted' });
       return true;
     } catch (error) {
       console.error('Error deleting playlist:', error);
-      toast.error('Failed to delete playlist');
+      toast({ title: 'Failed to delete playlist', variant: 'destructive' });
       return false;
     }
   };
