@@ -564,9 +564,9 @@ export default function TrackListPanel({
                             setOpenAddOverlayTrackId(null);
                           }}
                         >
-                          <div className="h-full flex flex-col relative">
+                          <div className="h-full flex flex-col relative overflow-hidden">
                             {/* Playlists List - Full Height */}
-                            <div className="h-full overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pt-8 pb-3">
+                            <div className="flex-1 overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pt-8 pb-3">
                               <div className="space-y-2">
                                 {/* Mock Playlists */}
                                 {[
