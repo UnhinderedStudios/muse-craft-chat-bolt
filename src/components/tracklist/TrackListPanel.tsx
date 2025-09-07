@@ -607,7 +607,10 @@ export default function TrackListPanel({
                             </div>
 
                             {/* Search Bar - Overlaid at top */}
-                            <div className="absolute top-0 left-0 right-0 z-10 px-3 pt-1.5 pb-1 backdrop-blur-sm rounded-t-xl focus-within:bg-white/20 transition-colors" style={{ backgroundColor: '#151515CC' }}>
+                            <div 
+                              className="absolute top-0 left-0 right-0 z-10 px-3 pt-1.5 pb-1 backdrop-blur-sm rounded-t-xl transition-colors focus-within:[background-color:#2a2a2aCC]" 
+                              style={{ backgroundColor: '#151515CC' }}
+                            >
                               <div className="relative">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                                 <input
