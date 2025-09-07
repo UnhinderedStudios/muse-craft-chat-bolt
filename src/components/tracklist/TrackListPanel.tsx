@@ -351,7 +351,7 @@ export default function TrackListPanel({
                             onChange={(e) => setEditTitle(e.target.value)}
                             onBlur={() => handleTitleSubmit(actualIndex)}
                             onKeyDown={(e) => handleKeyDown(e, actualIndex)}
-                            className="w-full text-sm font-medium bg-transparent border-none outline-none text-white p-0 m-0"
+                            className="w-[90%] text-sm font-medium bg-transparent border-none outline-none text-white p-0 m-0"
                             autoFocus
                           />
                         ) : (
