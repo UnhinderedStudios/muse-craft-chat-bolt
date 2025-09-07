@@ -580,9 +580,12 @@ export default function TrackListPanel({
                          <div 
                            className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
                            style={{ backgroundColor: '#151515CC' }}
-                           onClick={() => {
-                             setOpenAddOverlayTrackId(null);
-                             setClickedPlaylists(new Set()); // Reset clicked state when closing
+                           onClick={(e) => {
+                             // Only close if clicking directly on the backdrop
+                             if (e.target === e.currentTarget) {
+                               setOpenAddOverlayTrackId(null);
+                               setClickedPlaylists(new Set()); // Reset clicked state when closing
+                             }
                            }}
                          >
                            <div 
@@ -691,17 +694,27 @@ export default function TrackListPanel({
                                        className="text-white/40 hover:text-white hover:scale-110 transition-all duration-200"
                                        onClick={(e) => {
                                          e.stopPropagation();
-                                         // Add to clicked playlists to show checkmark
-                                         setClickedPlaylists(prev => new Set([...prev, playlist.id]));
-                                         // TODO: Add song to playlist
-                                         console.log(`Adding song "${t.title}" to playlist "${playlist.name}"`);
+                                         // Toggle playlist in clicked set
+                                         setClickedPlaylists(prev => {
+                                           const newSet = new Set(prev);
+                                           if (newSet.has(playlist.id)) {
+                                             newSet.delete(playlist.id);
+                                           } else {
+                                             newSet.add(playlist.id);
+                                           }
+                                           return newSet;
+                                         });
+                                         // TODO: Add/remove song to/from playlist
+                                         console.log(`${clickedPlaylists.has(playlist.id) ? 'Removing' : 'Adding'} song "${t.title}" ${clickedPlaylists.has(playlist.id) ? 'from' : 'to'} playlist "${playlist.name}"`);
                                        }}
                                      >
-                                       {clickedPlaylists.has(playlist.id) ? (
-                                         <Check className="w-4 h-4 text-green-400" />
-                                       ) : (
-                                         <Plus className="w-4 h-4" />
-                                       )}
+                                       <div className="relative w-4 h-4">
+                                         {clickedPlaylists.has(playlist.id) ? (
+                                           <Check className="w-4 h-4 text-green-400 animate-scale-in" />
+                                         ) : (
+                                           <Plus className="w-4 h-4 animate-scale-in" />
+                                         )}
+                                       </div>
                                      </button>
                                         </div>
                                       ))}
