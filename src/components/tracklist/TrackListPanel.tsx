@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Play, Pause, RotateCw, X, Heart, Download, Plus, Trash2, Search, Edit3, MoreVertical, Music, Check, FileDown, Image, FileText, Info, AlertCircle } from "lucide-react";
+import { Play, Pause, RotateCw, X, Heart, Download, Plus, Trash2, Search, Edit3, MoreVertical, Music, Check } from "lucide-react";
 import { TrackItem } from "@/types";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -74,10 +74,9 @@ export default function TrackListPanel({
   // Menu overlay state
   const [openMenuTrackId, setOpenMenuTrackId] = useState<string | null>(null);
   
-  // Delete, Add, and Download overlay states
+  // Delete and Add overlay states
   const [openDeleteOverlayTrackId, setOpenDeleteOverlayTrackId] = useState<string | null>(null);
   const [openAddOverlayTrackId, setOpenAddOverlayTrackId] = useState<string | null>(null);
-  const [openDownloadOverlayTrackId, setOpenDownloadOverlayTrackId] = useState<string | null>(null);
   
   // Playlist search state
   const [playlistSearchQuery, setPlaylistSearchQuery] = useState("");
@@ -355,12 +354,11 @@ export default function TrackListPanel({
                       className="absolute top-1 right-2 text-white/60 hover:text-white transition-colors z-30 w-6 h-6 flex items-center justify-center"
                        onClick={(e) => {
                          e.stopPropagation();
-                          // If any overlay is open, close all overlays
-                          if (openMenuTrackId === t.id || openDeleteOverlayTrackId === t.id || openAddOverlayTrackId === t.id || openDownloadOverlayTrackId === t.id) {
-                            setOpenMenuTrackId(null);
-                            setOpenDeleteOverlayTrackId(null);
-                            setOpenAddOverlayTrackId(null);
-                            setOpenDownloadOverlayTrackId(null);
+                         // If any overlay is open, close all overlays
+                         if (openMenuTrackId === t.id || openDeleteOverlayTrackId === t.id || openAddOverlayTrackId === t.id) {
+                           setOpenMenuTrackId(null);
+                           setOpenDeleteOverlayTrackId(null);
+                           setOpenAddOverlayTrackId(null);
                          } else {
                            // If no overlays are open, toggle the menu
                            setOpenMenuTrackId(openMenuTrackId === t.id ? null : t.id);
@@ -523,10 +521,9 @@ export default function TrackListPanel({
                             className="text-white/60 hover:text-white transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setOpenDownloadOverlayTrackId(openDownloadOverlayTrackId === t.id ? null : t.id);
+                              setOpenDeleteOverlayTrackId(openDeleteOverlayTrackId === t.id ? null : t.id);
                               setOpenMenuTrackId(null);
                               setOpenAddOverlayTrackId(null);
-                              setOpenDeleteOverlayTrackId(null);
                             }}
                           >
                             <Download className="w-4 h-4" />
@@ -538,7 +535,6 @@ export default function TrackListPanel({
                               setOpenDeleteOverlayTrackId(openDeleteOverlayTrackId === t.id ? null : t.id);
                               setOpenMenuTrackId(null);
                               setOpenAddOverlayTrackId(null);
-                              setOpenDownloadOverlayTrackId(null);
                             }}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -760,82 +756,7 @@ export default function TrackListPanel({
                             </div>
                           </div>
                         </div>
-                       )}
-                </div>
-              )}
-
-              {/* Download Overlay */}
-              {openDownloadOverlayTrackId === t.id && (
-                <div 
-                  className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
-                  style={{ backgroundColor: '#151515CC' }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setOpenDownloadOverlayTrackId(null);
-                  }}
-                >
-                  <div className="h-full flex flex-col items-center justify-center gap-2 px-4">
-                    <p className="text-gray-400 text-xs mb-1">Download Options</p>
-                    <div className="flex gap-2 w-full mt-2">
-                      {/* MP3 Download */}
-                      <button
-                        className="relative h-6 px-3 rounded-xl bg-green-500/20 text-green-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const link = document.createElement('a');
-                          link.href = t.url;
-                          link.download = `${t.title || 'song'}.mp3`;
-                          link.click();
-                          setOpenDownloadOverlayTrackId(null);
-                        }}
-                      >
-                        <div className="absolute inset-0 bg-green-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                        <span className="relative z-10">MP3</span>
-                      </button>
-
-                      {/* Cover Download */}
-                      {t.coverUrl && (
-                        <button
-                          className="relative h-6 px-3 rounded-xl bg-purple-500/20 text-purple-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const link = document.createElement('a');
-                            link.href = t.coverUrl;
-                            link.download = `${t.title || 'song'}_cover.jpg`;
-                            link.click();
-                            setOpenDownloadOverlayTrackId(null);
-                          }}
-                        >
-                          <div className="absolute inset-0 bg-purple-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                          <span className="relative z-10">Cover</span>
-                        </button>
                       )}
-
-                      {/* Lyrics Download */}
-                      {(t.words && t.words.length > 0) && (
-                        <button
-                          className="relative h-6 px-3 rounded-xl bg-cyan-500/20 text-cyan-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (t.words) {
-                              const lyricsText = t.words.map(w => w.word).join(' ');
-                              const blob = new Blob([lyricsText], { type: 'text/plain' });
-                              const url = URL.createObjectURL(blob);
-                              const link = document.createElement('a');
-                              link.href = url;
-                              link.download = `${t.title || 'song'}_lyrics.txt`;
-                              link.click();
-                              URL.revokeObjectURL(url);
-                            }
-                            setOpenDownloadOverlayTrackId(null);
-                          }}
-                        >
-                          <div className="absolute inset-0 bg-cyan-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                          <span className="relative z-10">Lyrics</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
                 </div>
               )}
 
