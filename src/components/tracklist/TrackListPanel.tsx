@@ -566,18 +566,20 @@ export default function TrackListPanel({
                         >
                           <div className="h-full flex flex-col p-3">
                             {/* Search Bar */}
-                            <div className="relative mb-3">
-                              <input
-                                type="text"
-                                placeholder="Search playlists..."
-                                className="w-full bg-[#1e1e1e] border-0 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-white/20"
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                            <div className="flex justify-center mb-3">
+                              <div className="relative w-4/5">
+                                <input
+                                  type="text"
+                                  placeholder="Search playlists..."
+                                  className="w-full bg-[#1e1e1e] border-0 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-white/20"
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                              </div>
                             </div>
 
                             {/* Playlists List */}
-                            <div className="flex-1 overflow-y-auto overflow-x-hidden lyrics-scrollbar">
+                            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lyrics-scrollbar pb-3">
                               <div className="space-y-2">
                                 {/* Mock Playlists */}
                                 {[
