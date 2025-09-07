@@ -635,11 +635,11 @@ export default function TrackListPanel({
                                   
                                   return (
                                     <>
-                                      {playlistSearchQuery && (
-                                        <div className="text-xs text-white/40 px-2 pb-2">
-                                          {filteredPlaylists.length} playlist{filteredPlaylists.length !== 1 ? 's' : ''} found
-                                        </div>
-                                      )}
+                                       {playlistSearchQuery && (
+                                         <div className="text-xs text-white/40 px-1 pb-2">
+                                           {filteredPlaylists.length} playlist{filteredPlaylists.length !== 1 ? 's' : ''} found
+                                         </div>
+                                       )}
                                       {filteredPlaylists.map((playlist) => (
                                   <div
                                     key={playlist.id}
