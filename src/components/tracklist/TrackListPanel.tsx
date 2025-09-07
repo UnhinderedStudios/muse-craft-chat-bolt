@@ -330,10 +330,15 @@ export default function TrackListPanel({
                       className="absolute top-2 right-2 text-white/60 hover:text-white transition-colors z-30 w-6 h-6 flex items-center justify-center"
                        onClick={(e) => {
                          e.stopPropagation();
-                         // Close all overlays when clicking the X
-                         setOpenMenuTrackId(null);
-                         setOpenDeleteOverlayTrackId(null);
-                         setOpenAddOverlayTrackId(null);
+                         // If any overlay is open, close all overlays
+                         if (openMenuTrackId === t.id || openDeleteOverlayTrackId === t.id || openAddOverlayTrackId === t.id) {
+                           setOpenMenuTrackId(null);
+                           setOpenDeleteOverlayTrackId(null);
+                           setOpenAddOverlayTrackId(null);
+                         } else {
+                           // If no overlays are open, toggle the menu
+                           setOpenMenuTrackId(openMenuTrackId === t.id ? null : t.id);
+                         }
                        }}
                     >
                       <div className="relative w-4 h-4">
