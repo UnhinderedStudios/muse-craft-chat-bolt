@@ -1414,13 +1414,10 @@ const Index = () => {
             return newTracks;
           });
           
-          // Clean up job after successful track creation (delayed to ensure covers are preserved)
+          // Clean up job immediately after successful track creation and cover assignment
           if (wrapperJobId) {
-            console.log(`[Generation] Scheduling cleanup for job ${wrapperJobId} in 3 seconds to preserve covers`);
-            setTimeout(() => {
-              console.log(`[Generation] Cleaning up job ${wrapperJobId} after delay`);
-              setActiveGenerations(prev => prev.filter(job => job.id !== wrapperJobId));
-            }, 3000); // 3 second delay to ensure covers are properly transferred
+            console.log(`[Generation] Cleaning up job ${wrapperJobId} immediately after track creation`);
+            setActiveGenerations(prev => prev.filter(job => job.id !== wrapperJobId));
           }
           
           // Audio elements reset naturally when src changes - no manual reset needed
