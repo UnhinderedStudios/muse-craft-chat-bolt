@@ -78,9 +78,6 @@ export default function TrackListPanel({
   const [openDeleteOverlayTrackId, setOpenDeleteOverlayTrackId] = useState<string | null>(null);
   const [openAddOverlayTrackId, setOpenAddOverlayTrackId] = useState<string | null>(null);
   
-  // Playlist search state
-  const [playlistSearchQuery, setPlaylistSearchQuery] = useState("");
-  
   // Drag functionality
   const { startDrag, dragState } = useDrag();
   
@@ -225,59 +222,212 @@ export default function TrackListPanel({
             })}
             
             {paginatedTracks.map((t, pageIndex) => {
-              // Calculate the actual index in the original tracks array
-              const actualIndex = tracks.findIndex(track => track.id === t.id);
-              const active = actualIndex === currentIndex;
-              return (
-                <div
-                  key={t.id}
-                  className={`${active ? "" : "rounded-xl bg-[#1e1e1e] p-3 cursor-pointer hover:bg-[#252525] transition-colors"}`}
-                  onClick={!active ? () => {
-                    setCurrentIndex(actualIndex);
-                    onPlayPause(actualIndex);
-                  } : undefined}
+          // Calculate the actual index in the original tracks array
+          const actualIndex = tracks.findIndex(track => track.id === t.id);
+          const active = actualIndex === currentIndex;
+          return (
+            <div
+              key={t.id}
+              className={`${active ? "" : "rounded-xl bg-[#1e1e1e] p-3 cursor-pointer hover:bg-[#252525] transition-colors"}`}
+              onClick={!active ? () => {
+                setCurrentIndex(actualIndex);
+                onPlayPause(actualIndex);
+              } : undefined}
+              onMouseEnter={() => setHoveredTracks(prev => ({ ...prev, [t.id]: true }))}
+              onMouseLeave={() => setHoveredTracks(prev => ({ ...prev, [t.id]: false }))}
+            >
+              {!active ? (
+                /* Regular track row */
+                <div 
+                  className={cn(
+                    "flex items-center gap-3",
+                    dragStartTrack?.track.id === t.id && "track-detaching"
+                  )}
+                  onMouseDown={(e) => {
+                    // Only start drag detection for non-selected tracks
+                    if (!active) {
+                      setDragStartTrack({ 
+                        track: t, 
+                        startPos: { x: e.clientX, y: e.clientY } 
+                      });
+                      startDrag(t, e);
+                    }
+                  }}
+                  onMouseUp={() => {
+                    setDragStartTrack(null);
+                  }}
+                >
+                  <div className="shrink-0 w-10 h-10 rounded-md bg-black/30 overflow-hidden">
+                    {t.coverUrl ? (
+                      <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20" />
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <EllipsisMarquee
+                      text={`No Artist – ${t.title || "Song Title"}`}
+                      className="text-xs text-white/60"
+                      speedPxPerSec={70}
+                      gapPx={32}
+                      isActive={hoveredTracks[t.id]}
+                    />
+                    <div
+                      className="mt-1 h-1.5 bg-white/10 rounded cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        
+                        const audio = audioRefs.current[actualIndex];
+                        if (!audio || !audio.duration) return;
+                        const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+                        const pct = (e.clientX - rect.left) / rect.width;
+                        const seek = pct * audio.duration;
+                        
+                        if (actualIndex !== currentIndex) {
+                          setCurrentIndex(actualIndex);
+                          onPlayPause(actualIndex);
+                        }
+                        
+                        onSeek(seek);
+                      }}
+                    >
+                       <div
+                         className="h-full bg-white/70 rounded"
+                         style={{
+                            width: (() => {
+                              const a = audioRefs.current[actualIndex];
+                              if (!a || !a.duration) return "0%";
+                              const time = audioCurrentTimes[actualIndex] || 0;
+                              return `${(time / a.duration) * 100}%`;
+                            })(),
+                         }}
+                       />
+                    </div>
+                  </div>
+
+                  <button
+                    className="w-8 h-8 shrink-0 flex items-center justify-center text-white/60 hover:text-white transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPlayPause(actualIndex);
+                    }}
+                  >
+                    <Play className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                /* Active track - album art hugs left edge */
+                <div 
+                  className="bg-[#1e1e1e] rounded-xl flex flex-col relative"
                   onMouseEnter={() => setHoveredTracks(prev => ({ ...prev, [t.id]: true }))}
                   onMouseLeave={() => setHoveredTracks(prev => ({ ...prev, [t.id]: false }))}
                 >
-                  {!active ? (
-                    /* Regular track row */
-                    <div 
-                      className={cn(
-                        "flex items-center gap-3",
-                        dragStartTrack?.track.id === t.id && "track-detaching"
-                      )}
-                      onMouseDown={(e) => {
-                        // Only start drag detection for non-selected tracks
-                        if (!active) {
-                          setDragStartTrack({ 
-                            track: t, 
-                            startPos: { x: e.clientX, y: e.clientY } 
-                          });
-                          startDrag(t, e);
-                        }
-                      }}
-                      onMouseUp={() => {
-                        setDragStartTrack(null);
-                      }}
+                  {/* First row: Album art + Content */}
+                  <div className="flex relative">
+                    {/* Top-right menu icon */}
+                    <button 
+                      className="absolute top-1 right-2 text-white/60 hover:text-white transition-colors z-30 w-6 h-6 flex items-center justify-center"
+                       onClick={(e) => {
+                         e.stopPropagation();
+                         // If any overlay is open, close all overlays
+                         if (openMenuTrackId === t.id || openDeleteOverlayTrackId === t.id || openAddOverlayTrackId === t.id) {
+                           setOpenMenuTrackId(null);
+                           setOpenDeleteOverlayTrackId(null);
+                           setOpenAddOverlayTrackId(null);
+                         } else {
+                           // If no overlays are open, toggle the menu
+                           setOpenMenuTrackId(openMenuTrackId === t.id ? null : t.id);
+                         }
+                       }}
                     >
-                      <div className="shrink-0 w-10 h-10 rounded-md bg-black/30 overflow-hidden">
-                        {t.coverUrl ? (
-                          <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
+                      <div className="relative w-4 h-4">
+                        <MoreVertical 
+                          className={`w-4 h-4 absolute transition-all duration-200 ease-in-out ${
+                            openMenuTrackId === t.id || openDeleteOverlayTrackId === t.id || openAddOverlayTrackId === t.id
+                              ? 'opacity-0 rotate-90 scale-75' 
+                              : 'opacity-100 rotate-0 scale-100'
+                          }`}
+                        />
+                        <X 
+                          className={`w-4 h-4 absolute transition-all duration-200 ease-in-out ${
+                            openMenuTrackId === t.id || openDeleteOverlayTrackId === t.id || openAddOverlayTrackId === t.id
+                              ? 'opacity-100 rotate-0 scale-100' 
+                              : 'opacity-0 rotate-90 scale-75'
+                          }`}
+                        />
+                      </div>
+                    </button>
+                    {/* Album art - flush with container left edge, only top-left corner rounded */}
+                    <div className="shrink-0 w-16 h-16 bg-black/30 overflow-hidden rounded-tl-xl rounded-br-xl relative group">
+                      {t.coverUrl ? (
+                        <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20" />
+                      )}
+                      <div 
+                        className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedTrackForRegen(t);
+                          setShowQuickAlbumGenerator(true);
+                        }}
+                      >
+                        <RotateCw className="w-4 h-4 text-white group-hover:animate-[spin_0.36s_ease-in-out] transition-transform" />
+                      </div>
+                    </div>
+
+                     {/* Content area next to album art */}
+                     <div className="flex-1 ml-3 mr-3 flex flex-col justify-start min-w-0">
+                      {/* Title above controls */}
+                      <div className="mb-1 mt-1">
+                        {isEditingTitle ? (
+                          <input
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            onBlur={() => handleTitleSubmit(actualIndex)}
+                            onKeyDown={(e) => handleKeyDown(e, actualIndex)}
+                            className="w-[90%] text-sm font-medium bg-transparent border-none outline-none text-white p-0 m-0"
+                            autoFocus
+                          />
                         ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20" />
+                          <div 
+                            onClick={() => handleTitleClick(actualIndex)}
+                            className="cursor-pointer group/title w-full overflow-hidden"
+                          >
+                             <div className="flex items-baseline gap-1 w-full min-w-0">
+                               <div className="min-w-0 w-[90%] flex items-baseline">
+                                 <EllipsisMarquee
+                                   text={t.title || "Song Title"}
+                                   className="text-sm text-white font-medium"
+                                   speedPxPerSec={30}
+                                   gapPx={32}
+                                   isActive={hoveredTracks[t.id]}
+                                 />
+                                 <Edit3 className="w-3 h-3 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0 ml-1" />
+                               </div>
+                             </div>
+                          </div>
                         )}
+                        <div className="text-xs text-white/60 truncate">No Artist</div>
                       </div>
 
-                      <div className="flex-1 min-w-0">
-                        <EllipsisMarquee
-                          text={`No Artist – ${t.title || "Song Title"}`}
-                          className="text-xs text-white/60"
-                          speedPxPerSec={70}
-                          gapPx={32}
-                          isActive={hoveredTracks[t.id]}
-                        />
-                        <div
-                          className="mt-1 h-1.5 bg-white/10 rounded cursor-pointer"
+                      {/* Controls line: Play button + Progress bar + 4 icons */}
+                      <div className="flex items-center gap-3 mb-3 -ml-1">
+                        {/* Play button */}
+                        <button
+                          className="w-6 h-6 flex items-center justify-center text-white hover:text-white/80 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onPlayPause(actualIndex);
+                          }}
+                        >
+                          {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                        </button>
+
+                        {/* Progress bar */}
+                        <div 
+                          className="flex-1 h-1.5 bg-white/10 rounded cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
                             
@@ -287,340 +437,158 @@ export default function TrackListPanel({
                             const pct = (e.clientX - rect.left) / rect.width;
                             const seek = pct * audio.duration;
                             
-                            if (actualIndex !== currentIndex) {
-                              setCurrentIndex(actualIndex);
-                              onPlayPause(actualIndex);
-                            }
-                            
                             onSeek(seek);
                           }}
                         >
                            <div
                              className="h-full bg-white/70 rounded"
                              style={{
-                                width: (() => {
-                                  const a = audioRefs.current[actualIndex];
-                                  if (!a || !a.duration) return "0%";
-                                  const time = audioCurrentTimes[actualIndex] || 0;
-                                  return `${(time / a.duration) * 100}%`;
-                                })(),
+                               width: (() => {
+                              const a = audioRefs.current[actualIndex];
+                              if (!a || !a.duration) return "0%";
+                              const time = audioCurrentTimes[actualIndex] || 0;
+                              return `${(time / a.duration) * 100}%`;
+                               })(),
                              }}
                            />
                         </div>
-                      </div>
 
-                      <button
-                        className="w-8 h-8 shrink-0 flex items-center justify-center text-white/60 hover:text-white transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onPlayPause(actualIndex);
-                        }}
-                      >
-                        <Play className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    /* Active track - album art hugs left edge */
-                    <div 
-                      className="bg-[#1e1e1e] rounded-xl flex flex-col relative"
-                      onMouseEnter={() => setHoveredTracks(prev => ({ ...prev, [t.id]: true }))}
-                      onMouseLeave={() => setHoveredTracks(prev => ({ ...prev, [t.id]: false }))}
-                    >
-                      {/* First row: Album art + Content */}
-                      <div className="flex relative">
-                        {/* Top-right menu icon */}
-                        <button 
-                          className="absolute top-1 right-2 text-white/60 hover:text-white transition-colors z-30 w-6 h-6 flex items-center justify-center"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             // If any overlay is open, close all overlays
-                             if (openMenuTrackId === t.id || openDeleteOverlayTrackId === t.id || openAddOverlayTrackId === t.id) {
-                               setOpenMenuTrackId(null);
-                               setOpenDeleteOverlayTrackId(null);
-                               setOpenAddOverlayTrackId(null);
-                             } else {
-                               // If no overlays are open, toggle the menu
-                               setOpenMenuTrackId(openMenuTrackId === t.id ? null : t.id);
-                             }
-                           }}
-                        >
-                          <div className="relative w-4 h-4">
-                            <MoreVertical 
-                              className={`w-4 h-4 absolute transition-all duration-200 ease-in-out ${
-                                openMenuTrackId === t.id || openDeleteOverlayTrackId === t.id || openAddOverlayTrackId === t.id
-                                  ? 'opacity-0 rotate-90 scale-75' 
-                                  : 'opacity-100 rotate-0 scale-100'
-                              }`}
-                            />
-                            <X 
-                              className={`w-4 h-4 absolute transition-all duration-200 ease-in-out ${
-                                openMenuTrackId === t.id || openDeleteOverlayTrackId === t.id || openAddOverlayTrackId === t.id
-                                  ? 'opacity-100 rotate-0 scale-100' 
-                                  : 'opacity-0 rotate-90 scale-75'
-                              }`}
-                            />
-                          </div>
-                        </button>
-                        {/* Album art - flush with container left edge, only top-left corner rounded */}
-                        <div className="shrink-0 w-16 h-16 bg-black/30 overflow-hidden rounded-tl-xl rounded-br-xl relative group">
-                          {t.coverUrl ? (
-                            <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20" />
-                          )}
-                          <div 
-                            className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
+                        {/* 4 control icons */}
+                        <div className="flex items-center gap-2">
+                          <button className="text-white/60 hover:text-white transition-colors">
+                            <Heart className="w-4 h-4" />
+                          </button>
+                          <button className="text-white/60 hover:text-white transition-colors">
+                            <Redo2 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            className="text-white/60 hover:text-white transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedTrackForRegen(t);
-                              setShowQuickAlbumGenerator(true);
+                              setOpenAddOverlayTrackId(openAddOverlayTrackId === t.id ? null : t.id);
+                              setOpenMenuTrackId(null);
+                              setOpenDeleteOverlayTrackId(null);
                             }}
                           >
-                            <RotateCw className="w-4 h-4 text-white group-hover:animate-[spin_0.36s_ease-in-out] transition-transform" />
-                          </div>
-                        </div>
-
-                         {/* Content area next to album art */}
-                         <div className="flex-1 ml-3 mr-3 flex flex-col justify-start min-w-0">
-                          {/* Title above controls */}
-                          <div className="mb-1 mt-1">
-                            {isEditingTitle ? (
-                              <input
-                                value={editTitle}
-                                onChange={(e) => setEditTitle(e.target.value)}
-                                onBlur={() => handleTitleSubmit(actualIndex)}
-                                onKeyDown={(e) => handleKeyDown(e, actualIndex)}
-                                className="w-[90%] text-sm font-medium bg-transparent border-none outline-none text-white p-0 m-0"
-                                autoFocus
-                              />
-                            ) : (
-                              <div 
-                                onClick={() => handleTitleClick(actualIndex)}
-                                className="cursor-pointer group/title w-full overflow-hidden"
-                              >
-                                 <div className="flex items-baseline gap-1 w-full min-w-0">
-                                   <div className="min-w-0 w-[90%] flex items-baseline">
-                                     <EllipsisMarquee
-                                       text={t.title || "Song Title"}
-                                       className="text-sm text-white font-medium"
-                                       speedPxPerSec={30}
-                                       gapPx={32}
-                                       isActive={hoveredTracks[t.id]}
-                                     />
-                                     <Edit3 className="w-3 h-3 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0 ml-1" />
-                                   </div>
-                                 </div>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Controls row */}
-                          <div className="flex items-center gap-2 mt-1">
-                            <button
-                              className="w-7 h-7 shrink-0 flex items-center justify-center text-white/60 hover:text-white transition-colors rounded-md bg-white/5 hover:bg-white/10"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onPlayPause(actualIndex);
-                              }}
-                            >
-                              {isPlaying && playingTrackIndex === actualIndex ? (
-                                <Pause className="w-4 h-4" />
-                              ) : (
-                                <Play className="w-4 h-4" />
-                              )}
-                            </button>
-
-                            {/* Progress bar that takes remaining space */}
-                            <div 
-                              className="flex-1 h-1 bg-white/10 rounded cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                
-                                const audio = audioRefs.current[actualIndex];
-                                if (!audio || !audio.duration) return;
-                                const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-                                const pct = (e.clientX - rect.left) / rect.width;
-                                const seek = pct * audio.duration;
-                                
-                                onSeek(seek);
-                              }}
-                            >
-                              <div
-                                className="h-full bg-white/70 rounded"
-                                style={{
-                                  width: (() => {
-                                    const a = audioRefs.current[actualIndex];
-                                    if (!a || !a.duration) return "0%";
-                                    const time = audioCurrentTimes[actualIndex] || 0;
-                                    return `${(time / a.duration) * 100}%`;
-                                  })(),
-                                }}
-                              />
-                            </div>
-                          </div>
+                            <Plus className="w-4 h-4" />
+                          </button>
+                          <button 
+                            className="text-white/60 hover:text-white transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenDeleteOverlayTrackId(openDeleteOverlayTrackId === t.id ? null : t.id);
+                              setOpenMenuTrackId(null);
+                              setOpenAddOverlayTrackId(null);
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
+                     </div>
+                   </div>
 
-                      {/* Menu overlay */}
-                      {openMenuTrackId === t.id && (
-                        <div 
-                          className="absolute top-0 left-0 w-full h-full bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center p-3 z-20"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="flex gap-6">
-                            {/* Favorite Button */}
-                            <button 
-                              className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                console.log("Favoriting track:", t.title);
-                                setOpenMenuTrackId(null);
-                              }}
-                            >
-                              <Heart className="w-5 h-5 text-white/60" />
-                              <span className="text-xs text-white/60">Favorite</span>
-                            </button>
-                            
-                            {/* Add to Playlist Button */}
-                            <button 
-                              className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenMenuTrackId(null);
-                                setOpenAddOverlayTrackId(t.id);
-                              }}
-                            >
-                              <Plus className="w-5 h-5 text-white/60" />
-                              <span className="text-xs text-white/60">Add to Playlist</span>
-                            </button>
-                            
-                            {/* Regenerate Button */}
-                            <button 
-                              className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                console.log("Regenerating track:", t.title);
-                                setOpenMenuTrackId(null);
-                              }}
-                            >
-                              <Redo2 className="w-5 h-5 text-white/60" />
-                              <span className="text-xs text-white/60">Regenerate</span>
-                            </button>
-                            
-                            {/* Delete Button */}
-                            <button 
-                              className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenMenuTrackId(null);
-                                setOpenDeleteOverlayTrackId(t.id);
-                              }}
-                            >
-                              <Trash2 className="w-5 h-5 text-red-400" />
-                              <span className="text-xs text-red-400">Delete</span>
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                   {/* Second row: Parameters - full width from album art left edge */}
+                   <div className="-mt-0.5 pr-1">
+                     <div className="max-h-[120px] overflow-y-auto lyrics-scrollbar">
+                       <div className="flex flex-wrap gap-x-1.5 gap-y-1.5 px-2 pb-2">
+                         {(t.params || ["ambient", "chill", "electronic"]).map((p, idx) => (
+                           <div key={idx} className="px-3 py-1.5 rounded-full bg-white/25 text-[12px] text-black font-semibold text-center whitespace-nowrap">
+                             {p}
+                           </div>
+                         ))}
+                       </div>
+                     </div>
+                   </div>
 
-                      {/* Delete confirmation overlay */}
-                      {openDeleteOverlayTrackId === t.id && (
-                        <div 
-                          className="absolute top-0 left-0 w-full h-full bg-[#1a1a1a] rounded-xl flex flex-col items-center justify-center p-3 z-20"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="text-center">
-                            <h3 className="text-white text-sm font-medium mb-2">Delete Track?</h3>
-                            <p className="text-white/60 text-xs mb-4">This action cannot be undone</p>
-                            <div className="flex gap-3">
-                              <button 
-                                className="px-4 py-2 bg-white/10 text-white/80 rounded-lg text-xs hover:bg-white/20 transition-colors"
+                     {/* Overlay Menu */}
+                     {openMenuTrackId === t.id && (
+                       <div 
+                          className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
+                         style={{ backgroundColor: '#151515CC' }}
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           setOpenMenuTrackId(null);
+                         }}
+                       >
+                       </div>
+                     )}
+
+                     {/* Delete Overlay */}
+                     {openDeleteOverlayTrackId === t.id && (
+                       <div 
+                          className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
+                         style={{ backgroundColor: '#151515CC' }}
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           setOpenDeleteOverlayTrackId(null);
+                         }}
+                       >
+                          <div className="h-full flex flex-col items-center justify-center gap-2 px-4">
+                            <p className="text-gray-400 text-xs mb-1">Caution: Deletion is permanent</p>
+                            <div className="flex gap-3 w-full mt-2">
+                              <button
+                                className="relative h-6 px-4 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group"
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  // TODO: Handle hide functionality
                                   setOpenDeleteOverlayTrackId(null);
                                 }}
                               >
-                                Cancel
+                                <div className="absolute inset-0 bg-gray-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                                <span className="relative z-10">Hide</span>
                               </button>
-                              <button 
-                                className="px-4 py-2 bg-red-500/80 text-white rounded-lg text-xs hover:bg-red-500 transition-colors"
+                              <button
+                                className="relative h-6 px-4 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  console.log("Deleting track:", t.title);
+                                  // TODO: Handle delete functionality
                                   setOpenDeleteOverlayTrackId(null);
                                 }}
                               >
-                                Delete
+                                <div className="absolute inset-0 bg-red-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                                <span className="relative z-10">Delete</span>
                               </button>
                             </div>
                           </div>
-                        </div>
-                      )}
+                       </div>
+                     )}
 
-                      {/* Add to playlist overlay */}
+                      {/* Add Overlay */}
                       {openAddOverlayTrackId === t.id && (
                         <div 
-                          className="absolute top-0 left-0 w-full h-full bg-[#1a1a1a] rounded-xl flex flex-col z-20"
-                          onClick={(e) => e.stopPropagation()}
+                          className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
+                          style={{ backgroundColor: '#151515CC' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenAddOverlayTrackId(null);
+                          }}
                         >
-                          {/* Header */}
-                          <div className="flex items-center justify-between p-3 border-b border-white/10">
-                            <h3 className="text-white text-sm font-medium">Add to Playlist</h3>
-                            <div className="flex items-center gap-2">
+                          <div className="h-full flex flex-col">
+                            {/* Search Bar */}
+                            <div className="flex justify-center p-3 pb-2">
                               <div className="relative w-4/5">
                                 <input
                                   type="text"
                                   placeholder="Search playlists..."
-                                  value={playlistSearchQuery}
-                                  onChange={(e) => setPlaylistSearchQuery(e.target.value)}
-                                  className="w-full bg-[#1e1e1e] border-0 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-white/20 pr-10"
+                                  className="w-full bg-[#1e1e1e] border-0 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-white/20"
                                   onClick={(e) => e.stopPropagation()}
                                 />
-                                {playlistSearchQuery ? (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setPlaylistSearchQuery("");
-                                    }}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                ) : (
-                                  <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
-                                )}
+                                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
                               </div>
                             </div>
-                          </div>
 
-                          {/* Playlists List */}
-                          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pb-3">
-                            <div className="space-y-2">
-                              {(() => {
-                                const mockPlaylists = [
+                            {/* Playlists List */}
+                            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pb-3">
+                              <div className="space-y-2">
+                                {/* Mock Playlists */}
+                                {[
                                   { id: "fav", name: "Favourites", songCount: 12 },
                                   { id: "chill", name: "Chill Vibes", songCount: 8 },
                                   { id: "workout", name: "Workout Mix", songCount: 15 },
                                   { id: "focus", name: "Deep Focus", songCount: 6 },
                                   { id: "party", name: "Party Hits", songCount: 24 }
-                                ];
-                                
-                                const filteredPlaylists = playlistSearchQuery.trim() === ""
-                                  ? mockPlaylists
-                                  : mockPlaylists.filter(playlist =>
-                                      playlist.name.toLowerCase().includes(playlistSearchQuery.toLowerCase())
-                                    );
-                                
-                                if (filteredPlaylists.length === 0) {
-                                  return (
-                                    <div className="text-center py-8 text-white/40">
-                                      <Music className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                                      <p className="text-sm">No playlists found</p>
-                                    </div>
-                                  );
-                                }
-                                
-                                return filteredPlaylists.map((playlist) => (
+                                ].map((playlist) => (
                                   <div
                                     key={playlist.id}
                                     className="flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors cursor-pointer group"
@@ -647,113 +615,124 @@ export default function TrackListPanel({
                                       <Plus className="w-3 h-3 text-accent-primary" />
                                     </button>
                                   </div>
-                                ));
-                              })()}
+                                ))}
+                              </div>
                             </div>
                           </div>
                         </div>
                       )}
-                    </div>
-                  )}
-
-                  {/* Hidden audio element per track */}
-                   <audio
-                     src={t.url}
-                     preload="auto"
-                     autoPlay={false}
-                     muted={false}
-                     className="hidden"
-                     crossOrigin="anonymous"
-                      ref={(el) => { 
-                        if (el) {
-                          audioRefs.current[actualIndex] = el;
-                          // CRITICAL: Ensure no auto-play when element is created
-                          el.autoplay = false;
-                          console.log(`[AUDIO DEBUG] Created audio element at index ${actualIndex}, autoplay disabled`);
-                        }
-                      }}
-                      onTimeUpdate={(e) => {
-                        const audio = e.currentTarget;
-                        // CRITICAL: Only update if this is the currently playing track AND playing
-                        if (actualIndex === playingTrackIndex && isPlaying && !audio.paused) {
-                          onTimeUpdate(audio);
-                          setAudioCurrentTimes(prev => {
-                            const newTimes = [...prev];
-                            newTimes[actualIndex] = audio.currentTime;
-                            return newTimes;
-                          });
-                        }
-                      }}
-                   />
                 </div>
-              );
-            })}
-            
-               {filteredTracks.length === 0 && (
-                 <div className="text-center text-white/40 py-8">
-                   {isSearchMode ? (
-                     <>
-                       <div className="text-sm">No matching tracks found</div>
-                       <div className="text-xs mt-1">Try different keywords</div>
-                     </>
-                   ) : (
-                     <>
-                       <div className="text-sm">No tracks yet</div>
-                       <div className="text-xs mt-1">Generate a song to see it here</div>
-                     </>
-                   )}
-                 </div>
+              )}
+
+              {/* Hidden audio element per track */}
+               <audio
+                 src={t.url}
+                 preload="auto"
+                 autoPlay={false}
+                 muted={false}
+                 className="hidden"
+                 crossOrigin="anonymous"
+                  ref={(el) => { 
+                    if (el) {
+                      audioRefs.current[actualIndex] = el;
+                      // CRITICAL: Ensure no auto-play when element is created
+                      el.autoplay = false;
+                      console.log(`[AUDIO DEBUG] Created audio element at index ${actualIndex}, autoplay disabled`);
+                    }
+                  }}
+                  onTimeUpdate={(e) => {
+                    const audio = e.currentTarget;
+                    // CRITICAL: Only update if this is the currently playing track AND playing
+                    if (actualIndex === playingTrackIndex && isPlaying && !audio.paused) {
+                      setAudioCurrentTimes(prev => {
+                        const newTimes = [...prev];
+                        newTimes[actualIndex] = audio.currentTime;
+                        return newTimes;
+                      });
+                      // Call the original onTimeUpdate only for playing track
+                      onTimeUpdate(audio);
+                    }
+                  }}
+                  onPlay={(e) => {
+                    // Pause all other audio elements when this one starts playing
+                    const currentAudio = e.currentTarget;
+                    audioRefs.current.forEach((audio, index) => {
+                      if (audio && audio !== currentAudio && !audio.paused) {
+                        console.log(`[AUDIO DEBUG] Pausing conflicting audio at index ${index}`);
+                        audio.pause();
+                      }
+                    });
+                  }}
+               />
+            </div>
+          );
+        })}
+        
+           {filteredTracks.length === 0 && (
+             <div className="text-center text-white/40 py-8">
+               {isSearchMode ? (
+                 <>
+                   <div className="text-sm">No matching tracks found</div>
+                   <div className="text-xs mt-1">Try different keywords</div>
+                 </>
+               ) : (
+                 <>
+                   <div className="text-sm">No tracks yet</div>
+                   <div className="text-xs mt-1">Generate a song to see it here</div>
+                 </>
                )}
-               
-               {/* Pagination */}
-               {filteredTracks.length > tracksPerPage && (
-                 <div className="mt-3 flex justify-center">
-                   <Pagination>
-                     <PaginationContent className="gap-1">
-                        <PaginationItem>
-                          <PaginationPrevious
+             </div>
+           )}
+           
+           {/* Pagination */}
+           {filteredTracks.length > tracksPerPage && (
+             <div className="mt-3 flex justify-center">
+               <Pagination>
+                 <PaginationContent className="gap-1">
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handlePageChange(currentPage - 1);
+                        }}
+                        className={currentPage === 1 ? "pointer-events-none text-white/20 hover:text-white/20" : ""}
+                      />
+                    </PaginationItem>
+                   
+                   {Array.from({ length: totalPages }, (_, index) => {
+                     const page = index + 1;
+                     return (
+                        <PaginationItem key={page}>
+                          <PaginationLink
                             href="#"
                             onClick={(e) => {
                               e.preventDefault();
-                              handlePageChange(currentPage - 1);
+                              handlePageChange(page);
                             }}
-                            className={currentPage === 1 ? "pointer-events-none text-white/20 hover:text-white/20" : ""}
-                          />
+                            isActive={page === currentPage}
+                          >
+                            {page}
+                          </PaginationLink>
                         </PaginationItem>
-                       
-                       {Array.from({ length: totalPages }, (_, index) => {
-                         const page = index + 1;
-                         return (
-                            <PaginationItem key={page}>
-                              <PaginationLink
-                                href="#"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  handlePageChange(page);
-                                }}
-                                isActive={page === currentPage}
-                              >
-                                {page}
-                              </PaginationLink>
-                            </PaginationItem>
-                         );
-                       })}
-                       
-                        <PaginationItem>
-                          <PaginationNext
-                            href="#"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handlePageChange(currentPage + 1);
-                            }}
-                            className={currentPage === totalPages ? "pointer-events-none text-white/20 hover:text-white/20" : ""}
-                          />
-                        </PaginationItem>
-                     </PaginationContent>
-                   </Pagination>
-                 </div>
-               )}
-          </div>
+                     );
+                   })}
+                   
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handlePageChange(currentPage + 1);
+                        }}
+                        className={currentPage === totalPages ? "pointer-events-none text-white/20 hover:text-white/20" : ""}
+                      />
+                    </PaginationItem>
+                 </PaginationContent>
+               </Pagination>
+             </div>
+           )}
+           </div>
         </div>
       </div>
 
