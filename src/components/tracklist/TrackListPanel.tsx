@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from "react";
 import { Play, Pause, RotateCw, X, Heart, Redo2, Plus, Trash2, Search, Edit3, MoreVertical, Music } from "lucide-react";
 import { TrackItem } from "@/types";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { useScrollDelegationHook } from "@/utils/scrollDelegation";
 import EllipsisMarquee from "@/components/ui/EllipsisMarquee";
@@ -200,8 +199,7 @@ export default function TrackListPanel({
 
       {/* Scrollable area */}
       <div className="min-h-0 flex-1 overflow-hidden">
-        <ScrollArea className="h-full">
-          <div ref={scrollRef} className="min-h-full flex flex-col justify-start gap-3 px-4 pt-2 pb-4">
+        <div ref={scrollRef} className="h-full overflow-y-auto overflow-x-hidden lyrics-scrollbar">
           <div className={`min-h-full flex flex-col justify-start gap-3 px-4 pt-2 pb-4`}>
             
             {/* Show loading shells for each active generation */}
@@ -559,7 +557,7 @@ export default function TrackListPanel({
                       {/* Add Overlay */}
                       {openAddOverlayTrackId === t.id && (
                         <div 
-                          className="absolute top-0 left-0 right-0 bottom-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
+                          className="absolute top-2 left-2 right-2 bottom-2 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
                           style={{ backgroundColor: '#151515CC' }}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -570,7 +568,7 @@ export default function TrackListPanel({
                             {/* Playlists List - Constrained Height */}
                             <div 
                               className="overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pt-8 pb-3"
-                              style={{ height: 'calc(100% - 0px)' }}
+                              style={{ height: 'calc(100% - 44px)' }}
                             >
                               <div className="space-y-2">
                                 {/* Mock Playlists */}
@@ -738,10 +736,9 @@ export default function TrackListPanel({
                  </PaginationContent>
                </Pagination>
              </div>
-            )}
-            </div>
-          </div>
-        </ScrollArea>
+           )}
+           </div>
+        </div>
       </div>
 
       {/* Quick Album Cover Generator Overlay */}
