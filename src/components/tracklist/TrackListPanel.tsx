@@ -745,11 +745,10 @@ export default function TrackListPanel({
                                  <div className="flex gap-2 w-full">
                                    <button
                                      className="relative h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group flex items-center justify-center gap-1"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDownloadMP3(t);
-                                        setOpenDeleteOverlayTrackId(null);
-                                      }}
+                                       onClick={(e) => {
+                                         e.stopPropagation();
+                                         handleDownloadMP3(t);
+                                       }}
                                    >
                                      <div className="absolute inset-0 bg-blue-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
                                      <FileMusic className="w-3 h-3 relative z-10" />
@@ -776,11 +775,10 @@ export default function TrackListPanel({
                                  <div className="flex gap-2 w-full">
                                    <button
                                      className="relative h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group flex items-center justify-center gap-1"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDownloadLyrics(t);
-                                        setOpenDeleteOverlayTrackId(null);
-                                      }}
+                                       onClick={(e) => {
+                                         e.stopPropagation();
+                                         handleDownloadLyrics(t);
+                                       }}
                                    >
                                      <div className="absolute inset-0 bg-green-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
                                      <FileText className="w-3 h-3 relative z-10" />
@@ -788,11 +786,10 @@ export default function TrackListPanel({
                                    </button>
                                    <button
                                      className="relative h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group flex items-center justify-center gap-1"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDownloadArt(t);
-                                        setOpenDeleteOverlayTrackId(null);
-                                      }}
+                                       onClick={(e) => {
+                                         e.stopPropagation();
+                                         handleDownloadArt(t);
+                                       }}
                                    >
                                      <div className="absolute inset-0 bg-orange-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
                                      <ImageIcon className="w-3 h-3 relative z-10" />
@@ -801,11 +798,10 @@ export default function TrackListPanel({
                                  </div>
                                  <button
                                    className="relative h-6 px-4 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs w-full overflow-hidden group flex items-center justify-center gap-1"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDownloadAll(t);
-                                      setOpenDeleteOverlayTrackId(null);
-                                    }}
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       handleDownloadAll(t);
+                                     }}
                                  >
                                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/80 to-purple-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
                                    <Package className="w-3 h-3 relative z-10" />
