@@ -421,19 +421,34 @@ serve(async (req) => {
         const wavUrl = data.wav_url || data.wavUrl || data.file_url || data.fileUrl || 
                       data.download_url || data.downloadUrl || data.audio_url || data.audioUrl ||
                       data.response?.wav_url || data.response?.wavUrl || 
-                      data.response?.file_url || data.response?.fileUrl;
+                      data.response?.file_url || data.response?.fileUrl ||
+                      data.response?.audioWavUrl;
         
         console.log("[suno] WAV conversion complete, wavUrl:", wavUrl);
         
         if (wavUrl) {
           try {
-            // Save WAV to storage
-            const wavPath = `wav/${wavJobId}.wav`;
-            const publicUrl = await saveToStorageFromUrl(wavPath, wavUrl, "audio/wav");
-            return json({ status: "ready", wavUrl: publicUrl });
+            // Stream the WAV file directly to the client
+            console.log("[suno] Fetching WAV content from:", wavUrl);
+            const wavResp = await fetch(wavUrl);
+            if (!wavResp.ok) {
+              throw new Error(`Failed to fetch WAV: ${wavResp.status} ${wavResp.statusText}`);
+            }
+            
+            const wavContent = await wavResp.arrayBuffer();
+            console.log("[suno] Streaming WAV file, size:", wavContent.byteLength);
+            
+            return new Response(wavContent, {
+              headers: {
+                ...corsHeaders,
+                'Content-Type': 'audio/wav',
+                'Content-Disposition': `attachment; filename="track-${wavJobId}.wav"`,
+                'Content-Length': String(wavContent.byteLength),
+              },
+            });
           } catch (e) {
-            console.error("[suno] Failed to save WAV to storage:", e);
-            return json({ status: "error", error: "Failed to save WAV file" });
+            console.error("[suno] Failed to stream WAV:", e);
+            return json({ status: "error", error: "Failed to download WAV file" });
           }
         } else {
           console.warn("[suno] WAV conversion complete but no WAV URL found");

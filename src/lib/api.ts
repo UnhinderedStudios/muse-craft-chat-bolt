@@ -198,8 +198,16 @@ export const api = {
     return handle(resp);
   },
 
-  async pollWav(jobId: string): Promise<{ status: "pending" | "ready" | "error"; wavUrl?: string; error?: string }> {
+  async pollWav(jobId: string): Promise<{ status: "pending" | "ready" | "error"; wavUrl?: string; error?: string; blob?: Blob }> {
     const resp = await fetch(`${FUNCTIONS_BASE}/suno/wav?jobId=${encodeURIComponent(jobId)}`);
+    
+    // Check if response is a WAV file download
+    const contentType = resp.headers.get('content-type');
+    if (contentType === 'audio/wav' && resp.ok) {
+      const blob = await resp.blob();
+      return { status: "ready", blob };
+    }
+    
     return handle(resp);
   },
 
@@ -216,8 +224,21 @@ export const api = {
       
       const result = await this.pollWav(jobId);
       
-      if (result.status === "ready" && result.wavUrl) {
-        return result.wavUrl;
+      if (result.status === "ready") {
+        if (result.blob) {
+          // Create download URL from blob and trigger download
+          const downloadUrl = URL.createObjectURL(result.blob);
+          const link = document.createElement('a');
+          link.href = downloadUrl;
+          link.download = `track-${jobId}.wav`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(downloadUrl);
+          return "Downloaded";
+        } else if (result.wavUrl) {
+          return result.wavUrl;
+        }
       }
       
       if (result.status === "error") {
