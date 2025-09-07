@@ -84,6 +84,9 @@ export default function TrackListPanel({
   // Track which playlists have been clicked (show checkmark)
   const [clickedPlaylists, setClickedPlaylists] = useState<Set<string>>(new Set());
   
+  // Track favorited songs
+  const [favoritedTracks, setFavoritedTracks] = useState<Set<string>>(new Set());
+  
   // Drag functionality
   const { startDrag, dragState } = useDrag();
   
@@ -476,8 +479,32 @@ export default function TrackListPanel({
 
                         {/* 4 control icons */}
                         <div className="flex items-center gap-2">
-                          <button className="text-white/60 hover:text-white transition-colors">
-                            <Heart className="w-4 h-4" />
+                          <button 
+                            className={`transition-colors ${
+                              favoritedTracks.has(t.id)
+                                ? 'text-pink-500 hover:text-pink-400' 
+                                : 'text-white/60 hover:text-white'
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setFavoritedTracks(prev => {
+                                const newSet = new Set(prev);
+                                if (newSet.has(t.id)) {
+                                  newSet.delete(t.id);
+                                } else {
+                                  newSet.add(t.id);
+                                  // Auto-add to Favourites playlist when favoriting
+                                  setClickedPlaylists(prevClicked => {
+                                    const newClickedSet = new Set(prevClicked);
+                                    newClickedSet.add("fav");
+                                    return newClickedSet;
+                                  });
+                                }
+                                return newSet;
+                              });
+                            }}
+                          >
+                            <Heart className={`w-4 h-4 ${favoritedTracks.has(t.id) ? 'fill-current' : ''}`} />
                           </button>
                           <button className="text-white/60 hover:text-white transition-colors">
                             <Redo2 className="w-4 h-4" />
@@ -705,12 +732,12 @@ export default function TrackListPanel({
                                        }}
                                      >
                                        <div className="relative w-4 h-4">
-                                         {clickedPlaylists.has(playlist.id) ? (
-                                           <Check className="w-4 h-4 text-green-400 animate-scale-in" />
-                                         ) : (
-                                           <Plus className="w-4 h-4 animate-scale-in" />
-                                         )}
-                                       </div>
+                                          {clickedPlaylists.has(playlist.id) || (playlist.id === "fav" && favoritedTracks.has(t.id)) ? (
+                                            <Check className="w-4 h-4 text-green-400 animate-scale-in" />
+                                          ) : (
+                                            <Plus className="w-4 h-4 animate-scale-in" />
+                                          )}
+                                        </div>
                                      </button>
                                         </div>
                                       ))}
