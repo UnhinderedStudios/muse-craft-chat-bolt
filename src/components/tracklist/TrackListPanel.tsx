@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Play, Pause, RotateCw, X, Heart, Redo2, Plus, Trash2, Search, Edit3 } from "lucide-react";
+import { Play, Pause, RotateCw, X, Heart, Redo2, Plus, Trash2, Search, Edit3, MoreVertical } from "lucide-react";
 import { TrackItem } from "@/types";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -317,7 +317,11 @@ export default function TrackListPanel({
                   onMouseLeave={() => setHoveredTracks(prev => ({ ...prev, [t.id]: false }))}
                 >
                   {/* First row: Album art + Content */}
-                  <div className="flex">
+                  <div className="flex relative">
+                    {/* Top-right menu icon */}
+                    <button className="absolute top-2 right-2 text-white/60 hover:text-white transition-colors z-10">
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
                     {/* Album art - flush with container left edge, only top-left corner rounded */}
                     <div className="shrink-0 w-16 h-16 bg-black/30 overflow-hidden rounded-tl-xl rounded-br-xl relative group">
                       {t.coverUrl ? (
