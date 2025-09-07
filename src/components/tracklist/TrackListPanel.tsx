@@ -283,33 +283,14 @@ export default function TrackListPanel({
                     )}
                   </div>
 
-                  <div className="flex-1 min-w-0 flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <EllipsisMarquee
-                        text={`No Artist – ${t.title || "Song Title"}`}
-                        className="text-xs text-white/60"
-                        speedPxPerSec={70}
-                        gapPx={32}
-                        isActive={hoveredTracks[t.id]}
-                      />
-                    </div>
-                    
-                    {/* Always visible plus icon */}
-                    <button 
-                      className="text-white/40 hover:text-white hover:scale-110 transition-all duration-200 ml-2"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOpenAddOverlayTrackId(openAddOverlayTrackId === t.id ? null : t.id);
-                        setOpenMenuTrackId(null);
-                        setOpenDeleteOverlayTrackId(null);
-                      }}
-                    >
-                      {openAddOverlayTrackId === t.id ? (
-                        <Check className="w-4 h-4 text-green-400" />
-                      ) : (
-                        <Plus className="w-4 h-4" />
-                      )}
-                    </button>
+                  <div className="flex-1 min-w-0">
+                    <EllipsisMarquee
+                      text={`No Artist – ${t.title || "Song Title"}`}
+                      className="text-xs text-white/60"
+                      speedPxPerSec={70}
+                      gapPx={32}
+                      isActive={hoveredTracks[t.id]}
+                    />
                     <div
                       className="mt-1 h-1.5 bg-white/10 rounded cursor-pointer"
                       onClick={(e) => {
@@ -692,7 +673,7 @@ export default function TrackListPanel({
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-cyan-500/20 flex items-center justify-center shrink-0">
+                                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500/20 to-rose-500/20 flex items-center justify-center shrink-0">
                                         <Music className="w-4 h-4 text-white/60" />
                                       </div>
                                       <div className="flex-1 min-w-0">
@@ -700,17 +681,17 @@ export default function TrackListPanel({
                                         <p className="text-white/40 text-xs">{playlist.songCount} songs</p>
                                       </div>
                                     </div>
-                                    <button
-                                      className="w-6 h-6 rounded-full bg-accent-primary/20 hover:bg-accent-primary/40 flex items-center justify-center transition-colors opacity-0 group-hover:opacity-100"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        // TODO: Add song to playlist
-                                        console.log(`Adding song "${t.title}" to playlist "${playlist.name}"`);
-                                        setOpenAddOverlayTrackId(null);
-                                      }}
-                                    >
-                                      <Plus className="w-3 h-3 text-accent-primary" />
-                                    </button>
+                                     <button
+                                       className="text-white/40 hover:text-white hover:scale-110 transition-all duration-200"
+                                       onClick={(e) => {
+                                         e.stopPropagation();
+                                         // TODO: Add song to playlist
+                                         console.log(`Adding song "${t.title}" to playlist "${playlist.name}"`);
+                                         setOpenAddOverlayTrackId(null);
+                                       }}
+                                     >
+                                       <Plus className="w-4 h-4" />
+                                     </button>
                                         </div>
                                       ))}
                                     </>
