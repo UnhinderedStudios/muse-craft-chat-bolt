@@ -71,6 +71,9 @@ export default function TrackListPanel({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   
+  // Menu overlay state
+  const [openMenuTrackId, setOpenMenuTrackId] = useState<string | null>(null);
+  
   // Drag functionality
   const { startDrag, dragState } = useDrag();
   
@@ -319,7 +322,13 @@ export default function TrackListPanel({
                   {/* First row: Album art + Content */}
                   <div className="flex relative">
                     {/* Top-right menu icon */}
-                    <button className="absolute top-2 right-2 text-white/60 hover:text-white transition-colors z-10">
+                    <button 
+                      className="absolute top-2 right-2 text-white/60 hover:text-white transition-colors z-10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setOpenMenuTrackId(openMenuTrackId === t.id ? null : t.id);
+                      }}
+                    >
                       <MoreVertical className="w-4 h-4" />
                     </button>
                     {/* Album art - flush with container left edge, only top-left corner rounded */}
@@ -433,10 +442,43 @@ export default function TrackListPanel({
                           </button>
                         </div>
                       </div>
-                    </div>
-                  </div>
+                     </div>
+                   </div>
 
-                  {/* Second row: Parameters - full width from album art left edge */}
+                   {/* Overlay Menu */}
+                   {openMenuTrackId === t.id && (
+                     <div 
+                       className="absolute inset-0 bg-black/30 backdrop-blur-sm rounded-xl z-20 flex flex-col justify-center p-4"
+                       onClick={(e) => {
+                         e.stopPropagation();
+                         setOpenMenuTrackId(null);
+                       }}
+                     >
+                       <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                         {[
+                           { label: "Edit Track", action: () => console.log("Edit Track") },
+                           { label: "Add to Playlist", action: () => console.log("Add to Playlist") },
+                           { label: "Share", action: () => console.log("Share") },
+                           { label: "Download", action: () => console.log("Download") },
+                           { label: "Delete", action: () => console.log("Delete") }
+                         ].map((item, index) => (
+                           <button
+                             key={index}
+                             className="w-full py-3 px-4 text-white hover:text-white/80 transition-colors text-left font-medium border border-white/20 rounded-lg hover:border-white/40 bg-black/20"
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               item.action();
+                               setOpenMenuTrackId(null);
+                             }}
+                           >
+                             {item.label}
+                           </button>
+                         ))}
+                       </div>
+                     </div>
+                   )}
+
+                   {/* Second row: Parameters - full width from album art left edge */}
                   <div className="-mt-0.5 pr-1">
                     <div className="max-h-[120px] overflow-y-auto lyrics-scrollbar">
                       <div className="flex flex-wrap gap-x-1.5 gap-y-1.5 px-2 pb-2">
