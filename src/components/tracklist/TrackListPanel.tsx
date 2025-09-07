@@ -327,7 +327,7 @@ export default function TrackListPanel({
                   <div className="flex relative">
                     {/* Top-right menu icon */}
                     <button 
-                      className="absolute top-2 right-2 text-white/60 hover:text-white transition-colors z-30 w-6 h-6 flex items-center justify-center"
+                      className="absolute top-1 right-2 text-white/60 hover:text-white transition-colors z-30 w-6 h-6 flex items-center justify-center"
                        onClick={(e) => {
                          e.stopPropagation();
                          // If any overlay is open, close all overlays
