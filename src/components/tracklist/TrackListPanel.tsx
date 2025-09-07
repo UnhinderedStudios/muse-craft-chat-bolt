@@ -74,6 +74,10 @@ export default function TrackListPanel({
   // Menu overlay state
   const [openMenuTrackId, setOpenMenuTrackId] = useState<string | null>(null);
   
+  // Delete and Add overlay states
+  const [openDeleteOverlayTrackId, setOpenDeleteOverlayTrackId] = useState<string | null>(null);
+  const [openAddOverlayTrackId, setOpenAddOverlayTrackId] = useState<string | null>(null);
+  
   // Drag functionality
   const { startDrag, dragState } = useDrag();
   
@@ -449,10 +453,26 @@ export default function TrackListPanel({
                           <button className="text-white/60 hover:text-white transition-colors">
                             <Redo2 className="w-4 h-4" />
                           </button>
-                          <button className="text-white/60 hover:text-white transition-colors">
+                          <button 
+                            className="text-white/60 hover:text-white transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenAddOverlayTrackId(openAddOverlayTrackId === t.id ? null : t.id);
+                              setOpenMenuTrackId(null);
+                              setOpenDeleteOverlayTrackId(null);
+                            }}
+                          >
                             <Plus className="w-4 h-4" />
                           </button>
-                          <button className="text-white/60 hover:text-white transition-colors">
+                          <button 
+                            className="text-white/60 hover:text-white transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenDeleteOverlayTrackId(openDeleteOverlayTrackId === t.id ? null : t.id);
+                              setOpenMenuTrackId(null);
+                              setOpenAddOverlayTrackId(null);
+                            }}
+                          >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -473,18 +493,92 @@ export default function TrackListPanel({
                      </div>
                    </div>
 
-                    {/* Overlay Menu */}
-                    {openMenuTrackId === t.id && (
-                      <div 
-                        className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.08] z-20"
-                        style={{ backgroundColor: '#151515CC' }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenMenuTrackId(null);
-                        }}
-                      >
-                      </div>
-                    )}
+                     {/* Overlay Menu */}
+                     {openMenuTrackId === t.id && (
+                       <div 
+                         className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.08] z-20"
+                         style={{ backgroundColor: '#151515CC' }}
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           setOpenMenuTrackId(null);
+                         }}
+                       >
+                       </div>
+                     )}
+
+                     {/* Delete Overlay */}
+                     {openDeleteOverlayTrackId === t.id && (
+                       <div 
+                         className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.08] z-20"
+                         style={{ backgroundColor: '#151515CC' }}
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           setOpenDeleteOverlayTrackId(null);
+                         }}
+                       >
+                         <div className="h-full flex items-center justify-center gap-3 px-4">
+                           <button
+                             className="relative h-12 px-4 rounded-xl bg-gray-500/20 text-white hover:text-white transition-all duration-200 font-medium flex-1 overflow-hidden group"
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               // TODO: Handle hide functionality
+                               setOpenDeleteOverlayTrackId(null);
+                             }}
+                           >
+                             <div className="absolute inset-0 bg-gray-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                             <span className="relative z-10">Hide</span>
+                           </button>
+                           <button
+                             className="relative h-12 px-4 rounded-xl bg-gray-500/20 text-white hover:text-white transition-all duration-200 font-medium flex-1 overflow-hidden group"
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               // TODO: Handle delete functionality
+                               setOpenDeleteOverlayTrackId(null);
+                             }}
+                           >
+                             <div className="absolute inset-0 bg-red-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                             <span className="relative z-10">Delete</span>
+                           </button>
+                         </div>
+                       </div>
+                     )}
+
+                     {/* Add Overlay */}
+                     {openAddOverlayTrackId === t.id && (
+                       <div 
+                         className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.08] z-20"
+                         style={{ backgroundColor: '#151515CC' }}
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           setOpenAddOverlayTrackId(null);
+                         }}
+                       >
+                         <div className="h-full flex items-center justify-center gap-3 px-4">
+                           <button
+                             className="relative h-12 px-4 rounded-xl bg-gray-500/20 text-white hover:text-white transition-all duration-200 font-medium flex-1 overflow-hidden group"
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               // TODO: Handle add to playlist functionality
+                               setOpenAddOverlayTrackId(null);
+                             }}
+                           >
+                             <div className="absolute inset-0 bg-blue-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                             <span className="relative z-10">Add to Playlist</span>
+                           </button>
+                           <button
+                             className="relative h-12 px-4 rounded-xl bg-gray-500/20 text-white hover:text-white transition-all duration-200 font-medium flex-1 overflow-hidden group"
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               // TODO: Handle favorite functionality
+                               setOpenAddOverlayTrackId(null);
+                             }}
+                           >
+                             <div className="absolute inset-0 bg-green-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                             <span className="relative z-10">Favorite</span>
+                           </button>
+                         </div>
+                       </div>
+                     )}
                 </div>
               )}
 
