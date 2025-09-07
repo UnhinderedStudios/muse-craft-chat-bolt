@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Play, Pause, RotateCw, X, Heart, Download, Plus, Trash2, Search, Edit3, MoreVertical, Music, Check } from "lucide-react";
+import { Play, Pause, RotateCw, X, Heart, Download, Plus, Trash2, Search, Edit3, MoreVertical, Music, Check, FileMusic, FileAudio, FileText, ImageIcon, Package } from "lucide-react";
 import { TrackItem } from "@/types";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -77,6 +77,9 @@ export default function TrackListPanel({
   // Delete and Add overlay states
   const [openDeleteOverlayTrackId, setOpenDeleteOverlayTrackId] = useState<string | null>(null);
   const [openAddOverlayTrackId, setOpenAddOverlayTrackId] = useState<string | null>(null);
+  
+  // Track overlay type (download or delete)
+  const [overlayType, setOverlayType] = useState<'download' | 'delete'>('delete');
   
   // Playlist search state
   const [playlistSearchQuery, setPlaylistSearchQuery] = useState("");
@@ -521,6 +524,7 @@ export default function TrackListPanel({
                             className="text-white/60 hover:text-white transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
+                              setOverlayType('download');
                               setOpenDeleteOverlayTrackId(openDeleteOverlayTrackId === t.id ? null : t.id);
                               setOpenMenuTrackId(null);
                               setOpenAddOverlayTrackId(null);
@@ -532,6 +536,7 @@ export default function TrackListPanel({
                             className="text-white/60 hover:text-white transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
+                              setOverlayType('delete');
                               setOpenDeleteOverlayTrackId(openDeleteOverlayTrackId === t.id ? null : t.id);
                               setOpenMenuTrackId(null);
                               setOpenAddOverlayTrackId(null);
@@ -579,34 +584,110 @@ export default function TrackListPanel({
                            e.stopPropagation();
                            setOpenDeleteOverlayTrackId(null);
                          }}
-                       >
-                          <div className="h-full flex flex-col items-center justify-center gap-2 px-4">
-                            <p className="text-gray-400 text-xs mb-1">Caution: Deletion is permanent</p>
-                            <div className="flex gap-3 w-full mt-2">
-                              <button
-                                className="relative h-6 px-4 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  // TODO: Handle hide functionality
-                                  setOpenDeleteOverlayTrackId(null);
-                                }}
-                              >
-                                <div className="absolute inset-0 bg-gray-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                                <span className="relative z-10">Hide</span>
-                              </button>
-                              <button
-                                className="relative h-6 px-4 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  // TODO: Handle delete functionality
-                                  setOpenDeleteOverlayTrackId(null);
-                                }}
-                              >
-                                <div className="absolute inset-0 bg-red-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                                <span className="relative z-10">Delete</span>
-                              </button>
-                            </div>
-                          </div>
+                        >
+                           <div className="h-full flex flex-col items-center justify-center gap-2 px-4">
+                             {overlayType === 'download' ? (
+                               <>
+                                 <div className="flex gap-2 w-full">
+                                   <button
+                                     className="relative h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group flex items-center justify-center gap-1"
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       // TODO: Download MP3
+                                       console.log('Downloading MP3 for track:', t.title);
+                                       setOpenDeleteOverlayTrackId(null);
+                                     }}
+                                   >
+                                     <div className="absolute inset-0 bg-blue-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                                     <FileMusic className="w-3 h-3 relative z-10" />
+                                     <span className="relative z-10">MP3</span>
+                                   </button>
+                                   <button
+                                     className="relative h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group flex items-center justify-center gap-1"
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       // TODO: Download WAV
+                                       console.log('Downloading WAV for track:', t.title);
+                                       setOpenDeleteOverlayTrackId(null);
+                                     }}
+                                   >
+                                     <div className="absolute inset-0 bg-purple-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                                     <FileAudio className="w-3 h-3 relative z-10" />
+                                     <span className="relative z-10">WAV</span>
+                                   </button>
+                                 </div>
+                                 <div className="flex gap-2 w-full">
+                                   <button
+                                     className="relative h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group flex items-center justify-center gap-1"
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       // TODO: Download Lyrics
+                                       console.log('Downloading Lyrics for track:', t.title);
+                                       setOpenDeleteOverlayTrackId(null);
+                                     }}
+                                   >
+                                     <div className="absolute inset-0 bg-green-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                                     <FileText className="w-3 h-3 relative z-10" />
+                                     <span className="relative z-10">Lyrics</span>
+                                   </button>
+                                   <button
+                                     className="relative h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group flex items-center justify-center gap-1"
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       // TODO: Download Art
+                                       console.log('Downloading Art for track:', t.title);
+                                       setOpenDeleteOverlayTrackId(null);
+                                     }}
+                                   >
+                                     <div className="absolute inset-0 bg-orange-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                                     <ImageIcon className="w-3 h-3 relative z-10" />
+                                     <span className="relative z-10">Art</span>
+                                   </button>
+                                 </div>
+                                 <button
+                                   className="relative h-6 px-4 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs w-full overflow-hidden group flex items-center justify-center gap-1"
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     // TODO: Download All
+                                     console.log('Downloading All for track:', t.title);
+                                     setOpenDeleteOverlayTrackId(null);
+                                   }}
+                                 >
+                                   <div className="absolute inset-0 bg-gradient-to-r from-blue-500/80 to-purple-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                                   <Package className="w-3 h-3 relative z-10" />
+                                   <span className="relative z-10">Download All</span>
+                                 </button>
+                               </>
+                             ) : (
+                               <>
+                                 <p className="text-gray-400 text-xs mb-1">Caution: Deletion is permanent</p>
+                                 <div className="flex gap-3 w-full mt-2">
+                                   <button
+                                     className="relative h-6 px-4 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group"
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       // TODO: Handle hide functionality
+                                       setOpenDeleteOverlayTrackId(null);
+                                     }}
+                                   >
+                                     <div className="absolute inset-0 bg-gray-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                                     <span className="relative z-10">Hide</span>
+                                   </button>
+                                   <button
+                                     className="relative h-6 px-4 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group"
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       // TODO: Handle delete functionality
+                                       setOpenDeleteOverlayTrackId(null);
+                                     }}
+                                   >
+                                     <div className="absolute inset-0 bg-red-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                                     <span className="relative z-10">Delete</span>
+                                   </button>
+                                 </div>
+                               </>
+                             )}
+                           </div>
                        </div>
                      )}
 
