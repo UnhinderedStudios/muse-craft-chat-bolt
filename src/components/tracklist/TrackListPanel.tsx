@@ -297,13 +297,19 @@ export default function TrackListPanel({
     try {
       const wavUrl = await api.convertToWav(params);
       if (wavUrl) {
-        const filename = `${(track.title || 'song').replace(/[^a-zA-Z0-9\s-_]/g, '')}.wav`;
-        const success = await downloadFile(wavUrl, filename);
-        
-        if (success) {
+        // Check if the WAV was directly downloaded (blob-based download)
+        if (wavUrl === "Downloaded") {
           toast({ title: "Download Complete", description: "WAV file has been downloaded" });
         } else {
-          toast({ title: "Download Failed", description: "Could not download the WAV file", variant: "destructive" });
+          // Fallback: use the URL to download (legacy behavior)
+          const filename = `${(track.title || 'song').replace(/[^a-zA-Z0-9\s-_]/g, '')}.wav`;
+          const success = await downloadFile(wavUrl, filename);
+          
+          if (success) {
+            toast({ title: "Download Complete", description: "WAV file has been downloaded" });
+          } else {
+            toast({ title: "Download Failed", description: "Could not download the WAV file", variant: "destructive" });
+          }
         }
       } else {
         throw new Error("WAV conversion returned no URL");
