@@ -267,15 +267,11 @@ export default function TrackListPanel({
                     setDragStartTrack(null);
                   }}
                 >
-                  <div className="shrink-0 w-10 h-10 rounded-md bg-black/30 overflow-hidden relative">
+                  <div className="shrink-0 w-10 h-10 rounded-md bg-black/30 overflow-hidden">
                     {t.coverUrl ? (
                       <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20" />
-                    )}
-                    {/* Unplayed indicator - assuming tracks without currentTime are unplayed */}
-                    {(!audioCurrentTimes[actualIndex] || audioCurrentTimes[actualIndex] === 0) && (
-                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-pink-400 rounded-full shadow-[0_0_10px_rgba(244,114,182,0.6)] animate-pulse" />
                     )}
                   </div>
 
@@ -378,10 +374,6 @@ export default function TrackListPanel({
                         <img src={t.coverUrl} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-purple-500/20 to-cyan-500/20" />
-                      )}
-                      {/* Unplayed indicator - assuming tracks without currentTime are unplayed */}
-                      {(!audioCurrentTimes[actualIndex] || audioCurrentTimes[actualIndex] === 0) && (
-                        <div className="absolute -top-1 -right-1 w-3 h-3 bg-pink-400 rounded-full shadow-[0_0_10px_rgba(244,114,182,0.6)] animate-pulse" />
                       )}
                       <div 
                         className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
