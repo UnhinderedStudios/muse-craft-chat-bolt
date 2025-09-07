@@ -323,7 +323,7 @@ export default function TrackListPanel({
                   <div className="flex relative">
                     {/* Top-right menu icon */}
                     <button 
-                      className="absolute top-2 right-2 text-white/60 hover:text-white transition-colors z-10 w-6 h-6 flex items-center justify-center"
+                      className="absolute top-2 right-2 text-white/60 hover:text-white transition-colors z-30 w-6 h-6 flex items-center justify-center"
                       onClick={(e) => {
                         e.stopPropagation();
                         setOpenMenuTrackId(openMenuTrackId === t.id ? null : t.id);
@@ -476,7 +476,7 @@ export default function TrackListPanel({
                     {/* Overlay Menu */}
                     {openMenuTrackId === t.id && (
                       <div 
-                        className="absolute inset-0 bg-black/30 backdrop-blur-sm rounded-xl border border-white/10 z-20"
+                        className="absolute inset-0 bg-black/30 backdrop-blur-sm rounded-xl border border-white/[0.02] z-20"
                         onClick={(e) => {
                           e.stopPropagation();
                           setOpenMenuTrackId(null);
