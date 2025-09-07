@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Play, Pause, RotateCw, X, Heart, Shuffle, Repeat, MoreHorizontal, Search, Edit3 } from "lucide-react";
+import { Play, Pause, RotateCw, X, Heart, Redo2, Plus, Trash2, Search, Edit3 } from "lucide-react";
 import { TrackItem } from "@/types";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -419,13 +419,13 @@ export default function TrackListPanel({
                             <Heart className="w-4 h-4" />
                           </button>
                           <button className="text-white/60 hover:text-white transition-colors">
-                            <Shuffle className="w-4 h-4" />
+                            <Redo2 className="w-4 h-4" />
                           </button>
                           <button className="text-white/60 hover:text-white transition-colors">
-                            <Repeat className="w-4 h-4" />
+                            <Plus className="w-4 h-4" />
                           </button>
                           <button className="text-white/60 hover:text-white transition-colors">
-                            <MoreHorizontal className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
