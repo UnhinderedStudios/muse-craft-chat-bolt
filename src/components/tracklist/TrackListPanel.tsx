@@ -573,16 +573,21 @@ export default function TrackListPanel({
                      )}
 
                       {/* Add Overlay */}
-                      {openAddOverlayTrackId === t.id && (
-                        <div 
-                          className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
-                          style={{ backgroundColor: '#151515CC' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenAddOverlayTrackId(null);
-                          }}
-                        >
-                          <div className="h-full flex flex-col">
+                       {openAddOverlayTrackId === t.id && (
+                         <div 
+                           className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
+                           style={{ backgroundColor: '#151515CC' }}
+                           onClick={(e) => {
+                             // Only close if clicking on the backdrop, not the content
+                             if (e.target === e.currentTarget) {
+                               setOpenAddOverlayTrackId(null);
+                             }
+                           }}
+                         >
+                           <div 
+                             className="h-full flex flex-col"
+                             onClick={(e) => e.stopPropagation()}
+                           >
                             {/* Search Bar */}
                             <div className="flex justify-center p-3 pb-2">
                               <div className="relative w-4/5">
