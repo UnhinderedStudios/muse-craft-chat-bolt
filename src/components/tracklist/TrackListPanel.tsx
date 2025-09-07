@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Play, Pause, RotateCw, X, Heart, Redo2, Plus, Trash2, Search, Edit3, MoreVertical, Music, Check } from "lucide-react";
+import { Play, Pause, RotateCw, X, Heart, Download, Plus, Trash2, Search, Edit3, MoreVertical, Music, Check } from "lucide-react";
 import { TrackItem } from "@/types";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -507,7 +507,7 @@ export default function TrackListPanel({
                             <Heart className={`w-4 h-4 ${favoritedTracks.has(t.id) ? 'fill-current' : ''}`} />
                           </button>
                           <button className="text-white/60 hover:text-white transition-colors">
-                            <Redo2 className="w-4 h-4" />
+                            <Download className="w-4 h-4" />
                           </button>
                           <button 
                             className="text-white/60 hover:text-white transition-colors"
