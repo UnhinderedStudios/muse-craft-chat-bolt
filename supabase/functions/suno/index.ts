@@ -197,6 +197,7 @@ serve(async (req) => {
           if (audioId) body.audioId = audioId;
           if (taskId) body.taskId = taskId;
           if (typeof musicIndex === 'number') body.musicIndex = musicIndex;
+          console.log(`[suno] WAV attempt 1 params:`, { audioId, taskId, musicIndex });
           return body;
         },
         // Try musicId instead of audioId
@@ -205,6 +206,7 @@ serve(async (req) => {
           if (audioId) body.musicId = audioId;
           if (taskId) body.taskId = taskId;
           if (typeof musicIndex === 'number') body.musicIndex = musicIndex;
+          console.log(`[suno] WAV attempt 2 params:`, { musicId: audioId, taskId, musicIndex });
           return body;
         },
         // Try index instead of musicIndex
@@ -213,6 +215,7 @@ serve(async (req) => {
           if (audioId) body.audioId = audioId;
           if (taskId) body.taskId = taskId;
           if (typeof musicIndex === 'number') body.index = musicIndex;
+          console.log(`[suno] WAV attempt 3 params:`, { audioId, taskId, index: musicIndex });
           return body;
         },
         // Try musicId + index
@@ -221,6 +224,43 @@ serve(async (req) => {
           if (audioId) body.musicId = audioId;
           if (taskId) body.taskId = taskId;
           if (typeof musicIndex === 'number') body.index = musicIndex;
+          console.log(`[suno] WAV attempt 4 params:`, { musicId: audioId, taskId, index: musicIndex });
+          return body;
+        },
+        // Try snake_case variants
+        () => {
+          const body: Record<string, unknown> = {};
+          if (audioId) body.music_id = audioId;
+          if (taskId) body.task_id = taskId;
+          if (typeof musicIndex === 'number') body.music_index = musicIndex;
+          console.log(`[suno] WAV attempt 5 params:`, { music_id: audioId, task_id: taskId, music_index: musicIndex });
+          return body;
+        },
+        // Try clip/song variants
+        () => {
+          const body: Record<string, unknown> = {};
+          if (audioId) body.clip_id = audioId;
+          if (taskId) body.taskId = taskId;
+          if (typeof musicIndex === 'number') body.index = musicIndex;
+          console.log(`[suno] WAV attempt 6 params:`, { clip_id: audioId, taskId, index: musicIndex });
+          return body;
+        },
+        // Try song_id variant
+        () => {
+          const body: Record<string, unknown> = {};
+          if (audioId) body.song_id = audioId;
+          if (taskId) body.taskId = taskId;
+          if (typeof musicIndex === 'number') body.index = musicIndex;
+          console.log(`[suno] WAV attempt 7 params:`, { song_id: audioId, taskId, index: musicIndex });
+          return body;
+        },
+        // Try track_id variant
+        () => {
+          const body: Record<string, unknown> = {};
+          if (audioId) body.track_id = audioId;
+          if (taskId) body.taskId = taskId;
+          if (typeof musicIndex === 'number') body.track_index = musicIndex;
+          console.log(`[suno] WAV attempt 8 params:`, { track_id: audioId, taskId, track_index: musicIndex });
           return body;
         }
       ];
@@ -242,6 +282,15 @@ serve(async (req) => {
           });
 
           const wavJson = await wavResp.json().catch(() => ({}));
+          
+          // Log detailed response for debugging
+          console.log(`[suno] WAV attempt ${i + 1} response:`, {
+            status: wavResp.status,
+            ok: wavResp.ok,
+            code: wavJson?.code,
+            data: wavJson?.data,
+            msg: wavJson?.msg
+          });
           
           if (wavResp.ok && wavJson?.code === 200) {
             const wavJobId = wavJson?.data?.taskId;
