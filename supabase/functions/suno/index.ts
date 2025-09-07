@@ -178,6 +178,113 @@ serve(async (req) => {
       return json({ jobId: taskId });
     }
 
+    // Handle WAV conversion
+    if (req.method === "POST" && pathname.endsWith("/wav")) {
+      const details = await req.json().catch(() => ({} as any));
+      const audioId = details.audioId;
+      const taskId = details.taskId;
+      const musicIndex = details.musicIndex;
+
+      if (!audioId && !taskId) {
+        return json({ error: "Missing audioId or taskId" }, { status: 400 });
+      }
+
+      const body: Record<string, unknown> = {};
+      if (audioId) body.audioId = audioId;
+      if (taskId) body.taskId = taskId;
+      if (typeof musicIndex === 'number') body.musicIndex = musicIndex;
+
+      console.log("[suno] Starting WAV conversion", body);
+
+      const wavResp = await fetch(`${API_BASE}/wav/generate`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      const wavJson = await wavResp.json().catch(() => ({}));
+      if (!wavResp.ok || wavJson?.code !== 200) {
+        const msg = wavJson?.msg || (await wavResp.text().catch(() => "")) || wavResp.statusText;
+        console.error("[suno] WAV conversion error:", msg);
+        return json({ error: msg }, { status: 500 });
+      }
+
+      const wavJobId = wavJson?.data?.taskId;
+      if (!wavJobId) return json({ error: "No WAV taskId returned" }, { status: 500 });
+
+      return json({ jobId: wavJobId });
+    }
+
+    // Handle WAV status polling
+    if (req.method === "GET" && pathname.endsWith("/wav")) {
+      const wavJobId = url.searchParams.get("jobId");
+      if (!wavJobId) return json({ error: "Missing WAV jobId" }, { status: 400 });
+
+      // Check if already stored in Supabase Storage
+      try {
+        const wavPath = `wav/${wavJobId}.wav`;
+        const { data: signed, error: signErr } = await supabase.storage
+          .from("songs")
+          .createSignedUrl(wavPath, 3600);
+        if (!signErr && signed?.signedUrl) {
+          const pub = supabase.storage.from("songs").getPublicUrl(wavPath);
+          const publicUrl = pub.data.publicUrl || signed.signedUrl;
+          console.log("[suno] Found stored WAV for", wavJobId, publicUrl);
+          return json({ status: "ready", wavUrl: publicUrl });
+        }
+      } catch (e) {
+        console.log("[suno] WAV storage check error:", e);
+      }
+
+      // Poll WAV conversion status
+      const statusResp = await fetch(`${API_BASE}/wav/record-info?taskId=${encodeURIComponent(wavJobId)}`, {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      });
+      const statusJson = await statusResp.json().catch(() => ({}));
+
+      if (!statusResp.ok || typeof statusJson?.data === "undefined") {
+        const msg = statusJson?.msg || (await statusResp.text().catch(() => "")) || statusResp.statusText;
+        console.error("[suno] WAV status error:", msg);
+        return json({ status: "error", error: msg });
+      }
+
+      const data = statusJson.data as any;
+      const st: string = String(data.status || data.taskStatus || "PENDING").toUpperCase();
+      
+      if (st.includes("SUCCESS") || st.includes("COMPLETE")) {
+        // Extract WAV URL from various possible fields
+        const wavUrl = data.wav_url || data.wavUrl || data.file_url || data.fileUrl || 
+                      data.download_url || data.downloadUrl || data.audio_url || data.audioUrl ||
+                      data.response?.wav_url || data.response?.wavUrl || 
+                      data.response?.file_url || data.response?.fileUrl;
+        
+        if (wavUrl) {
+          try {
+            // Save WAV to storage
+            const wavPath = `wav/${wavJobId}.wav`;
+            const publicUrl = await saveToStorageFromUrl(wavPath, wavUrl, "audio/wav");
+            return json({ status: "ready", wavUrl: publicUrl });
+          } catch (e) {
+            console.error("[suno] Failed to save WAV to storage:", e);
+            return json({ status: "error", error: "Failed to save WAV file" });
+          }
+        } else {
+          console.warn("[suno] WAV conversion complete but no WAV URL found");
+          return json({ status: "error", error: "No WAV URL in response" });
+        }
+      }
+      
+      if (st.includes("FAIL") || st.includes("ERROR")) {
+        const err = data.errorMessage || data.status || "WAV conversion failed";
+        return json({ status: "error", error: err });
+      }
+
+      return json({ status: "pending" });
+    }
+
       if (req.method === "GET") {
         const jobId = url.searchParams.get("jobId");
         const detailsParam = url.searchParams.get("details");

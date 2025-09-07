@@ -9,6 +9,7 @@ import { useDrag } from "@/contexts/DragContext";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import JSZip from "jszip";
+import { api } from "@/lib/api";
 import {
   Pagination,
   PaginationContent,
@@ -268,6 +269,38 @@ export default function TrackListPanel({
     }
   };
 
+  const handleDownloadWAV = async (track: TrackItem) => {
+    if (!track.id || track.id.includes('loading') || track.id.includes('placeholder')) {
+      toast({ 
+        title: "WAV Not Available", 
+        description: "WAV conversion is only available for generated songs with valid IDs.", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    toast({ title: "Converting to WAV...", description: "This may take a few moments" });
+    
+    try {
+      const wavUrl = await api.convertToWav({ audioId: track.id });
+      const filename = `${(track.title || 'song').replace(/[^a-zA-Z0-9\s-_]/g, '')}.wav`;
+      const success = await downloadFile(wavUrl, filename);
+      
+      if (success) {
+        toast({ title: "Download Complete", description: "WAV file has been downloaded" });
+      } else {
+        toast({ title: "Download Failed", description: "Could not download the WAV file", variant: "destructive" });
+      }
+    } catch (error) {
+      console.error('WAV conversion failed:', error);
+      toast({ 
+        title: "WAV Conversion Failed", 
+        description: error instanceof Error ? error.message : "Could not convert to WAV format", 
+        variant: "destructive" 
+      });
+    }
+  };
+
   const handleDownloadAll = async (track: TrackItem) => {
     toast({ title: "Preparing Download...", description: "Creating zip file with all content" });
     
@@ -284,6 +317,22 @@ export default function TrackListPanel({
         }
       } catch (error) {
         console.error('Could not add MP3 to zip:', error);
+      }
+      
+      // Add WAV file if available
+      if (track.id && !track.id.includes('loading') && !track.id.includes('placeholder')) {
+        try {
+          toast({ title: "Converting to WAV...", description: "Adding WAV to download package" });
+          const wavUrl = await api.convertToWav({ audioId: track.id });
+          const wavResponse = await fetch(wavUrl);
+          if (wavResponse.ok) {
+            const wavBlob = await wavResponse.blob();
+            zip.file(`${folderName}/${folderName}.wav`, wavBlob);
+          }
+        } catch (error) {
+          console.error('Could not add WAV to zip:', error);
+          // Continue without WAV if conversion fails
+        }
       }
       
       // Add lyrics file
@@ -754,19 +803,13 @@ export default function TrackListPanel({
                                      <FileMusic className="w-3 h-3 relative z-10" />
                                      <span className="relative z-10">MP3</span>
                                    </button>
-                                   <button
-                                     className="relative h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group flex items-center justify-center gap-1"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        // WAV conversion would require server-side processing
-                                        toast({ 
-                                          title: "WAV Not Available", 
-                                          description: "WAV conversion is not supported yet. Use MP3 instead.", 
-                                          variant: "destructive" 
-                                        });
-                                        setOpenDeleteOverlayTrackId(null);
-                                      }}
-                                   >
+                                    <button
+                                      className="relative h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group flex items-center justify-center gap-1"
+                                       onClick={(e) => {
+                                         e.stopPropagation();
+                                         handleDownloadWAV(t);
+                                       }}
+                                    >
                                      <div className="absolute inset-0 bg-purple-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
                                      <FileAudio className="w-3 h-3 relative z-10" />
                                      <span className="relative z-10">WAV</span>

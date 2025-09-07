@@ -189,6 +189,46 @@ export const api = {
     return handle(response);
   },
 
+  async startWavConversion(params: { audioId?: string; taskId?: string; musicIndex?: number }): Promise<{ jobId: string }> {
+    const resp = await fetch(`${FUNCTIONS_BASE}/suno/wav`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+    return handle(resp);
+  },
+
+  async pollWav(jobId: string): Promise<{ status: "pending" | "ready" | "error"; wavUrl?: string; error?: string }> {
+    const resp = await fetch(`${FUNCTIONS_BASE}/suno/wav?jobId=${encodeURIComponent(jobId)}`);
+    return handle(resp);
+  },
+
+  async convertToWav(params: { audioId?: string; taskId?: string; musicIndex?: number }): Promise<string> {
+    const { jobId } = await this.startWavConversion(params);
+    
+    // Poll with exponential backoff
+    const maxAttempts = 30; // ~90 seconds max
+    let attempt = 0;
+    
+    while (attempt < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(1.2, attempt), 5000)));
+      
+      const result = await this.pollWav(jobId);
+      
+      if (result.status === "ready" && result.wavUrl) {
+        return result.wavUrl;
+      }
+      
+      if (result.status === "error") {
+        throw new Error(result.error || "WAV conversion failed");
+      }
+      
+      attempt++;
+    }
+    
+    throw new Error("WAV conversion timed out");
+  },
+
   async testAlbumCover(songDetails?: SongDetails): Promise<{ 
     cover1: string; 
     cover2: string; 
