@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useScrollDelegationHook } from "@/utils/scrollDelegation";
 import EllipsisMarquee from "@/components/ui/EllipsisMarquee";
 import { useDrag } from "@/contexts/DragContext";
+import { useOverlayResize } from "@/hooks/use-overlay-resize";
 import { cn } from "@/lib/utils";
 import {
   Pagination,
@@ -87,6 +88,9 @@ export default function TrackListPanel({
   // Drag functionality
   const { startDrag, dragState } = useDrag();
   
+  // Overlay resize functionality
+  const { overlayHeight, isResizing, handleMouseDown, resetHeight } = useOverlayResize();
+  
   // Scroll delegation
   const scrollRef = useRef<HTMLDivElement>(null);
   useScrollDelegationHook(scrollRef);
@@ -130,8 +134,9 @@ export default function TrackListPanel({
   useEffect(() => {
     if (!openAddOverlayTrackId) {
       setPlaylistSearchQuery("");
+      resetHeight(); // Reset overlay height when closing
     }
-  }, [openAddOverlayTrackId]);
+  }, [openAddOverlayTrackId, resetHeight]);
 
   // Handle page changes
   const handlePageChange = (page: number) => {
@@ -586,7 +591,9 @@ export default function TrackListPanel({
                            }}
                          >
                            <div 
-                             className="h-full flex flex-col"
+                             className="flex flex-col transition-all duration-200 relative"
+                             style={{ height: `${overlayHeight}px` }}
+                             onClick={(e) => e.stopPropagation()}
                            >
                             {/* Search Bar */}
                             <div className="flex justify-center p-3 pb-2">
@@ -640,8 +647,8 @@ export default function TrackListPanel({
                               </div>
                             )}
 
-                            {/* Playlists List */}
-                            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pb-3" onClick={(e) => e.stopPropagation()}>
+                             {/* Playlists List */}
+                            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pb-8" onClick={(e) => e.stopPropagation()}>
                               <div className="space-y-2">
                                 {/* Filter playlists based on search */}
                                 {(() => {
@@ -717,10 +724,23 @@ export default function TrackListPanel({
                                     </>
                                   );
                                 })()}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                               </div>
+                             </div>
+
+                             {/* Resize Handle */}
+                             <div 
+                               className={cn(
+                                 "absolute bottom-0 left-1/2 transform -translate-x-1/2 w-12 h-4 cursor-ns-resize flex items-center justify-center transition-colors duration-200 z-30",
+                                 isResizing ? "bg-accent-primary/30" : "hover:bg-white/10"
+                               )}
+                               onMouseDown={handleMouseDown}
+                               onClick={(e) => e.stopPropagation()}
+                               style={{ borderBottomLeftRadius: '16px', borderBottomRightRadius: '16px' }}
+                             >
+                               <div className="w-8 h-1 bg-white/40 rounded-full"></div>
+                             </div>
+                           </div>
+                         </div>
                       )}
                 </div>
               )}
