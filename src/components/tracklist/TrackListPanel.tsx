@@ -604,6 +604,29 @@ export default function TrackListPanel({
                               </div>
                             </div>
 
+                            {/* Search Results Info */}
+                            {playlistSearchQuery && (
+                              <div className="flex justify-center">
+                                <div className="w-4/5 text-xs text-white/40 px-3 pb-2">
+                                  {(() => {
+                                    const mockPlaylists = [
+                                      { id: "fav", name: "Favourites", songCount: 12 },
+                                      { id: "chill", name: "Chill Vibes", songCount: 8 },
+                                      { id: "workout", name: "Workout Mix", songCount: 15 },
+                                      { id: "focus", name: "Deep Focus", songCount: 6 },
+                                      { id: "party", name: "Party Hits", songCount: 24 }
+                                    ];
+                                    const filteredPlaylists = playlistSearchQuery.trim() === ""
+                                      ? mockPlaylists
+                                      : mockPlaylists.filter(playlist =>
+                                          playlist.name.toLowerCase().includes(playlistSearchQuery.toLowerCase())
+                                        );
+                                    return `${filteredPlaylists.length} playlist${filteredPlaylists.length !== 1 ? 's' : ''} found`;
+                                  })()}
+                                </div>
+                              </div>
+                            )}
+
                             {/* Playlists List */}
                             <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pb-3">
                               <div className="space-y-2">
@@ -635,11 +658,6 @@ export default function TrackListPanel({
                                   
                                   return (
                                     <>
-                                       {playlistSearchQuery && (
-                                         <div className="text-xs text-white/40 px-2 pb-2">
-                                           {filteredPlaylists.length} playlist{filteredPlaylists.length !== 1 ? 's' : ''} found
-                                         </div>
-                                       )}
                                       {filteredPlaylists.map((playlist) => (
                                   <div
                                     key={playlist.id}
