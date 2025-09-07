@@ -120,7 +120,7 @@ serve(async (req) => {
       return json({ ok: true });
     }
 
-    if (req.method === "POST") {
+    if (req.method === "POST" && !pathname.endsWith("/wav") && !pathname.endsWith("/callback")) {
       const details = await req.json().catch(() => ({} as any));
 
       // Expect unified fields: style (string) and lyrics (string). Title optional.
@@ -154,7 +154,7 @@ serve(async (req) => {
         callBackUrl: `${SUPABASE_URL}/functions/v1/suno/callback`,
       };
 
-      console.log("[suno] Starting generation (unified)", { hasLyrics: !!lyrics, styleLength: style.length });
+      console.log("[suno] Starting generation (unified)", { hasLyrics: !!lyrics, styleLength: style.length, pathname });
 
       const start = await fetch(`${API_BASE}/generate`, {
         method: "POST",
