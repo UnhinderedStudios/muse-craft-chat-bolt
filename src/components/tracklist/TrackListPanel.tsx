@@ -832,64 +832,59 @@ export default function TrackListPanel({
                              {overlayType === 'download' ? (
                                <>
                                  <div className="flex gap-2 w-full">
-                                   <button
-                                     className="relative h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group flex items-center justify-center gap-1"
-                                       onClick={(e) => {
-                                         e.stopPropagation();
-                                         handleDownloadMP3(t);
-                                       }}
-                                   >
-                                     <div className="absolute inset-0 bg-blue-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                                     <FileMusic className="w-3 h-3 relative z-10" />
-                                     <span className="relative z-10">MP3</span>
-                                   </button>
                                     <button
-                                      className="relative h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group flex items-center justify-center gap-1"
-                                       onClick={(e) => {
-                                         e.stopPropagation();
-                                         handleDownloadWAV(t);
-                                       }}
+                                      className="h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:bg-white/20 hover:text-white transition-colors duration-200 text-xs flex-1 flex items-center justify-center gap-1"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDownloadMP3(t);
+                                        }}
                                     >
-                                     <div className="absolute inset-0 bg-purple-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                                     <FileAudio className="w-3 h-3 relative z-10" />
-                                     <span className="relative z-10">WAV</span>
-                                   </button>
+                                      <FileMusic className="w-3 h-3" />
+                                      <span>MP3</span>
+                                    </button>
+                                     <button
+                                       className="h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:bg-white/20 hover:text-white transition-colors duration-200 text-xs flex-1 flex items-center justify-center gap-1"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDownloadWAV(t);
+                                        }}
+                                     >
+                                      <FileAudio className="w-3 h-3" />
+                                      <span>WAV</span>
+                                    </button>
                                  </div>
                                  <div className="flex gap-2 w-full">
-                                   <button
-                                     className="relative h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group flex items-center justify-center gap-1"
-                                       onClick={(e) => {
-                                         e.stopPropagation();
-                                         handleDownloadLyrics(t);
-                                       }}
-                                   >
-                                     <div className="absolute inset-0 bg-green-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                                     <FileText className="w-3 h-3 relative z-10" />
-                                     <span className="relative z-10">Lyrics</span>
-                                   </button>
-                                   <button
-                                     className="relative h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group flex items-center justify-center gap-1"
-                                       onClick={(e) => {
-                                         e.stopPropagation();
-                                         handleDownloadArt(t);
-                                       }}
-                                   >
-                                     <div className="absolute inset-0 bg-orange-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                                     <ImageIcon className="w-3 h-3 relative z-10" />
-                                     <span className="relative z-10">Art</span>
-                                   </button>
+                                    <button
+                                      className="h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:bg-white/20 hover:text-white transition-colors duration-200 text-xs flex-1 flex items-center justify-center gap-1"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDownloadLyrics(t);
+                                        }}
+                                    >
+                                      <FileText className="w-3 h-3" />
+                                      <span>Lyrics</span>
+                                    </button>
+                                    <button
+                                      className="h-6 px-3 rounded-xl bg-gray-500/20 text-gray-300 hover:bg-white/20 hover:text-white transition-colors duration-200 text-xs flex-1 flex items-center justify-center gap-1"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDownloadArt(t);
+                                        }}
+                                    >
+                                      <ImageIcon className="w-3 h-3" />
+                                      <span>Art</span>
+                                    </button>
                                  </div>
-                                 <button
-                                   className="relative h-6 px-4 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs w-full overflow-hidden group flex items-center justify-center gap-1"
-                                     onClick={(e) => {
-                                       e.stopPropagation();
-                                       handleDownloadAll(t);
-                                     }}
-                                 >
-                                   <div className="absolute inset-0 bg-gradient-to-r from-blue-500/80 to-purple-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                                   <Package className="w-3 h-3 relative z-10" />
-                                   <span className="relative z-10">Download All</span>
-                                 </button>
+                                  <button
+                                    className="h-6 px-4 rounded-xl bg-gray-500/20 text-gray-300 hover:bg-white/20 hover:text-white transition-colors duration-200 text-xs w-full flex items-center justify-center gap-1"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDownloadAll(t);
+                                      }}
+                                  >
+                                    <Package className="w-3 h-3" />
+                                    <span>Download All</span>
+                                  </button>
                                </>
                              ) : (
                                <>
