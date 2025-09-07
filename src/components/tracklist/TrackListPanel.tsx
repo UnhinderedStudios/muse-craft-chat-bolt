@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Play, Pause, RotateCw, X, Heart, Redo2, Plus, Trash2, Search, Edit3, MoreVertical } from "lucide-react";
+import { Play, Pause, RotateCw, X, Heart, Redo2, Plus, Trash2, Search, Edit3, MoreVertical, Music } from "lucide-react";
 import { TrackItem } from "@/types";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -554,45 +554,71 @@ export default function TrackListPanel({
                        </div>
                      )}
 
-                     {/* Add Overlay */}
-                     {openAddOverlayTrackId === t.id && (
-                       <div 
-                         className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
-                         style={{ backgroundColor: '#151515CC' }}
-                         onClick={(e) => {
-                           e.stopPropagation();
-                           setOpenAddOverlayTrackId(null);
-                         }}
-                       >
-                          <div className="h-full flex flex-col items-center justify-center gap-2 px-4">
-                            <p className="text-gray-400 text-xs mb-1">Caution: Deletion is permanent</p>
-                            <div className="flex gap-3 w-full mt-2">
-                              <button
-                                className="relative h-6 px-4 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  // TODO: Handle add to playlist functionality
-                                  setOpenAddOverlayTrackId(null);
-                                }}
-                              >
-                                <div className="absolute inset-0 bg-blue-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                                <span className="relative z-10">Add to Playlist</span>
-                              </button>
-                              <button
-                                className="relative h-6 px-4 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  // TODO: Handle favorite functionality
-                                  setOpenAddOverlayTrackId(null);
-                                }}
-                              >
-                                <div className="absolute inset-0 bg-green-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                                <span className="relative z-10">Favorite</span>
-                              </button>
+                      {/* Add Overlay */}
+                      {openAddOverlayTrackId === t.id && (
+                        <div 
+                          className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
+                          style={{ backgroundColor: '#151515CC' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenAddOverlayTrackId(null);
+                          }}
+                        >
+                          <div className="h-full flex flex-col p-3">
+                            {/* Search Bar */}
+                            <div className="relative mb-3">
+                              <input
+                                type="text"
+                                placeholder="Search playlists..."
+                                className="w-full bg-[#1e1e1e] border-0 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-white/20"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                            </div>
+
+                            {/* Playlists List */}
+                            <div className="flex-1 overflow-y-auto overflow-x-hidden lyrics-scrollbar">
+                              <div className="space-y-2">
+                                {/* Mock Playlists */}
+                                {[
+                                  { id: "fav", name: "Favourites", songCount: 12 },
+                                  { id: "chill", name: "Chill Vibes", songCount: 8 },
+                                  { id: "workout", name: "Workout Mix", songCount: 15 },
+                                  { id: "focus", name: "Deep Focus", songCount: 6 },
+                                  { id: "party", name: "Party Hits", songCount: 24 }
+                                ].map((playlist) => (
+                                  <div
+                                    key={playlist.id}
+                                    className="flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors cursor-pointer group"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-cyan-500/20 flex items-center justify-center shrink-0">
+                                        <Music className="w-4 h-4 text-white/60" />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-white text-sm font-medium truncate">{playlist.name}</p>
+                                        <p className="text-white/40 text-xs">{playlist.songCount} songs</p>
+                                      </div>
+                                    </div>
+                                    <button
+                                      className="w-6 h-6 rounded-full bg-accent-primary/20 hover:bg-accent-primary/40 flex items-center justify-center transition-colors opacity-0 group-hover:opacity-100"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        // TODO: Add song to playlist
+                                        console.log(`Adding song "${t.title}" to playlist "${playlist.name}"`);
+                                        setOpenAddOverlayTrackId(null);
+                                      }}
+                                    >
+                                      <Plus className="w-3 h-3 text-accent-primary" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           </div>
-                       </div>
-                     )}
+                        </div>
+                      )}
                 </div>
               )}
 
