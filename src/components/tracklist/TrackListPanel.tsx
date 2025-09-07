@@ -16,6 +16,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { TrackLoadingShell } from "./TrackLoadingShell";
+import { useOverlayResize } from "@/hooks/use-overlay-resize";
 
 type Props = {
   tracks: TrackItem[];
@@ -126,12 +127,16 @@ export default function TrackListPanel({
     setCurrentPage(1);
   };
 
+  // Overlay resize functionality
+  const { overlayHeight, isResizing, handleMouseDown, resetHeight } = useOverlayResize();
+
   // Clear playlist search when overlay closes
   useEffect(() => {
     if (!openAddOverlayTrackId) {
       setPlaylistSearchQuery("");
+      resetHeight(); // Reset overlay height when closed
     }
-  }, [openAddOverlayTrackId]);
+  }, [openAddOverlayTrackId, resetHeight]);
 
   // Handle page changes
   const handlePageChange = (page: number) => {
@@ -575,19 +580,21 @@ export default function TrackListPanel({
                        </div>
                      )}
 
-                      {/* Add Overlay */}
-                       {openAddOverlayTrackId === t.id && (
-                         <div 
-                           className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
-                           style={{ backgroundColor: '#151515CC' }}
-                           onClick={() => {
-                             setOpenAddOverlayTrackId(null);
-                             setClickedPlaylists(new Set());
-                           }}
-                         >
-                           <div 
-                             className="h-full flex flex-col"
-                           >
+                       {/* Add Overlay */}
+                        {openAddOverlayTrackId === t.id && (
+                          <div 
+                            className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
+                            style={{ backgroundColor: '#151515CC' }}
+                            onClick={() => {
+                              setOpenAddOverlayTrackId(null);
+                              setClickedPlaylists(new Set());
+                            }}
+                          >
+                            <div 
+                              className="relative flex flex-col transition-all duration-200"
+                              style={{ height: `${overlayHeight}px` }}
+                              onClick={(e) => e.stopPropagation()}
+                            >
                             {/* Search Bar */}
                             <div className="flex justify-center p-3 pb-2">
                               <div className="relative w-4/5">
@@ -716,7 +723,23 @@ export default function TrackListPanel({
                                       ))}
                                     </>
                                   );
-                                })()}
+                                 })()}
+                              </div>
+                            </div>
+
+                            {/* Resize Handle */}
+                            <div 
+                              className={cn(
+                                "absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-3 cursor-ns-resize flex items-center justify-center group transition-colors duration-200",
+                                isResizing ? "bg-primary/20" : "bg-white/10 hover:bg-white/20"
+                              )}
+                              onMouseDown={handleMouseDown}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="flex gap-1">
+                                <div className="w-1 h-1 bg-white/60 rounded-full"></div>
+                                <div className="w-1 h-1 bg-white/60 rounded-full"></div>
+                                <div className="w-1 h-1 bg-white/60 rounded-full"></div>
                               </div>
                             </div>
                           </div>
