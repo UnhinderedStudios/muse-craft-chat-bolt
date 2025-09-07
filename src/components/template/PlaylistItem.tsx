@@ -147,12 +147,14 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
     >
       <div className="flex items-center gap-3">
         {/* Icon - Fixed width */}
-        <div className="flex-none w-10 h-10 rounded-md bg-black/30 flex items-center justify-center">
+        <div className="flex-none w-10 h-10 rounded-md bg-black/30 flex items-center justify-center relative">
           {isArtist ? (
             <User className="w-5 h-5 text-white/60" />
           ) : (
             <Music className="w-5 h-5 text-white/60" />
           )}
+          {/* Unplayed indicator for templates - assuming they haven't been played */}
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-pink-400 rounded-full shadow-[0_0_10px_rgba(244,114,182,0.6)] animate-pulse" />
         </div>
 
         {/* Title area - Flexible with overflow handling */}
