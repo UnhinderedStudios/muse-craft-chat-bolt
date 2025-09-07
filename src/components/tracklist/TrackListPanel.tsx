@@ -368,7 +368,7 @@ export default function TrackListPanel({
                                   gapPx={32}
                                   isActive={hoveredTracks[t.id]}
                                 />
-                                <Edit3 className="w-3 h-3 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0 ml-6" />
+                                <Edit3 className="w-3 h-3 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0 ml-10" />
                               </div>
                             </div>
                           </div>
