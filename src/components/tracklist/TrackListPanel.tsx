@@ -6,8 +6,6 @@ import { Input } from "@/components/ui/input";
 import { useScrollDelegationHook } from "@/utils/scrollDelegation";
 import EllipsisMarquee from "@/components/ui/EllipsisMarquee";
 import { useDrag } from "@/contexts/DragContext";
-import { useOverlayResize } from "@/hooks/use-overlay-resize";
-import { useDraggableOverlay } from "@/hooks/use-draggable-overlay";
 import { cn } from "@/lib/utils";
 import {
   Pagination,
@@ -89,12 +87,6 @@ export default function TrackListPanel({
   // Drag functionality
   const { startDrag, dragState } = useDrag();
   
-  // Overlay resize functionality  
-  const { overlayHeight, isResizing, handleMouseDown: handleResizeMouseDown, resetHeight } = useOverlayResize();
-  
-  // Draggable overlay functionality
-  const { isDragging: isOverlayDragging, overlayPosition, insertPosition, handleMouseDown: handleOverlayDrag, resetPosition } = useDraggableOverlay();
-  
   // Scroll delegation
   const scrollRef = useRef<HTMLDivElement>(null);
   useScrollDelegationHook(scrollRef);
@@ -138,10 +130,8 @@ export default function TrackListPanel({
   useEffect(() => {
     if (!openAddOverlayTrackId) {
       setPlaylistSearchQuery("");
-      resetHeight(); // Reset overlay height when closing
-      resetPosition(); // Reset overlay position when closing
     }
-  }, [openAddOverlayTrackId, resetHeight, resetPosition]);
+  }, [openAddOverlayTrackId]);
 
   // Handle page changes
   const handlePageChange = (page: number) => {
@@ -245,21 +235,11 @@ export default function TrackListPanel({
             })}
             
             {paginatedTracks.map((t, pageIndex) => {
-              // Calculate the actual index in the original tracks array
-              const actualIndex = tracks.findIndex(track => track.id === t.id);
-              const active = actualIndex === currentIndex;
-              
-              // Add spacing if overlay should be inserted before this track
-              const shouldShowSpaceBefore = insertPosition === pageIndex && openAddOverlayTrackId && isOverlayDragging;
-              
-              return (
-                <React.Fragment key={t.id}>
-                  {shouldShowSpaceBefore && (
-                    <div className="h-20 border-2 border-dashed border-white/20 rounded-xl bg-white/5 flex items-center justify-center">
-                      <span className="text-white/40 text-sm">Drop playlist overlay here</span>
-                    </div>
-                  )}
-                  <div
+          // Calculate the actual index in the original tracks array
+          const actualIndex = tracks.findIndex(track => track.id === t.id);
+          const active = actualIndex === currentIndex;
+          return (
+            <div
               key={t.id}
               className={`${active ? "" : "rounded-xl bg-[#1e1e1e] p-3 cursor-pointer hover:bg-[#252525] transition-colors"}`}
               onClick={!active ? () => {
@@ -595,35 +575,19 @@ export default function TrackListPanel({
                        </div>
                      )}
 
-                       {/* Add Overlay - Now draggable */}
-                        {openAddOverlayTrackId === t.id && (
-                          <div 
-                            className={cn(
-                              "backdrop-blur-sm rounded-xl border border-white/[0.06] z-20 cursor-move",
-                              isOverlayDragging ? "fixed" : "absolute inset-0"
-                            )}
-                            style={{ 
-                              backgroundColor: '#151515CC',
-                              ...(isOverlayDragging ? {
-                                left: overlayPosition.x,
-                                top: overlayPosition.y,
-                                width: '300px',
-                                height: `${overlayHeight}px`,
-                                zIndex: 50
-                              } : {})
-                            }}
-                            onClick={() => {
-                              if (!isOverlayDragging) {
-                                setOpenAddOverlayTrackId(null);
-                                setClickedPlaylists(new Set());
-                              }
-                            }}
-                            onMouseDown={handleOverlayDrag}
-                          >
-                            <div 
-                              className="flex flex-col transition-all duration-200 relative h-full"
-                              onClick={(e) => e.stopPropagation()}
-                            >
+                      {/* Add Overlay */}
+                       {openAddOverlayTrackId === t.id && (
+                         <div 
+                           className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
+                           style={{ backgroundColor: '#151515CC' }}
+                           onClick={() => {
+                             setOpenAddOverlayTrackId(null);
+                             setClickedPlaylists(new Set());
+                           }}
+                         >
+                           <div 
+                             className="h-full flex flex-col"
+                           >
                             {/* Search Bar */}
                             <div className="flex justify-center p-3 pb-2">
                               <div className="relative w-4/5">
@@ -676,8 +640,8 @@ export default function TrackListPanel({
                               </div>
                             )}
 
-                             {/* Playlists List */}
-                            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pb-8" onClick={(e) => e.stopPropagation()}>
+                            {/* Playlists List */}
+                            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pb-3" onClick={(e) => e.stopPropagation()}>
                               <div className="space-y-2">
                                 {/* Filter playlists based on search */}
                                 {(() => {
@@ -753,26 +717,10 @@ export default function TrackListPanel({
                                     </>
                                   );
                                 })()}
-                               </div>
-                             </div>
-
-                             {/* Resize Handle */}
-                             <div 
-                               className={cn(
-                                 "absolute bottom-0 left-1/2 transform -translate-x-1/2 w-12 h-4 cursor-ns-resize flex items-center justify-center transition-colors duration-200 z-30",
-                                 isResizing ? "bg-accent-primary/30" : "hover:bg-white/10"
-                               )}
-                               onMouseDown={(e) => {
-                                 e.stopPropagation();
-                                 handleResizeMouseDown(e);
-                               }}
-                               onClick={(e) => e.stopPropagation()}
-                               style={{ borderBottomLeftRadius: '16px', borderBottomRightRadius: '16px' }}
-                             >
-                               <div className="w-8 h-1 bg-white/40 rounded-full"></div>
-                             </div>
-                           </div>
-                         </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       )}
                 </div>
               )}
@@ -816,9 +764,8 @@ export default function TrackListPanel({
                       }
                     });
                   }}
-                />
-              </div>
-            </React.Fragment>
+               />
+            </div>
           );
         })}
         
