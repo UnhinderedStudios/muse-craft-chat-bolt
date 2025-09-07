@@ -342,7 +342,7 @@ export default function TrackListPanel({
                     </div>
 
                      {/* Content area next to album art */}
-                     <div className="flex-1 ml-3 mr-3 flex flex-col justify-start min-w-0">
+                     <div className="flex-1 ml-3 mr-8 flex flex-col justify-start min-w-0">
                       {/* Title above controls */}
                       <div className="mb-1 mt-1">
                         {isEditingTitle ? (
@@ -368,7 +368,7 @@ export default function TrackListPanel({
                                   gapPx={32}
                                   isActive={hoveredTracks[t.id]}
                                 />
-                                <Edit3 className="w-3 h-3 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0 ml-3" />
+                                <Edit3 className="w-3 h-3 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity shrink-0 ml-2" />
                               </div>
                             </div>
                           </div>
