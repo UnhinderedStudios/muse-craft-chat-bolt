@@ -16,6 +16,9 @@ const supaUrl = Deno.env.get("SUPABASE_URL") || SUPABASE_URL;
 const supaKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const supabase = createClient(supaUrl, supaKey, { auth: { persistSession: false } });
 
+// Cache for WAV URLs to avoid duplicate conversions
+const wavUrlCache = new Map<string, string>();
+
 async function saveToStorageFromUrl(path: string, fileUrl: string, contentType = "audio/mpeg") {
   console.log("[suno] Downloading file to store:", fileUrl);
   const resp = await fetch(fileUrl);
@@ -189,6 +192,28 @@ serve(async (req) => {
         return json({ error: "Missing audioId or taskId" }, { status: 400 });
       }
 
+      // Check if we already have this WAV file cached/stored
+      if (audioId) {
+        try {
+          const wavPath = `wav_${audioId}.wav`;
+          const { data: signed, error: signErr } = await supabase.storage
+            .from("songs")
+            .createSignedUrl(wavPath, 3600);
+          if (!signErr && signed?.signedUrl) {
+            console.log(`[suno] Found existing WAV file for audioId ${audioId}`);
+            const pub = supabase.storage.from("songs").getPublicUrl(wavPath);
+            const publicUrl = pub.data.publicUrl || signed.signedUrl;
+            
+            // Return a unique fake jobId that can be used to retrieve this cached file
+            const fakeJobId = `cached_${audioId}_${Date.now()}`;
+            wavUrlCache.set(fakeJobId, publicUrl);
+            return json({ jobId: fakeJobId });
+          }
+        } catch (e) {
+          console.log(`[suno] No existing WAV found for audioId ${audioId}:`, e);
+        }
+      }
+
       // If audioId is missing but taskId is provided, resolve the provider track id from taskId
       if (!audioId && taskId) {
         try {
@@ -346,6 +371,7 @@ serve(async (req) => {
         console.log("[suno] WAV callback received:", JSON.stringify(body, null, 2));
 
         const wavJobId: string | undefined = body?.data?.taskId || body?.taskId || body?.data?.task_id || body?.task_id;
+        const audioId: string | undefined = body?.data?.audioId || body?.data?.musicId || body?.audioId || body?.musicId;
         const wavUrl: string | undefined =
           body?.data?.wav_url || body?.data?.wavUrl || body?.data?.file_url || body?.data?.fileUrl ||
           body?.data?.download_url || body?.data?.downloadUrl ||
@@ -358,6 +384,18 @@ serve(async (req) => {
             // Save WAV to storage with callback identifier
             const wavPath = `wav/${wavJobId}.wav`;
             const publicUrl = await saveToStorageFromUrl(wavPath, wavUrl, "audio/wav");
+            
+            // Also save with audioId-based name for future reuse if available
+            if (audioId) {
+              try {
+                const audioWavPath = `wav_${audioId}.wav`;
+                await saveToStorageFromUrl(audioWavPath, wavUrl, "audio/wav");
+                console.log("[suno] WAV also saved for audioId:", audioId);
+              } catch (e) {
+                console.log("[suno] Failed to save WAV with audioId name:", e);
+              }
+            }
+            
             console.log("[suno] WAV saved from callback:", { wavJobId, publicUrl });
             return json({ ok: true, wavJobId, publicUrl });
           } catch (e) {
@@ -379,6 +417,13 @@ serve(async (req) => {
       if (!wavJobId) return json({ error: "Missing WAV jobId or taskId" }, { status: 400 });
 
       console.log("[suno] WAV polling for jobId:", wavJobId);
+
+      // Check if this is a cached URL from a previous conversion
+      if (wavUrlCache.has(wavJobId)) {
+        const cachedUrl = wavUrlCache.get(wavJobId)!;
+        console.log("[suno] Found cached WAV URL for", wavJobId);
+        return json({ status: "ready", wavUrl: cachedUrl });
+      }
 
       // First priority: Check if already stored in Supabase Storage (from callback)
       try {
