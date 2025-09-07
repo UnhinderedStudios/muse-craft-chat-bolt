@@ -445,6 +445,19 @@ export default function TrackListPanel({
                      </div>
                    </div>
 
+                   {/* Second row: Parameters - full width from album art left edge */}
+                   <div className="-mt-0.5 pr-1">
+                     <div className="max-h-[120px] overflow-y-auto lyrics-scrollbar">
+                       <div className="flex flex-wrap gap-x-1.5 gap-y-1.5 px-2 pb-2">
+                         {(t.params || ["ambient", "chill", "electronic"]).map((p, idx) => (
+                           <div key={idx} className="px-3 py-1.5 rounded-full bg-white/25 text-[12px] text-black font-semibold text-center whitespace-nowrap">
+                             {p}
+                           </div>
+                         ))}
+                       </div>
+                     </div>
+                   </div>
+
                    {/* Overlay Menu */}
                    {openMenuTrackId === t.id && (
                      <div 
@@ -477,19 +490,6 @@ export default function TrackListPanel({
                        </div>
                      </div>
                    )}
-
-                   {/* Second row: Parameters - full width from album art left edge */}
-                  <div className="-mt-0.5 pr-1">
-                    <div className="max-h-[120px] overflow-y-auto lyrics-scrollbar">
-                      <div className="flex flex-wrap gap-x-1.5 gap-y-1.5 px-2 pb-2">
-                        {(t.params || ["ambient", "chill", "electronic"]).map((p, idx) => (
-                          <div key={idx} className="px-3 py-1.5 rounded-full bg-white/25 text-[12px] text-black font-semibold text-center whitespace-nowrap">
-                            {p}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
                 </div>
               )}
 
