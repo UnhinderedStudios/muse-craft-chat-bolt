@@ -81,6 +81,9 @@ export default function TrackListPanel({
   // Playlist search state
   const [playlistSearchQuery, setPlaylistSearchQuery] = useState("");
   
+  // Track which playlists have been clicked (show checkmark)
+  const [clickedPlaylists, setClickedPlaylists] = useState<Set<string>>(new Set());
+  
   // Drag functionality
   const { startDrag, dragState } = useDrag();
   
@@ -577,11 +580,9 @@ export default function TrackListPanel({
                          <div 
                            className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
                            style={{ backgroundColor: '#151515CC' }}
-                           onClick={(e) => {
-                             // Only close if clicking on the backdrop, not the content
-                             if (e.target === e.currentTarget) {
-                               setOpenAddOverlayTrackId(null);
-                             }
+                           onClick={() => {
+                             setOpenAddOverlayTrackId(null);
+                             setClickedPlaylists(new Set()); // Reset clicked state when closing
                            }}
                          >
                            <div 
@@ -690,12 +691,17 @@ export default function TrackListPanel({
                                        className="text-white/40 hover:text-white hover:scale-110 transition-all duration-200"
                                        onClick={(e) => {
                                          e.stopPropagation();
+                                         // Add to clicked playlists to show checkmark
+                                         setClickedPlaylists(prev => new Set([...prev, playlist.id]));
                                          // TODO: Add song to playlist
                                          console.log(`Adding song "${t.title}" to playlist "${playlist.name}"`);
-                                         // Don't close overlay - let user add to multiple playlists
                                        }}
                                      >
-                                       <Plus className="w-4 h-4" />
+                                       {clickedPlaylists.has(playlist.id) ? (
+                                         <Check className="w-4 h-4 text-green-400" />
+                                       ) : (
+                                         <Plus className="w-4 h-4" />
+                                       )}
                                      </button>
                                         </div>
                                       ))}
