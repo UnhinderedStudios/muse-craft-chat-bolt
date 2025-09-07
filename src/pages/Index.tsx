@@ -14,7 +14,7 @@ import { Dice5, Mic, Upload, Plus, List, Play, Pause, X, SkipBack, SkipForward, 
 // Components
 import { CyberCard } from "@/components/cyber/CyberCard";
 import { CyberButton } from "@/components/cyber/CyberButton";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { ProfileSection } from "@/components/auth/ProfileSection";
 import { ChatBubble } from "@/components/chat/ChatBubble";
 import { ChatContainer } from "@/components/chat/ChatContainer";
 import { ChatInput } from "@/components/chat/ChatInput";
@@ -1583,26 +1583,7 @@ const Index = () => {
             </div>
             
             {/* Profile Section - Anchored to absolute bottom */}
-            <div className="flex-shrink-0 mt-2 space-y-2 pb-2">
-              <button className="w-full flex items-center p-2 lg:p-2.5 bg-[#262626] rounded-lg hover:bg-[#2a2a2a] transition-colors">
-                <Avatar className="w-6 h-6 lg:w-7 lg:h-7 mr-2 flex-shrink-0">
-                  <AvatarImage src="/api/placeholder/32/32" alt="Sir Brom" />
-                  <AvatarFallback className="bg-accent-primary text-white font-semibold text-xs">SB</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 text-left min-w-0">
-                  <div className="text-white font-medium text-xs lg:text-sm truncate">Sir Brom</div>
-                  <div className="text-gray-400 text-xs truncate">Pro Plan</div>
-                  <div className="text-gray-400 text-xs truncate">Credits - 232,323</div>
-                </div>
-              </button>
-              
-              {/* Upgrade Link */}
-              <div className="text-center">
-                <button className="text-accent-primary hover:text-accent-primary/80 text-xs font-medium transition-colors">
-                  Upgrade / Top Up
-                </button>
-              </div>
-            </div>
+            <ProfileSection />
           </div>
 
           {/* Row 1 - Center: Chat */}
