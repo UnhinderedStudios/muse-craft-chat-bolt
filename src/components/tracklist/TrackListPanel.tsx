@@ -360,7 +360,7 @@ export default function TrackListPanel({
                             className="cursor-pointer group/title w-full overflow-hidden"
                           >
                              <div className="flex items-baseline gap-1 w-full min-w-0">
-                               <div className="flex-1 min-w-0 w-[90%] flex items-baseline">
+                               <div className="min-w-0 w-[90%] flex items-baseline">
                                  <EllipsisMarquee
                                    text={t.title || "Song Title"}
                                    className="text-sm text-white font-medium"
