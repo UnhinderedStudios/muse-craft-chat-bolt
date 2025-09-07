@@ -524,30 +524,30 @@ export default function TrackListPanel({
                            setOpenDeleteOverlayTrackId(null);
                          }}
                        >
-                         <div className="h-full flex items-center justify-center gap-3 px-4">
-                           <button
-                             className="relative h-12 px-4 rounded-xl bg-gray-500/20 text-white hover:text-white transition-all duration-200 font-medium flex-1 overflow-hidden group"
-                             onClick={(e) => {
-                               e.stopPropagation();
-                               // TODO: Handle hide functionality
-                               setOpenDeleteOverlayTrackId(null);
-                             }}
-                           >
-                             <div className="absolute inset-0 bg-gray-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                             <span className="relative z-10">Hide</span>
-                           </button>
-                           <button
-                             className="relative h-12 px-4 rounded-xl bg-gray-500/20 text-white hover:text-white transition-all duration-200 font-medium flex-1 overflow-hidden group"
-                             onClick={(e) => {
-                               e.stopPropagation();
-                               // TODO: Handle delete functionality
-                               setOpenDeleteOverlayTrackId(null);
-                             }}
-                           >
-                             <div className="absolute inset-0 bg-red-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                             <span className="relative z-10">Delete</span>
-                           </button>
-                         </div>
+                          <div className="h-full flex items-center justify-center gap-3 px-4">
+                            <button
+                              className="relative h-6 px-4 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // TODO: Handle hide functionality
+                                setOpenDeleteOverlayTrackId(null);
+                              }}
+                            >
+                              <div className="absolute inset-0 bg-gray-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                              <span className="relative z-10">Hide</span>
+                            </button>
+                            <button
+                              className="relative h-6 px-4 rounded-xl bg-gray-500/20 text-gray-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // TODO: Handle delete functionality
+                                setOpenDeleteOverlayTrackId(null);
+                              }}
+                            >
+                              <div className="absolute inset-0 bg-red-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+                              <span className="relative z-10">Delete</span>
+                            </button>
+                          </div>
                        </div>
                      )}
 
