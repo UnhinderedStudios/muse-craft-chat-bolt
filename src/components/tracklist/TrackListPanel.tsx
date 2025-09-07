@@ -342,15 +342,16 @@ export default function TrackListPanel({
                     <Play className="w-4 h-4" />
                   </button>
                 </div>
-              ) : (
+               ) : (
                 /* Active track - album art hugs left edge */
                 <div 
-                  className="bg-[#1e1e1e] rounded-xl flex flex-col relative"
+                  className="bg-[#1e1e1e] rounded-xl flex flex-col relative transition-all duration-300 ease-in-out"
+                  style={{ height: openAddOverlayTrackId === t.id ? `${overlayHeight}px` : 'auto' }}
                   onMouseEnter={() => setHoveredTracks(prev => ({ ...prev, [t.id]: true }))}
                   onMouseLeave={() => setHoveredTracks(prev => ({ ...prev, [t.id]: false }))}
                 >
                   {/* First row: Album art + Content */}
-                  <div className="flex relative">
+                  <div className="flex relative flex-shrink-0">
                     {/* Top-right menu icon */}
                     <button 
                       className="absolute top-1 right-2 text-white/60 hover:text-white transition-colors z-30 w-6 h-6 flex items-center justify-center"
@@ -578,173 +579,169 @@ export default function TrackListPanel({
                             </div>
                           </div>
                        </div>
-                     )}
+                      )}
 
-                       {/* Add Overlay */}
-                        {openAddOverlayTrackId === t.id && (
-                          <div 
-                            className="absolute inset-0 backdrop-blur-sm rounded-xl border border-white/[0.06] z-20"
-                            style={{ backgroundColor: '#151515CC' }}
-                            onClick={() => {
-                              setOpenAddOverlayTrackId(null);
-                              setClickedPlaylists(new Set());
-                            }}
-                          >
-                            <div 
-                              className="relative flex flex-col transition-all duration-200"
-                              style={{ height: `${overlayHeight}px` }}
+                  {/* Playlist Content Section - appears below main track content when expanded */}
+                  {openAddOverlayTrackId === t.id && (
+                    <div 
+                      className="overflow-hidden border-t border-white/10 mt-2"
+                      style={{ height: `${overlayHeight - 64}px` }} // Subtract space for main track content
+                      onClick={() => {
+                        setOpenAddOverlayTrackId(null);
+                        setClickedPlaylists(new Set());
+                      }}
+                    >
+                      <div 
+                        className="h-full flex flex-col p-3"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {/* Search Bar */}
+                        <div className="mb-3">
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={playlistSearchQuery}
+                              onChange={(e) => setPlaylistSearchQuery(e.target.value)}
+                              placeholder="Search playlists..."
+                              className="w-full bg-[#2a2a2a] border-0 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-white/20 pr-10"
                               onClick={(e) => e.stopPropagation()}
+                            />
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (playlistSearchQuery) {
+                                  setPlaylistSearchQuery("");
+                                }
+                              }}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
                             >
-                            {/* Search Bar */}
-                            <div className="flex justify-center p-3 pb-2">
-                              <div className="relative w-4/5">
-                                <input
-                                  type="text"
-                                  value={playlistSearchQuery}
-                                  onChange={(e) => setPlaylistSearchQuery(e.target.value)}
-                                  placeholder="Search playlists..."
-                                  className="w-full bg-[#1e1e1e] border-0 text-white placeholder:text-white/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-white/20 pr-10"
-                                  onClick={(e) => e.stopPropagation()}
-                                />
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (playlistSearchQuery) {
-                                      setPlaylistSearchQuery("");
-                                    }
-                                  }}
-                                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60 transition-colors"
-                                >
-                                  {playlistSearchQuery ? (
-                                    <X className="w-4 h-4" />
-                                  ) : (
-                                    <Search className="w-4 h-4" />
-                                  )}
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* Search Results Info */}
-                            {playlistSearchQuery && (
-                              <div className="flex justify-center">
-                                <div className="w-4/5 text-xs text-white/40 px-3 pb-2">
-                                  {(() => {
-                                    const mockPlaylists = [
-                                      { id: "fav", name: "Favourites", songCount: 12 },
-                                      { id: "chill", name: "Chill Vibes", songCount: 8 },
-                                      { id: "workout", name: "Workout Mix", songCount: 15 },
-                                      { id: "focus", name: "Deep Focus", songCount: 6 },
-                                      { id: "party", name: "Party Hits", songCount: 24 }
-                                    ];
-                                    const filteredPlaylists = playlistSearchQuery.trim() === ""
-                                      ? mockPlaylists
-                                      : mockPlaylists.filter(playlist =>
-                                          playlist.name.toLowerCase().includes(playlistSearchQuery.toLowerCase())
-                                        );
-                                    return `${filteredPlaylists.length} playlist${filteredPlaylists.length !== 1 ? 's' : ''} found`;
-                                  })()}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Playlists List */}
-                            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lyrics-scrollbar px-3 pb-3" onClick={(e) => e.stopPropagation()}>
-                              <div className="space-y-2">
-                                {/* Filter playlists based on search */}
-                                {(() => {
-                                  const mockPlaylists = [
-                                    { id: "fav", name: "Favourites", songCount: 12 },
-                                    { id: "chill", name: "Chill Vibes", songCount: 8 },
-                                    { id: "workout", name: "Workout Mix", songCount: 15 },
-                                    { id: "focus", name: "Deep Focus", songCount: 6 },
-                                    { id: "party", name: "Party Hits", songCount: 24 }
-                                  ];
-                                  
-                                  const filteredPlaylists = playlistSearchQuery.trim() === ""
-                                    ? mockPlaylists
-                                    : mockPlaylists.filter(playlist =>
-                                        playlist.name.toLowerCase().includes(playlistSearchQuery.toLowerCase())
-                                      );
-                                  
-                                  if (filteredPlaylists.length === 0) {
-                                    return (
-                                      <div className="text-center py-8">
-                                        <Music className="w-8 h-8 text-white/20 mx-auto mb-2" />
-                                        <p className="text-white/40 text-sm">No playlists found</p>
-                                        <p className="text-white/20 text-xs mt-1">Try a different search term</p>
-                                      </div>
-                                    );
-                                  }
-                                  
-                                  return (
-                                    <>
-                                      {filteredPlaylists.map((playlist) => (
-                                  <div
-                                    key={playlist.id}
-                                    className="flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors cursor-pointer group"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500/20 to-rose-500/20 flex items-center justify-center shrink-0">
-                                        <Music className="w-4 h-4 text-white/60" />
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-white text-sm font-medium truncate">{playlist.name}</p>
-                                        <p className="text-white/40 text-xs">{playlist.songCount} songs</p>
-                                      </div>
-                                    </div>
-                                     <button
-                                       className="text-white/40 hover:text-white hover:scale-110 transition-all duration-200"
-                                       onClick={(e) => {
-                                         e.stopPropagation();
-                                         // Toggle playlist in clicked set
-                                         setClickedPlaylists(prev => {
-                                           const newSet = new Set(prev);
-                                           if (newSet.has(playlist.id)) {
-                                             newSet.delete(playlist.id);
-                                           } else {
-                                             newSet.add(playlist.id);
-                                           }
-                                           return newSet;
-                                         });
-                                         // TODO: Add/remove song to/from playlist
-                                         console.log(`${clickedPlaylists.has(playlist.id) ? 'Removing' : 'Adding'} song "${t.title}" ${clickedPlaylists.has(playlist.id) ? 'from' : 'to'} playlist "${playlist.name}"`);
-                                       }}
-                                     >
-                                       <div className="relative w-4 h-4">
-                                         {clickedPlaylists.has(playlist.id) ? (
-                                           <Check className="w-4 h-4 text-green-400 animate-scale-in" />
-                                         ) : (
-                                           <Plus className="w-4 h-4 animate-scale-in" />
-                                         )}
-                                       </div>
-                                     </button>
-                                        </div>
-                                      ))}
-                                    </>
-                                  );
-                                 })()}
-                              </div>
-                            </div>
-
-                            {/* Resize Handle */}
-                            <div 
-                              className={cn(
-                                "absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-3 cursor-ns-resize flex items-center justify-center group transition-colors duration-200",
-                                isResizing ? "bg-primary/20" : "bg-white/10 hover:bg-white/20"
+                              {playlistSearchQuery ? (
+                                <X className="w-4 h-4" />
+                              ) : (
+                                <Search className="w-4 h-4" />
                               )}
-                              onMouseDown={handleMouseDown}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <div className="flex gap-1">
-                                <div className="w-1 h-1 bg-white/60 rounded-full"></div>
-                                <div className="w-1 h-1 bg-white/60 rounded-full"></div>
-                                <div className="w-1 h-1 bg-white/60 rounded-full"></div>
-                              </div>
+                            </button>
+                          </div>
+                          {/* Search Results Info */}
+                          {playlistSearchQuery && (
+                            <div className="text-xs text-white/40 mt-2">
+                              {(() => {
+                                const mockPlaylists = [
+                                  { id: "fav", name: "Favourites", songCount: 12 },
+                                  { id: "chill", name: "Chill Vibes", songCount: 8 },
+                                  { id: "workout", name: "Workout Mix", songCount: 15 },
+                                  { id: "focus", name: "Deep Focus", songCount: 6 },
+                                  { id: "party", name: "Party Hits", songCount: 24 }
+                                ];
+                                const filteredPlaylists = playlistSearchQuery.trim() === ""
+                                  ? mockPlaylists
+                                  : mockPlaylists.filter(playlist =>
+                                      playlist.name.toLowerCase().includes(playlistSearchQuery.toLowerCase())
+                                    );
+                                return `${filteredPlaylists.length} playlist${filteredPlaylists.length !== 1 ? 's' : ''} found`;
+                              })()}
                             </div>
+                          )}
+                        </div>
+
+                        {/* Playlists List */}
+                        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden lyrics-scrollbar">
+                          <div className="space-y-2">
+                            {/* Filter playlists based on search */}
+                            {(() => {
+                              const mockPlaylists = [
+                                { id: "fav", name: "Favourites", songCount: 12 },
+                                { id: "chill", name: "Chill Vibes", songCount: 8 },
+                                { id: "workout", name: "Workout Mix", songCount: 15 },
+                                { id: "focus", name: "Deep Focus", songCount: 6 },
+                                { id: "party", name: "Party Hits", songCount: 24 }
+                              ];
+                              
+                              const filteredPlaylists = playlistSearchQuery.trim() === ""
+                                ? mockPlaylists
+                                : mockPlaylists.filter(playlist =>
+                                    playlist.name.toLowerCase().includes(playlistSearchQuery.toLowerCase())
+                                  );
+                              
+                              if (filteredPlaylists.length === 0) {
+                                return (
+                                  <div className="text-center py-8">
+                                    <Music className="w-8 h-8 text-white/20 mx-auto mb-2" />
+                                    <p className="text-white/40 text-sm">No playlists found</p>
+                                    <p className="text-white/20 text-xs mt-1">Try a different search term</p>
+                                  </div>
+                                );
+                              }
+                              
+                              return (
+                                <>
+                                  {filteredPlaylists.map((playlist) => (
+                                    <div
+                                      key={playlist.id}
+                                      className="flex items-center justify-between p-2 rounded-lg bg-[#2a2a2a] hover:bg-[#333333] transition-colors cursor-pointer group"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500/20 to-rose-500/20 flex items-center justify-center shrink-0">
+                                          <Music className="w-4 h-4 text-white/60" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-white text-sm font-medium truncate">{playlist.name}</p>
+                                          <p className="text-white/40 text-xs">{playlist.songCount} songs</p>
+                                        </div>
+                                      </div>
+                                      <button
+                                        className="text-white/40 hover:text-white hover:scale-110 transition-all duration-200"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          // Toggle playlist in clicked set
+                                          setClickedPlaylists(prev => {
+                                            const newSet = new Set(prev);
+                                            if (newSet.has(playlist.id)) {
+                                              newSet.delete(playlist.id);
+                                            } else {
+                                              newSet.add(playlist.id);
+                                            }
+                                            return newSet;
+                                          });
+                                          // TODO: Add/remove song to/from playlist
+                                          console.log(`${clickedPlaylists.has(playlist.id) ? 'Removing' : 'Adding'} song "${t.title}" ${clickedPlaylists.has(playlist.id) ? 'from' : 'to'} playlist "${playlist.name}"`);
+                                        }}
+                                      >
+                                        <div className="relative w-4 h-4">
+                                          {clickedPlaylists.has(playlist.id) ? (
+                                            <Check className="w-4 h-4 text-green-400 animate-scale-in" />
+                                          ) : (
+                                            <Plus className="w-4 h-4 animate-scale-in" />
+                                          )}
+                                        </div>
+                                      </button>
+                                    </div>
+                                  ))}
+                                </>
+                              );
+                            })()}
                           </div>
                         </div>
-                      )}
+
+                        {/* Resize Handle */}
+                        <div 
+                          className={cn(
+                            "absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-3 cursor-ns-resize flex items-center justify-center group transition-colors duration-200",
+                            isResizing ? "bg-primary/20" : "bg-white/10 hover:bg-white/20"
+                          )}
+                          onMouseDown={handleMouseDown}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="flex gap-1">
+                            <div className="w-1 h-1 bg-white/60 rounded-full"></div>
+                            <div className="w-1 h-1 bg-white/60 rounded-full"></div>
+                            <div className="w-1 h-1 bg-white/60 rounded-full"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
