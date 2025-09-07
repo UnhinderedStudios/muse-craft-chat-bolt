@@ -776,10 +776,10 @@ export default function TrackListPanel({
                 >
                   <div className="h-full flex flex-col items-center justify-center gap-2 px-4">
                     <p className="text-gray-400 text-xs mb-1">Download Options</p>
-                    <div className="flex flex-col gap-1.5 w-full">
+                    <div className="flex gap-2 w-full mt-2">
                       {/* MP3 Download */}
                       <button
-                        className="relative h-6 px-3 rounded-xl bg-green-500/20 text-green-300 hover:text-white transition-all duration-200 text-xs flex items-center justify-center overflow-hidden group"
+                        className="relative h-6 px-3 rounded-xl bg-green-500/20 text-green-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group"
                         onClick={(e) => {
                           e.stopPropagation();
                           const link = document.createElement('a');
@@ -790,16 +790,13 @@ export default function TrackListPanel({
                         }}
                       >
                         <div className="absolute inset-0 bg-green-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                        <span className="relative z-10 flex items-center gap-1">
-                          <FileDown className="w-3 h-3" />
-                          MP3
-                        </span>
+                        <span className="relative z-10">MP3</span>
                       </button>
 
                       {/* Cover Download */}
                       {t.coverUrl && (
                         <button
-                          className="relative h-6 px-3 rounded-xl bg-purple-500/20 text-purple-300 hover:text-white transition-all duration-200 text-xs flex items-center justify-center overflow-hidden group"
+                          className="relative h-6 px-3 rounded-xl bg-purple-500/20 text-purple-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group"
                           onClick={(e) => {
                             e.stopPropagation();
                             const link = document.createElement('a');
@@ -810,17 +807,14 @@ export default function TrackListPanel({
                           }}
                         >
                           <div className="absolute inset-0 bg-purple-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                          <span className="relative z-10 flex items-center gap-1">
-                            <Image className="w-3 h-3" />
-                            Cover
-                          </span>
+                          <span className="relative z-10">Cover</span>
                         </button>
                       )}
 
                       {/* Lyrics Download */}
                       {(t.words && t.words.length > 0) && (
                         <button
-                          className="relative h-6 px-3 rounded-xl bg-cyan-500/20 text-cyan-300 hover:text-white transition-all duration-200 text-xs flex items-center justify-center overflow-hidden group"
+                          className="relative h-6 px-3 rounded-xl bg-cyan-500/20 text-cyan-300 hover:text-white transition-all duration-200 text-xs flex-1 overflow-hidden group"
                           onClick={(e) => {
                             e.stopPropagation();
                             if (t.words) {
@@ -837,10 +831,7 @@ export default function TrackListPanel({
                           }}
                         >
                           <div className="absolute inset-0 bg-cyan-500/80 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-                          <span className="relative z-10 flex items-center gap-1">
-                            <FileText className="w-3 h-3" />
-                            Lyrics
-                          </span>
+                          <span className="relative z-10">Lyrics</span>
                         </button>
                       )}
                     </div>
