@@ -268,7 +268,7 @@ export default function TrackListPanel({
                   }}
                 >
                   {/* New track indicator - pink glowing ball */}
-                  {t.createdAt && Date.now() - t.createdAt < 24 * 60 * 60 * 1000 && (
+                  {t.createdAt && Date.now() - t.createdAt < 24 * 60 * 60 * 1000 && !t.hasBeenPlayed && (
                     <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-pink-500 z-10" 
                          style={{
                            boxShadow: '0 0 8px rgba(236, 72, 153, 0.6), 0 0 4px rgba(236, 72, 153, 0.8)',

@@ -14,4 +14,5 @@ export interface TrackItem {
   params: string[];         // styleTags at time of generation
   words?: TimestampedWord[];
   hasTimestamps?: boolean;
+  hasBeenPlayed?: boolean;  // Track if this song has been played before
 }

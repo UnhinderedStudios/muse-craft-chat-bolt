@@ -582,6 +582,13 @@ const Index = () => {
       setKaraokeTrackId(playingTrack.id);
       setPlayingTrackId(playingTrack.id);
       setPlayingTrackIndex(index);
+      
+      // Mark track as played
+      setTracks(prevTracks => 
+        prevTracks.map((track, i) => 
+          i === index ? { ...track, hasBeenPlayed: true } : track
+        )
+      );
     }
     
     // If same track is already playing, just toggle pause/play
