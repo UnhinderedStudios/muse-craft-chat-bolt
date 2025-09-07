@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import JSZip from "jszip";
 import { api } from "@/lib/api";
+import { wavRegistry } from "@/lib/wavRegistry";
 import {
   Pagination,
   PaginationContent,
@@ -281,15 +282,54 @@ export default function TrackListPanel({
 
     toast({ title: "Converting to WAV...", description: "This may take a few moments" });
     
+    // Get WAV conversion refs from registry
+    const wavRefs = wavRegistry.get(track.id);
+    console.log(`[WAV] Track ${track.id} refs:`, wavRefs);
+    
     try {
-      const wavUrl = await api.convertToWav({ audioId: track.id });
-      const filename = `${(track.title || 'song').replace(/[^a-zA-Z0-9\s-_]/g, '')}.wav`;
-      const success = await downloadFile(wavUrl, filename);
+      let wavUrl: string | null = null;
       
-      if (success) {
-        toast({ title: "Download Complete", description: "WAV file has been downloaded" });
+      // Try with audioId first (preferred)
+      if (wavRefs?.audioId) {
+        try {
+          console.log(`[WAV] Attempting conversion with audioId: ${wavRefs.audioId}`);
+          wavUrl = await api.convertToWav({ audioId: wavRefs.audioId });
+        } catch (audioIdError) {
+          console.warn(`[WAV] audioId conversion failed:`, audioIdError);
+          
+          // If audioId fails and we have taskId + musicIndex, try with those
+          if (wavRefs.taskId !== undefined && wavRefs.musicIndex !== undefined) {
+            console.log(`[WAV] Retrying with taskId: ${wavRefs.taskId}, musicIndex: ${wavRefs.musicIndex}`);
+            try {
+              wavUrl = await api.convertToWav({ 
+                taskId: wavRefs.taskId, 
+                musicIndex: wavRefs.musicIndex 
+              });
+            } catch (taskIdError) {
+              console.error(`[WAV] taskId conversion also failed:`, taskIdError);
+              throw audioIdError; // Throw original error
+            }
+          } else {
+            throw audioIdError;
+          }
+        }
       } else {
-        toast({ title: "Download Failed", description: "Could not download the WAV file", variant: "destructive" });
+        // Fallback to track.id if no registry data
+        console.log(`[WAV] No registry data, using track.id as audioId: ${track.id}`);
+        wavUrl = await api.convertToWav({ audioId: track.id });
+      }
+      
+      if (wavUrl) {
+        const filename = `${(track.title || 'song').replace(/[^a-zA-Z0-9\s-_]/g, '')}.wav`;
+        const success = await downloadFile(wavUrl, filename);
+        
+        if (success) {
+          toast({ title: "Download Complete", description: "WAV file has been downloaded" });
+        } else {
+          toast({ title: "Download Failed", description: "Could not download the WAV file", variant: "destructive" });
+        }
+      } else {
+        throw new Error("WAV conversion returned no URL");
       }
     } catch (error) {
       console.error('WAV conversion failed:', error);
@@ -323,11 +363,38 @@ export default function TrackListPanel({
       if (track.id && !track.id.includes('loading') && !track.id.includes('placeholder')) {
         try {
           toast({ title: "Converting to WAV...", description: "Adding WAV to download package" });
-          const wavUrl = await api.convertToWav({ audioId: track.id });
-          const wavResponse = await fetch(wavUrl);
-          if (wavResponse.ok) {
-            const wavBlob = await wavResponse.blob();
-            zip.file(`${folderName}/${folderName}.wav`, wavBlob);
+          
+          // Use same WAV conversion logic as handleDownloadWAV
+          const wavRefs = wavRegistry.get(track.id);
+          let wavUrl: string | null = null;
+          
+          if (wavRefs?.audioId) {
+            try {
+              wavUrl = await api.convertToWav({ audioId: wavRefs.audioId });
+            } catch (audioIdError) {
+              if (wavRefs.taskId !== undefined && wavRefs.musicIndex !== undefined) {
+                try {
+                  wavUrl = await api.convertToWav({ 
+                    taskId: wavRefs.taskId, 
+                    musicIndex: wavRefs.musicIndex 
+                  });
+                } catch (taskIdError) {
+                  throw audioIdError;
+                }
+              } else {
+                throw audioIdError;
+              }
+            }
+          } else {
+            wavUrl = await api.convertToWav({ audioId: track.id });
+          }
+          
+          if (wavUrl) {
+            const wavResponse = await fetch(wavUrl);
+            if (wavResponse.ok) {
+              const wavBlob = await wavResponse.blob();
+              zip.file(`${folderName}/${folderName}.wav`, wavBlob);
+            }
           }
         } catch (error) {
           console.error('Could not add WAV to zip:', error);

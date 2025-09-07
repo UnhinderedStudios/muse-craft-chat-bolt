@@ -46,6 +46,7 @@ import { parseSongRequest, convertToSongDetails } from "@/lib/parseSongRequest";
 import { RANDOM_MUSIC_FORGE_PROMPT } from "@/utils/prompts";
 import { parseRandomMusicForgeOutput } from "@/lib/parseRandomMusicForge";
 import { diceMemory } from "@/lib/diceMemory";
+import { wavRegistry } from "@/lib/wavRegistry";
 
 const systemPrompt = `You are Melody Muse, a friendly creative assistant for songwriting.
 Your goal is to chat naturally and quickly gather two things only: (1) a unified Style description and (2) Lyrics.
@@ -1335,14 +1336,16 @@ const Index = () => {
             
             const fresh = updatedVersions.map((v, i) => {
               const assignedCover = jobCovers ? (i === 0 ? jobCovers.cover1 : jobCovers.cover2) : undefined;
+              const trackId = v.audioId || `${sunoJobId}-${i}`;
+              
               console.log(`[Generation] Track ${i}: 
-                - ID: ${v.audioId || `${sunoJobId}-${i}`}
+                - ID: ${trackId}
                 - URL: ${v.url?.substring(0, 50)}...
                 - CoverURL: ${assignedCover ? assignedCover.substring(0, 50) + '...' : 'UNDEFINED'}
                 - Title: ${songData.title || "Song Title"}`);
               
               const track = {
-                id: v.audioId || `${sunoJobId}-${i}`,
+                id: trackId,
                 url: v.url,
                 title: songData.title || "Song Title",
                 coverUrl: assignedCover,
@@ -1352,7 +1355,15 @@ const Index = () => {
                 hasTimestamps: v.hasTimestamps,
               };
               
+              // Store WAV refs for potential future conversion
+              wavRegistry.set(trackId, {
+                audioId: v.audioId,
+                taskId: sunoJobId,
+                musicIndex: i
+              });
+              
               console.log(`[Generation] Created track object:`, track);
+              console.log(`[WAV Registry] Stored refs for track ${trackId}:`, { audioId: v.audioId, taskId: sunoJobId, musicIndex: i });
               return track;
             }).filter(t => !existing.has(t.id));
             
