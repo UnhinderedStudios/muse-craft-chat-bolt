@@ -178,7 +178,7 @@ serve(async (req) => {
       return json({ jobId: taskId });
     }
 
-    // Handle WAV conversion with retry logic
+    // Handle WAV conversion with retry logic and callback support
     if (req.method === "POST" && pathname.endsWith("/wav")) {
       const details = await req.json().catch(() => ({} as any));
       let audioId: string | undefined = details.audioId;
@@ -234,49 +234,54 @@ serve(async (req) => {
 
       // Try different parameter combinations until one works. Start with official fields per docs.
       const attempts = [
-        // Attempt 1: Official params exactly as documented
+        // Attempt 1: Official params exactly as documented + callback
         () => {
           const body: Record<string, unknown> = {};
           if (audioId) body.audioId = audioId;
           if (taskId) body.taskId = taskId;
           if (typeof musicIndex === 'number') body.musicIndex = musicIndex;
-          console.log(`[suno] WAV attempt 1 (official) params:`, { audioId, taskId, musicIndex });
+          body.callBackUrl = `${SUPABASE_URL}/functions/v1/suno/wav/callback`;
+          console.log(`[suno] WAV attempt 1 (official + callback) params:`, { audioId, taskId, musicIndex, callBackUrl: body.callBackUrl });
           return body;
         },
-        // Attempt 2: Use 'id' instead of audioId
+        // Attempt 2: Use 'id' instead of audioId + callback
         () => {
           const body: Record<string, unknown> = {};
           if (audioId) body.id = audioId;
           if (taskId) body.taskId = taskId;
           if (typeof musicIndex === 'number') body.musicIndex = musicIndex;
-          console.log(`[suno] WAV attempt 2 params:`, { id: audioId, taskId, musicIndex });
+          body.callBackUrl = `${SUPABASE_URL}/functions/v1/suno/wav/callback`;
+          console.log(`[suno] WAV attempt 2 (id + callback) params:`, { id: audioId, taskId, musicIndex, callBackUrl: body.callBackUrl });
           return body;
         },
-        // Attempt 3: musicId alias
+        // Attempt 3: musicId alias + callback
         () => {
           const body: Record<string, unknown> = {};
           if (audioId) body.musicId = audioId;
           if (taskId) body.taskId = taskId;
           if (typeof musicIndex === 'number') body.musicIndex = musicIndex;
-          console.log(`[suno] WAV attempt 3 params:`, { musicId: audioId, taskId, musicIndex });
+          body.callBackUrl = `${SUPABASE_URL}/functions/v1/suno/wav/callback`;
+          console.log(`[suno] WAV attempt 3 (musicId + callback) params:`, { musicId: audioId, taskId, musicIndex, callBackUrl: body.callBackUrl });
           return body;
         },
-        // Attempt 4: index instead of musicIndex
+        // Attempt 4: index instead of musicIndex + callback
         () => {
           const body: Record<string, unknown> = {};
           if (audioId) body.audioId = audioId;
           if (taskId) body.taskId = taskId;
           if (typeof musicIndex === 'number') body.index = musicIndex;
-          console.log(`[suno] WAV attempt 4 params:`, { audioId, taskId, index: musicIndex });
+          body.callBackUrl = `${SUPABASE_URL}/functions/v1/suno/wav/callback`;
+          console.log(`[suno] WAV attempt 4 (index + callback) params:`, { audioId, taskId, index: musicIndex, callBackUrl: body.callBackUrl });
           return body;
         },
-        // Attempt 5: snake_case variants
+        // Attempt 5: snake_case variants + callback
         () => {
           const body: Record<string, unknown> = {};
           if (audioId) body.music_id = audioId;
           if (taskId) body.task_id = taskId;
           if (typeof musicIndex === 'number') body.music_index = musicIndex;
-          console.log(`[suno] WAV attempt 5 params:`, { music_id: audioId, task_id: taskId, music_index: musicIndex });
+          body.callBackUrl = `${SUPABASE_URL}/functions/v1/suno/wav/callback`;
+          console.log(`[suno] WAV attempt 5 (snake_case + callback) params:`, { music_id: audioId, task_id: taskId, music_index: musicIndex, callBackUrl: body.callBackUrl });
           return body;
         }
       ];
@@ -334,12 +339,45 @@ serve(async (req) => {
       return json({ error: `WAV conversion failed after ${attempts.length} attempts. Last error: ${lastError}` }, { status: 500 });
     }
 
-    // Handle WAV status polling
-    if (req.method === "GET" && pathname.endsWith("/wav")) {
-      const wavJobId = url.searchParams.get("jobId");
-      if (!wavJobId) return json({ error: "Missing WAV jobId" }, { status: 400 });
+    // Handle WAV callback
+    if (req.method === "POST" && pathname.endsWith("/wav/callback")) {
+      try {
+        const body = await req.json();
+        console.log("[suno] WAV callback received:", JSON.stringify(body, null, 2));
 
-      // Check if already stored in Supabase Storage
+        const wavJobId: string | undefined = body?.data?.taskId || body?.taskId || body?.data?.task_id || body?.task_id;
+        const wavUrl: string | undefined = body?.data?.wav_url || body?.data?.wavUrl || body?.data?.file_url || body?.data?.fileUrl || 
+                                          body?.data?.download_url || body?.data?.downloadUrl || body?.wav_url || body?.wavUrl || 
+                                          body?.file_url || body?.fileUrl || body?.download_url || body?.downloadUrl;
+        
+        if (wavJobId && wavUrl) {
+          try {
+            // Save WAV to storage with callback identifier
+            const wavPath = `wav/${wavJobId}.wav`;
+            const publicUrl = await saveToStorageFromUrl(wavPath, wavUrl, "audio/wav");
+            console.log("[suno] WAV saved from callback:", { wavJobId, publicUrl });
+            return json({ ok: true, wavJobId, publicUrl });
+          } catch (e) {
+            console.error("[suno] Failed to save WAV from callback:", e);
+            return json({ ok: false, error: "Failed to save WAV file" });
+          }
+        } else {
+          console.log("[suno] WAV callback missing required fields:", { wavJobId, wavUrl });
+        }
+      } catch (e) {
+        console.log("[suno] WAV callback received (non-JSON body):", e);
+      }
+      return json({ ok: true });
+    }
+
+    // Handle WAV status polling with enhanced storage check
+    if (req.method === "GET" && pathname.endsWith("/wav")) {
+      const wavJobId = url.searchParams.get("jobId") || url.searchParams.get("taskId");
+      if (!wavJobId) return json({ error: "Missing WAV jobId or taskId" }, { status: 400 });
+
+      console.log("[suno] WAV polling for jobId:", wavJobId);
+
+      // First priority: Check if already stored in Supabase Storage (from callback)
       try {
         const wavPath = `wav/${wavJobId}.wav`;
         const { data: signed, error: signErr } = await supabase.storage
@@ -355,11 +393,18 @@ serve(async (req) => {
         console.log("[suno] WAV storage check error:", e);
       }
 
-      // Poll WAV conversion status
+      // Second priority: Poll WAV conversion status from provider
       const statusResp = await fetch(`${API_BASE}/wav/record-info?taskId=${encodeURIComponent(wavJobId)}`, {
         headers: { Authorization: `Bearer ${apiKey}` },
       });
       const statusJson = await statusResp.json().catch(() => ({}));
+      
+      console.log("[suno] WAV polling response:", {
+        status: statusResp.status,
+        ok: statusResp.ok,
+        data: statusJson?.data,
+        msg: statusJson?.msg
+      });
 
       if (!statusResp.ok || typeof statusJson?.data === "undefined") {
         const msg = statusJson?.msg || (await statusResp.text().catch(() => "")) || statusResp.statusText;
@@ -369,6 +414,7 @@ serve(async (req) => {
 
       const data = statusJson.data as any;
       const st: string = String(data.status || data.taskStatus || "PENDING").toUpperCase();
+      console.log("[suno] WAV job status:", st);
       
       if (st.includes("SUCCESS") || st.includes("COMPLETE")) {
         // Extract WAV URL from various possible fields
@@ -376,6 +422,8 @@ serve(async (req) => {
                       data.download_url || data.downloadUrl || data.audio_url || data.audioUrl ||
                       data.response?.wav_url || data.response?.wavUrl || 
                       data.response?.file_url || data.response?.fileUrl;
+        
+        console.log("[suno] WAV conversion complete, wavUrl:", wavUrl);
         
         if (wavUrl) {
           try {
@@ -395,9 +443,11 @@ serve(async (req) => {
       
       if (st.includes("FAIL") || st.includes("ERROR")) {
         const err = data.errorMessage || data.status || "WAV conversion failed";
+        console.error("[suno] WAV conversion failed:", err);
         return json({ status: "error", error: err });
       }
 
+      console.log("[suno] WAV conversion still pending");
       return json({ status: "pending" });
     }
 

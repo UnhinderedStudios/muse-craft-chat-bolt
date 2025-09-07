@@ -280,7 +280,7 @@ export default function TrackListPanel({
       return;
     }
 
-    toast({ title: "Converting to WAV...", description: "This may take a few moments" });
+    toast({ title: "Converting to WAV...", description: "This may take a few minutes..." });
     
     // Get WAV conversion refs from registry and pass ALL known refs in one call
     const refs = wavRegistry.get(track.id) || {};
@@ -310,9 +310,14 @@ export default function TrackListPanel({
       }
     } catch (error) {
       console.error('WAV conversion failed:', error);
+      const errorMessage = error instanceof Error ? error.message : "Could not convert to WAV format";
+      const isTimeout = errorMessage.includes("timed out");
+      
       toast({ 
         title: "WAV Conversion Failed", 
-        description: error instanceof Error ? error.message : "Could not convert to WAV format", 
+        description: isTimeout 
+          ? "Conversion is taking longer than expected. The file may still be processing - please try again in a few minutes."
+          : errorMessage,
         variant: "destructive" 
       });
     }

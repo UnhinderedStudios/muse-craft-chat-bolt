@@ -206,12 +206,13 @@ export const api = {
   async convertToWav(params: { audioId?: string; taskId?: string; musicIndex?: number }): Promise<string> {
     const { jobId } = await this.startWavConversion(params);
     
-    // Poll with exponential backoff
-    const maxAttempts = 30; // ~90 seconds max
+    // Poll with exponential backoff and extended timeout for callback-driven approach
+    const maxAttempts = 60; // ~3 minutes max to accommodate callback delays
     let attempt = 0;
     
     while (attempt < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, Math.min(1000 * Math.pow(1.2, attempt), 5000)));
+      // Shorter initial delays, longer maximum delay
+      await new Promise(resolve => setTimeout(resolve, Math.min(500 * Math.pow(1.1, attempt), 3000)));
       
       const result = await this.pollWav(jobId);
       
@@ -226,7 +227,7 @@ export const api = {
       attempt++;
     }
     
-    throw new Error("WAV conversion timed out");
+    throw new Error("WAV conversion timed out after 3 minutes. The conversion may still be processing - try again later.");
   },
 
   async testAlbumCover(songDetails?: SongDetails): Promise<{ 
