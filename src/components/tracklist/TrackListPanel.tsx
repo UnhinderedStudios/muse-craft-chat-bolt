@@ -461,13 +461,13 @@ export default function TrackListPanel({
                    {/* Overlay Menu */}
                    {openMenuTrackId === t.id && (
                      <div 
-                       className="absolute inset-0 bg-black/30 backdrop-blur-sm rounded-xl z-20 flex flex-col justify-center p-4"
+                       className="absolute inset-0 bg-black/30 backdrop-blur-sm rounded-xl z-20 flex flex-col justify-center p-3"
                        onClick={(e) => {
                          e.stopPropagation();
                          setOpenMenuTrackId(null);
                        }}
                      >
-                       <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                       <div className="space-y-1.5 max-h-full overflow-hidden" onClick={(e) => e.stopPropagation()}>
                          {[
                            { label: "Edit Track", action: () => console.log("Edit Track") },
                            { label: "Add to Playlist", action: () => console.log("Add to Playlist") },
@@ -477,7 +477,7 @@ export default function TrackListPanel({
                          ].map((item, index) => (
                            <button
                              key={index}
-                             className="w-full py-3 px-4 text-white hover:text-white/80 transition-colors text-left font-medium border border-white/20 rounded-lg hover:border-white/40 bg-black/20"
+                             className="w-full py-2 px-3 text-white hover:text-white/80 transition-colors text-left text-sm font-medium border border-white/20 rounded-lg hover:border-white/40 bg-black/20"
                              onClick={(e) => {
                                e.stopPropagation();
                                item.action();
