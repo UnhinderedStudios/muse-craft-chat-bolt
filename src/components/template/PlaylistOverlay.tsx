@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { X, Search, Filter, MoreVertical, Play, Clock } from "lucide-react";
+import { Playlist, Song } from "./TemplatePanel";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { usePlaylists, DbPlaylist, DbPlaylistItem } from "@/hooks/use-playlists";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +20,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface PlaylistOverlayProps {
-  playlist: DbPlaylist | null;
+  playlist: Playlist | null;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -30,10 +30,6 @@ type SortOption = "newest" | "oldest" | "title" | "artist";
 export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
-  const [songs, setSongs] = useState<DbPlaylistItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const { loadPlaylistItems, removeTrackFromPlaylist } = usePlaylists();
 
   // Handle escape key
   useEffect(() => {
@@ -56,46 +52,32 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
     };
   }, [isOpen, onClose]);
 
-  // Load playlist items when playlist changes
-  useEffect(() => {
-    const loadSongs = async () => {
-      if (playlist && isOpen) {
-        setIsLoading(true);
-        const items = await loadPlaylistItems(playlist.id);
-        setSongs(items);
-        setIsLoading(false);
-      }
-    };
-
-    loadSongs();
-  }, [playlist, isOpen, loadPlaylistItems]);
-
   // Reset state when overlay closes
   useEffect(() => {
     if (!isOpen) {
       setSearchQuery("");
       setSortBy("newest");
-      setSongs([]);
     }
   }, [isOpen]);
 
   if (!isOpen || !playlist) return null;
 
   // Filter and sort songs
-  const filteredSongs = songs.filter(song =>
-    (song.track_title || '').toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredSongs = playlist.songs.filter(song =>
+    song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    song.artist.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const sortedSongs = [...filteredSongs].sort((a, b) => {
     switch (sortBy) {
       case "newest":
-        return new Date(b.added_at).getTime() - new Date(a.added_at).getTime();
+        return b.dateCreated - a.dateCreated;
       case "oldest":
-        return new Date(a.added_at).getTime() - new Date(b.added_at).getTime();
+        return a.dateCreated - b.dateCreated;
       case "title":
-        return (a.track_title || '').localeCompare(b.track_title || '');
+        return a.title.localeCompare(b.title);
       case "artist":
-        return 0; // No artist field in current structure
+        return a.artist.localeCompare(b.artist);
       default:
         return 0;
     }
@@ -117,19 +99,9 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
     });
   };
 
-  const handleSongAction = async (trackId: string, action: string) => {
-    switch (action) {
-      case 'remove':
-        if (playlist) {
-          const success = await removeTrackFromPlaylist(playlist.id, trackId);
-          if (success) {
-            setSongs(prev => prev.filter(song => song.track_id !== trackId));
-          }
-        }
-        break;
-      default:
-        console.log(`Action ${action} on song ${trackId}`);
-    }
+  const handleSongAction = (songId: string, action: string) => {
+    console.log(`Action ${action} on song ${songId}`);
+    // Handle song actions here
   };
 
   return (
@@ -156,15 +128,15 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
           <div className="text-white mb-4 sm:mb-6">
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 sm:mb-3 pr-8">{playlist.name}</h2>
             <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm sm:text-base text-white/60">
-              <span>{songs.length} {songs.length === 1 ? 'song' : 'songs'}</span>
+              <span>{playlist.songCount} {playlist.songCount === 1 ? 'song' : 'songs'}</span>
               <span>•</span>
-              <span>Created {formatDate(new Date(playlist.created_at).getTime())}</span>
-              {playlist.is_favorites && (
+              <span>Created {formatDate(playlist.createdAt)}</span>
+              {playlist.isFavorited && (
                 <>
                   <span>•</span>
                   <div className="inline-flex items-center gap-2 px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-sm">
                     <span>★</span>
-                    <span>Favourites</span>
+                    <span>Favorited</span>
                   </div>
                 </>
               )}
@@ -200,18 +172,14 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
           {/* Search results count */}
           {searchQuery && (
             <div className="text-xs sm:text-sm text-white/40 mt-2 sm:mt-3">
-              {filteredSongs.length} of {songs.length} songs
+              {filteredSongs.length} of {playlist.songs.length} songs
             </div>
           )}
         </div>
 
         {/* Song List */}
         <div className="flex-1 min-h-0">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center h-full text-white/60 p-6 sm:p-12">
-              <div className="text-lg mb-2">Loading songs...</div>
-            </div>
-          ) : sortedSongs.length === 0 ? (
+          {sortedSongs.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-white/60 p-6 sm:p-12">
               {searchQuery ? (
                 <>
@@ -254,50 +222,46 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                     <div className="flex lg:contents items-center gap-3">
                       {/* Album Art */}
                       <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center shrink-0">
-                        {song.track_cover_url ? (
-                          <img 
-                            src={song.track_cover_url} 
-                            alt={`${song.track_title} cover`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              target.parentElement!.innerHTML = '<div class="w-full h-full bg-white/10 flex items-center justify-center"><div class="w-4 h-4 rounded bg-white/40"></div></div>';
-                            }}
-                          />
-                        ) : (
-                          <div className="w-4 h-4 rounded bg-white/40"></div>
-                        )}
+                        <img 
+                          src={song.albumArt} 
+                          alt={`${song.title} cover`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.parentElement!.innerHTML = '<div class="w-full h-full bg-white/10 flex items-center justify-center"><Play class="w-4 h-4 text-white/40" /></div>';
+                          }}
+                        />
                       </div>
 
                       {/* Title & Artist - Mobile */}
                       <div className="flex-1 min-w-0 lg:contents">
                         <div className="lg:flex lg:flex-col lg:justify-center lg:min-w-0">
-                          <div className="text-white font-medium truncate">{song.track_title || 'Unknown Track'}</div>
-                          <div className="text-white/60 text-sm lg:hidden truncate">Unknown Artist</div>
+                          <div className="text-white font-medium truncate">{song.title}</div>
+                          <div className="text-white/60 text-sm lg:hidden truncate">{song.artist}</div>
                         </div>
                         
                         {/* Artist - Desktop */}
                         <div className="hidden lg:flex lg:items-center text-white/60 truncate">
-                          Unknown Artist
+                          {song.artist}
                         </div>
 
                         {/* Date - Desktop */}
                         <div className="hidden lg:flex lg:items-center text-white/60 text-sm">
-                          {formatDate(new Date(song.added_at).getTime())}
+                          {formatDate(song.dateCreated)}
                         </div>
 
                         {/* Duration - Desktop */}
                         <div className="hidden lg:flex lg:items-center text-white/60 text-sm">
-                          --:--
+                          {formatDuration(song.duration)}
                         </div>
                       </div>
 
                       {/* Mobile metadata */}
                       <div className="flex lg:hidden items-center gap-3 text-white/60 text-xs">
-                        <span>--:--</span>
+                        <span>{formatDuration(song.duration)}</span>
                         <span>•</span>
-                        <span>{formatDate(new Date(song.added_at).getTime())}</span>
+                        <span>{formatDate(song.dateCreated)}</span>
                       </div>
 
                       {/* Actions */}
@@ -313,21 +277,28 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                           className="bg-black/90 border-white/20 text-white min-w-[180px]"
                         >
                           <DropdownMenuItem 
-                            onClick={() => handleSongAction(song.track_id, 'play')}
+                            onClick={() => handleSongAction(song.id, 'play')}
                             className="hover:bg-white/10 focus:bg-white/10"
                           >
                             <Play className="w-4 h-4 mr-2" />
                             Play
                           </DropdownMenuItem>
                           <DropdownMenuItem 
-                            onClick={() => handleSongAction(song.track_id, 'queue')}
+                            onClick={() => handleSongAction(song.id, 'queue')}
                             className="hover:bg-white/10 focus:bg-white/10"
                           >
                             Add to Queue
                           </DropdownMenuItem>
                           <DropdownMenuSeparator className="bg-white/20" />
                           <DropdownMenuItem 
-                            onClick={() => handleSongAction(song.track_id, 'remove')}
+                            onClick={() => handleSongAction(song.id, 'artist')}
+                            className="hover:bg-white/10 focus:bg-white/10"
+                          >
+                            Go to Artist
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator className="bg-white/20" />
+                          <DropdownMenuItem 
+                            onClick={() => handleSongAction(song.id, 'remove')}
                             className="hover:bg-white/10 focus:bg-white/10 text-red-400"
                           >
                             Remove from Playlist
