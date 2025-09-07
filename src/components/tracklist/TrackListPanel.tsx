@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { Play, Pause, RotateCw, X, Heart, Redo2, Plus, Trash2, Search, Edit3, MoreVertical, Music } from "lucide-react";
 import { TrackItem } from "@/types";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { useScrollDelegationHook } from "@/utils/scrollDelegation";
 import EllipsisMarquee from "@/components/ui/EllipsisMarquee";
@@ -199,7 +200,8 @@ export default function TrackListPanel({
 
       {/* Scrollable area */}
       <div className="min-h-0 flex-1 overflow-hidden">
-        <div ref={scrollRef} className="h-full overflow-y-auto overflow-x-hidden overlay-scrollbar">
+        <ScrollArea className="h-full">
+          <div ref={scrollRef} className="min-h-full flex flex-col justify-start gap-3 px-4 pt-2 pb-4">
           <div className={`min-h-full flex flex-col justify-start gap-3 px-4 pt-2 pb-4`}>
             
             {/* Show loading shells for each active generation */}
@@ -736,9 +738,10 @@ export default function TrackListPanel({
                  </PaginationContent>
                </Pagination>
              </div>
-           )}
-           </div>
-        </div>
+            )}
+            </div>
+          </div>
+        </ScrollArea>
       </div>
 
       {/* Quick Album Cover Generator Overlay */}
