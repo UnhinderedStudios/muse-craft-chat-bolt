@@ -198,8 +198,8 @@ export default function TrackListPanel({
       </div>
 
       {/* Scrollable area */}
-      <div className="min-h-0 flex-1 overflow-hidden">
-        <div ref={scrollRef} className="h-full overflow-y-auto overflow-x-hidden lyrics-scrollbar">
+      <div className="min-h-0 flex-1 overflow-hidden relative">
+        <div ref={scrollRef} className="h-full overflow-y-auto overflow-x-hidden lyrics-scrollbar relative z-50">
           <div className={`min-h-full flex flex-col justify-start gap-3 px-4 pt-2 pb-4`}>
             
             {/* Show loading shells for each active generation */}
