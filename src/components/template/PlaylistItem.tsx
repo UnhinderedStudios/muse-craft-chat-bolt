@@ -174,7 +174,7 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
               onClick={handleTitleClick}
               className={cn(
                 "flex items-center gap-1 group/title",
-                playlist.id === "fav" ? "cursor-default" : "cursor-pointer"
+                playlist.id === "favourites" ? "cursor-default" : "cursor-pointer"
               )}
             >
               <EllipsisMarquee
@@ -184,7 +184,7 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
                 gapPx={32}
                 isActive={isHovered}
               />
-              {playlist.id !== "fav" && (
+              {playlist.id !== "favourites" && (
                 <Edit3 className="w-3 h-3 text-white/40 opacity-0 group-hover/title:opacity-100 transition-opacity" />
               )}
             </div>

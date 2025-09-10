@@ -741,6 +741,7 @@ export default function TrackListPanel({
                             }`}
                             onClick={(e) => {
                               e.stopPropagation();
+                              console.log('❤️ Heart button clicked for track:', t.title, t.id);
                               toggleFavourite(t);
                             }}
                           >
