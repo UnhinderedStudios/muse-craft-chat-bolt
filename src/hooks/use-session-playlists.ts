@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { TrackItem } from "@/types";
 
 export interface SessionPlaylist {
@@ -12,24 +12,78 @@ export interface SessionPlaylist {
 
 const STORAGE_KEY = "session_playlists";
 const FAVOURITES_ID = "favourites";
+const PLAYLIST_UPDATE_EVENT = "playlist-update";
+
+// Generate unique instance ID for debugging
+const generateInstanceId = () => Math.random().toString(36).substr(2, 9);
 
 export function useSessionPlaylists() {
   const [playlists, setPlaylists] = useState<SessionPlaylist[]>([]);
+  const instanceId = useRef(generateInstanceId());
+  const isUpdatingRef = useRef(false);
 
   // Load playlists from sessionStorage on mount
   useEffect(() => {
+    console.log(`🔧 [${instanceId.current}] Loading playlists from sessionStorage on mount`);
     const stored = sessionStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
         const parsedPlaylists = JSON.parse(stored);
+        console.log(`📂 [${instanceId.current}] Loaded ${parsedPlaylists.length} playlists from storage`);
         setPlaylists(parsedPlaylists);
       } catch (error) {
         console.error("Error parsing stored playlists:", error);
         initializeFavourites();
       }
     } else {
+      console.log(`📂 [${instanceId.current}] No playlists in storage, initializing favourites`);
       initializeFavourites();
     }
+  }, []);
+
+  // Listen for playlist updates from other hook instances
+  useEffect(() => {
+    const handlePlaylistUpdate = (event: CustomEvent) => {
+      if (isUpdatingRef.current) {
+        console.log(`🔄 [${instanceId.current}] Ignoring playlist update (currently updating)`);
+        return;
+      }
+      
+      console.log(`🔄 [${instanceId.current}] Received playlist update event, refreshing from storage`);
+      const stored = sessionStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
+          const parsedPlaylists = JSON.parse(stored);
+          console.log(`📂 [${instanceId.current}] Synced ${parsedPlaylists.length} playlists from storage`);
+          setPlaylists(parsedPlaylists);
+        } catch (error) {
+          console.error(`❌ [${instanceId.current}] Error parsing synced playlists:`, error);
+        }
+      }
+    };
+
+    // Listen for custom playlist update events
+    window.addEventListener(PLAYLIST_UPDATE_EVENT, handlePlaylistUpdate as EventListener);
+    
+    // Listen for storage events (for cross-tab sync)
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === STORAGE_KEY && event.newValue && !isUpdatingRef.current) {
+        console.log(`🔄 [${instanceId.current}] Storage changed externally, syncing`);
+        try {
+          const parsedPlaylists = JSON.parse(event.newValue);
+          setPlaylists(parsedPlaylists);
+        } catch (error) {
+          console.error(`❌ [${instanceId.current}] Error parsing storage change:`, error);
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener(PLAYLIST_UPDATE_EVENT, handlePlaylistUpdate as EventListener);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   // Initialize with Favourites playlist
@@ -46,11 +100,19 @@ export function useSessionPlaylists() {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify([favourites]));
   }, []);
 
-  // Save playlists to sessionStorage
+  // Save playlists to sessionStorage and notify other instances
   const savePlaylists = useCallback((newPlaylists: SessionPlaylist[]) => {
-    console.log('💾 Saving playlists to sessionStorage:', newPlaylists.map(p => ({ id: p.id, name: p.name, songCount: p.songCount })));
+    isUpdatingRef.current = true;
+    console.log(`💾 [${instanceId.current}] Saving playlists to sessionStorage:`, newPlaylists.map(p => ({ id: p.id, name: p.name, songCount: p.songCount })));
     setPlaylists(newPlaylists);
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(newPlaylists));
+    
+    // Notify other hook instances
+    setTimeout(() => {
+      console.log(`📢 [${instanceId.current}] Broadcasting playlist update event`);
+      window.dispatchEvent(new CustomEvent(PLAYLIST_UPDATE_EVENT, { detail: { instanceId: instanceId.current } }));
+      isUpdatingRef.current = false;
+    }, 10);
   }, []);
 
   // Create a new playlist
