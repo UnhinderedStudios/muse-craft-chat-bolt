@@ -1003,16 +1003,16 @@ export default function TrackListPanel({
                                      className="flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors cursor-pointer group"
                                      onClick={(e) => e.stopPropagation()}
                                    >
-                                     <div 
-                                       className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer hover:bg-white/5 rounded-lg p-1 -m-1 transition-colors"
-                                       onClick={(e) => {
-                                         e.stopPropagation();
-                                         if (onPlaylistClick) {
-                                           onPlaylistClick(playlist);
-                                           setOpenAddOverlayTrackId(null); // Close the add overlay
-                                         }
-                                       }}
-                                     >
+                                      <div 
+                                        className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (onPlaylistClick) {
+                                            onPlaylistClick(playlist);
+                                            setOpenAddOverlayTrackId(null); // Close the add overlay
+                                          }
+                                        }}
+                                      >
                                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500/20 to-rose-500/20 flex items-center justify-center shrink-0">
                                          <Music className="w-4 h-4 text-white/60" />
                                        </div>
