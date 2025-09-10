@@ -126,6 +126,12 @@ export function useSessionPlaylists() {
     return favouritesPlaylist?.songs.some(song => song.id === trackId) || false;
   }, [playlists]);
 
+  // Check if track is in specific playlist
+  const isTrackInPlaylist = useCallback((playlistId: string, trackId: string) => {
+    const playlist = playlists.find(p => p.id === playlistId);
+    return playlist?.songs.some(song => song.id === trackId) || false;
+  }, [playlists]);
+
   // Rename playlist
   const renamePlaylist = useCallback((playlistId: string, newName: string) => {
     const updatedPlaylists = playlists.map(playlist => 
@@ -161,6 +167,7 @@ export function useSessionPlaylists() {
     removeTrackFromPlaylist,
     toggleFavourite,
     isTrackInFavourites,
+    isTrackInPlaylist,
     renamePlaylist,
     deletePlaylist,
     togglePlaylistFavourite

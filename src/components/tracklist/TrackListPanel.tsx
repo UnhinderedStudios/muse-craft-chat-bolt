@@ -99,7 +99,8 @@ export default function TrackListPanel({
     addTrackToPlaylist,
     removeTrackFromPlaylist,
     toggleFavourite,
-    isTrackInFavourites
+    isTrackInFavourites,
+    isTrackInPlaylist
   } = useSessionPlaylists();
   
   // Drag functionality
@@ -1022,21 +1023,21 @@ export default function TrackListPanel({
                                            }
                                            return newSet;
                                          });
-                                          // Add/remove song to/from playlist
-                                          if (clickedPlaylists.has(playlist.id)) {
-                                            removeTrackFromPlaylist(playlist.id, t.id);
-                                          } else {
-                                            addTrackToPlaylist(playlist.id, t);
-                                          }
+                                           // Add/remove song to/from playlist
+                                           if (isTrackInPlaylist(playlist.id, t.id)) {
+                                             removeTrackFromPlaylist(playlist.id, t.id);
+                                           } else {
+                                             addTrackToPlaylist(playlist.id, t);
+                                           }
                                         }}
                                      >
-                                       <div className="relative w-4 h-4">
-                                          {clickedPlaylists.has(playlist.id) || (playlist.id === "favourites" && isTrackInFavourites(t.id)) ? (
-                                            <Check className="w-4 h-4 text-green-400 animate-scale-in" />
-                                          ) : (
-                                            <Plus className="w-4 h-4 animate-scale-in" />
-                                          )}
-                                        </div>
+                                        <div className="relative w-4 h-4">
+                                           {isTrackInPlaylist(playlist.id, t.id) ? (
+                                             <Check className="w-4 h-4 text-green-400 animate-scale-in" />
+                                           ) : (
+                                             <Plus className="w-4 h-4 animate-scale-in" />
+                                           )}
+                                         </div>
                                      </button>
                                         </div>
                                       ))}
