@@ -417,6 +417,10 @@ const Index = () => {
   const [playingTrackId, setPlayingTrackId] = useState<string>("");
   const [playingTrackIndex, setPlayingTrackIndex] = useState<number>(-1);
   
+  // Shared playlist overlay state
+  const [selectedPlaylist, setSelectedPlaylist] = useState<any>(null);
+  const [showPlaylistOverlay, setShowPlaylistOverlay] = useState(false);
+  
   // Sync karaoke version selection with karaoke track (smarter version dependency)
   useEffect(() => {
     if (!karaokeTrackId) {
@@ -1804,6 +1808,10 @@ const Index = () => {
               generationProgress={generationProgress}
               activeJobCount={activeGenerations.length}
               activeGenerations={activeGenerations}
+              onPlaylistClick={(playlist) => {
+                setSelectedPlaylist(playlist);
+                setShowPlaylistOverlay(true);
+              }}
             />
           </div>
 
@@ -1888,7 +1896,18 @@ const Index = () => {
             className="order-8 md:col-span-8 lg:col-span-1 xl:col-span-1"
             style={isDesktop ? { height: `${formHeightPx}px` } : { height: 'auto' }}
           >
-            <TemplatePanel />
+            <TemplatePanel 
+              onPlaylistClick={(playlist) => {
+                setSelectedPlaylist(playlist);
+                setShowPlaylistOverlay(true);
+              }}
+              selectedPlaylist={selectedPlaylist}
+              showPlaylistOverlay={showPlaylistOverlay}
+              onClosePlaylistOverlay={() => {
+                setShowPlaylistOverlay(false);
+                setSelectedPlaylist(null);
+              }}
+            />
           </div>
         </div>
 

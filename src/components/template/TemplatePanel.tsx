@@ -31,6 +31,10 @@ export interface Playlist extends SessionPlaylist {}
 
 interface TemplatePanelProps {
   className?: string;
+  onPlaylistClick?: (playlist: Playlist) => void;
+  selectedPlaylist?: Playlist | null;
+  showPlaylistOverlay?: boolean;
+  onClosePlaylistOverlay?: () => void;
 }
 
 const mockArtists = [
@@ -39,7 +43,13 @@ const mockArtists = [
   { id: "artist3", name: "Rock Legend", songCount: 12, createdAt: Date.now() - 259200000, songs: [] },
 ];
 
-export function TemplatePanel({ className }: TemplatePanelProps) {
+export function TemplatePanel({ 
+  className, 
+  onPlaylistClick, 
+  selectedPlaylist, 
+  showPlaylistOverlay, 
+  onClosePlaylistOverlay 
+}: TemplatePanelProps) {
   const [viewMode, setViewMode] = useState<"playlists" | "artists">("playlists");
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchMode, setIsSearchMode] = useState(false);
@@ -58,10 +68,6 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
     deletePlaylist,
     togglePlaylistFavourite
   } = useSessionPlaylists();
-  
-  // Overlay state
-  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
-  const [showOverlay, setShowOverlay] = useState(false);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -144,13 +150,9 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
 
   // Handle playlist click to show overlay
   const handlePlaylistClick = (playlist: Playlist) => {
-    setSelectedPlaylist(playlist);
-    setShowOverlay(true);
-  };
-
-  const handleCloseOverlay = () => {
-    setShowOverlay(false);
-    setSelectedPlaylist(null);
+    if (onPlaylistClick) {
+      onPlaylistClick(playlist);
+    }
   };
 
   // Handle track added to playlist
@@ -347,11 +349,13 @@ export function TemplatePanel({ className }: TemplatePanelProps) {
       </div>
 
       {/* Playlist Overlay */}
-      <PlaylistOverlay
-        playlist={selectedPlaylist}
-        isOpen={showOverlay}
-        onClose={handleCloseOverlay}
-      />
+      {showPlaylistOverlay && (
+        <PlaylistOverlay
+          playlist={selectedPlaylist}
+          isOpen={showPlaylistOverlay}
+          onClose={onClosePlaylistOverlay || (() => {})}
+        />
+      )}
     </div>
   );
 }

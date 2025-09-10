@@ -8,7 +8,7 @@ import EllipsisMarquee from "@/components/ui/EllipsisMarquee";
 import { useDrag } from "@/contexts/DragContext";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import { useSessionPlaylists } from "@/hooks/use-session-playlists";
+import { useSessionPlaylists, SessionPlaylist } from "@/hooks/use-session-playlists";
 import JSZip from "jszip";
 import { api } from "@/lib/api";
 import { wavRegistry, isValidSunoAudioId } from "@/lib/wavRegistry";
@@ -37,6 +37,7 @@ type Props = {
   generationProgress?: number;
   activeJobCount?: number;
   activeGenerations?: Array<{id: string, startTime: number, progress: number, details: any, covers?: { cover1: string; cover2: string } | null}>;
+  onPlaylistClick?: (playlist: SessionPlaylist) => void;
 };
 
 
@@ -54,7 +55,8 @@ export default function TrackListPanel({
   isGenerating = false,
   generationProgress = 0,
   activeJobCount = 0,
-  activeGenerations = []
+  activeGenerations = [],
+  onPlaylistClick
 }: Props) {
   const { toast } = useToast();
   const [audioCurrentTimes, setAudioCurrentTimes] = useState<number[]>([]);
@@ -996,20 +998,29 @@ export default function TrackListPanel({
                                   return (
                                     <>
                                       {filteredPlaylists.map((playlist) => (
-                                  <div
-                                    key={playlist.id}
-                                    className="flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors cursor-pointer group"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500/20 to-rose-500/20 flex items-center justify-center shrink-0">
-                                        <Music className="w-4 h-4 text-white/60" />
-                                      </div>
-                                      <div className="flex-1 min-w-0">
-                                        <p className="text-white text-sm font-medium truncate">{playlist.name}</p>
-                                        <p className="text-white/40 text-xs">{playlist.songCount} songs</p>
-                                      </div>
-                                    </div>
+                                   <div
+                                     key={playlist.id}
+                                     className="flex items-center justify-between p-2 rounded-lg bg-[#1e1e1e] hover:bg-[#2a2a2a] transition-colors cursor-pointer group"
+                                     onClick={(e) => e.stopPropagation()}
+                                   >
+                                     <div 
+                                       className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer hover:bg-white/5 rounded-lg p-1 -m-1 transition-colors"
+                                       onClick={(e) => {
+                                         e.stopPropagation();
+                                         if (onPlaylistClick) {
+                                           onPlaylistClick(playlist);
+                                           setOpenAddOverlayTrackId(null); // Close the add overlay
+                                         }
+                                       }}
+                                     >
+                                       <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500/20 to-rose-500/20 flex items-center justify-center shrink-0">
+                                         <Music className="w-4 h-4 text-white/60" />
+                                       </div>
+                                       <div className="flex-1 min-w-0">
+                                         <p className="text-white text-sm font-medium truncate">{playlist.name}</p>
+                                         <p className="text-white/40 text-xs">{playlist.songCount} songs</p>
+                                       </div>
+                                     </div>
                                      <button
                                        className="text-white/40 hover:text-white hover:scale-110 transition-all duration-200"
                                        onClick={(e) => {

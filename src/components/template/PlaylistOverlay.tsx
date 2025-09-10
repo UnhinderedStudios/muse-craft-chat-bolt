@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { X, Search, Filter, MoreVertical, Play, Clock } from "lucide-react";
-import { SessionPlaylist } from "@/hooks/use-session-playlists";
+import { SessionPlaylist, useSessionPlaylists } from "@/hooks/use-session-playlists";
 import { TrackItem } from "@/types";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -31,6 +32,9 @@ type SortOption = "newest" | "oldest" | "title" | "artist";
 export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
+  
+  // Access session playlists for removing tracks
+  const { removeTrackFromPlaylist } = useSessionPlaylists();
 
   // Handle escape key
   useEffect(() => {
@@ -93,8 +97,28 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
   };
 
   const handleSongAction = (songId: string, action: string) => {
-    console.log(`Action ${action} on song ${songId}`);
-    // Handle song actions here
+    if (!playlist) return;
+    
+    switch (action) {
+      case 'remove':
+        removeTrackFromPlaylist(playlist.id, songId);
+        toast.success(`Removed song from "${playlist.name}"`);
+        break;
+      case 'play':
+        console.log(`Playing song ${songId}`);
+        // TODO: Connect to audio player
+        break;
+      case 'queue':
+        console.log(`Adding song ${songId} to queue`);
+        // TODO: Connect to queue system
+        break;
+      case 'artist':
+        console.log(`Going to artist for song ${songId}`);
+        // TODO: Navigate to artist view
+        break;
+      default:
+        console.log(`Action ${action} on song ${songId}`);
+    }
   };
 
   return (
