@@ -13,18 +13,20 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <DragProvider>
-        <Toaster />
-        <Sonner />
-        <DragOverlay />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </DragProvider>
+      <SessionManagerProvider>
+        <DragProvider>
+          <Toaster />
+          <Sonner />
+          <DragOverlay />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </DragProvider>
+      </SessionManagerProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
