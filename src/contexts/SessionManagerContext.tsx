@@ -32,6 +32,7 @@ export interface SessionManagerContextValue {
   renameSession: (sessionId: string, newTitle: string) => boolean;
   duplicateSession: (sessionId: string) => string | null;
   addTrackToCurrentSession: (track: TrackItem) => void;
+  addTracksToCurrentSession: (tracks: TrackItem[]) => void;
   removeTrackFromSession: (sessionId: string, trackId: string) => void;
   updateCurrentSessionChat: (messages: ChatMessage[]) => void;
   
@@ -267,6 +268,12 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     updateSession(current.id, { tracks: [...current.tracks, track] });
   }, [getCurrentSession, updateSession]);
 
+  const addTracksToCurrentSession = useCallback((newTracks: TrackItem[]) => {
+    const current = getCurrentSession();
+    if (!current) return;
+    updateSession(current.id, { tracks: [...current.tracks, ...newTracks] });
+  }, [getCurrentSession, updateSession]);
+
   const removeTrackFromSession = useCallback((sessionId: string, trackId: string) => {
     const session = sessions.find((s) => s.id === sessionId);
     if (!session || session.id === GLOBAL_SESSION_ID) return;
@@ -370,10 +377,28 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
   }, [sessions, updateSession]);
 
   const getActiveGenerations = useCallback(() => {
+    if (currentSessionId === GLOBAL_SESSION_ID) {
+      // In Global view, aggregate all active generations from all sessions
+      const allActiveGenerations: Array<{
+        id: string;
+        sunoJobId?: string;
+        startTime: number;
+        progress: number;
+        details: any;
+        covers?: { cover1: string; cover2: string } | null;
+      }> = [];
+      
+      for (const session of sessions) {
+        allActiveGenerations.push(...session.activeGenerations);
+      }
+      
+      return allActiveGenerations;
+    }
+    
     const current = getCurrentSession();
     if (!current) return [];
     return current.activeGenerations || [];
-  }, [getCurrentSession]);
+  }, [getCurrentSession, currentSessionId, sessions]);
 
   // Compute current session (use aggregated Global when selected)
   const currentSession = useMemo(() => {
@@ -392,6 +417,7 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     renameSession,
     duplicateSession,
     addTrackToCurrentSession,
+    addTracksToCurrentSession,
     removeTrackFromSession,
     updateCurrentSessionChat,
     addActiveGeneration,

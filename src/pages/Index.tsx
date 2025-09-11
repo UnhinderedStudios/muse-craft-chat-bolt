@@ -223,6 +223,7 @@ const Index = () => {
     currentSession,
     currentSessionId,
     addTrackToCurrentSession,
+    addTracksToCurrentSession,
     updateCurrentSessionChat,
     addActiveGeneration,
     updateActiveGeneration,
@@ -603,6 +604,59 @@ const Index = () => {
       setKaraokeTrackId(playingTrack.id);
       setPlayingTrackId(playingTrack.id);
       setPlayingTrackIndex(index);
+      
+      // Ensure karaoke data is available for older tracks by hydrating versions
+      if (playingTrack.words && playingTrack.words.length > 0) {
+        console.log('[Karaoke] Hydrating versions for older track:', playingTrack.id);
+        
+        // Handle ID collisions - map the track ID to a version ID
+        let audioIndex = 0;
+        let audioId = playingTrack.id;
+        
+        // Handle suffixed IDs (e.g., "sunoJobId-0_1" -> index 0)
+        const suffixMatch = playingTrack.id.match(/^(.+?)_(\d+)$/);
+        if (suffixMatch) {
+          audioId = suffixMatch[1]; // Remove suffix
+          console.log('[Karaoke] Detected suffixed ID, mapped to:', audioId);
+        }
+        
+        // Extract index from audioId if it follows the pattern "jobId-index"
+        const indexMatch = audioId.match(/-(\d+)$/);
+        if (indexMatch) {
+          audioIndex = parseInt(indexMatch[1], 10);
+        }
+        
+        setKaraokeAudioIndex(audioIndex);
+        
+        // Ensure this track's karaoke data is in versions
+        const existingVersionIndex = versions.findIndex(v => v.audioId === audioId || v.audioId === playingTrack.id);
+        if (existingVersionIndex === -1) {
+          console.log('[Karaoke] Adding track to versions for karaoke:', { 
+            trackId: playingTrack.id, 
+            audioId, 
+            audioIndex, 
+            wordsCount: playingTrack.words.length 
+          });
+          
+          const versionEntry = {
+            url: playingTrack.url,
+            audioId: audioId,
+            musicIndex: audioIndex,
+            words: playingTrack.words,
+            hasTimestamps: playingTrack.hasTimestamps || false
+          };
+          
+          setVersions(prev => {
+            const newVersions = [versionEntry, ...prev];
+            // Set karaoke audio index to the newly added entry (position 0)
+            setKaraokeAudioIndex(0);
+            return newVersions;
+          });
+        } else {
+          console.log('[Karaoke] Using existing version at index:', existingVersionIndex);
+          setKaraokeAudioIndex(existingVersionIndex);
+        }
+      }
       
       // Mark track as played - we'll need to update the session
       // For now, just log this as we need to implement session track updates
@@ -1397,6 +1451,12 @@ const Index = () => {
             
             console.log(`[Generation] ===== FINAL TRACK SUMMARY =====`);
             console.log(`[Generation] Fresh tracks created: ${fresh.length}`);
+            fresh.forEach((track, i) => {
+              console.log(`[Generation] Track ${i}: ${track.id} -> ${track.url.substring(0, 50)}...`);
+            });
+            
+            // Add ALL tracks atomically to prevent race conditions
+            addTracksToCurrentSession(fresh);
             console.log(`[Generation] Fresh tracks with covers: ${fresh.filter(t => t.coverUrl).length}`);
             console.log(`[Generation] Fresh tracks coverUrls:`, fresh.map(t => ({ id: t.id, hasCover: !!t.coverUrl, coverPreview: t.coverUrl?.substring(0, 50) })));
             
@@ -1428,8 +1488,7 @@ const Index = () => {
               // This ensures that new songs don't auto-play when generation completes
             }
             
-            // Add all new tracks to current session
-            fresh.forEach(track => addTrackToCurrentSession(track));
+            // Tracks already added with addTracksToCurrentSession - remove redundant loop
           
           // Clean up job immediately after successful track creation and cover assignment
           if (wrapperJobId) {
