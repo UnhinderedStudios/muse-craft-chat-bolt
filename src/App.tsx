@@ -7,6 +7,7 @@ import { DragProvider } from "@/contexts/DragContext";
 import { DragOverlay } from "@/components/drag/DragOverlay";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import { SessionManagerProvider } from "@/contexts/SessionManagerContext";
 
 const queryClient = new QueryClient();
 
