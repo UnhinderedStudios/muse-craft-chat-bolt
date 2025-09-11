@@ -49,29 +49,8 @@ const STORAGE_KEY = "session_manager_data";
 const GLOBAL_SESSION_ID = "global";
 
 function getMockTracks(): TrackItem[] {
-  const now = Date.now();
-  return [
-    {
-      id: "placeholder-track-1",
-      url: "",
-      title: "Neon Dreams",
-      coverUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300",
-      createdAt: now - 3600000,
-      params: ["synthpop", "uplifting", "120 BPM", "English", "female vocals", "bright synths"],
-      words: [],
-      hasTimestamps: false,
-    },
-    {
-      id: "placeholder-track-2",
-      url: "",
-      title: "Coffee Shop Moments",
-      coverUrl: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=300",
-      createdAt: now - 7200000,
-      params: ["indie folk", "mellow", "95 BPM", "English", "male vocals", "acoustic guitar"],
-      words: [],
-      hasTimestamps: false,
-    },
-  ];
+  // Return empty array - no more static placeholder tracks
+  return [];
 }
 
 export function SessionManagerProvider({ children }: { children: React.ReactNode }) {
@@ -83,7 +62,7 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     const globalSession: SessionData = {
       id: GLOBAL_SESSION_ID,
       title: "Global",
-      tracks: getMockTracks(),
+      tracks: [],
       chatMessages: [
         { role: "assistant", content: "Hey! I can help write and generate a song. What vibe are you going for?" },
       ],
@@ -238,7 +217,7 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     const newSession: SessionData = {
       id: `session_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
       title: title || `Session ${count + 1}`,
-      tracks: getMockTracks(), // ensure mock tracks in every session
+      tracks: [], // Start with empty tracks
       chatMessages: [
         { role: "assistant", content: "Hey! I can help write and generate a song. What vibe are you going for?" },
       ],
@@ -294,11 +273,10 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     if (sessionToDelete) {
       const globalSession = sessions.find(s => s.id === GLOBAL_SESSION_ID);
       if (globalSession) {
-        // Move real tracks (non-placeholder) to Global
-        const realTracks = sessionToDelete.tracks.filter(t => !t.id.startsWith('placeholder-'));
-        if (realTracks.length > 0) {
+        // Move all tracks to Global (no more filtering needed)
+        if (sessionToDelete.tracks.length > 0) {
           updateSession(GLOBAL_SESSION_ID, { 
-            tracks: [...globalSession.tracks, ...realTracks]
+            tracks: [...globalSession.tracks, ...sessionToDelete.tracks]
           });
         }
         
