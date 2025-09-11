@@ -1984,29 +1984,29 @@ const Index = () => {
           "
           style={{ paddingBottom: `env(safe-area-inset-bottom, 0px)` }}
         >
-        {tracks.length > 0 && (
-          <PlayerDock
-            title={tracks[playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex]?.title || "No track yet"}
-            audioRefs={audioRefs}
-            currentAudioIndex={playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex}
-            isPlaying={isPlaying}
-            currentTime={currentTime}
-            onPrev={playPrev}
-            onNext={playNext}
-            onPlay={() => handleAudioPlay(playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex)}
-            onPause={handleAudioPause}
-            onSeek={(t) => handleSeek(t)}
-            accent="#f92c8f"
-            disabled={!tracks[playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex]}
-            albumCoverUrl={tracks[playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex]?.coverUrl}
-            onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
-            onTitleUpdate={(newTitle) => {
+        <PlayerDock
+          title={tracks.length > 0 ? (tracks[playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex]?.title || "No track yet") : "No track yet"}
+          audioRefs={audioRefs}
+          currentAudioIndex={tracks.length > 0 ? (playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex) : 0}
+          isPlaying={isPlaying}
+          currentTime={currentTime}
+          onPrev={playPrev}
+          onNext={playNext}
+          onPlay={() => tracks.length > 0 && handleAudioPlay(playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex)}
+          onPause={handleAudioPause}
+          onSeek={(t) => handleSeek(t)}
+          accent="#f92c8f"
+          disabled={tracks.length === 0 || !tracks[playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex]}
+          albumCoverUrl={tracks.length > 0 ? tracks[playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex]?.coverUrl : undefined}
+          onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
+          onTitleUpdate={(newTitle) => {
+            if (tracks.length > 0) {
               const targetIndex = playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex;
               // Update track title in session - to be implemented
               console.log('[Title] Updating player track title:', targetIndex, newTitle);
-            }}
-          />
-        )}
+            }
+          }}
+        />
         </div>
       </footer>
     </div>
