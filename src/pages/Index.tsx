@@ -50,6 +50,13 @@ import { parseRandomMusicForgeOutput } from "@/lib/parseRandomMusicForge";
 import { diceMemory } from "@/lib/diceMemory";
 import { wavRegistry, isValidSunoAudioId } from "@/lib/wavRegistry";
 
+const FALLBACK_COVERS = {
+  cover1: "/lovable-uploads/e52952b6-c4ce-4b31-bfec-e269875fe04b.png",
+  cover2: "/lovable-uploads/fd64a6f2-eb35-4daa-97af-2c7f58aca59c.png",
+};
+
+const getFallbackCovers = () => FALLBACK_COVERS;
+
 const systemPrompt = `You are Melody Muse, a friendly creative assistant for songwriting.
 Your goal is to chat naturally and quickly gather two things only: (1) a unified Style description and (2) Lyrics.
 IMPORTANT: Never include artist names in Style. If the user mentions an artist (e.g., "like Ed Sheeran"), translate that into neutral descriptors (timbre, instrumentation, tempo/BPM, mood, era) and DO NOT name the artist. Style must combine: genre/subgenre, mood/energy, tempo or BPM, language, vocal type (male/female/duet/none), and production notes.
@@ -229,6 +236,7 @@ const Index = () => {
     updateActiveGeneration,
     removeActiveGeneration,
     getActiveGenerations,
+    updateSession,
   } = useSessionManager();
   
   // Get session-specific active generations
@@ -1234,21 +1242,34 @@ const Index = () => {
           setAudioUrls(status.audioUrls);
           setAudioUrl(status.audioUrls[0]);
           
-          // Create initial versions from audioUrls and sunoData with real IDs
+          // Create initial versions from audioUrls and sunoData with real IDs (match by URL, not index)
           const newVersions = status.audioUrls.map((url, index) => {
-            const trackData = sunoData[index];
-            const realAudioId = trackData?.id;
-            
+            const match = sunoData.find((d: any) => {
+              try {
+                const a = (d?.audioUrl || '').split('?')[0];
+                const b = (url || '').split('?')[0];
+                if (!a || !b) return false;
+                // Direct equality or path-based equality
+                const aPath = new URL(a, window.location.href).pathname;
+                const bPath = new URL(b, window.location.href).pathname;
+                return a === b || aPath === bPath || a.endsWith(bPath) || b.endsWith(aPath);
+              } catch {
+                const a = (d?.audioUrl || '').split('?')[0];
+                const b = (url || '').split('?')[0];
+                return !!a && !!b && (a === b || a.includes(b) || b.includes(a));
+              }
+            });
+            const realAudioId = match?.id;
+            const musicIndex = typeof match?.musicIndex === 'number' ? match.musicIndex : index;
             if (!realAudioId) {
-              console.warn(`[Generation] Version ${index}: Missing audioId`);
+              console.warn(`[Generation] Version ${index}: Missing audioId (URL match failed)`);
             } else {
-              console.log(`[Generation] Version ${index}: Using provider audioId: ${realAudioId}`);
+              console.log(`[Generation] Version ${index}: Matched by URL with audioId: ${realAudioId} (musicIndex=${musicIndex})`);
             }
-            
             return {
               url,
               audioId: realAudioId || `missing_id_${index}`,
-              musicIndex: index,
+              musicIndex,
               words: [] as TimestampedWord[],
               hasTimestamps: false
             };
@@ -1837,19 +1858,20 @@ const Index = () => {
 
           {/* Far-right Track List: spans both rows, bleeds to the right, sticky inner */}
           <div className="order-5 lg:order-4 md:col-span-8 lg:col-span-1 xl:col-span-1 lg:row-span-2 lg:self-stretch min-h-0 overflow-hidden">
-            <TrackListPanel
-              tracks={tracks}
-              currentIndex={currentTrackIndex}
-              playingTrackIndex={playingTrackIndex}
-              isPlaying={isPlaying}
-              audioRefs={audioRefs}
-              onPlayPause={(idx) => {
-                if (currentTrackIndex === idx && isPlaying) {
-                  handleAudioPause();
-                } else {
-                  handleAudioPlay(idx);
-                }
-              }}
+          <TrackListPanel
+            tracks={tracks}
+            currentIndex={currentTrackIndex}
+            playingTrackIndex={playingTrackIndex}
+            isPlaying={isPlaying}
+            audioRefs={audioRefs}
+            activeGenerations={activeGenerations}
+            onPlayPause={(idx) => {
+              if (currentTrackIndex === idx && isPlaying) {
+                handleAudioPause();
+              } else {
+                handleAudioPlay(idx);
+              }
+            }}
               onSeek={handleSeek}
               setCurrentIndex={(idx) => {
                 if (idx !== currentTrackIndex) {
