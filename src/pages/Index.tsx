@@ -1135,32 +1135,16 @@ const Index = () => {
     try {
       const payload = { ...songData, style: sanitizeStyle(songData.style || "") };
       
-      // Start both audio generation and cover generation in parallel
-      const [sunoResult, coversResult] = await Promise.allSettled([
-        api.startSong(payload),
-        api.generateAlbumCovers(payload)
-      ]);
-      
-      if (sunoResult.status === 'rejected') {
-        throw sunoResult.reason;
-      }
-      
-      const { jobId: sunoJobId } = sunoResult.value;
+      // Start audio generation (covers already generated in concurrent wrapper)
+      const sunoResult = await api.startSong(payload);
+      const { jobId: sunoJobId } = sunoResult;
       setJobId(sunoJobId);
       
-       // Store covers locally and in active generation
-       const coverData = coversResult.status === 'fulfilled' ? coversResult.value : null;
-       console.log(`[CoverGen] 🎨 Generated covers for job ${wrapperJobId}:`, coverData);
-       
-       if (wrapperJobId) {
-          updateActiveGeneration(wrapperJobId, { 
-            sunoJobId,
-            covers: coverData
-          });
-          console.log(`[CoverGen] 📦 Updated activeGeneration for job ${wrapperJobId}`);
-        } else {
-          console.warn(`[CoverGen] ⚠️ No wrapperJobId found, covers will not be stored!`);
-        }
+      if (wrapperJobId) {
+        // Update with sunoJobId for tracking
+        updateActiveGeneration(wrapperJobId, { sunoJobId });
+        console.log(`[Generation] 📦 Updated activeGeneration with sunoJobId for job ${wrapperJobId}`);
+      }
       
       toast.success("Song requested. Composing...");
 
@@ -1383,9 +1367,9 @@ const Index = () => {
           // Create tracks and add to session
           const existing = new Set(tracks.map(t => t.id));
           
-          // Get pre-generated covers for this job (use locally stored covers to avoid race condition)
-          const targetJob = wrapperJobId ? activeGenerations.find(job => job.id === wrapperJobId) : undefined;
-          const jobCovers = targetJob?.covers || coverData;
+          // Get pre-generated covers for this job (shells should already have these)
+          const targetJob = wrapperJobId ? activeGenerations.find(job => job.id === wrapperJobId) : null;
+          const jobCovers = targetJob?.covers;
             
             console.log(`[Generation] Target job found:`, targetJob);
             console.log(`[Generation] Job covers extracted:`, jobCovers);
@@ -1555,6 +1539,20 @@ const Index = () => {
     });
     
     console.log(`[Generation] 📋 ActiveGenerations after job creation:`, getActiveGenerations());
+    
+    // Generate covers immediately and update shells
+    try {
+      console.log(`[CoverGen] 🎨 Starting immediate cover generation for job ${jobId}`);
+      const coverData = await api.generateAlbumCovers(details);
+      console.log(`[CoverGen] ✅ Covers generated immediately:`, coverData);
+      
+      // Update shells with covers right away
+      updateActiveGeneration(jobId, { covers: coverData });
+      console.log(`[CoverGen] 📦 Shells updated with covers for job ${jobId}`);
+    } catch (error) {
+      console.warn(`[CoverGen] ⚠️ Cover generation failed for job ${jobId}:`, error);
+      // Continue with audio generation even if covers fail
+    }
     
     try {
       await startGenerationWithJobId(jobId, details);
