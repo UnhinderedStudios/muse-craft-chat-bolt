@@ -63,6 +63,9 @@ export function useSongGeneration() {
       } while (result.status !== "complete" && attempts < maxAttempts);
 
       if (result.status === "complete" && result.audioUrls) {
+        console.log(`[DEBUG] Song generation complete! Audio URLs:`, result.audioUrls);
+        console.log(`[DEBUG] Number of songs generated:`, result.audioUrls.length);
+        
         setGenerationState(prev => ({ 
           ...prev, 
           audioUrls: result.audioUrls,
@@ -78,7 +81,7 @@ export function useSongGeneration() {
           console.error("Album cover generation failed:", error);
         }
 
-        toast.success("Song generated successfully!");
+        toast.success(`${result.audioUrls.length} song${result.audioUrls.length > 1 ? 's' : ''} generated successfully!`);
       } else {
         throw new Error("Generation failed or timed out");
       }

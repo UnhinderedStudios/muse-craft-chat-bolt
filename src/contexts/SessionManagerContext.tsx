@@ -8,6 +8,14 @@ export interface SessionData {
   chatMessages: ChatMessage[];
   createdAt: number;
   lastModified: number;
+  activeGenerations: Array<{
+    id: string;
+    sunoJobId?: string;
+    startTime: number;
+    progress: number;
+    details: any;
+    covers?: { cover1: string; cover2: string } | null;
+  }>;
 }
 
 export interface SessionManagerContextValue {
@@ -26,6 +34,12 @@ export interface SessionManagerContextValue {
   addTrackToCurrentSession: (track: TrackItem) => void;
   removeTrackFromSession: (sessionId: string, trackId: string) => void;
   updateCurrentSessionChat: (messages: ChatMessage[]) => void;
+  
+  // Generation management
+  addActiveGeneration: (generation: { id: string; sunoJobId?: string; startTime: number; progress: number; details: any; covers?: { cover1: string; cover2: string } | null }) => void;
+  updateActiveGeneration: (id: string, updates: Partial<{ sunoJobId?: string; progress: number; details: any; covers?: { cover1: string; cover2: string } | null }>) => void;
+  removeActiveGeneration: (id: string) => void;
+  getActiveGenerations: () => Array<{ id: string; sunoJobId?: string; startTime: number; progress: number; details: any; covers?: { cover1: string; cover2: string } | null }>;
 }
 
 export const SessionManagerContext = createContext<SessionManagerContextValue | null>(null);
@@ -74,6 +88,7 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
       ],
       createdAt: Date.now(),
       lastModified: Date.now(),
+      activeGenerations: [],
     };
     setSessions([globalSession]);
     setCurrentSessionId(GLOBAL_SESSION_ID);
@@ -86,7 +101,12 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
       if (raw) {
         const data = JSON.parse(raw);
         if (data?.sessions?.length) {
-          setSessions(data.sessions);
+          // Migrate old sessions to add activeGenerations property
+          const migratedSessions = data.sessions.map((session: any) => ({
+            ...session,
+            activeGenerations: session.activeGenerations || []
+          }));
+          setSessions(migratedSessions);
           setCurrentSessionId(data.currentSessionId || GLOBAL_SESSION_ID);
           return;
         }
@@ -128,7 +148,8 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
 
     const allTracks = Array.from(map.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
-    return { ...global, tracks: allTracks };
+    // Global session should NOT show activeGenerations from other sessions - only its own empty array
+    return { ...global, tracks: allTracks, activeGenerations: [] };
   }, [sessions]);
 
   const displaySessions = useMemo(() => {
@@ -149,6 +170,7 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
       ],
       createdAt: Date.now(),
       lastModified: Date.now(),
+      activeGenerations: [],
     };
     setSessions((prev) => [...prev, newSession]);
     return newSession.id;
@@ -207,10 +229,47 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
       title: `${session.title} (Copy)`,
       createdAt: Date.now(),
       lastModified: Date.now(),
+      activeGenerations: [], // Don't copy active generations
     };
     setSessions((prev) => [...prev, dup]);
     return dup.id;
   }, [sessions]);
+
+  // Generation management functions
+  const addActiveGeneration = useCallback((generation: { id: string; sunoJobId?: string; startTime: number; progress: number; details: any; covers?: { cover1: string; cover2: string } | null }) => {
+    const current = getCurrentSession();
+    if (!current || current.id === GLOBAL_SESSION_ID) return;
+    
+    updateSession(current.id, { 
+      activeGenerations: [generation, ...current.activeGenerations] 
+    });
+  }, [getCurrentSession, updateSession]);
+
+  const updateActiveGeneration = useCallback((id: string, updates: Partial<{ sunoJobId?: string; progress: number; details: any; covers?: { cover1: string; cover2: string } | null }>) => {
+    const current = getCurrentSession();
+    if (!current || current.id === GLOBAL_SESSION_ID) return;
+    
+    updateSession(current.id, { 
+      activeGenerations: current.activeGenerations.map(gen => 
+        gen.id === id ? { ...gen, ...updates } : gen
+      )
+    });
+  }, [getCurrentSession, updateSession]);
+
+  const removeActiveGeneration = useCallback((id: string) => {
+    const current = getCurrentSession();
+    if (!current || current.id === GLOBAL_SESSION_ID) return;
+    
+    updateSession(current.id, { 
+      activeGenerations: current.activeGenerations.filter(gen => gen.id !== id)
+    });
+  }, [getCurrentSession, updateSession]);
+
+  const getActiveGenerations = useCallback(() => {
+    const current = getCurrentSession();
+    if (!current || current.id === GLOBAL_SESSION_ID) return [];
+    return current.activeGenerations || [];
+  }, [getCurrentSession]);
 
   // Compute current session (use aggregated Global when selected)
   const currentSession = useMemo(() => {
@@ -231,6 +290,10 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     addTrackToCurrentSession,
     removeTrackFromSession,
     updateCurrentSessionChat,
+    addActiveGeneration,
+    updateActiveGeneration,
+    removeActiveGeneration,
+    getActiveGenerations,
   };
 
   return (

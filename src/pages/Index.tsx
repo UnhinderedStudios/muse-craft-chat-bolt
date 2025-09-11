@@ -228,8 +228,15 @@ const Index = () => {
     currentSession,
     currentSessionId,
     addTrackToCurrentSession,
-    updateCurrentSessionChat
+    updateCurrentSessionChat,
+    addActiveGeneration,
+    updateActiveGeneration,
+    removeActiveGeneration,
+    getActiveGenerations,
   } = useSessionManager();
+  
+  // Get session-specific active generations
+  const activeGenerations = getActiveGenerations();
   
   // Use session-aware chat
   const { messages, sendMessage } = useSessionChat();
@@ -475,14 +482,6 @@ const Index = () => {
   } | null>(null);
   const [isGeneratingCovers, setIsGeneratingCovers] = useState(false);
   const [scrollTop, setScrollTop] = useState<number>(0);
-  const [activeGenerations, setActiveGenerations] = useState<Array<{
-    id: string, 
-    sunoJobId?: string,
-    startTime: number,
-    progress: number,
-    details: SongDetails,
-    covers?: { cover1: string; cover2: string } | null
-  }>>([]);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const audioRefs = useRef<HTMLAudioElement[]>([]);
   const lastDiceAt = useRef<number>(0);
@@ -1105,20 +1104,14 @@ const Index = () => {
        console.log(`[CoverGen] 🎨 Generated covers for job ${wrapperJobId}:`, coverData);
        
        if (wrapperJobId) {
-         setActiveGenerations(prev => {
-           const updated = prev.map(job => 
-             job.id === wrapperJobId ? { 
-               ...job, 
-               sunoJobId,
-               covers: coverData
-             } : job
-           );
-           console.log(`[CoverGen] 📦 Updated activeGenerations:`, updated);
-           return updated;
-         });
-       } else {
-         console.warn(`[CoverGen] ⚠️ No wrapperJobId found, covers will not be stored!`);
-       }
+          updateActiveGeneration(wrapperJobId, { 
+            sunoJobId,
+            covers: coverData
+          });
+          console.log(`[CoverGen] 📦 Updated activeGeneration for job ${wrapperJobId}`);
+        } else {
+          console.warn(`[CoverGen] ⚠️ No wrapperJobId found, covers will not be stored!`);
+        }
       
       toast.success("Song requested. Composing...");
 
@@ -1433,7 +1426,7 @@ const Index = () => {
           // Clean up job immediately after successful track creation and cover assignment
           if (wrapperJobId) {
             console.log(`[Generation] Cleaning up job ${wrapperJobId} immediately after track creation`);
-            setActiveGenerations(prev => prev.filter(job => job.id !== wrapperJobId));
+            removeActiveGeneration(wrapperJobId);
           }
           
           // Audio elements reset naturally when src changes - no manual reset needed
@@ -1474,11 +1467,7 @@ const Index = () => {
 
   // Update job progress helper
   const updateJobProgress = (jobId: string, newProgress: number) => {
-    setActiveGenerations(prev => 
-      prev.map(job => 
-        job.id === jobId ? { ...job, progress: newProgress } : job
-      )
-    );
+    updateActiveGeneration(jobId, { progress: newProgress });
   };
 
   // Concurrent generation wrapper
@@ -1490,23 +1479,22 @@ const Index = () => {
     
     const jobId = Date.now().toString();
     console.log(`[Generation] 🆕 Creating new job ${jobId} and adding to activeGenerations`);
-    setActiveGenerations(prev => {
-      const updated = [{ 
-        id: jobId, 
-        startTime: Date.now(),
-        progress: 0,
-        details: { ...details }
-      }, ...prev];
-      console.log(`[Generation] 📋 ActiveGenerations after job creation:`, updated);
-      return updated;
+    
+    addActiveGeneration({ 
+      id: jobId, 
+      startTime: Date.now(), 
+      progress: 0, 
+      details: { ...details }
     });
+    
+    console.log(`[Generation] 📋 ActiveGenerations after job creation:`, getActiveGenerations());
     
     try {
       await startGenerationWithJobId(jobId, details);
     } catch (error) {
       // Keep failed jobs visible with error state for 5 seconds
       setTimeout(() => {
-        setActiveGenerations(prev => prev.filter(job => job.id !== jobId));
+        removeActiveGeneration(jobId);
       }, 5000);
       throw error;
     }
