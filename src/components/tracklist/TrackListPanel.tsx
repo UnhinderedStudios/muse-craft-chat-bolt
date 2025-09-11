@@ -474,24 +474,32 @@ export default function TrackListPanel({
         <div ref={scrollRef} className="h-full overflow-y-auto overflow-x-hidden lyrics-scrollbar">
           <div className={`min-h-full flex flex-col justify-start gap-3 px-4 pt-2 pb-4`}>
             
-            {/* Show loading shells for each active generation */}
-            {activeJobCount > 0 && Array.from({ length: activeJobCount * 2 }, (_, i) => {
-              const jobIndex = Math.floor(i / 2);
-              const trackInJob = i % 2;
-              // Use job-specific progress from activeGenerations
-              const job = activeGenerations[jobIndex];
-              const jobProgress = job?.progress || 0;
-              const coverUrl = job?.covers ? (trackInJob === 0 ? job.covers.cover1 : job.covers.cover2) : undefined;
-              return (
-                <TrackLoadingShell 
-                  key={`loading-${jobIndex}-${trackInJob}`}
-                  progress={trackInJob === 0 ? jobProgress : Math.max(0, jobProgress - 25)} 
-                  trackNumber={tracks.length + i + 1}
-                  coverUrl={coverUrl}
-                  title={job?.details?.title}
-                />
-              );
-            })}
+            {/* Show loading shells for active generations, filtered to avoid stale/duplicated shells */}
+            {(() => {
+              const MAX_AGE_MS = 20 * 60 * 1000; // safety: expire very old jobs
+              const jobsToShow = (activeGenerations || []).filter((job) => {
+                if (!job) return false;
+                const age = Date.now() - (job.startTime || 0);
+                if (age > MAX_AGE_MS) return false;
+                // If at least two tracks appear after this job started, consider it replaced
+                const replacements = tracks.filter(t => (t.createdAt || 0) >= (job.startTime || 0)).length;
+                return replacements < 2;
+              });
+              return jobsToShow.flatMap((job, jobIndex) => [0, 1].map((trackInJob) => {
+                const jobProgress = job?.progress || 0;
+                const coverUrl = job?.covers ? (trackInJob === 0 ? job.covers.cover1 : job.covers.cover2) : undefined;
+                const listIndex = tracks.length + jobIndex * 2 + trackInJob + 1;
+                return (
+                  <TrackLoadingShell
+                    key={`loading-${job.id}-${trackInJob}`}
+                    progress={trackInJob === 0 ? jobProgress : Math.max(0, jobProgress - 25)}
+                    trackNumber={listIndex}
+                    coverUrl={coverUrl}
+                    title={job?.details?.title}
+                  />
+                );
+              }));
+            })()}
             
             {paginatedTracks.map((t, pageIndex) => {
           // Calculate the actual index in the original tracks array

@@ -169,6 +169,34 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     }
   }, [sessions, currentSessionId]);
 
+  // Auto-prune stale or replaced active generations (safety net)
+  useEffect(() => {
+    const MAX_AGE_MS = 20 * 60 * 1000; // 20 minutes
+    const prune = () => {
+      setSessions((prev) => {
+        let changed = false;
+        const next = prev.map((session) => {
+          const filtered = (session.activeGenerations || []).filter((g) => {
+            const tooOld = Date.now() - (g.startTime || 0) > MAX_AGE_MS;
+            const replacements = (session.tracks || []).filter((t) => (t.createdAt || 0) >= (g.startTime || 0)).length;
+            if (tooOld || replacements >= 2) {
+              changed = true;
+              return false;
+            }
+            return true;
+          });
+          return filtered.length !== session.activeGenerations.length
+            ? { ...session, activeGenerations: filtered }
+            : session;
+        });
+        return changed ? next : prev;
+      });
+    };
+    prune();
+    const id = window.setInterval(prune, 15000);
+    return () => window.clearInterval(id);
+  }, []);
+
   // Helpers
   const getCurrentSession = useCallback(() => {
     return sessions.find((s) => s.id === currentSessionId) || sessions.find((s) => s.id === GLOBAL_SESSION_ID) || null;
@@ -355,6 +383,8 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
   }, [sessions, updateSession]);
 
   const getActiveGenerations = useCallback(() => {
+    const MAX_AGE_MS = 5 * 60 * 1000; // 5 minutes safety TTL
+
     if (currentSessionId === GLOBAL_SESSION_ID) {
       // In Global view, aggregate all active generations from all sessions
       const allActiveGenerations: Array<{
@@ -365,17 +395,33 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
         details: any;
         covers?: { cover1: string; cover2: string } | null;
       }> = [];
-      
+
+      const aggregatedTracks: TrackItem[] = [];
       for (const session of sessions) {
         allActiveGenerations.push(...session.activeGenerations);
+        aggregatedTracks.push(...session.tracks);
       }
-      
-      return allActiveGenerations;
+
+      // Hide jobs that are too old or already have 2 tracks created after they started
+      const filtered = allActiveGenerations.filter((g) => {
+        const ageOk = Date.now() - (g.startTime || 0) <= MAX_AGE_MS;
+        const replacements = aggregatedTracks.filter((t) => (t.createdAt || 0) >= (g.startTime || 0)).length;
+        return ageOk && replacements < 2;
+      });
+
+      return filtered;
     }
-    
+
     const current = getCurrentSession();
     if (!current) return [];
-    return current.activeGenerations || [];
+
+    const filtered = (current.activeGenerations || []).filter((g) => {
+      const ageOk = Date.now() - (g.startTime || 0) <= MAX_AGE_MS;
+      const replacements = (current.tracks || []).filter((t) => (t.createdAt || 0) >= (g.startTime || 0)).length;
+      return ageOk && replacements < 2;
+    });
+
+    return filtered;
   }, [getCurrentSession, currentSessionId, sessions]);
 
   // Compute current session (use aggregated Global when selected)
