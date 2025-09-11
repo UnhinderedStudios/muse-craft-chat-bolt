@@ -206,11 +206,6 @@ const VirtualizedChat = ({ chatFeed, scrollerRef, bottomPad }: VirtualizedChatPr
 };
 
 const Index = () => {
-  // Clear old session data to ensure proper initialization - temporary fix
-  if (typeof window !== 'undefined' && !window.sessionStorage.getItem('session_cleared_v1')) {
-    localStorage.removeItem('session_manager_data');
-    window.sessionStorage.setItem('session_cleared_v1', 'true');
-  }
   const DOCK_H = 80; // px — reduced height to make container more compact
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [input, setInput] = useState("");
@@ -1346,7 +1341,16 @@ const Index = () => {
             
             const fresh = updatedVersions.map((v, i) => {
               const assignedCover = jobCovers ? (i === 0 ? jobCovers.cover1 : jobCovers.cover2) : undefined;
-              const trackId = v.audioId || `${sunoJobId}-${i}`;
+              let trackId = v.audioId || `${sunoJobId}-${i}`;
+              
+              // Handle ID collisions by adding suffix
+              let suffix = 0;
+              const originalId = trackId;
+              while (existing.has(trackId)) {
+                suffix++;
+                trackId = `${originalId}_${suffix}`;
+                console.log(`[Generation] ID collision detected, using: ${trackId}`);
+              }
               
               console.log(`[Generation] Track ${i}: 
                 - ID: ${trackId}
@@ -1384,8 +1388,12 @@ const Index = () => {
               
               console.log(`[Generation] Created track object:`, track);
               console.log(`[WAV Registry] Stored refs for track ${trackId}:`, { audioId: v.audioId, taskId: sunoJobId, musicIndex: i });
+              
+              // Add this track ID to existing set to prevent future collisions in this batch
+              existing.add(trackId);
+              
               return track;
-            }).filter(t => !existing.has(t.id));
+            });
             
             console.log(`[Generation] ===== FINAL TRACK SUMMARY =====`);
             console.log(`[Generation] Fresh tracks created: ${fresh.length}`);

@@ -133,23 +133,31 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     const global = sessions.find((s) => s.id === GLOBAL_SESSION_ID);
     if (!global) return null;
 
-    // Aggregate all tracks from non-global sessions
+    // Aggregate all tracks from all sessions (including global itself)
     const map = new Map<string, TrackItem>();
     for (const session of sessions) {
-      if (session.id === GLOBAL_SESSION_ID) continue;
       for (const t of session.tracks) {
         if (!map.has(t.id)) map.set(t.id, t);
       }
     }
-    // Include Global's own mock tracks
-    for (const t of global.tracks) {
-      if (!map.has(t.id)) map.set(t.id, t);
-    }
 
     const allTracks = Array.from(map.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
-    // Global session should NOT show activeGenerations from other sessions - only its own empty array
-    return { ...global, tracks: allTracks, activeGenerations: [] };
+    // Aggregate all active generations from all sessions for Global view
+    const allActiveGenerations: Array<{
+      id: string;
+      sunoJobId?: string;
+      startTime: number;
+      progress: number;
+      details: any;
+      covers?: { cover1: string; cover2: string } | null;
+    }> = [];
+    
+    for (const session of sessions) {
+      allActiveGenerations.push(...session.activeGenerations);
+    }
+
+    return { ...global, tracks: allTracks, activeGenerations: allActiveGenerations };
   }, [sessions]);
 
   const displaySessions = useMemo(() => {
@@ -208,10 +216,33 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
 
   const deleteSession = useCallback((sessionId: string) => {
     if (sessionId === GLOBAL_SESSION_ID) return false;
+    
+    // Before deleting, move real tracks and active generations to Global session
+    const sessionToDelete = sessions.find(s => s.id === sessionId);
+    if (sessionToDelete) {
+      const globalSession = sessions.find(s => s.id === GLOBAL_SESSION_ID);
+      if (globalSession) {
+        // Move real tracks (non-placeholder) to Global
+        const realTracks = sessionToDelete.tracks.filter(t => !t.id.startsWith('placeholder-'));
+        if (realTracks.length > 0) {
+          updateSession(GLOBAL_SESSION_ID, { 
+            tracks: [...globalSession.tracks, ...realTracks]
+          });
+        }
+        
+        // Move active generations to Global
+        if (sessionToDelete.activeGenerations.length > 0) {
+          updateSession(GLOBAL_SESSION_ID, { 
+            activeGenerations: [...globalSession.activeGenerations, ...sessionToDelete.activeGenerations]
+          });
+        }
+      }
+    }
+    
     setSessions((prev) => prev.filter((s) => s.id !== sessionId));
     if (currentSessionId === sessionId) setCurrentSessionId(GLOBAL_SESSION_ID);
     return true;
-  }, [currentSessionId]);
+  }, [currentSessionId, sessions, updateSession]);
 
   const renameSession = useCallback((sessionId: string, newTitle: string) => {
     if (sessionId === GLOBAL_SESSION_ID) return false;
@@ -238,7 +269,7 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
   // Generation management functions
   const addActiveGeneration = useCallback((generation: { id: string; sunoJobId?: string; startTime: number; progress: number; details: any; covers?: { cover1: string; cover2: string } | null }) => {
     const current = getCurrentSession();
-    if (!current || current.id === GLOBAL_SESSION_ID) return;
+    if (!current) return;
     
     updateSession(current.id, { 
       activeGenerations: [generation, ...current.activeGenerations] 
@@ -246,28 +277,36 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
   }, [getCurrentSession, updateSession]);
 
   const updateActiveGeneration = useCallback((id: string, updates: Partial<{ sunoJobId?: string; progress: number; details: any; covers?: { cover1: string; cover2: string } | null }>) => {
-    const current = getCurrentSession();
-    if (!current || current.id === GLOBAL_SESSION_ID) return;
-    
-    updateSession(current.id, { 
-      activeGenerations: current.activeGenerations.map(gen => 
-        gen.id === id ? { ...gen, ...updates } : gen
-      )
-    });
-  }, [getCurrentSession, updateSession]);
+    // Find which session contains this generation
+    for (const session of sessions) {
+      const hasGeneration = session.activeGenerations.some(gen => gen.id === id);
+      if (hasGeneration) {
+        updateSession(session.id, { 
+          activeGenerations: session.activeGenerations.map(gen => 
+            gen.id === id ? { ...gen, ...updates } : gen
+          )
+        });
+        return;
+      }
+    }
+  }, [sessions, updateSession]);
 
   const removeActiveGeneration = useCallback((id: string) => {
-    const current = getCurrentSession();
-    if (!current || current.id === GLOBAL_SESSION_ID) return;
-    
-    updateSession(current.id, { 
-      activeGenerations: current.activeGenerations.filter(gen => gen.id !== id)
-    });
-  }, [getCurrentSession, updateSession]);
+    // Find which session contains this generation and remove it
+    for (const session of sessions) {
+      const hasGeneration = session.activeGenerations.some(gen => gen.id === id);
+      if (hasGeneration) {
+        updateSession(session.id, { 
+          activeGenerations: session.activeGenerations.filter(gen => gen.id !== id)
+        });
+        return;
+      }
+    }
+  }, [sessions, updateSession]);
 
   const getActiveGenerations = useCallback(() => {
     const current = getCurrentSession();
-    if (!current || current.id === GLOBAL_SESSION_ID) return [];
+    if (!current) return [];
     return current.activeGenerations || [];
   }, [getCurrentSession]);
 
