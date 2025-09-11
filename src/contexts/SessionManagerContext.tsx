@@ -355,32 +355,38 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
   }, [getCurrentSession, updateSession]);
 
   const updateActiveGeneration = useCallback((id: string, updates: Partial<{ sunoJobId?: string; progress: number; details: any; covers?: { cover1: string; cover2: string } | null }>) => {
-    // Find which session contains this generation
-    for (const session of sessions) {
-      const hasGeneration = session.activeGenerations.some(gen => gen.id === id);
-      if (hasGeneration) {
-        updateSession(session.id, { 
-          activeGenerations: session.activeGenerations.map(gen => 
-            gen.id === id ? { ...gen, ...updates } : gen
-          )
-        });
-        return;
-      }
-    }
-  }, [sessions, updateSession]);
+    setSessions(prevSessions => {
+      // Find which session contains this generation and update it
+      return prevSessions.map(session => {
+        const hasGeneration = session.activeGenerations.some(gen => gen.id === id);
+        if (hasGeneration) {
+          return {
+            ...session,
+            activeGenerations: session.activeGenerations.map(gen => 
+              gen.id === id ? { ...gen, ...updates } : gen
+            )
+          };
+        }
+        return session;
+      });
+    });
+  }, []);
 
   const removeActiveGeneration = useCallback((id: string) => {
-    // Find which session contains this generation and remove it
-    for (const session of sessions) {
-      const hasGeneration = session.activeGenerations.some(gen => gen.id === id);
-      if (hasGeneration) {
-        updateSession(session.id, { 
-          activeGenerations: session.activeGenerations.filter(gen => gen.id !== id)
-        });
-        return;
-      }
-    }
-  }, [sessions, updateSession]);
+    setSessions(prevSessions => {
+      // Find which session contains this generation and remove it
+      return prevSessions.map(session => {
+        const hasGeneration = session.activeGenerations.some(gen => gen.id === id);
+        if (hasGeneration) {
+          return {
+            ...session,
+            activeGenerations: session.activeGenerations.filter(gen => gen.id !== id)
+          };
+        }
+        return session;
+      });
+    });
+  }, []);
 
   const getActiveGenerations = useCallback(() => {
     const MAX_AGE_MS = 5 * 60 * 1000; // 5 minutes safety TTL
