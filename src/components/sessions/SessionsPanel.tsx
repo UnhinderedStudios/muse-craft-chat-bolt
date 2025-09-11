@@ -15,91 +15,27 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { SessionConfirmationDialog } from "./SessionConfirmationDialog";
+import { useSessionManager } from "@/hooks/use-session-manager";
 
 interface SessionsPanelProps {
   className?: string;
+  onSessionSwitch?: (sessionId: string) => void;
 }
 
-// Mock data for development - more sessions to trigger scrollbar
-const mockSessions: Session[] = [
-  { 
-    id: "session-1", 
-    title: "Synthwave Collection",
-    createdAt: Date.now() - 86400000, // 1 day ago
-    lastModified: Date.now() - 3600000 // 1 hour ago
-  },
-  { 
-    id: "session-2", 
-    title: "Acoustic Sessions",
-    createdAt: Date.now() - 172800000, // 2 days ago
-    lastModified: Date.now() - 7200000 // 2 hours ago
-  },
-  { 
-    id: "session-3", 
-    title: "Electronic Experiments",
-    createdAt: Date.now() - 259200000, // 3 days ago
-    lastModified: Date.now() - 14400000 // 4 hours ago
-  },
-  { 
-    id: "session-4", 
-    title: "Jazz Fusion Project",
-    createdAt: Date.now() - 345600000, // 4 days ago
-    lastModified: Date.now() - 86400000 // 1 day ago
-  },
-  { 
-    id: "session-5", 
-    title: "Lo-Fi Hip Hop Vibes",
-    createdAt: Date.now() - 432000000, // 5 days ago
-    lastModified: Date.now() - 172800000 // 2 days ago
-  },
-  { 
-    id: "session-6", 
-    title: "Rock Anthem Session",
-    createdAt: Date.now() - 518400000, // 6 days ago
-    lastModified: Date.now() - 259200000 // 3 days ago
-  },
-  { 
-    id: "session-7", 
-    title: "Ambient Soundscapes",
-    createdAt: Date.now() - 604800000, // 7 days ago
-    lastModified: Date.now() - 345600000 // 4 days ago
-  },
-  { 
-    id: "session-8", 
-    title: "Country Roads Mix",
-    createdAt: Date.now() - 691200000, // 8 days ago
-    lastModified: Date.now() - 432000000 // 5 days ago
-  },
-  { 
-    id: "session-9", 
-    title: "Classical Crossover",
-    createdAt: Date.now() - 777600000, // 9 days ago
-    lastModified: Date.now() - 518400000 // 6 days ago
-  },
-  { 
-    id: "session-10", 
-    title: "Reggae Sunset Session",
-    createdAt: Date.now() - 864000000, // 10 days ago
-    lastModified: Date.now() - 604800000 // 7 days ago
-  },
-  { 
-    id: "session-11", 
-    title: "Punk Revival Project",
-    createdAt: Date.now() - 950400000, // 11 days ago
-    lastModified: Date.now() - 691200000 // 8 days ago
-  },
-  { 
-    id: "session-12", 
-    title: "Orchestral Arrangements",
-    createdAt: Date.now() - 1036800000, // 12 days ago
-    lastModified: Date.now() - 777600000 // 9 days ago
-  }
-];
-
-export function SessionsPanel({ className }: SessionsPanelProps) {
+export function SessionsPanel({ className, onSessionSwitch }: SessionsPanelProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchMode, setIsSearchMode] = useState(false);
-  const [sessions, setSessions] = useState<Session[]>(mockSessions);
+  
+  // Use session manager instead of mock data
+  const {
+    sessions,
+    currentSessionId,
+    createSession,
+    deleteSession,
+    renameSession,
+    duplicateSession,
+    switchToSession
+  } = useSessionManager();
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -118,8 +54,8 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
         session.title.toLowerCase().includes(searchQuery.toLowerCase())
       );
 
-  // Sort sessions by last modified (newest first)
-  const sortedSessions = [...filteredSessions].sort((a, b) => b.lastModified - a.lastModified);
+  // Sessions are already sorted by the session manager (Global first, then by last modified)
+  const sortedSessions = filteredSessions;
 
   // Calculate pagination
   const totalPages = Math.ceil(sortedSessions.length / sessionsPerPage);
@@ -150,14 +86,11 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
 
   // Create new session
   const handleCreateSession = () => {
-    const newSession: Session = {
-      id: `session_${Date.now()}`,
-      title: `Session ${sessions.length + 1}`,
-      createdAt: Date.now(),
-      lastModified: Date.now()
-    };
-    setSessions(prev => [newSession, ...prev]);
-    toast.success(`Created new session: "${newSession.title}"`);
+    const sessionId = createSession();
+    const newSession = sessions.find(s => s.id === sessionId);
+    if (newSession) {
+      toast.success(`Created new session: "${newSession.title}"`);
+    }
   };
 
   // Handle session menu actions
@@ -167,27 +100,28 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
 
     switch (action) {
       case 'open':
-        toast.success(`Opening session: "${session.title}"`);
+        switchToSession(sessionId);
+        onSessionSwitch?.(sessionId);
+        toast.success(`Opened session: "${session.title}"`);
         break;
       case 'rename':
         // This will be handled by the inline edit
         break;
       case 'duplicate':
-        const duplicatedSession: Session = {
-          id: `session_${Date.now()}`,
-          title: `${session.title} (Copy)`,
-          createdAt: Date.now(),
-          lastModified: Date.now()
-        };
-        setSessions(prev => [duplicatedSession, ...prev]);
-        toast.success(`Duplicated session: "${session.title}"`);
+        const newSessionId = duplicateSession(sessionId);
+        if (newSessionId) {
+          toast.success(`Duplicated session: "${session.title}"`);
+        }
         break;
       case 'export':
         toast.success(`Exporting session: "${session.title}"`);
         break;
       case 'delete':
-        setSessions(prev => prev.filter(s => s.id !== sessionId));
-        toast.success(`Deleted session: "${session.title}"`);
+        if (deleteSession(sessionId)) {
+          toast.success(`Deleted session: "${session.title}"`);
+        } else {
+          toast.error("Cannot delete Global session");
+        }
         break;
       default:
         console.log(`Action ${action} on session ${sessionId}`);
@@ -196,16 +130,15 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
 
   // Handle session title edit
   const handleTitleEdit = (sessionId: string, newTitle: string) => {
-    setSessions(prev => prev.map(session => 
-      session.id === sessionId 
-        ? { ...session, title: newTitle, lastModified: Date.now() }
-        : session
-    ));
-    toast.success("Session renamed successfully");
+    if (renameSession(sessionId, newTitle)) {
+      toast.success("Session renamed successfully");
+    } else {
+      toast.error("Cannot rename Global session");
+    }
   };
 
   // Handle session click
-  const handleSessionClick = (session: Session) => {
+  const handleSessionClick = (session: any) => {
     setSelectedSession(session);
     setIsDialogOpen(true);
   };
@@ -214,16 +147,17 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
   const handleLoadSession = (sessionId: string) => {
     const session = sessions.find(s => s.id === sessionId);
     if (session) {
-      toast.success(`Loading session: "${session.title}"`);
-      // Add session loading logic here
+      switchToSession(sessionId);
+      onSessionSwitch?.(sessionId);
+      toast.success(`Loaded session: "${session.title}"`);
     }
   };
 
   const handleDeleteSession = (sessionId: string) => {
-    const session = sessions.find(s => s.id === sessionId);
-    if (session) {
-      setSessions(prev => prev.filter(s => s.id !== sessionId));
-      toast.success(`Deleted session: "${session.title}"`);
+    if (deleteSession(sessionId)) {
+      toast.success(`Deleted session`);
+    } else {
+      toast.error("Cannot delete Global session");
     }
   };
 
@@ -290,8 +224,10 @@ export function SessionsPanel({ className }: SessionsPanelProps) {
                 key={session.id}
                 session={session}
                 onMenuAction={handleSessionAction}
-                onTitleEdit={handleTitleEdit}
+                onTitleEdit={session.id === 'global' ? undefined : handleTitleEdit}
                 onSessionClick={handleSessionClick}
+                isActive={session.id === currentSessionId}
+                isGlobal={session.id === 'global'}
               />
             ))}
 

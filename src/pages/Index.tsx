@@ -38,6 +38,7 @@ import { useChat } from "@/hooks/use-chat";
 import { useResize } from "@/hooks/use-resize";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useSongGeneration } from "@/hooks/use-song-generation";
+import { useSessionManager } from "@/hooks/use-session-manager";
 
 // Types
 import { type TimestampedWord, type ChatMessage, type TrackItem } from "@/types";
@@ -216,7 +217,15 @@ const Index = () => {
   const { chatHeight, isResizing, handleMouseDown } = useResize();
   const [showMelodySpeech, setShowMelodySpeech] = useState(false);
   
-  // Use the chat hook for both main chat and voice interface
+  // Session management
+  const {
+    currentSession,
+    currentSessionId,
+    addTrackToCurrentSession,
+    updateCurrentSessionChat
+  } = useSessionManager();
+  
+  // Use session-aware chat
   const { messages, sendMessage } = useChat();
   
   // Ref for chat input to maintain focus
@@ -384,29 +393,8 @@ const Index = () => {
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentAudioIndex, setCurrentAudioIndex] = useState<number>(0);
-  // Placeholder tracks for design development - remove when ready for production
-  const [tracks, setTracks] = useState<TrackItem[]>([
-    {
-      id: "placeholder-track-1",
-      url: "",
-      title: "Neon Dreams",
-      coverUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300",
-      createdAt: Date.now() - 3600000, // 1 hour ago
-      params: ["synthpop", "uplifting", "120 BPM", "English", "female vocals", "bright synths"],
-      words: [],
-      hasTimestamps: false
-    },
-    {
-      id: "placeholder-track-2",
-      url: "",
-      title: "Coffee Shop Moments", 
-      coverUrl: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=300",
-      createdAt: Date.now() - 7200000, // 2 hours ago
-      params: ["indie folk", "mellow", "95 BPM", "English", "male vocals", "acoustic guitar"],
-      words: [],
-      hasTimestamps: false
-    }
-  ]);
+  // Get tracks from current session
+  const tracks = currentSession?.tracks || [];
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
   
   // Independent karaoke state - tracks what's displayed in karaoke panel
@@ -588,12 +576,9 @@ const Index = () => {
       setPlayingTrackId(playingTrack.id);
       setPlayingTrackIndex(index);
       
-      // Mark track as played
-      setTracks(prevTracks => 
-        prevTracks.map((track, i) => 
-          i === index ? { ...track, hasBeenPlayed: true } : track
-        )
-      );
+      // Mark track as played - we'll need to update the session
+      // For now, just log this as we need to implement session track updates
+      console.log('[Play] Marking track as played:', playingTrack.id);
     }
     
     // If same track is already playing, just toggle pause/play
@@ -758,7 +743,8 @@ const Index = () => {
 
       if (words.length) {
         setVersions(vs => vs.map((v, i) => i === versionIndex ? { ...v, words, hasTimestamps: true, timestampError: undefined } : v));
-        setTracks(ts => ts.map(t => t.id === audioId ? { ...t, words, hasTimestamps: true, timestampError: undefined } : t));
+        // Update track timestamps in session - to be implemented
+        console.log('[Timestamps] Updated timestamps for track:', audioId);
         toast.success("Karaoke timestamps loaded!");
       } else {
         setVersions(vs => vs.map((v, i) => i === versionIndex ? { ...v, timestampError: "No timestamps available" } : v));
@@ -775,16 +761,9 @@ const Index = () => {
   // Update track cover URLs when album covers are generated
   useEffect(() => {
     if (albumCovers && tracks.length > 0) {
-      setTracks(prev => prev.map((track, index) => {
-        // Only update if the track doesn't already have a cover URL
-        if (!track.coverUrl) {
-          return {
-            ...track,
-            coverUrl: index % 2 === 1 ? albumCovers.cover2 : albumCovers.cover1
-          };
-        }
-        return track;
-      }));
+      // Update covers in session - to be implemented
+      console.log('[Covers] Album covers generated:', albumCovers);
+      // For now, covers are set when tracks are created
     }
   }, [albumCovers, tracks.length]);
 
@@ -1325,12 +1304,12 @@ const Index = () => {
           console.log(`[Generation] ActiveGenerations length:`, activeGenerations.length);
           console.log(`[Index Preservation] Current track before insertion:`, currentlySelectedTrackId);
           
-          setTracks(prev => {
-            const existing = new Set(prev.map(t => t.id));
-            
-            // Get pre-generated covers for this job (use locally stored covers to avoid race condition)
-            const targetJob = wrapperJobId ? activeGenerations.find(job => job.id === wrapperJobId) : undefined;
-            const jobCovers = targetJob?.covers || coverData;
+          // Create tracks and add to session
+          const existing = new Set(tracks.map(t => t.id));
+          
+          // Get pre-generated covers for this job (use locally stored covers to avoid race condition)
+          const targetJob = wrapperJobId ? activeGenerations.find(job => job.id === wrapperJobId) : undefined;
+          const jobCovers = targetJob?.covers || coverData;
             
             console.log(`[Generation] Target job found:`, targetJob);
             console.log(`[Generation] Job covers extracted:`, jobCovers);
@@ -1392,12 +1371,10 @@ const Index = () => {
               console.log(`[CoverGen] ❌ NO COVERS FOUND - tracks will have no covers!`);
             }
             
-            const newTracks = [...prev, ...fresh]; // append new tracks, preserve existing indices
-            
             // Store current state before making decisions
             const wasPlaying = isPlaying;
             const hadRealTrackSelected = currentlySelectedTrackId && !currentlySelectedTrackId.startsWith('placeholder-');
-            const currentSelectedTrack = hadRealTrackSelected ? prev.find(t => t.id === currentlySelectedTrackId) : null;
+            const currentSelectedTrack = hadRealTrackSelected ? tracks.find(t => t.id === currentlySelectedTrackId) : null;
             
             // With append order, indices stay stable - only need to handle new track selection
             if (!wasPlaying && hadRealTrackSelected) {
@@ -1405,10 +1382,10 @@ const Index = () => {
               console.log(`[Index Preservation] Indices preserved due to append order, currentTrackIndex: ${currentTrackIndex}`);
             } else if (!wasPlaying && !hadRealTrackSelected) {
               // Only auto-select if no user activity - select first NEW track (at end of array)
-              const hasOnlyPlaceholders = prev.every(t => t.id.startsWith('placeholder-'));
+              const hasOnlyPlaceholders = tracks.every(t => t.id.startsWith('placeholder-'));
               if (hasOnlyPlaceholders || currentTrackIndex < 0) {
                 console.log('[Auto-select] Selecting first new track at end of array');
-                setCurrentTrackIndex(prev.length); // First new track position
+                setCurrentTrackIndex(tracks.length); // First new track position
               }
             } else {
               console.log('[Playback Preserved] User is playing - indices preserved due to append order');
@@ -1416,8 +1393,8 @@ const Index = () => {
               // This ensures that new songs don't auto-play when generation completes
             }
             
-            return newTracks;
-          });
+            // Add all new tracks to current session
+            fresh.forEach(track => addTrackToCurrentSession(track));
           
           // Clean up job immediately after successful track creation and cover assignment
           if (wrapperJobId) {
@@ -1796,13 +1773,8 @@ const Index = () => {
               }}
               onTimeUpdate={handleTimeUpdate}
               onTrackTitleUpdate={(trackIndex, newTitle) => {
-                setTracks(prevTracks => 
-                  prevTracks.map((track, index) => 
-                    index === trackIndex 
-                      ? { ...track, title: newTitle }
-                      : track
-                  )
-                );
+                // Update track title in session - to be implemented
+                console.log('[Title] Updating track title:', trackIndex, newTitle);
               }}
               isGenerating={isMusicGenerating}
               generationProgress={generationProgress}
@@ -1996,13 +1968,8 @@ const Index = () => {
             onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
             onTitleUpdate={(newTitle) => {
               const targetIndex = playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex;
-              setTracks(prevTracks => 
-                prevTracks.map((track, index) => 
-                  index === targetIndex 
-                    ? { ...track, title: newTitle }
-                    : track
-                )
-              );
+              // Update track title in session - to be implemented
+              console.log('[Title] Updating player track title:', targetIndex, newTitle);
             }}
           />
         )}
