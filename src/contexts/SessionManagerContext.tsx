@@ -117,11 +117,76 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     initialize();
   }, [initialize]);
 
-  // Persist to localStorage
+  // Persist to localStorage with pruning and quota guards
   useEffect(() => {
     if (!sessions.length) return;
-    const data = { sessions, currentSessionId };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+    // Create a pruned, storage-safe snapshot to avoid exceeding localStorage quota
+    const buildSnapshot = (level: 0 | 1 | 2) => {
+      return {
+        sessions: sessions.map((s) => {
+          const safeTracks = (s.tracks ?? []).map((t: any) => ({
+            id: t.id,
+            url: t.url,
+            title: t.title,
+            coverUrl: t.coverUrl,
+            createdAt: t.createdAt,
+            // keep light metadata only
+            params: level < 2 ? t.params : undefined,
+            hasTimestamps: t.hasTimestamps,
+            // do not persist heavy word timings
+            words: [],
+          }));
+
+          const safeActive = (s.activeGenerations ?? []).map((g: any) => ({
+            id: g.id,
+            sunoJobId: g.sunoJobId,
+            startTime: g.startTime,
+            progress: g.progress,
+            covers: g.covers ?? null,
+            // drop details to keep small
+          }));
+
+          let safeChat = s.chatMessages ?? [];
+          if (level >= 1) {
+            safeChat = safeChat.slice(-50);
+          }
+          if (level >= 2) {
+            safeChat = safeChat.slice(-10);
+          }
+
+          return {
+            id: s.id,
+            title: s.title,
+            createdAt: s.createdAt,
+            lastModified: s.lastModified,
+            tracks: safeTracks,
+            chatMessages: safeChat,
+            activeGenerations: safeActive,
+          };
+        }),
+        currentSessionId,
+      };
+    };
+
+    let level: 0 | 1 | 2 = 0;
+    for (;;) {
+      try {
+        const snapshot = buildSnapshot(level);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+        break;
+      } catch (err: any) {
+        const isQuota =
+          (typeof DOMException !== "undefined" && err instanceof DOMException && err.name === "QuotaExceededError") ||
+          (err && String(err).includes("QuotaExceededError"));
+        if (isQuota && level < 2) {
+          level = (level + 1) as 0 | 1 | 2;
+          continue;
+        }
+        console.error("[SessionManager] Failed to persist sessions", err);
+        break;
+      }
+    }
   }, [sessions, currentSessionId]);
 
   // Helpers
