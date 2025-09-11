@@ -190,7 +190,7 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
 
   const addTrackToCurrentSession = useCallback((track: TrackItem) => {
     const current = getCurrentSession();
-    if (!current || current.id === GLOBAL_SESSION_ID) return;
+    if (!current) return;
     updateSession(current.id, { tracks: [...current.tracks, track] });
   }, [getCurrentSession, updateSession]);
 
