@@ -1888,7 +1888,6 @@ const Index = () => {
               isGenerating={isMusicGenerating}
               generationProgress={generationProgress}
               activeJobCount={activeGenerations.length}
-              activeGenerations={activeGenerations}
               onPlaylistClick={(playlist) => {
                 setSelectedPlaylist(playlist);
                 setShowPlaylistOverlay(true);
