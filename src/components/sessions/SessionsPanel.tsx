@@ -36,6 +36,9 @@ export function SessionsPanel({ className, onSessionSwitch }: SessionsPanelProps
     duplicateSession,
     switchToSession
   } = useSessionManager();
+
+  // Debug logging
+  console.log('SessionsPanel sessions:', sessions.length, sessions.map(s => s.title));
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);

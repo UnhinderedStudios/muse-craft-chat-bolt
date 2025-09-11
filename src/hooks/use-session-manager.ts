@@ -17,37 +17,33 @@ export function useSessionManager() {
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string>(GLOBAL_SESSION_ID);
 
-  // Load sessions from localStorage on mount
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        setSessions(data.sessions || []);
-        setCurrentSessionId(data.currentSessionId || GLOBAL_SESSION_ID);
-      } catch (error) {
-        console.error('Failed to load sessions:', error);
-        initializeGlobalSession();
-      }
-    } else {
-      initializeGlobalSession();
-    }
-  }, []);
-
-  // Save sessions to localStorage whenever they change
-  useEffect(() => {
-    const data = {
-      sessions,
-      currentSessionId
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }, [sessions, currentSessionId]);
-
-  const initializeGlobalSession = () => {
+  // Initialize global session function
+  const initializeGlobalSession = useCallback(() => {
     const globalSession: SessionData = {
       id: GLOBAL_SESSION_ID,
       title: 'Global',
-      tracks: [],
+      tracks: [
+        {
+          id: "placeholder-track-1",
+          url: "",
+          title: "Neon Dreams",
+          coverUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=300",
+          createdAt: Date.now() - 3600000, // 1 hour ago
+          params: ["synthpop", "uplifting", "120 BPM", "English", "female vocals", "bright synths"],
+          words: [],
+          hasTimestamps: false
+        },
+        {
+          id: "placeholder-track-2", 
+          url: "",
+          title: "Coffee Shop Moments",
+          coverUrl: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=300",
+          createdAt: Date.now() - 7200000, // 2 hours ago
+          params: ["indie folk", "mellow", "95 BPM", "English", "male vocals", "acoustic guitar"],
+          words: [],
+          hasTimestamps: false
+        }
+      ],
       chatMessages: [
         { role: "assistant", content: "Hey! I can help write and generate a song. What vibe are you going for?" }
       ],
@@ -56,7 +52,39 @@ export function useSessionManager() {
     };
     setSessions([globalSession]);
     setCurrentSessionId(GLOBAL_SESSION_ID);
-  };
+  }, []);
+
+  // Load sessions from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        const data = JSON.parse(stored);
+        if (data.sessions && data.sessions.length > 0) {
+          setSessions(data.sessions);
+          setCurrentSessionId(data.currentSessionId || GLOBAL_SESSION_ID);
+        } else {
+          initializeGlobalSession();
+        }
+      } catch (error) {
+        console.error('Failed to load sessions:', error);
+        initializeGlobalSession();
+      }
+    } else {
+      initializeGlobalSession();
+    }
+  }, [initializeGlobalSession]);
+
+  // Save sessions to localStorage whenever they change
+  useEffect(() => {
+    if (sessions.length > 0) { // Only save if we have sessions to avoid overwriting
+      const data = {
+        sessions,
+        currentSessionId
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+  }, [sessions, currentSessionId]);
 
   // Get current session
   const getCurrentSession = useCallback(() => {

@@ -205,6 +205,11 @@ const VirtualizedChat = ({ chatFeed, scrollerRef, bottomPad }: VirtualizedChatPr
 };
 
 const Index = () => {
+  // Clear old session data to ensure proper initialization - temporary fix
+  if (typeof window !== 'undefined' && !window.sessionStorage.getItem('session_cleared_v1')) {
+    localStorage.removeItem('session_manager_data');
+    window.sessionStorage.setItem('session_cleared_v1', 'true');
+  }
   const DOCK_H = 80; // px — reduced height to make container more compact
   const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [input, setInput] = useState("");
@@ -1950,7 +1955,7 @@ const Index = () => {
           "
           style={{ paddingBottom: `env(safe-area-inset-bottom, 0px)` }}
         >
-        {tracks.length > 0 && currentTrackIndex >= 0 && (
+        {tracks.length > 0 && (
           <PlayerDock
             title={tracks[playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex]?.title || "No track yet"}
             audioRefs={audioRefs}
