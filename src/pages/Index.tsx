@@ -1147,6 +1147,18 @@ const Index = () => {
       const sunoResult = await api.startSong(payload);
       const { jobId: sunoJobId } = sunoResult;
       setJobId(sunoJobId);
+
+      // For non-concurrent runs, generate covers in parallel so we can assign them to final tracks
+      let coversPromise: Promise<{ cover1: string; cover2: string } | null> | null = null;
+      if (!wrapperJobId) {
+        coversPromise = api
+          .generateAlbumCovers(songData)
+          .then((d) => ({ cover1: d.cover1, cover2: d.cover2 }))
+          .catch((err) => {
+            console.warn("[CoverGen] Non-concurrent cover generation failed:", err);
+            return null;
+          });
+      }
       
       if (wrapperJobId) {
         // Update with sunoJobId for tracking
@@ -1317,11 +1329,11 @@ const Index = () => {
 
                   console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}: Using audioId=${version.audioId}, musicIndex=${version.musicIndex}`);
                   
-                  const result = await api.getTimestampedLyrics({
-                    taskId: sunoJobId,
-                    audioId: version.audioId,
-                    musicIndex: version.musicIndex
-                  });
+                  const payload: any = { taskId: sunoJobId, musicIndex: version.musicIndex };
+                  if (version.audioId && !version.audioId.startsWith("missing_id_")) {
+                    payload.audioId = version.audioId;
+                  }
+                  const result = await api.getTimestampedLyrics(payload);
 
                   if (result.alignedWords && result.alignedWords.length > 0) {
                     console.log(`[Timestamps] Version ${index + 1}: Success with ${result.alignedWords.length} words`);
@@ -1389,8 +1401,22 @@ const Index = () => {
           const existing = new Set(tracks.map(t => t.id));
           
           // Get pre-generated covers for this job (shells should already have these)
-          const targetJob = wrapperJobId ? activeGenerations.find(job => job.id === wrapperJobId) : null;
-          const jobCovers = targetJob?.covers;
+          const freshActive = getActiveGenerations();
+          const targetJob = wrapperJobId ? freshActive.find(job => job.id === wrapperJobId) : null;
+          // Prefer job covers (concurrent path). For non-concurrent, resolve our local covers promise.
+          let jobCovers: { cover1: string; cover2: string } | null = (targetJob?.covers as any) || null;
+          if (!jobCovers && !wrapperJobId && typeof coversPromise !== 'undefined' && coversPromise) {
+            try {
+              const resolved = await coversPromise;
+              if (resolved?.cover1) jobCovers = resolved;
+            } catch (e) {
+              console.warn('[CoverGen] Failed to resolve non-concurrent coversPromise:', e);
+            }
+          }
+          // Strong fallback to bundled images if no covers available
+          if (!jobCovers || !jobCovers.cover1) {
+            jobCovers = getFallbackCovers();
+          }
             
             console.log(`[Generation] Target job found:`, targetJob);
             console.log(`[Generation] Job covers extracted:`, jobCovers);
