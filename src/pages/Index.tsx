@@ -35,6 +35,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 
 // Hooks
 import { useChat } from "@/hooks/use-chat";
+import { useSessionChat } from "@/hooks/use-session-chat";
 import { useResize } from "@/hooks/use-resize";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useSongGeneration } from "@/hooks/use-song-generation";
@@ -231,7 +232,35 @@ const Index = () => {
   } = useSessionManager();
   
   // Use session-aware chat
-  const { messages, sendMessage } = useChat();
+  const { messages, sendMessage } = useSessionChat();
+  
+  // Reset UI state when switching sessions
+  useEffect(() => {
+    console.log('[Session Switch] Resetting UI state for session:', currentSessionId);
+    
+    // Reset track selection
+    setCurrentTrackIndex(tracks.length > 0 ? 0 : -1);
+    setPlayingTrackIndex(-1);
+    setPlayingTrackId("");
+    setKaraokeTrackId("");
+    setKaraokeAudioIndex(-1);
+    setCurrentAudioIndex(0);
+    
+    // Reset audio state
+    setIsPlaying(false);
+    setCurrentTime(0);
+    
+    // Pause all audio elements
+    audioRefs.current.forEach(audio => {
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    });
+    
+    // Reset other UI states that should be clean on session switch
+    setShowFullscreenKaraoke(false);
+  }, [currentSessionId]); // Trigger when session changes
   
   // Ref for chat input to maintain focus
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
