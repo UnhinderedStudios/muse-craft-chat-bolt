@@ -82,12 +82,26 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
       if (raw) {
         const data = JSON.parse(raw);
         if (data?.sessions?.length) {
-          // Migrate old sessions to add activeGenerations property
-          const migratedSessions = data.sessions.map((session: any) => ({
-            ...session,
-            activeGenerations: session.activeGenerations || []
-          }));
-          setSessions(migratedSessions);
+          // Clear all tracks except keep 2 mock tracks total across all sessions
+          let mockTrackCount = 0;
+          const clearedSessions = data.sessions.map((session: any) => {
+            const clearedTracks = (session.tracks || []).filter((track: any) => {
+              // Keep up to 2 tracks that look like mock/demo tracks (have basic structure)
+              if (mockTrackCount < 2 && track.id && track.title) {
+                mockTrackCount++;
+                return true;
+              }
+              return false;
+            });
+            
+            return {
+              ...session,
+              tracks: clearedTracks,
+              activeGenerations: [] // Also clear active generations
+            };
+          });
+          
+          setSessions(clearedSessions);
           setCurrentSessionId(data.currentSessionId || GLOBAL_SESSION_ID);
           return;
         }
