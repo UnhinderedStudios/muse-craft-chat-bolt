@@ -57,8 +57,6 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   useScrollDelegationHook(panelRef);
 
   const handlePlayPause = () => {
-    if (!hasContent) return;
-    
     if (isPlaying) {
       onAudioPause();
     } else {
@@ -67,7 +65,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   };
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!hasContent || !audioElement || !onSeek) return;
+    if (!audioElement || !onSeek) return;
     
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
@@ -107,9 +105,9 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
                 onClick={handlePlayPause}
                 className={cn(
                   "flex items-center justify-center w-7 h-7 rounded-full transition-colors",
-                  hasContent ? "bg-primary hover:bg-primary/80" : "bg-muted cursor-not-allowed"
+                  audioElement ? "bg-primary hover:bg-primary/80" : "bg-muted cursor-not-allowed"
                 )}
-                disabled={!hasContent}
+                disabled={!audioElement}
               >
                 {hasContent && isPlaying ? (
                   <Pause size={14} className="text-primary-foreground" />
@@ -126,17 +124,17 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
                 
                 {/* Progress Bar - Made more compact */}
                 <div className="flex items-center gap-1.5 text-xs text-white/60">
-                  <span>{hasContent ? formatTime(currentTime) : "--:--"}</span>
+                  <span>{audioElement ? formatTime(currentTime) : "--:--"}</span>
                   <div 
                     className="flex-1 h-1 bg-white/20 rounded-full overflow-hidden cursor-pointer"
                     onClick={handleProgressClick}
                   >
                     <div
                       className="h-full bg-primary transition-all duration-200"
-                      style={{ width: hasContent ? `${progressPercentage}%` : '0%' }}
+                      style={{ width: audioElement ? `${progressPercentage}%` : '0%' }}
                     />
                   </div>
-                  <span>{hasContent ? formatTime(duration) : "--:--"}</span>
+                  <span>{audioElement ? formatTime(duration) : "--:--"}</span>
                 </div>
               </div>
             </div>

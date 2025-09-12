@@ -459,6 +459,7 @@ const Index = () => {
   // Track what's actually playing (independent of UI selection)
   const [playingTrackId, setPlayingTrackId] = useState<string>("");
   const [playingTrackIndex, setPlayingTrackIndex] = useState<number>(-1);
+  const resolvedPlayingIndex = useMemo(() => tracks.findIndex(t => t.id === playingTrackId), [tracks, playingTrackId]);
   
   // Shared playlist overlay state
   const [selectedPlaylist, setSelectedPlaylist] = useState<any>(null);
@@ -470,13 +471,17 @@ const Index = () => {
       setKaraokeAudioIndex(versions.length ? 0 : -1);
       return;
     }
-    
-    const idx = versions.findIndex(v => v.audioId === karaokeTrackId);
+
+    // Resolve provider audioId via wavRegistry to avoid mismatches
+    const refs = wavRegistry.get(karaokeTrackId);
+    const wantedAudioId = refs?.audioId || karaokeTrackId;
+
+    const idx = versions.findIndex(v => v.audioId === wantedAudioId);
     if (idx !== -1) {
       setKaraokeAudioIndex(idx);
     } else {
       // Keep existing karaoke audio index if track versions haven't updated yet
-      setKaraokeAudioIndex(prev => prev >= 0 && prev < versions.length ? prev : -1);
+      setKaraokeAudioIndex(prev => (prev >= 0 && prev < versions.length ? prev : -1));
     }
   }, [karaokeTrackId, versions]);
   const [showFullscreenKaraoke, setShowFullscreenKaraoke] = useState(false);
@@ -648,11 +653,10 @@ const Index = () => {
       
       console.log(`[Karaoke] Selected track: ${playingTrack.id}, refs:`, refs, `audioId: ${audioId}, musicIndex: ${musicIndex}`);
       
-      // Check if versions already contains an entry for this audioId - use wavRegistry lookup
-      const karaokeTrack = tracks.find(t => t.id === karaokeTrackId);
-      const karaokeRefs = wavRegistry.get(karaokeTrackId);
-      const karaokeAudioId = karaokeRefs?.audioId || karaokeTrackId;
-      const existingVersionIndex = versions.findIndex(v => v.audioId === karaokeAudioId);
+      // Check if versions already contains an entry for this audioId - use wavRegistry lookup from current playing track
+      const playingRefs = wavRegistry.get(playingTrack.id);
+      const targetAudioId = playingRefs?.audioId || playingTrack.id;
+      const existingVersionIndex = versions.findIndex(v => v.audioId === targetAudioId);
       
       if (existingVersionIndex === -1) {
         if (playingTrack.words && playingTrack.words.length > 0) {
@@ -792,10 +796,12 @@ const Index = () => {
   }
 
   const handleAudioPause = () => {
-    console.log(`[AUDIO DEBUG] Pausing playback, playingTrackIndex: ${playingTrackIndex}`);
+    const resolvedPlayingIndex = tracks.findIndex(t => t.id === playingTrackId);
+    console.log(`[AUDIO DEBUG] Pausing playback, resolvedPlayingIndex: ${resolvedPlayingIndex}, stateIndex: ${playingTrackIndex}`);
     
     // Pause the actually playing audio, not just the selected one
-    const audioElement = audioRefs.current[playingTrackIndex];
+    const targetIndex = resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : playingTrackIndex;
+    const audioElement = audioRefs.current[targetIndex];
     if (audioElement && !audioElement.paused) {
       try {
         audioElement.pause();
@@ -818,20 +824,22 @@ const Index = () => {
   const handleTimeUpdate = (audio: HTMLAudioElement) => {
     // CRITICAL: Only update if this is the currently playing audio AND actually playing
     const audioIndex = audioRefs.current.findIndex(ref => ref === audio);
-    const isCurrentlyPlaying = playingTrackIndex >= 0 && audioIndex === playingTrackIndex && isPlaying && !audio.paused;
+    const resolvedPlayingIndex = tracks.findIndex(t => t.id === playingTrackId);
+    const isCurrentlyPlaying = resolvedPlayingIndex >= 0 && audioIndex === resolvedPlayingIndex && isPlaying && !audio.paused;
     
     if (isCurrentlyPlaying) {
       const newTime = audio.currentTime;
       setCurrentTime(newTime);
-    } else if (audioIndex !== playingTrackIndex && !audio.paused) {
+    } else if (audioIndex !== resolvedPlayingIndex && !audio.paused) {
       // Safety: pause any non-current audio that's somehow playing
-      console.log(`[AUDIO DEBUG] Safety pausing audio at index ${audioIndex} (current playing: ${playingTrackIndex})`);
+      console.log(`[AUDIO DEBUG] Safety pausing audio at index ${audioIndex} (current playing: ${resolvedPlayingIndex})`);
       audio.pause();
     }
   };
 
   const handleSeek = (time: number) => {
-    const audioElement = audioRefs.current[playingTrackIndex];
+    const resolvedPlayingIndex = tracks.findIndex(t => t.id === playingTrackId);
+    const audioElement = audioRefs.current[resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : playingTrackIndex];
     if (audioElement) {
       try {
         audioElement.currentTime = time;
@@ -844,13 +852,15 @@ const Index = () => {
 
   const playPrev = () => {
     if (tracks.length) {
-      const targetIndex = playingTrackIndex >= 0 ? Math.max(0, playingTrackIndex - 1) : Math.max(0, currentTrackIndex - 1);
+      const resolved = tracks.findIndex(t => t.id === playingTrackId);
+      const targetIndex = resolved >= 0 ? Math.max(0, resolved - 1) : Math.max(0, currentTrackIndex - 1);
       handleAudioPlay(targetIndex);
     }
   };
   const playNext = () => {
     if (tracks.length) {
-      const targetIndex = playingTrackIndex >= 0 ? Math.min(tracks.length - 1, playingTrackIndex + 1) : Math.min(tracks.length - 1, currentTrackIndex + 1);
+      const resolved = tracks.findIndex(t => t.id === playingTrackId);
+      const targetIndex = resolved >= 0 ? Math.min(tracks.length - 1, resolved + 1) : Math.min(tracks.length - 1, currentTrackIndex + 1);
       handleAudioPlay(targetIndex);
     }
   };
@@ -1177,8 +1187,10 @@ const Index = () => {
     setAudioUrl(null);
     setAudioUrls(null);
     setJobId(null);
-    if (!wrapperJobId) {
+    if (!wrapperJobId && !karaokePinnedRef.current) {
       setVersions([]);
+    } else if (!wrapperJobId && karaokePinnedRef.current) {
+      console.log('[Karaoke Pin] Preserving versions during generation start due to active pin');
     }
     if (!wrapperJobId) {
       setGenerationProgress(0);
@@ -2180,19 +2192,19 @@ const Index = () => {
           style={{ paddingBottom: `env(safe-area-inset-bottom, 0px)` }}
         >
         <PlayerDock
-          title={tracks.length > 0 ? (tracks[playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex]?.title || "No track yet") : "No track yet"}
+          title={tracks.length > 0 ? (tracks[(resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex)]?.title || "No track yet") : "No track yet"}
           audioRefs={audioRefs}
-          currentAudioIndex={tracks.length > 0 ? (playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex) : 0}
+          currentAudioIndex={tracks.length > 0 ? (resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex) : 0}
           isPlaying={isPlaying}
           currentTime={currentTime}
           onPrev={playPrev}
           onNext={playNext}
-          onPlay={() => tracks.length > 0 && handleAudioPlay(playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex)}
+          onPlay={() => tracks.length > 0 && handleAudioPlay(resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex)}
           onPause={handleAudioPause}
           onSeek={(t) => handleSeek(t)}
           accent="#f92c8f"
-          disabled={tracks.length === 0 || !tracks[playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex]}
-          albumCoverUrl={tracks.length > 0 ? tracks[playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex]?.coverUrl : undefined}
+          disabled={tracks.length === 0 || !tracks[(resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex)]}
+          albumCoverUrl={tracks.length > 0 ? tracks[(resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex)]?.coverUrl : undefined}
           onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
           onTitleUpdate={(newTitle) => {
             if (tracks.length > 0) {
