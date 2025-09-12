@@ -243,6 +243,7 @@ const Index = () => {
   // Karaoke pinning refs to prevent overwrite during active playback
   const karaokePinnedRef = useRef<boolean>(false);
   const pinnedAudioIdRef = useRef<string | null>(null);
+  const pinnedUrlRef = useRef<string | null>(null);
   
   // Get session-specific active generations
   const activeGenerations = getActiveGenerations();
@@ -269,6 +270,7 @@ const Index = () => {
     // Reset karaoke pinning
     karaokePinnedRef.current = false;
     pinnedAudioIdRef.current = null;
+    pinnedUrlRef.current = null;
     console.log('[Karaoke Pin] Reset on session switch');
     
     // Pause all audio elements
@@ -290,6 +292,21 @@ const Index = () => {
 
   // utils
   const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
+  
+  // Normalize URLs to a comparable, stable pathname (lowercased, no query)
+  const normalizeUrl = (u?: string): string | null => {
+    if (!u) return null;
+    try {
+      const url = new URL(u, window.location.origin);
+      return url.pathname.toLowerCase();
+    } catch {
+      try {
+        return u.replace(/^https?:\/\/[^/]+/i, "").split("?")[0].toLowerCase();
+      } catch {
+        return u;
+      }
+    }
+  };
   
   // Helper function to determine if we should auto-select a new track
   const shouldAutoSelectTrack = () => {
@@ -461,6 +478,11 @@ const Index = () => {
   const [playingTrackIndex, setPlayingTrackIndex] = useState<number>(-1);
   const resolvedPlayingIndex = useMemo(() => tracks.findIndex(t => t.id === playingTrackId), [tracks, playingTrackId]);
   
+  // Keep playingTrackIndex synchronized with the actual list order
+  useEffect(() => {
+    setPlayingTrackIndex(resolvedPlayingIndex);
+  }, [resolvedPlayingIndex]);
+  
   // Shared playlist overlay state
   const [selectedPlaylist, setSelectedPlaylist] = useState<any>(null);
   const [showPlaylistOverlay, setShowPlaylistOverlay] = useState(false);
@@ -476,14 +498,23 @@ const Index = () => {
     const refs = wavRegistry.get(karaokeTrackId);
     const wantedAudioId = refs?.audioId || karaokeTrackId;
 
-    const idx = versions.findIndex(v => v.audioId === wantedAudioId);
+    // Try audioId first, then fallback to URL/path match to avoid placeholder collisions
+    let idx = versions.findIndex(v => v.audioId === wantedAudioId);
+    if (idx === -1) {
+      const karaokeTrack = tracks.find(t => t.id === karaokeTrackId);
+      const normUrl = normalizeUrl(karaokeTrack?.url);
+      if (normUrl) {
+        idx = versions.findIndex(v => normalizeUrl(v.url) === normUrl);
+      }
+    }
+
     if (idx !== -1) {
       setKaraokeAudioIndex(idx);
     } else {
       // Keep existing karaoke audio index if track versions haven't updated yet
       setKaraokeAudioIndex(prev => (prev >= 0 && prev < versions.length ? prev : -1));
     }
-  }, [karaokeTrackId, versions]);
+  }, [karaokeTrackId, versions, tracks]);
   const [showFullscreenKaraoke, setShowFullscreenKaraoke] = useState(false);
   const [generationProgress, setGenerationProgress] = useState<number>(0);
   const [lastProgressUpdate, setLastProgressUpdate] = useState<number>(Date.now());
@@ -649,14 +680,19 @@ const Index = () => {
       // Enable karaoke pinning to prevent overwrite during playback
       karaokePinnedRef.current = true;
       pinnedAudioIdRef.current = audioId;
-      console.log(`[Karaoke Pin] 🔒 Pinned karaoke to audioId: ${audioId} for track: ${playingTrack.id}`);
+      pinnedUrlRef.current = normalizeUrl(playingTrack.url);
+      console.log(`[Karaoke Pin] 🔒 Pinned karaoke to audioId: ${audioId}, url: ${pinnedUrlRef.current} for track: ${playingTrack.id}`);
       
       console.log(`[Karaoke] Selected track: ${playingTrack.id}, refs:`, refs, `audioId: ${audioId}, musicIndex: ${musicIndex}`);
       
-      // Check if versions already contains an entry for this audioId - use wavRegistry lookup from current playing track
+      // Check if versions already contains an entry for this audioId or by URL - use wavRegistry lookup from current playing track
       const playingRefs = wavRegistry.get(playingTrack.id);
       const targetAudioId = playingRefs?.audioId || playingTrack.id;
-      const existingVersionIndex = versions.findIndex(v => v.audioId === targetAudioId);
+      const normUrl = normalizeUrl(playingTrack.url);
+      let existingVersionIndex = versions.findIndex(v => v.audioId === targetAudioId);
+      if (existingVersionIndex === -1 && normUrl) {
+        existingVersionIndex = versions.findIndex(v => normalizeUrl(v.url) === normUrl);
+      }
       
       if (existingVersionIndex === -1) {
         if (playingTrack.words && playingTrack.words.length > 0) {
@@ -1354,10 +1390,15 @@ const Index = () => {
           // Check if karaoke is pinned - don't overwrite if user is actively playing
           const isPinned = karaokePinnedRef.current;
           const pinnedAudioId = pinnedAudioIdRef.current;
-          const matchesPinned = isPinned && newVersions.some(v => v.audioId === pinnedAudioId);
+          const pinnedUrl = pinnedUrlRef.current;
+          const matchesPinned = isPinned && newVersions.some(v => {
+            const audioMatch = pinnedAudioId && isValidSunoAudioId(pinnedAudioId) ? v.audioId === pinnedAudioId : false;
+            const urlMatch = pinnedUrl ? normalizeUrl(v.url) === pinnedUrl : false;
+            return audioMatch || urlMatch;
+          });
           
           if (isPinned && !matchesPinned) {
-            console.log(`[Karaoke Pin] 🚫 Blocked setVersions - karaoke pinned to ${pinnedAudioId}, new versions don't match`);
+            console.log(`[Karaoke Pin] 🚫 Blocked setVersions - pinned audioId: ${pinnedAudioId}, url: ${pinnedUrl}`);
           } else {
             if (wrapperJobId) {
               // For concurrent: don't overwrite existing versions
@@ -1450,10 +1491,15 @@ const Index = () => {
           // Check karaoke pinning again for final timestamp update
           const isPinnedFinal = karaokePinnedRef.current;
           const pinnedAudioIdFinal = pinnedAudioIdRef.current;
-          const matchesPinnedFinal = isPinnedFinal && updatedVersions.some(v => v.audioId === pinnedAudioIdFinal);
+          const pinnedUrlFinal = pinnedUrlRef.current;
+          const matchesPinnedFinal = isPinnedFinal && updatedVersions.some(v => {
+            const audioMatch = pinnedAudioIdFinal && isValidSunoAudioId(pinnedAudioIdFinal) ? v.audioId === pinnedAudioIdFinal : false;
+            const urlMatch = pinnedUrlFinal ? normalizeUrl(v.url) === pinnedUrlFinal : false;
+            return audioMatch || urlMatch;
+          });
           
           if (isPinnedFinal && !matchesPinnedFinal) {
-            console.log(`[Karaoke Pin] 🚫 Blocked final setVersions - karaoke pinned to ${pinnedAudioIdFinal}`);
+            console.log(`[Karaoke Pin] 🚫 Blocked final setVersions - pinned audioId: ${pinnedAudioIdFinal}, url: ${pinnedUrlFinal}`);
           } else {
             if (wrapperJobId) {
               // For concurrent: update only the new versions, preserve existing ones
@@ -1971,7 +2017,7 @@ const Index = () => {
             <KaraokeRightPanel
               versions={versions}
               currentAudioIndex={karaokeAudioIndex}
-              currentTrackIndex={currentTrackIndex}
+              currentTrackIndex={(resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex)}
               currentTime={currentTime}
               isPlaying={isPlaying && karaokeTrackId === playingTrackId}
               albumCovers={albumCovers}
@@ -2199,7 +2245,7 @@ const Index = () => {
           currentTime={currentTime}
           onPrev={playPrev}
           onNext={playNext}
-          onPlay={() => tracks.length > 0 && handleAudioPlay(resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex)}
+          onPlay={() => tracks.length > 0 && handleAudioPlay((resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex))}
           onPause={handleAudioPause}
           onSeek={(t) => handleSeek(t)}
           accent="#f92c8f"
@@ -2208,7 +2254,7 @@ const Index = () => {
           onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
           onTitleUpdate={(newTitle) => {
             if (tracks.length > 0) {
-              const targetIndex = playingTrackIndex >= 0 ? playingTrackIndex : currentTrackIndex;
+              const targetIndex = (resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex);
               // Update track title in session - to be implemented
               console.log('[Title] Updating player track title:', targetIndex, newTitle);
             }
