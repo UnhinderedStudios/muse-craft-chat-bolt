@@ -46,8 +46,8 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   onSeek,
   onRetryTimestamps,
 }) => {
-  const hasContent = versions.length > 0;
-  const currentVersion = hasContent && currentAudioIndex >= 0 && currentAudioIndex < versions.length ? versions[currentAudioIndex] : null;
+  const currentVersion = versions.length > 0 && currentAudioIndex >= 0 && currentAudioIndex < versions.length ? versions[currentAudioIndex] : null;
+  const hasContent = versions.length > 0 && currentVersion;
   const currentAlbumCover = currentTrackCoverUrl;
   const audioElement = audioRefs.current[currentTrackIndex] || null;
   const duration = audioElement?.duration || 0;

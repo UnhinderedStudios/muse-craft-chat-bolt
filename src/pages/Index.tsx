@@ -240,6 +240,10 @@ const Index = () => {
     updateSession,
   } = useSessionManager();
   
+  // Karaoke pinning refs to prevent overwrite during active playback
+  const karaokePinnedRef = useRef<boolean>(false);
+  const pinnedAudioIdRef = useRef<string | null>(null);
+  
   // Get session-specific active generations
   const activeGenerations = getActiveGenerations();
   
@@ -261,6 +265,11 @@ const Index = () => {
     // Reset audio state
     setIsPlaying(false);
     setCurrentTime(0);
+    
+    // Reset karaoke pinning
+    karaokePinnedRef.current = false;
+    pinnedAudioIdRef.current = null;
+    console.log('[Karaoke Pin] Reset on session switch');
     
     // Pause all audio elements
     audioRefs.current.forEach(audio => {
@@ -632,10 +641,18 @@ const Index = () => {
       const audioId = refs?.audioId || playingTrack.id;
       const musicIndex = typeof refs?.musicIndex === 'number' ? refs.musicIndex : 0;
       
+      // Enable karaoke pinning to prevent overwrite during playback
+      karaokePinnedRef.current = true;
+      pinnedAudioIdRef.current = audioId;
+      console.log(`[Karaoke Pin] 🔒 Pinned karaoke to audioId: ${audioId} for track: ${playingTrack.id}`);
+      
       console.log(`[Karaoke] Selected track: ${playingTrack.id}, refs:`, refs, `audioId: ${audioId}, musicIndex: ${musicIndex}`);
       
-      // Check if versions already contains an entry for this audioId
-      const existingVersionIndex = versions.findIndex(v => v.audioId === audioId);
+      // Check if versions already contains an entry for this audioId - use wavRegistry lookup
+      const karaokeTrack = tracks.find(t => t.id === karaokeTrackId);
+      const karaokeRefs = wavRegistry.get(karaokeTrackId);
+      const karaokeAudioId = karaokeRefs?.audioId || karaokeTrackId;
+      const existingVersionIndex = versions.findIndex(v => v.audioId === karaokeAudioId);
       
       if (existingVersionIndex === -1) {
         if (playingTrack.words && playingTrack.words.length > 0) {
@@ -1321,11 +1338,22 @@ const Index = () => {
           });
           
           console.log("[Generation] Created initial versions:", newVersions);
-          if (wrapperJobId) {
-            // For concurrent: don't overwrite existing versions
-            setVersions(prev => [...newVersions, ...prev]);
+          
+          // Check if karaoke is pinned - don't overwrite if user is actively playing
+          const isPinned = karaokePinnedRef.current;
+          const pinnedAudioId = pinnedAudioIdRef.current;
+          const matchesPinned = isPinned && newVersions.some(v => v.audioId === pinnedAudioId);
+          
+          if (isPinned && !matchesPinned) {
+            console.log(`[Karaoke Pin] 🚫 Blocked setVersions - karaoke pinned to ${pinnedAudioId}, new versions don't match`);
           } else {
-            setVersions(newVersions);
+            if (wrapperJobId) {
+              // For concurrent: don't overwrite existing versions
+              setVersions(prev => [...newVersions, ...prev]);
+            } else {
+              setVersions(newVersions);
+            }
+            console.log(`[Karaoke Pin] ✅ Allowed setVersions - ${isPinned ? 'pinned but matched' : 'not pinned'}`);
           }
           toast.success("Audio ready! Fetching karaoke lyrics...");
           
@@ -1406,15 +1434,26 @@ const Index = () => {
           );
 
           console.log("[Generation] Final versions with timestamps:", updatedVersions);
-          if (wrapperJobId) {
-            // For concurrent: update only the new versions, preserve existing ones
-            setVersions(prev => {
-              const newIds = new Set(newVersions.map(v => v.audioId));
-              const preserved = prev.filter(v => !newIds.has(v.audioId));
-              return [...updatedVersions, ...preserved];
-            });
+          
+          // Check karaoke pinning again for final timestamp update
+          const isPinnedFinal = karaokePinnedRef.current;
+          const pinnedAudioIdFinal = pinnedAudioIdRef.current;
+          const matchesPinnedFinal = isPinnedFinal && updatedVersions.some(v => v.audioId === pinnedAudioIdFinal);
+          
+          if (isPinnedFinal && !matchesPinnedFinal) {
+            console.log(`[Karaoke Pin] 🚫 Blocked final setVersions - karaoke pinned to ${pinnedAudioIdFinal}`);
           } else {
-            setVersions(updatedVersions);
+            if (wrapperJobId) {
+              // For concurrent: update only the new versions, preserve existing ones
+              setVersions(prev => {
+                const newIds = new Set(newVersions.map(v => v.audioId));
+                const preserved = prev.filter(v => !newIds.has(v.audioId));
+                return [...updatedVersions, ...preserved];
+              });
+            } else {
+              setVersions(updatedVersions);
+            }
+            console.log(`[Karaoke Pin] ✅ Allowed final setVersions - ${isPinnedFinal ? 'pinned but matched' : 'not pinned'}`);
           }
           
           // Store currently selected track before adding new ones
