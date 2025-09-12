@@ -491,6 +491,8 @@ const Index = () => {
   const audioRefs = useRef<HTMLAudioElement[]>([]);
   const lastDiceAt = useRef<number>(0);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // Cache real album covers by jobId to ensure shells and final tracks match
+  const coversByJobIdRef = useRef<Record<string, { cover1: string; cover2: string }>>({});
   const [attachedFiles, setAttachedFiles] = useState<FileAttachment[]>([]);
 
   // Global spacebar controls for play/pause
@@ -1435,22 +1437,40 @@ const Index = () => {
           const targetJob = wrapperJobId ? findActiveGenerationById(wrapperJobId) : null;
           console.log(`[CoverGen] Cover selection path: ${wrapperJobId ? 'raw active gen' : 'promise fallback'}`);
           console.log(`[CoverGen] Target job:`, targetJob?.id, targetJob?.covers ? 'has covers' : 'no covers');
-          // Prefer job covers (concurrent path). For non-concurrent, resolve our local covers promise.
-          let jobCovers: { cover1: string; cover2: string } | null = (targetJob?.covers as any) || null;
+          
+          // 1) First try cached covers to guarantee shells -> finals consistency
+          let jobCovers: { cover1: string; cover2: string } | null =
+            (wrapperJobId ? coversByJobIdRef.current[wrapperJobId] : null) ||
+            (sunoJobId ? coversByJobIdRef.current[sunoJobId] : null) ||
+            null;
+          
+          // 2) Then try live activeGeneration entry
+          if (!jobCovers && targetJob?.covers) {
+            jobCovers = targetJob.covers as any;
+          }
+          
+          // 3) For non-concurrent runs, resolve the local covers promise
           if (!jobCovers && !wrapperJobId && typeof coversPromise !== 'undefined' && coversPromise) {
             try {
               const resolved = await coversPromise;
-              if (resolved?.cover1) jobCovers = resolved;
+              if (resolved?.cover1) {
+                jobCovers = resolved;
+                // Cache under sunoJobId for consistency
+                if (sunoJobId) {
+                  coversByJobIdRef.current[sunoJobId] = { cover1: resolved.cover1, cover2: resolved.cover2 };
+                }
+              }
             } catch (e) {
               console.warn('[CoverGen] Failed to resolve non-concurrent coversPromise:', e);
             }
           }
-          // Strong fallback to bundled images if no covers available
+          
+          // 4) Only as a last resort, use bundled placeholders
           if (!jobCovers || !jobCovers.cover1) {
             jobCovers = getFallbackCovers();
             console.log(`[CoverGen] Using fallback covers`);
           } else {
-            console.log(`[CoverGen] Using generated covers from job`);
+            console.log(`[CoverGen] Using generated covers from job/cache`);
           }
             
             console.log(`[Generation] Target job found:`, targetJob);
@@ -1628,9 +1648,10 @@ const Index = () => {
       const coverData = await api.generateAlbumCovers(details);
       console.log(`[CoverGen] ✅ Covers generated immediately:`, coverData);
       
-      // Update shells with covers right away
+      // Update shells with covers right away and cache for final tracks
       updateActiveGeneration(jobId, { covers: coverData });
-      console.log(`[CoverGen] 📦 Shells updated with covers for job ${jobId}`);
+      coversByJobIdRef.current[jobId] = { cover1: coverData.cover1, cover2: coverData.cover2 };
+      console.log(`[CoverGen] 📦 Shells updated and cached covers for job ${jobId}`);
     } catch (error) {
       console.warn(`[CoverGen] ⚠️ Cover generation failed for job ${jobId}:`, error);
       // Continue with audio generation even if covers fail
