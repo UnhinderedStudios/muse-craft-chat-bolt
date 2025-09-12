@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -236,6 +236,7 @@ const Index = () => {
     updateActiveGeneration,
     removeActiveGeneration,
     getActiveGenerations,
+    findActiveGenerationById,
     updateSession,
   } = useSessionManager();
   
@@ -600,6 +601,17 @@ const Index = () => {
 
   const canGenerate = useMemo(() => !!details.lyrics, [details]);
 
+  // Helper to update words in current session track
+  const updateCurrentTrackWords = useCallback((trackId: string, words: TimestampedWord[]) => {
+    if (!currentSession) return;
+    
+    const updatedTracks = currentSession.tracks.map(t => 
+      t.id === trackId ? { ...t, words, hasTimestamps: true } : t
+    );
+    updateSession(currentSession.id, { tracks: updatedTracks });
+    console.log('[Karaoke] Updated track words in session:', trackId);
+  }, [currentSession, updateSession]);
+
   function handleAudioPlay(index: number) {
     if (!tracks.length) return;
     console.log(`[AudioPlay] Attempting to play track ${index}, current index: ${currentTrackIndex}, isPlaying: ${isPlaying}`);
@@ -613,62 +625,76 @@ const Index = () => {
       setPlayingTrackId(playingTrack.id);
       setPlayingTrackIndex(index);
       
-      // Ensure karaoke data is available for older tracks by hydrating versions
-      if (playingTrack.words && playingTrack.words.length > 0) {
-        console.log('[Karaoke] Hydrating versions for older track:', playingTrack.id);
-        
-        // Handle ID collisions - map the track ID to a version ID
-        let audioIndex = 0;
-        let audioId = playingTrack.id;
-        
-        // Handle suffixed IDs (e.g., "sunoJobId-0_1" -> index 0)
-        const suffixMatch = playingTrack.id.match(/^(.+?)_(\d+)$/);
-        if (suffixMatch) {
-          audioId = suffixMatch[1]; // Remove suffix
-          console.log('[Karaoke] Detected suffixed ID, mapped to:', audioId);
-        }
-        
-        // Extract index from audioId if it follows the pattern "jobId-index"
-        const indexMatch = audioId.match(/-(\d+)$/);
-        if (indexMatch) {
-          audioIndex = parseInt(indexMatch[1], 10);
-        }
-        
-        setKaraokeAudioIndex(audioIndex);
-        
-        // Ensure this track's karaoke data is in versions
-        const existingVersionIndex = versions.findIndex(v => v.audioId === audioId || v.audioId === playingTrack.id);
-        if (existingVersionIndex === -1) {
-          console.log('[Karaoke] Adding track to versions for karaoke:', { 
-            trackId: playingTrack.id, 
-            audioId, 
-            audioIndex, 
-            wordsCount: playingTrack.words.length 
-          });
-          
-          const versionEntry = {
-            url: playingTrack.url,
-            audioId: audioId,
-            musicIndex: audioIndex,
-            words: playingTrack.words,
-            hasTimestamps: playingTrack.hasTimestamps || false
-          };
-          
-          setVersions(prev => {
-            const newVersions = [versionEntry, ...prev];
-            // Set karaoke audio index to the newly added entry (position 0)
-            setKaraokeAudioIndex(0);
-            return newVersions;
-          });
-        } else {
-          console.log('[Karaoke] Using existing version at index:', existingVersionIndex);
-          setKaraokeAudioIndex(existingVersionIndex);
-        }
-      }
+      // Use wavRegistry for accurate audioId/musicIndex mapping
+      const refs = wavRegistry.get(playingTrack.id);
+      const audioId = refs?.audioId || playingTrack.id;
+      const musicIndex = typeof refs?.musicIndex === 'number' ? refs.musicIndex : 0;
       
-      // Mark track as played - we'll need to update the session
-      // For now, just log this as we need to implement session track updates
-      console.log('[Play] Marking track as played:', playingTrack.id);
+      console.log(`[Karaoke] Selected track: ${playingTrack.id}, refs:`, refs, `audioId: ${audioId}, musicIndex: ${musicIndex}`);
+      
+      // Check if versions already contains an entry for this audioId
+      const existingVersionIndex = versions.findIndex(v => v.audioId === audioId);
+      
+      if (existingVersionIndex === -1) {
+        if (playingTrack.words && playingTrack.words.length > 0) {
+          // Track has words, use them
+          console.log(`[Karaoke] Using existing words for track: ${playingTrack.id}, words count: ${playingTrack.words.length}`);
+          setVersions([{ 
+            url: playingTrack.url, 
+            audioId, 
+            musicIndex, 
+            words: playingTrack.words, 
+            hasTimestamps: true 
+          }]);
+          setKaraokeAudioIndex(0);
+        } else {
+          // Fetch lyrics for track with no words
+          console.log(`[Karaoke] Fetching lyrics for track: ${playingTrack.id}, taskId: ${refs?.taskId}`);
+          if (refs?.taskId) {
+            const fetchLyrics = async () => {
+              try {
+                const result = await api.getTimestampedLyrics({
+                  taskId: refs.taskId,
+                  audioId,
+                  musicIndex
+                });
+                
+                if (result.alignedWords && result.alignedWords.length > 0) {
+                  const words: TimestampedWord[] = result.alignedWords.map((w: any) => ({
+                    word: w.word,
+                    start: w.start_time,
+                    end: w.end_time,
+                    success: !!w.success,
+                    p_align: w.p_align ?? w.palign ?? 0,
+                  }));
+                  
+                  setVersions([{
+                    url: playingTrack.url,
+                    audioId,
+                    musicIndex,
+                    words,
+                    hasTimestamps: true
+                  }]);
+                  setKaraokeAudioIndex(0);
+                  
+                  // Persist to session track
+                  updateCurrentTrackWords(playingTrack.id, words);
+                  console.log(`[Karaoke] Fetched and persisted lyrics for: ${playingTrack.id}`);
+                } else {
+                  console.log(`[Karaoke] No words fetched for: ${playingTrack.id}`);
+                }
+              } catch (e) {
+                console.error(`[Karaoke] Failed to fetch lyrics for: ${playingTrack.id}`, e);
+              }
+            };
+            fetchLyrics();
+          }
+        }
+      } else {
+        // Use existing version
+        console.log(`[Karaoke] Using existing version at index: ${existingVersionIndex}`);
+        setKaraokeAudioIndex(existingVersionIndex);
+      }
     }
     
     // If same track is already playing, just toggle pause/play
@@ -833,8 +859,13 @@ const Index = () => {
 
       if (words.length) {
         setVersions(vs => vs.map((v, i) => i === versionIndex ? { ...v, words, hasTimestamps: true, timestampError: undefined } : v));
-        // Update track timestamps in session - to be implemented
-        console.log('[Timestamps] Updated timestamps for track:', audioId);
+        
+        // Persist the updated words to session track
+        if (karaokeTrackId) {
+          updateCurrentTrackWords(karaokeTrackId, words);
+        }
+        
+        console.log('[Timestamps] Updated and persisted timestamps for track:', audioId);
         toast.success("Karaoke timestamps loaded!");
       } else {
         setVersions(vs => vs.map((v, i) => i === versionIndex ? { ...v, timestampError: "No timestamps available" } : v));
@@ -1401,8 +1432,9 @@ const Index = () => {
           const existing = new Set(tracks.map(t => t.id));
           
           // Get pre-generated covers for this job (shells should already have these)
-          const freshActive = getActiveGenerations();
-          const targetJob = wrapperJobId ? freshActive.find(job => job.id === wrapperJobId) : null;
+          const targetJob = wrapperJobId ? findActiveGenerationById(wrapperJobId) : null;
+          console.log(`[CoverGen] Cover selection path: ${wrapperJobId ? 'raw active gen' : 'promise fallback'}`);
+          console.log(`[CoverGen] Target job:`, targetJob?.id, targetJob?.covers ? 'has covers' : 'no covers');
           // Prefer job covers (concurrent path). For non-concurrent, resolve our local covers promise.
           let jobCovers: { cover1: string; cover2: string } | null = (targetJob?.covers as any) || null;
           if (!jobCovers && !wrapperJobId && typeof coversPromise !== 'undefined' && coversPromise) {
@@ -1416,13 +1448,16 @@ const Index = () => {
           // Strong fallback to bundled images if no covers available
           if (!jobCovers || !jobCovers.cover1) {
             jobCovers = getFallbackCovers();
+            console.log(`[CoverGen] Using fallback covers`);
+          } else {
+            console.log(`[CoverGen] Using generated covers from job`);
           }
             
             console.log(`[Generation] Target job found:`, targetJob);
             console.log(`[Generation] Job covers extracted:`, jobCovers);
             console.log(`[Generation] Job covers type:`, typeof jobCovers);
-            console.log(`[Generation] Cover1:`, jobCovers?.cover1?.substring(0, 100));
-            console.log(`[Generation] Cover2:`, jobCovers?.cover2?.substring(0, 100));
+            console.log(`[Generation] Cover1 applied:`, jobCovers?.cover1?.substring(0, 100));
+            console.log(`[Generation] Cover2 applied:`, jobCovers?.cover2?.substring(0, 100));
             
             const fresh = updatedVersions.map((v, i) => {
               const assignedCover = jobCovers ? (i === 0 ? jobCovers.cover1 : jobCovers.cover2) : undefined;

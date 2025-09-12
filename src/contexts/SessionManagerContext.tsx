@@ -41,6 +41,7 @@ export interface SessionManagerContextValue {
   updateActiveGeneration: (id: string, updates: Partial<{ sunoJobId?: string; progress: number; details: any; covers?: { cover1: string; cover2: string } | null }>) => void;
   removeActiveGeneration: (id: string) => void;
   getActiveGenerations: () => Array<{ id: string; sunoJobId?: string; startTime: number; progress: number; details: any; covers?: { cover1: string; cover2: string } | null }>;
+  findActiveGenerationById: (id: string) => { id: string; sunoJobId?: string; startTime: number; progress: number; details: any; covers?: { cover1: string; cover2: string } | null } | null;
 }
 
 export const SessionManagerContext = createContext<SessionManagerContextValue | null>(null);
@@ -430,6 +431,15 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     return filtered;
   }, [getCurrentSession, currentSessionId, sessions]);
 
+  const findActiveGenerationById = useCallback((id: string) => {
+    // Find generation by ID across all sessions without filtering
+    for (const session of sessions) {
+      const generation = session.activeGenerations.find(g => g.id === id);
+      if (generation) return generation;
+    }
+    return null;
+  }, [sessions]);
+
   // Compute current session (use aggregated Global when selected)
   const currentSession = useMemo(() => {
     if (currentSessionId === GLOBAL_SESSION_ID) return getGlobalSession();
@@ -454,6 +464,7 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     updateActiveGeneration,
     removeActiveGeneration,
     getActiveGenerations,
+    findActiveGenerationById,
   };
 
   return (
