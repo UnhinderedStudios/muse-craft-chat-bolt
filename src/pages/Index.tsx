@@ -1626,14 +1626,18 @@ const Index = () => {
             const fresh = updatedVersions.map((v, i) => {
               const assignedCover = jobCovers ? (i === 0 ? jobCovers.cover1 : jobCovers.cover2) : undefined;
               const providerId = isValidSunoAudioId(v.audioId) ? v.audioId : undefined;
-              let trackId = providerId || `${sunoJobId}-${v.musicIndex}`;
               
-              // Handle ID collisions by adding suffix
+              // Build a collision-proof ID
+              const timestamp = Date.now();
+              const random = Math.random().toString(36).slice(2, 8);
+              let trackId = providerId || `track_${timestamp}_${random}_${v.musicIndex}`;
+              
+              // Ensure uniqueness against all known IDs in the current session
               let suffix = 0;
-              const originalId = trackId;
+              const baseId = trackId;
               while (existing.has(trackId)) {
                 suffix++;
-                trackId = `${originalId}_${suffix}`;
+                trackId = `${baseId}_${suffix}`;
                 console.log(`[Generation] ID collision detected, using: ${trackId}`);
               }
               
