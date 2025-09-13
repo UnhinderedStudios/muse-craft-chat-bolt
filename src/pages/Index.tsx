@@ -483,6 +483,33 @@ const Index = () => {
     setPlayingTrackIndex(resolvedPlayingIndex);
   }, [resolvedPlayingIndex]);
   
+  // Sync karaoke panel to the currently selected track when not actively playing
+  useEffect(() => {
+    if (isPlaying || karaokePinnedRef.current) return;
+    const selected = tracks[currentTrackIndex];
+    if (!selected) return;
+    
+    // Point karaoke to the selected track
+    setKaraokeTrackId(selected.id);
+    
+    // If the selected track already has lyrics, reflect them in the karaoke panel
+    if (selected.words && selected.words.length > 0) {
+      const refs = wavRegistry.get(selected.id);
+      const audioId = refs?.audioId || selected.id;
+      const musicIndex = typeof refs?.musicIndex === 'number' ? refs.musicIndex : 0;
+      setVersions([
+        {
+          url: selected.url,
+          audioId,
+          musicIndex,
+          words: selected.words,
+          hasTimestamps: true,
+        },
+      ]);
+      setKaraokeAudioIndex(0);
+    }
+  }, [currentTrackIndex, tracks, isPlaying]);
+  
   // Shared playlist overlay state
   const [selectedPlaylist, setSelectedPlaylist] = useState<any>(null);
   const [showPlaylistOverlay, setShowPlaylistOverlay] = useState(false);
@@ -853,6 +880,11 @@ const Index = () => {
         audio.pause();
       }
     });
+
+    // Unpin karaoke after playback stops to allow selection-based sync
+    karaokePinnedRef.current = false;
+    pinnedAudioIdRef.current = null;
+    pinnedUrlRef.current = null;
     
     setIsPlaying(false);
   };
@@ -1610,7 +1642,7 @@ const Index = () => {
               // Always store the provider's audioId - let the conversion attempt decide if it's valid
               const refs: any = {
                 taskId: sunoJobId,
-                musicIndex: i
+                musicIndex: v.musicIndex
               };
               
               // Always store the audioId from the provider, even if it looks unusual
