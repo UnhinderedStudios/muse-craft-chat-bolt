@@ -722,8 +722,18 @@ const Index = () => {
       }
       
       if (existingVersionIndex === -1) {
+        // Always set a placeholder entry first to avoid showing stale lyrics from previous tracks
+        setVersions([{ 
+          url: playingTrack.url, 
+          audioId, 
+          musicIndex, 
+          words: [], 
+          hasTimestamps: false 
+        }]);
+        setKaraokeAudioIndex(0);
+
         if (playingTrack.words && playingTrack.words.length > 0) {
-          // Track has words, use them
+          // Track already has words, use them immediately
           console.log(`[Karaoke] Using existing words for track: ${playingTrack.id}, words count: ${playingTrack.words.length}`);
           setVersions([{ 
             url: playingTrack.url, 
@@ -748,8 +758,8 @@ const Index = () => {
                 if (result.alignedWords && result.alignedWords.length > 0) {
                   const words: TimestampedWord[] = result.alignedWords.map((w: any) => ({
                     word: w.word,
-                    start: w.start_time,
-                    end: w.end_time,
+                    start: w.startS ?? w.start_s ?? w.start ?? 0,
+                    end:   w.endS   ?? w.end_s   ?? w.end   ?? 0,
                     success: !!w.success,
                     p_align: w.p_align ?? w.palign ?? 0,
                   }));
@@ -768,12 +778,17 @@ const Index = () => {
                   console.log(`[Karaoke] Fetched and persisted lyrics for: ${playingTrack.id}`);
                 } else {
                   console.log(`[Karaoke] No words fetched for: ${playingTrack.id}`);
+                  setVersions([{ url: playingTrack.url, audioId, musicIndex, words: [], hasTimestamps: false, timestampError: "No timestamps available" }]);
                 }
               } catch (e) {
                 console.error(`[Karaoke] Failed to fetch lyrics for: ${playingTrack.id}`, e);
+                setVersions([{ url: playingTrack.url, audioId, musicIndex, words: [], hasTimestamps: false, timestampError: "Failed to load timestamps" }]);
               }
             };
             fetchLyrics();
+          } else {
+            // No refs available to fetch timestamps; prevent mis-association by showing explicit state
+            setVersions([{ url: playingTrack.url, audioId, musicIndex, words: [], hasTimestamps: false, timestampError: "Timestamps unavailable for this track" }]);
           }
         }
       } else {
@@ -1610,7 +1625,8 @@ const Index = () => {
             
             const fresh = updatedVersions.map((v, i) => {
               const assignedCover = jobCovers ? (i === 0 ? jobCovers.cover1 : jobCovers.cover2) : undefined;
-              let trackId = v.audioId || `${sunoJobId}-${i}`;
+              const providerId = isValidSunoAudioId(v.audioId) ? v.audioId : undefined;
+              let trackId = providerId || `${sunoJobId}-${v.musicIndex}`;
               
               // Handle ID collisions by adding suffix
               let suffix = 0;
@@ -1656,7 +1672,7 @@ const Index = () => {
               wavRegistry.set(trackId, refs);
               
               console.log(`[Generation] Created track object:`, track);
-              console.log(`[WAV Registry] Stored refs for track ${trackId}:`, { audioId: v.audioId, taskId: sunoJobId, musicIndex: i });
+              console.log(`[WAV Registry] Stored refs for track ${trackId}:`, { audioId: v.audioId, taskId: sunoJobId, musicIndex: v.musicIndex });
               
               // Add this track ID to existing set to prevent future collisions in this batch
               existing.add(trackId);
