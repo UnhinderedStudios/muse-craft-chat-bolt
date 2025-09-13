@@ -602,12 +602,47 @@ const Index = () => {
 
 
   useEffect(() => {
-    // Smart audio refs management - only adjust size, preserve existing elements
-    if (audioRefs.current.length !== tracks.length) {
-      // Only resize array if needed, preserving existing elements
-      audioRefs.current.length = tracks.length;
+    // Smart audio refs management - create audio elements with stall recovery
+    const targetLength = tracks.length;
+    
+    // Create new audio elements as needed
+    for (let i = audioRefs.current.length; i < targetLength; i++) {
+      const audio = new Audio();
+      audio.preload = 'metadata';
+      audio.autoplay = false;
+      
+      // Add stall recovery handlers
+      audio.addEventListener('waiting', () => {
+        console.log(`[AUDIO DEBUG] Audio ${i} is waiting for data`);
+      });
+      
+      audio.addEventListener('stalled', () => {
+        console.log(`[AUDIO DEBUG] Audio ${i} stalled, attempting recovery`);
+        // Pause any other playing elements to free resources
+        audioRefs.current.forEach((otherAudio, index) => {
+          if (otherAudio && index !== i && !otherAudio.paused) {
+            console.log(`[AUDIO DEBUG] Pausing audio ${index} to recover ${i}`);
+            otherAudio.pause();
+          }
+        });
+      });
+      
+      console.log(`[AUDIO DEBUG] Created audio element at index ${i}, autoplay disabled`);
+      audioRefs.current[i] = audio;
     }
-  }, [audioUrls, audioUrl, tracks.length]);
+    
+    // Trim excess elements
+    if (audioRefs.current.length > targetLength) {
+      audioRefs.current.length = targetLength;
+    }
+    
+    // Update URLs for tracks
+    tracks.forEach((track, index) => {
+      if (audioRefs.current[index] && audioRefs.current[index].src !== track.url) {
+        audioRefs.current[index].src = track.url;
+      }
+    });
+  }, [tracks]);
 
   // Smooth progress system that never goes backward and handles stagnation
   useEffect(() => {
@@ -1627,12 +1662,10 @@ const Index = () => {
               const assignedCover = jobCovers ? (i === 0 ? jobCovers.cover1 : jobCovers.cover2) : undefined;
               const providerId = isValidSunoAudioId(v.audioId) ? v.audioId : undefined;
               
-              // Build a collision-proof ID
-              const timestamp = Date.now();
-              const random = Math.random().toString(36).slice(2, 8);
-              let trackId = providerId || `track_${timestamp}_${random}_${v.musicIndex}`;
+              // Use stable, deterministic ID generation
+              let trackId = providerId || `${sunoJobId}-${v.musicIndex}`;
               
-              // Ensure uniqueness against all known IDs in the current session
+              // Only add suffix if truly colliding (shouldn't happen with deterministic IDs)
               let suffix = 0;
               const baseId = trackId;
               while (existing.has(trackId)) {

@@ -112,8 +112,20 @@ export default function TrackListPanel({
   const scrollRef = useRef<HTMLDivElement>(null);
   useScrollDelegationHook(scrollRef);
   
-  // Sort real tracks by newest first
-  const allTracks = [...tracks].sort((a, b) => b.createdAt - a.createdAt);
+  // Group tracks by generation (createdAt) then sort by newest generation first
+  const groupedTracks = tracks.reduce((acc, track) => {
+    const generationTime = track.createdAt;
+    if (!acc[generationTime]) {
+      acc[generationTime] = [];
+    }
+    acc[generationTime].push(track);
+    return acc;
+  }, {} as Record<number, TrackItem[]>);
+
+  // Flatten groups, showing newest generations first, but tracks within generation in original order
+  const allTracks = Object.keys(groupedTracks)
+    .sort((a, b) => Number(b) - Number(a)) // Newest generations first
+    .flatMap(time => groupedTracks[Number(time)]);
   
   // Filter tracks based on search query
   const filteredTracks = searchQuery.trim() === "" 
