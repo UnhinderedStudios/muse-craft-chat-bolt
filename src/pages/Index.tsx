@@ -470,7 +470,27 @@ const Index = () => {
   const tracks = currentSession?.tracks || [];
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
   
-  // Independent karaoke state - tracks what's displayed in karaoke panel
+  // One-time cleanup: if both mock placeholders and real songs exist, keep only the 2 mocks
+  useEffect(() => {
+    try {
+      const doneFlag = localStorage.getItem('cleanup_real_tracks_done');
+      if (doneFlag === '1') return;
+      const session = currentSession;
+      if (!session) return;
+      const placeholders = (session.tracks || []).filter(t => t.id?.startsWith('placeholder-'));
+      const reals = (session.tracks || []).filter(t => !t.id?.startsWith('placeholder-'));
+      // If there are placeholders (mocks) and also real songs, keep only the mocks
+      if (placeholders.length >= 2 && reals.length > 0) {
+        console.log('[Cleanup] Removing real songs, keeping only mock placeholders');
+        updateSession(session.id, { tracks: placeholders });
+        setCurrentTrackIndex(0);
+        localStorage.setItem('cleanup_real_tracks_done', '1');
+      }
+    } catch (e) {
+      console.warn('[Cleanup] Failed:', e);
+    }
+  }, [currentSession?.id]);
+  
   const [karaokeTrackId, setKaraokeTrackId] = useState<string>("");
   const [karaokeAudioIndex, setKaraokeAudioIndex] = useState<number>(-1);
   
