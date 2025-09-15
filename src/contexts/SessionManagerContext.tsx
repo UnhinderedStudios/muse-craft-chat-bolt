@@ -82,26 +82,8 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
       if (raw) {
         const data = JSON.parse(raw);
         if (data?.sessions?.length) {
-          // Clear all tracks except keep 2 mock tracks total across all sessions
-          let mockTrackCount = 0;
-          const clearedSessions = data.sessions.map((session: any) => {
-            const clearedTracks = (session.tracks || []).filter((track: any) => {
-              // Keep up to 2 tracks that look like mock/demo tracks (have basic structure)
-              if (mockTrackCount < 2 && track.id && track.title) {
-                mockTrackCount++;
-                return true;
-              }
-              return false;
-            });
-            
-            return {
-              ...session,
-              tracks: clearedTracks,
-              activeGenerations: [] // Also clear active generations
-            };
-          });
-          
-          setSessions(clearedSessions);
+          // Load sessions exactly as persisted without destructive pruning
+          setSessions(data.sessions);
           setCurrentSessionId(data.currentSessionId || GLOBAL_SESSION_ID);
           return;
         }
@@ -225,7 +207,8 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     const map = new Map<string, TrackItem>();
     for (const session of sessions) {
       for (const t of session.tracks) {
-        if (!map.has(t.id)) map.set(t.id, t);
+        const key = `${t.id}|${t.url}`; // avoid accidental collisions by id-only
+        if (!map.has(key)) map.set(key, t);
       }
     }
 
