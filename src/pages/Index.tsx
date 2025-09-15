@@ -49,6 +49,7 @@ import { RANDOM_MUSIC_FORGE_PROMPT } from "@/utils/prompts";
 import { parseRandomMusicForgeOutput } from "@/lib/parseRandomMusicForge";
 import { diceMemory } from "@/lib/diceMemory";
 import { wavRegistry, isValidSunoAudioId } from "@/lib/wavRegistry";
+import { getBestAudioId } from "@/lib/audioIdExtractor";
 
 const FALLBACK_COVERS = {
   cover1: "/lovable-uploads/e52952b6-c4ce-4b31-bfec-e269875fe04b.png",
@@ -742,9 +743,14 @@ const Index = () => {
           if (refs?.taskId) {
             const fetchLyrics = async () => {
               try {
+                const bestAudioId = getBestAudioId({
+                  providerAudioId: playingTrack.audioId || audioId,
+                  url: playingTrack.url
+                });
+                
                 const result = await api.getTimestampedLyrics({
                   taskId: refs.taskId,
-                  audioId,
+                  audioId: bestAudioId,
                   musicIndex
                 });
                 
@@ -946,11 +952,16 @@ const Index = () => {
     if (!jobId || !versions[versionIndex]) return;
     try {
       setIsMusicGenerating(true);
-      const { audioId, musicIndex } = versions[versionIndex];
+      const { audioId, musicIndex, url } = versions[versionIndex];
+      
+      const bestAudioId = getBestAudioId({
+        providerAudioId: audioId,
+        url: url
+      });
 
       const res = await api.getTimestampedLyrics({
         taskId: jobId,
-        audioId,
+        audioId: bestAudioId,
         musicIndex,
       });
 
@@ -1483,10 +1494,17 @@ const Index = () => {
 
                   console.log(`[Timestamps] Version ${index + 1}, attempt ${retryAttempts}: Using audioId=${version.audioId}, musicIndex=${version.musicIndex}`);
                   
-                  const payload: any = { taskId: sunoJobId, musicIndex: version.musicIndex };
-                  if (version.audioId && !version.audioId.startsWith("missing_id_")) {
-                    payload.audioId = version.audioId;
-                  }
+                  const bestAudioId = getBestAudioId({
+                    providerAudioId: version.audioId,
+                    url: version.url
+                  });
+                  
+                  const payload: any = { 
+                    taskId: sunoJobId, 
+                    musicIndex: version.musicIndex,
+                    audioId: bestAudioId
+                  };
+                  
                   const result = await api.getTimestampedLyrics(payload);
 
                   if (result.alignedWords && result.alignedWords.length > 0) {
@@ -1638,6 +1656,12 @@ const Index = () => {
                 - CoverURL: ${assignedCover ? assignedCover.substring(0, 50) + '...' : 'UNDEFINED'}
                 - Title: ${songData.title || "Song Title"}`);
               
+              // Get the best available audioId for this track
+              const bestAudioId = getBestAudioId({
+                providerAudioId: v.audioId,
+                url: v.url
+              });
+              
               const track = {
                 id: trackId,
                 url: v.url,
@@ -1648,21 +1672,21 @@ const Index = () => {
                 words: v.words,
                 hasTimestamps: v.hasTimestamps,
                 jobId: targetJob?.id,
+                audioId: bestAudioId, // Store the best available audioId
               };
               
               // Store WAV refs for potential future conversion
-              // Always store the provider's audioId - let the conversion attempt decide if it's valid
               const refs: any = {
                 taskId: sunoJobId,
                 musicIndex: v.musicIndex
               };
               
-              // Always store the audioId from the provider, even if it looks unusual
-              if (v.audioId) {
-                refs.audioId = v.audioId;
-                console.log(`[WAV Registry] Storing provider audioId: ${v.audioId}`);
+              // Store the best available audioId (reuse the one we calculated above)
+              if (bestAudioId) {
+                refs.audioId = bestAudioId;
+                console.log(`[WAV Registry] Storing best audioId: ${bestAudioId}`);
               } else {
-                console.log(`[WAV Registry] No audioId from provider, using taskId/musicIndex only`);
+                console.log(`[WAV Registry] No valid audioId available, using taskId/musicIndex only`);
               }
               
               wavRegistry.set(trackId, refs);
@@ -2076,6 +2100,7 @@ const Index = () => {
               onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
               onSeek={handleSeek}
               onRetryTimestamps={handleRetryTimestamps}
+              onRefreshLyrics={handleRetryTimestamps}
             />
           </div>
 

@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { Play, Pause, Mic } from "lucide-react";
+import { Play, Pause, Mic, RefreshCw } from "lucide-react";
 import { KaraokeLyrics } from "@/components/audio/KaraokeLyrics";
 import { TimestampedWord } from "@/types";
 import { cn } from "@/lib/utils";
@@ -28,6 +28,7 @@ interface KaraokeRightPanelProps {
   onFullscreenKaraoke: () => void;
   onSeek?: (time: number) => void;
   onRetryTimestamps?: (index: number) => void;
+  onRefreshLyrics?: (index: number) => void;
 }
 
 export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
@@ -45,6 +46,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   onFullscreenKaraoke,
   onSeek,
   onRetryTimestamps,
+  onRefreshLyrics,
 }) => {
   const currentVersion = versions.length > 0 && currentAudioIndex >= 0 && currentAudioIndex < versions.length ? versions[currentAudioIndex] : null;
   const hasContent = !!currentVersion; // Treat having a selected version as content
@@ -170,7 +172,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
                   </div>
                 </div>
               )}
-              {/* Only show retry button if timestamps completely failed */}
+              {/* Show retry button if timestamps completely failed */}
               {hasContent && currentVersion && currentVersion.timestampError && (
                 <div className="mt-2 p-2 rounded-lg bg-muted/10 border border-muted/20">
                   <div className="flex items-center justify-between text-sm">
@@ -188,6 +190,21 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
                       </Button>
                     )}
                   </div>
+                </div>
+              )}
+              
+              {/* Show refresh button for tracks with lyrics */}
+              {hasContent && currentVersion && currentVersion.hasTimestamps && currentVersion.words?.length > 0 && (
+                <div className="mt-2 flex justify-center">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onRefreshLyrics?.(currentAudioIndex)}
+                    className="h-8 px-3 text-xs flex items-center gap-2"
+                  >
+                    <RefreshCw size={12} />
+                    Refresh Lyrics
+                  </Button>
                 </div>
               )}
             </>

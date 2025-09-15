@@ -16,4 +16,5 @@ export interface TrackItem {
   hasTimestamps?: boolean;
   hasBeenPlayed?: boolean;  // Track if this song has been played before
   jobId?: string;           // ID of the generation job that created this track
+  audioId?: string;         // Best available audioId for API calls
 }
