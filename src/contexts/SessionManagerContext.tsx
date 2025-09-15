@@ -268,22 +268,48 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
   }, []);
 
   const addTrackToCurrentSession = useCallback((track: TrackItem) => {
-    const current = getCurrentSession();
-    if (!current) return;
-    updateSession(current.id, { tracks: [...current.tracks, track] });
-  }, [getCurrentSession, updateSession]);
+    setSessions(prev => {
+      return prev.map(s => {
+        if (s.id !== currentSessionId) return s;
+        const nextTracks = [...s.tracks, track];
+        return { ...s, tracks: nextTracks, lastModified: Date.now() };
+      });
+    });
+  }, [currentSessionId]);
 
   const addTracksToCurrentSession = useCallback((newTracks: TrackItem[]) => {
-    const current = getCurrentSession();
-    if (!current) return;
-    updateSession(current.id, { tracks: [...current.tracks, ...newTracks] });
-  }, [getCurrentSession, updateSession]);
+    setSessions(prev => {
+      return prev.map(s => {
+        if (s.id !== currentSessionId) return s;
+        // Prevent accidental duplicates by id|url during concurrent appends
+        const seen = new Set<string>();
+        const key = (t: TrackItem) => `${t.id}|${t.url}`;
+        const base = s.tracks;
+        base.forEach(t => seen.add(key(t)));
+        const merged: TrackItem[] = [...base];
+        for (const t of newTracks) {
+          const k = key(t);
+          if (!seen.has(k)) {
+            seen.add(k);
+            merged.push(t);
+          }
+        }
+        return { ...s, tracks: merged, lastModified: Date.now() };
+      });
+    });
+  }, [currentSessionId]);
 
   const removeTrackFromSession = useCallback((sessionId: string, trackId: string) => {
-    const session = sessions.find((s) => s.id === sessionId);
-    if (!session || session.id === GLOBAL_SESSION_ID) return;
-    updateSession(sessionId, { tracks: session.tracks.filter((t) => t.id !== trackId) });
-  }, [sessions, updateSession]);
+    if (sessionId === GLOBAL_SESSION_ID) return;
+    setSessions(prev => prev.map(s => {
+      if (s.id !== sessionId) return s;
+      return {
+        ...s,
+        tracks: s.tracks.filter(t => t.id !== trackId),
+        lastModified: Date.now(),
+      };
+    }));
+  }, []);
 
   const updateCurrentSessionChat = useCallback((messages: ChatMessage[]) => {
     const current = getCurrentSession();
@@ -344,13 +370,15 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
 
   // Generation management functions
   const addActiveGeneration = useCallback((generation: { id: string; sunoJobId?: string; startTime: number; progress: number; details: any; covers?: { cover1: string; cover2: string } | null }) => {
-    const current = getCurrentSession();
-    if (!current) return;
-    
-    updateSession(current.id, { 
-      activeGenerations: [generation, ...current.activeGenerations] 
-    });
-  }, [getCurrentSession, updateSession]);
+    setSessions(prev => prev.map(s => {
+      if (s.id !== currentSessionId) return s;
+      // Ensure uniqueness by generation id
+      const exists = s.activeGenerations.some(g => g.id === generation.id);
+      const next = exists ? s.activeGenerations.map(g => g.id === generation.id ? { ...g, ...generation } : g)
+                          : [generation, ...s.activeGenerations];
+      return { ...s, activeGenerations: next, lastModified: Date.now() };
+    }));
+  }, [currentSessionId]);
 
   const updateActiveGeneration = useCallback((id: string, updates: Partial<{ sunoJobId?: string; progress: number; details: any; covers?: { cover1: string; cover2: string } | null }>) => {
     setSessions(prevSessions => {
