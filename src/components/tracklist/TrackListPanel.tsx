@@ -493,9 +493,9 @@ export default function TrackListPanel({
                 if (!job) return false;
                 const age = Date.now() - (job.startTime || 0);
                 if (age > MAX_AGE_MS) return false;
-                // If at least two tracks appear after this job started, consider it replaced
-                const replacements = tracks.filter(t => (t.createdAt || 0) === (job.startTime || 0)).length;
-                return replacements < 2;
+                // Only hide this job's shells if this specific job has produced tracks
+                const jobTracks = tracks.filter(t => t.jobId === job.id).length;
+                return jobTracks < 2;
               });
               return jobsToShow.flatMap((job, jobIndex) => [0, 1].map((trackInJob) => {
                 const jobProgress = job?.progress || 0;

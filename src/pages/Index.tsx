@@ -1647,6 +1647,7 @@ const Index = () => {
                 params: styleTags,
                 words: v.words,
                 hasTimestamps: v.hasTimestamps,
+                jobId: targetJob?.id,
               };
               
               // Store WAV refs for potential future conversion

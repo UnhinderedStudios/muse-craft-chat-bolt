@@ -15,4 +15,5 @@ export interface TrackItem {
   words?: TimestampedWord[];
   hasTimestamps?: boolean;
   hasBeenPlayed?: boolean;  // Track if this song has been played before
+  jobId?: string;           // ID of the generation job that created this track
 }
