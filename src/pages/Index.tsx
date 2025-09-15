@@ -601,48 +601,6 @@ const Index = () => {
 
 
 
-  useEffect(() => {
-    // Smart audio refs management - create audio elements with stall recovery
-    const targetLength = tracks.length;
-    
-    // Create new audio elements as needed
-    for (let i = audioRefs.current.length; i < targetLength; i++) {
-      const audio = new Audio();
-      audio.preload = 'metadata';
-      audio.autoplay = false;
-      
-      // Add stall recovery handlers
-      audio.addEventListener('waiting', () => {
-        console.log(`[AUDIO DEBUG] Audio ${i} is waiting for data`);
-      });
-      
-      audio.addEventListener('stalled', () => {
-        console.log(`[AUDIO DEBUG] Audio ${i} stalled, attempting recovery`);
-        // Pause any other playing elements to free resources
-        audioRefs.current.forEach((otherAudio, index) => {
-          if (otherAudio && index !== i && !otherAudio.paused) {
-            console.log(`[AUDIO DEBUG] Pausing audio ${index} to recover ${i}`);
-            otherAudio.pause();
-          }
-        });
-      });
-      
-      console.log(`[AUDIO DEBUG] Created audio element at index ${i}, autoplay disabled`);
-      audioRefs.current[i] = audio;
-    }
-    
-    // Trim excess elements
-    if (audioRefs.current.length > targetLength) {
-      audioRefs.current.length = targetLength;
-    }
-    
-    // Update URLs for tracks
-    tracks.forEach((track, index) => {
-      if (audioRefs.current[index] && audioRefs.current[index].src !== track.url) {
-        audioRefs.current[index].src = track.url;
-      }
-    });
-  }, [tracks]);
 
   // Smooth progress system that never goes backward and handles stagnation
   useEffect(() => {
@@ -1685,7 +1643,7 @@ const Index = () => {
                 url: v.url,
                 title: songData.title || "Song Title",
                 coverUrl: assignedCover,
-                createdAt: batchCreatedAt,
+                createdAt: (targetJob?.startTime || batchCreatedAt),
                 params: styleTags,
                 words: v.words,
                 hasTimestamps: v.hasTimestamps,
