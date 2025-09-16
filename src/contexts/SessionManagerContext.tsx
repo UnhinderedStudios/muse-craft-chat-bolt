@@ -54,20 +54,20 @@ function getMockTracks(): TrackItem[] {
     {
       id: "mock1",
       url: "https://www.soundjay.com/misc/sounds/magic-chime-02.mp3",
-      title: "Mock Track 1",
-      coverUrl: "/placeholder.svg",
-      createdAt: Date.now(),
-      params: ["mock", "demo"],
+      title: "Ethereal Dreams",
+      coverUrl: "/lovable-uploads/92dd2dde-eb4e-44a1-a2a3-b24829727f7a.png",
+      createdAt: Date.now() - 3600000, // 1 hour ago
+      params: ["ambient", "dreamy", "ethereal"],
       hasTimestamps: false,
       words: [],
     },
     {
       id: "mock2", 
       url: "https://www.soundjay.com/misc/sounds/magic-chime-02.mp3",
-      title: "Mock Track 2",
-      coverUrl: "/placeholder.svg", 
-      createdAt: Date.now(),
-      params: ["mock", "demo"],
+      title: "Neon Nights",
+      coverUrl: "/lovable-uploads/b1f7ab9f-3051-49c9-ace1-0331224addae.png", 
+      createdAt: Date.now() - 1800000, // 30 minutes ago
+      params: ["synthwave", "retro", "electronic"],
       hasTimestamps: false,
       words: [],
     }
