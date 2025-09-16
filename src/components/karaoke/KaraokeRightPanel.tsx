@@ -160,38 +160,6 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
                 isPlaying={isPlaying}
                 className="h-full border-0 bg-transparent"
               />
-              {/* Show loading animation when timestamps are being generated */}
-              {hasContent && currentVersion && !currentVersion.hasTimestamps && !currentVersion.timestampError && (
-                <div className="h-full flex items-center justify-center text-muted-foreground text-center">
-                  <div className="flex justify-center">
-                    <div className="loader">
-                      <div className="bar"></div>
-                      <div className="bar"></div>
-                      <div className="bar"></div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {/* Show retry button if timestamps completely failed */}
-              {hasContent && currentVersion && currentVersion.timestampError && (
-                <div className="mt-2 p-2 rounded-lg bg-muted/10 border border-muted/20">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      {currentVersion.timestampError}
-                    </span>
-                    {onRetryTimestamps && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onRetryTimestamps(currentAudioIndex)}
-                        className="h-6 px-2 text-xs"
-                      >
-                        Retry
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )}
               
               {/* Show refresh button for tracks with lyrics */}
               {hasContent && currentVersion && currentVersion.hasTimestamps && currentVersion.words?.length > 0 && (
