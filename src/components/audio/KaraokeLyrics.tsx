@@ -158,6 +158,7 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
   if (!words.length) {
     return (
       <div className={cn("min-h-[200px] flex items-center justify-center text-muted-foreground", className)}>
+        <span className="text-center">Lyrics not available</span>
       </div>
     );
   }
