@@ -50,8 +50,28 @@ const STORAGE_KEY = "session_manager_data";
 const GLOBAL_SESSION_ID = "global";
 
 function getMockTracks(): TrackItem[] {
-  // Return empty array - no more static placeholder tracks
-  return [];
+  return [
+    {
+      id: "mock1",
+      url: "https://www.soundjay.com/misc/sounds/magic-chime-02.mp3",
+      title: "Mock Track 1",
+      coverUrl: "/placeholder.svg",
+      createdAt: Date.now(),
+      params: ["mock", "demo"],
+      hasTimestamps: false,
+      words: [],
+    },
+    {
+      id: "mock2", 
+      url: "https://www.soundjay.com/misc/sounds/magic-chime-02.mp3",
+      title: "Mock Track 2",
+      coverUrl: "/placeholder.svg", 
+      createdAt: Date.now(),
+      params: ["mock", "demo"],
+      hasTimestamps: false,
+      words: [],
+    }
+  ];
 }
 
 export function SessionManagerProvider({ children }: { children: React.ReactNode }) {
@@ -63,7 +83,7 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     const globalSession: SessionData = {
       id: GLOBAL_SESSION_ID,
       title: "Global",
-      tracks: [],
+      tracks: getMockTracks(),
       chatMessages: [
         { role: "assistant", content: "Hey! I can help write and generate a song. What vibe are you going for?" },
       ],
@@ -75,15 +95,21 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     setCurrentSessionId(GLOBAL_SESSION_ID);
   }, []);
 
-  // Load from localStorage
+  // Load from localStorage and clear all tracks except mock ones
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const data = JSON.parse(raw);
         if (data?.sessions?.length) {
-          // Load sessions exactly as persisted without destructive pruning
-          setSessions(data.sessions);
+          // Clear all tracks except keep only mock tracks in Global session
+          const mockTracks = getMockTracks();
+          const clearedSessions = data.sessions.map((session: SessionData) => ({
+            ...session,
+            tracks: session.id === GLOBAL_SESSION_ID ? mockTracks : [],
+            activeGenerations: []
+          }));
+          setSessions(clearedSessions);
           setCurrentSessionId(data.currentSessionId || GLOBAL_SESSION_ID);
           return;
         }
