@@ -88,32 +88,28 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
     };
   }, [dragState.isDragging, playlist.id, setActiveDropZone]);
 
-  // Handle drop - only listen when we're the drop ready zone
+  // Handle drop robustly using hit-testing at mouseup (capture phase)
   useEffect(() => {
-    if (!isDropReady || !dragState.isDragging) return;
+    if (!dragState.isDragging || !dragState.draggedTrack) return;
 
     const handleMouseUp = (e: MouseEvent) => {
-      if (dragState.draggedTrack && onTrackAdd) {
-        console.log('🎵 Track dropped on playlist:', playlist.name, dragState.draggedTrack.title);
-        
-        // Set success state immediately
+      const el = document.getElementById(`playlist-${playlist.id}`);
+      if (!el) return;
+
+      const pointEl = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+      const overThis = !!pointEl && (pointEl.id === `playlist-${playlist.id}` || !!pointEl.closest(`#playlist-${playlist.id}`));
+
+      if (overThis && onTrackAdd) {
         setShowDropSuccess(true);
-        
-        // Call the track add handler
         addTrackToPlaylist(playlist.id, dragState.draggedTrack);
         onTrackAdd(playlist.id, dragState.draggedTrack);
-        
-        // Reset success animation after duration
-        setTimeout(() => {
-          setShowDropSuccess(false);
-        }, 2000);
+        setTimeout(() => setShowDropSuccess(false), 2000);
       }
     };
 
-    // Use capture phase to ensure we get the event
     document.addEventListener('mouseup', handleMouseUp, { capture: true, once: true });
     return () => document.removeEventListener('mouseup', handleMouseUp, { capture: true });
-  }, [isDropReady, dragState.isDragging, dragState.draggedTrack, playlist.id, onTrackAdd, addTrackToPlaylist]);
+  }, [dragState.isDragging, dragState.draggedTrack, playlist.id, onTrackAdd, addTrackToPlaylist]);
 
   const handlePlaylistClick = (e: React.MouseEvent) => {
     // Don't trigger if clicking on edit area, dropdown, or during editing
