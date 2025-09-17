@@ -28,9 +28,16 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
   const VISIBLE_COUNT = 5;
 
   useEffect(() => {
-    if (isOpen) {
-      const initial: string[] = [];
-      if (track?.coverUrl) initial.push(track.coverUrl);
+    if (isOpen && track) {
+      // Load all previously generated covers for this track (newest first)
+      const existingCovers = track.generatedCovers || [];
+      const initial: string[] = [...existingCovers];
+      
+      // Add current cover if it exists and not already in generated covers
+      if (track.coverUrl && !initial.includes(track.coverUrl)) {
+        initial.push(track.coverUrl);
+      }
+      
       setImages(initial);
       setSelectedIndex(0);
       setOffset(0);
@@ -55,8 +62,23 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
         toast({ title: "No images returned", description: "Try a different prompt.", variant: "destructive" });
         return;
       }
-      setImages(prev => [...prev, ...newImages]);
-      if (images.length === 0 && newImages.length > 0) setSelectedIndex(0);
+      
+      // Add new images to the front (newest first)
+      const updatedImages = [...newImages, ...images];
+      setImages(updatedImages);
+      
+      // Update track's generated covers in session
+      if (track && currentSession) {
+        const updatedTracks = (currentSession.tracks || []).map(t =>
+          t.id === track.id ? { 
+            ...t, 
+            generatedCovers: updatedImages
+          } : t
+        );
+        updateSession(currentSession.id, { tracks: updatedTracks });
+      }
+      
+      setSelectedIndex(0); // Select the newest generated image
       toast({ title: "Generated", description: `${newImages.length} cover${newImages.length > 1 ? 's' : ''} added` });
     } catch (e: any) {
       console.error("[Covers] Generate error", e);
@@ -81,7 +103,23 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
         toast({ title: "No covers returned", description: "Try again in a moment.", variant: "destructive" });
         return;
       }
-      setImages(prev => [...prev, ...covers]);
+      
+      // Add new covers to the front (newest first)
+      const updatedImages = [...covers, ...images];
+      setImages(updatedImages);
+      
+      // Update track's generated covers in session
+      if (track && currentSession) {
+        const updatedTracks = (currentSession.tracks || []).map(t =>
+          t.id === track.id ? { 
+            ...t, 
+            generatedCovers: updatedImages
+          } : t
+        );
+        updateSession(currentSession.id, { tracks: updatedTracks });
+      }
+      
+      setSelectedIndex(0); // Select the newest generated image
       toast({ title: "Regenerated", description: "1 new cover added" });
     } catch (e: any) {
       console.error("[Covers] Retry error", e);
@@ -100,7 +138,12 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
     }
 
     const updatedTracks = (currentSession.tracks || []).map(t =>
-      t.id === track.id ? { ...t, coverUrl: selected } : t
+      t.id === track.id ? { 
+        ...t, 
+        coverUrl: selected,
+        // Update the generated covers array to put the selected cover first
+        generatedCovers: selected ? [selected, ...(t.generatedCovers || []).filter(c => c !== selected)] : t.generatedCovers
+      } : t
     );
     updateSession(currentSession.id, { tracks: updatedTracks });
     toast({ title: "Cover applied", description: `Updated cover for "${track.title || 'Song'}"` });

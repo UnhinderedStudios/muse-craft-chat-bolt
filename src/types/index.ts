@@ -10,6 +10,7 @@ export interface TrackItem {
   url: string;
   title?: string;           // details.title || "Song Title"
   coverUrl?: string;        // albumCovers cover1/cover2 mapped per version
+  generatedCovers?: string[]; // All generated covers for this track (newest first)
   createdAt: number;        // Date.now() when added
   params: string[];         // styleTags at time of generation
   words?: TimestampedWord[];
