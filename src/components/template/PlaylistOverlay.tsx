@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { X, Search, Filter, MoreVertical, Play, Clock } from "lucide-react";
+import { X, Search, Filter, MoreVertical, Play, Clock, User, Trash2 } from "lucide-react";
 import { SessionPlaylist, useSessionPlaylists } from "@/hooks/use-session-playlists";
 import { TrackItem } from "@/types";
 import { cn } from "@/lib/utils";
@@ -218,7 +218,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
             <ScrollArea className="h-full">
               <div className="p-3 sm:p-6 pt-2 sm:pt-4 space-y-2">
                 {/* Header row - hidden on mobile */}
-                <div className="hidden lg:grid grid-cols-[48px_1fr_200px_120px_80px_40px] gap-4 px-4 py-2 text-sm text-white/60 border-b border-white/10 mb-2">
+                <div className="hidden lg:grid grid-cols-[48px_1fr_200px_120px_80px_80px] gap-4 px-4 py-2 text-sm text-white/60 border-b border-white/10 mb-2">
                   <div></div>
                   <div>Title</div>
                   <div>Artist</div>
@@ -226,14 +226,14 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                   <div className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                   </div>
-                  <div></div>
+                  <div>Actions</div>
                 </div>
 
                 {/* Song rows */}
                 {sortedSongs.map((song, index) => (
                   <div
                     key={song.id}
-                    className="group lg:grid lg:grid-cols-[48px_1fr_200px_120px_80px_40px] lg:gap-4 flex flex-col lg:flex-row px-3 sm:px-4 py-3 rounded-lg hover:bg-white/5 transition-colors"
+                    className="group lg:grid lg:grid-cols-[48px_1fr_200px_120px_80px_80px] lg:gap-4 flex flex-col lg:flex-row px-3 sm:px-4 py-3 rounded-lg hover:bg-white/5 transition-colors"
                   >
                     {/* Mobile layout */}
                     <div className="flex lg:contents items-center gap-3">
@@ -254,13 +254,37 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                       {/* Title & Artist - Mobile */}
                       <div className="flex-1 min-w-0 lg:contents">
                         <div className="lg:flex lg:flex-col lg:justify-center lg:min-w-0">
-                          <div className="text-white font-medium truncate">{song.title || "Untitled"}</div>
-                          <div className="text-white/60 text-sm lg:hidden truncate">Generated Song</div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-white font-medium truncate">{song.title || "Untitled"}</span>
+                            <div className="flex items-center gap-1 lg:hidden">
+                              <button 
+                                onClick={() => handleSongAction(song.id, 'play')}
+                                className="w-6 h-6 flex items-center justify-center text-white/60 hover:text-white transition-colors rounded hover:bg-white/10"
+                              >
+                                <Play className="w-3 h-3" />
+                              </button>
+                              <button 
+                                onClick={() => handleSongAction(song.id, 'remove')}
+                                className="w-6 h-6 flex items-center justify-center text-white/60 hover:text-red-400 transition-colors rounded hover:bg-white/10"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 text-white/60 text-sm lg:hidden">
+                            <div className="w-4 h-4 rounded bg-white/10 flex items-center justify-center shrink-0">
+                              <User className="w-2.5 h-2.5 text-white/40" />
+                            </div>
+                            <span className="truncate">Generated Song</span>
+                          </div>
                         </div>
                         
                         {/* Artist - Desktop */}
-                        <div className="hidden lg:flex lg:items-center text-white/60 truncate">
-                          Generated Song
+                        <div className="hidden lg:flex lg:items-center gap-2 text-white/60 truncate">
+                          <div className="w-6 h-6 rounded bg-white/10 flex items-center justify-center shrink-0">
+                            <User className="w-3 h-3 text-white/40" />
+                          </div>
+                          <span>Generated Song</span>
                         </div>
 
                         {/* Date - Desktop */}
@@ -272,6 +296,22 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                         <div className="hidden lg:flex lg:items-center text-white/60 text-sm">
                           --:--
                         </div>
+
+                        {/* Play & Bin buttons - Desktop */}
+                        <div className="hidden lg:flex lg:items-center gap-2">
+                          <button 
+                            onClick={() => handleSongAction(song.id, 'play')}
+                            className="w-8 h-8 flex items-center justify-center text-white/60 hover:text-white transition-colors rounded hover:bg-white/10"
+                          >
+                            <Play className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => handleSongAction(song.id, 'remove')}
+                            className="w-8 h-8 flex items-center justify-center text-white/60 hover:text-red-400 transition-colors rounded hover:bg-white/10"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
 
                       {/* Mobile metadata */}
@@ -281,7 +321,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                         <span>{formatDate(song.createdAt)}</span>
                       </div>
 
-                      {/* Actions */}
+                      {/* Three-dot menu */}
                       <div className="flex items-center">
                         <DropdownMenu>
                         <DropdownMenuTrigger asChild>
