@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { X, Search, Filter, MoreVertical, Play, Clock, User, Trash2 } from "lucide-react";
+import { X, Search, Filter, MoreVertical, Play, Pause, Clock, User, Trash2 } from "lucide-react";
 import { SessionPlaylist, useSessionPlaylists } from "@/hooks/use-session-playlists";
 import { TrackItem } from "@/types";
 import { cn } from "@/lib/utils";
@@ -25,11 +25,14 @@ interface PlaylistOverlayProps {
   playlist: SessionPlaylist | null;
   isOpen: boolean;
   onClose: () => void;
+  onPlayTrack?: (trackId: string) => void;
+  currentlyPlayingTrackId?: string;
+  isPlaying?: boolean;
 }
 
 type SortOption = "newest" | "oldest" | "title" | "artist";
 
-export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayProps) {
+export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, currentlyPlayingTrackId, isPlaying }: PlaylistOverlayProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   
@@ -105,8 +108,11 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
         toast.success(`Removed song from "${playlist.name}"`);
         break;
       case 'play':
-        console.log(`Playing song ${songId}`);
-        // TODO: Connect to audio player
+        if (onPlayTrack) {
+          onPlayTrack(songId);
+        } else {
+          console.log(`Playing song ${songId}`);
+        }
         break;
       case 'queue':
         console.log(`Adding song ${songId} to queue`);
@@ -119,6 +125,11 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
       default:
         console.log(`Action ${action} on song ${songId}`);
     }
+  };
+
+  // Helper to determine if a song is currently playing
+  const isSongPlaying = (songId: string) => {
+    return currentlyPlayingTrackId === songId && isPlaying;
   };
 
   return (
@@ -260,7 +271,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                                 onClick={() => handleSongAction(song.id, 'play')}
                                 className="w-6 h-6 flex items-center justify-center text-white/60 hover:text-white transition-colors rounded hover:bg-white/10"
                               >
-                                <Play className="w-3 h-3" />
+                                {isSongPlaying(song.id) ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
                               </button>
                               <button 
                                 onClick={() => handleSongAction(song.id, 'remove')}
@@ -302,7 +313,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                             onClick={() => handleSongAction(song.id, 'play')}
                             className="w-8 h-8 flex items-center justify-center text-white/60 hover:text-white transition-colors rounded hover:bg-white/10"
                           >
-                            <Play className="w-4 h-4" />
+                            {isSongPlaying(song.id) ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                           </button>
                           <button 
                             onClick={() => handleSongAction(song.id, 'remove')}
@@ -324,8 +335,8 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                                 onClick={() => handleSongAction(song.id, 'play')}
                                 className="hover:bg-white/10 focus:bg-white/10"
                               >
-                                <Play className="w-4 h-4 mr-2" />
-                                Play
+                                {isSongPlaying(song.id) ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
+                                {isSongPlaying(song.id) ? 'Pause' : 'Play'}
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 onClick={() => handleSongAction(song.id, 'queue')}
@@ -375,8 +386,8 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                             onClick={() => handleSongAction(song.id, 'play')}
                             className="hover:bg-white/10 focus:bg-white/10"
                           >
-                            <Play className="w-4 h-4 mr-2" />
-                            Play
+                            {isSongPlaying(song.id) ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
+                            {isSongPlaying(song.id) ? 'Pause' : 'Play'}
                           </DropdownMenuItem>
                           <DropdownMenuItem 
                             onClick={() => handleSongAction(song.id, 'queue')}

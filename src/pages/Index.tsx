@@ -2255,6 +2255,15 @@ const Index = () => {
                 setShowPlaylistOverlay(false);
                 setSelectedPlaylist(null);
               }}
+              onPlayTrack={(trackId) => {
+                // Find the track in the current session and play it
+                const trackIndex = tracks.findIndex(track => track.id === trackId);
+                if (trackIndex >= 0) {
+                  handleAudioPlay(trackIndex);
+                }
+              }}
+              currentlyPlayingTrackId={playingTrackId}
+              isPlaying={isPlaying}
             />
           </div>
         </div>
