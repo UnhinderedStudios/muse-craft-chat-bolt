@@ -121,8 +121,8 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
           </button>
 
           {/* Content */}
-          <div className="flex-1 min-h-0 px-6 pb-6">
-            <div className="h-full w-full grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6">
+          <div className="flex-1 min-h-0 px-6 pb-6 flex items-center justify-center">
+            <div className="h-full w-full max-w-6xl grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 items-center">
               {/* Left: Preview + Thumbnails (side-by-side) */}
               <div className="flex items-start justify-center gap-6">
                 {/* Thumbnails column (left) */}
