@@ -78,26 +78,56 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
+      console.log("[SessionManager] Raw localStorage data:", raw);
+      
       if (raw) {
         const data = JSON.parse(raw);
+        console.log("[SessionManager] Parsed localStorage data:", data);
+        
         if (data?.sessions?.length) {
+          console.log("[SessionManager] Found sessions in localStorage:", data.sessions.length);
+          
+          // Log track details before filtering
+          data.sessions.forEach((session: SessionData, index: number) => {
+            console.log(`[SessionManager] Session ${index} (${session.id}): ${session.tracks?.length || 0} tracks`, 
+              session.tracks?.map((t: TrackItem) => `"${t.title}"`) || []);
+          });
+          
           // Restore sessions as-is from localStorage, preserving all tracks
           // Remove any lingering mock tracks ("Digital Dreams", "Mountain Echo")
-          const restoredSessions = data.sessions.map((session: SessionData) => ({
-            ...session,
-            tracks: (session.tracks || []).filter((track: TrackItem) => 
+          const restoredSessions = data.sessions.map((session: SessionData) => {
+            const filteredTracks = (session.tracks || []).filter((track: TrackItem) => 
               track.title !== "Digital Dreams" && track.title !== "Mountain Echo"
-            ),
-            activeGenerations: []
-          }));
+            );
+            
+            console.log(`[SessionManager] Session ${session.id}: ${session.tracks?.length || 0} -> ${filteredTracks.length} tracks after filtering`);
+            
+            return {
+              ...session,
+              tracks: filteredTracks,
+              activeGenerations: []
+            };
+          });
+          
+          console.log("[SessionManager] Final restored sessions:", restoredSessions.map(s => ({
+            id: s.id,
+            trackCount: s.tracks.length,
+            trackTitles: s.tracks.map(t => t.title)
+          })));
+          
           setSessions(restoredSessions);
           setCurrentSessionId(data.currentSessionId || GLOBAL_SESSION_ID);
           return;
+        } else {
+          console.log("[SessionManager] No sessions found in localStorage data");
         }
+      } else {
+        console.log("[SessionManager] No localStorage data found");
       }
     } catch (e) {
       console.error("[SessionManager] Failed to load from storage", e);
     }
+    console.log("[SessionManager] Initializing with empty session");
     initialize();
   }, [initialize]);
 
@@ -157,6 +187,14 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     for (;;) {
       try {
         const snapshot = buildSnapshot(level);
+        console.log(`[SessionManager] Saving to localStorage (level ${level}):`, {
+          sessionCount: snapshot.sessions.length,
+          sessions: snapshot.sessions.map(s => ({
+            id: s.id,
+            trackCount: s.tracks.length,
+            trackTitles: s.tracks.map(t => t.title)
+          }))
+        });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
         break;
       } catch (err: any) {
