@@ -52,24 +52,24 @@ const GLOBAL_SESSION_ID = "global";
 function getMockTracks(): TrackItem[] {
   return [
     {
-      id: "mock-dance-1",
-      title: "Dance Under Lights",
-      url: "https://example.com/mock-audio-1.mp3",
+      id: "mock1",
+      url: "https://www.soundjay.com/misc/sounds/magic-chime-02.mp3",
+      title: "Ethereal Dreams",
       coverUrl: "/lovable-uploads/92dd2dde-eb4e-44a1-a2a3-b24829727f7a.png",
-      createdAt: Date.now(),
-      params: ["electronic", "dance", "upbeat"],
+      createdAt: Date.now() - 3600000, // 1 hour ago
+      params: ["ambient", "dreamy", "ethereal"],
       hasTimestamps: false,
-      hasBeenPlayed: false
+      words: [],
     },
     {
-      id: "mock-dance-2", 
-      title: "Dance Under Lights",
-      url: "https://example.com/mock-audio-2.mp3",
-      coverUrl: "/lovable-uploads/b1f7ab9f-3051-49c9-ace1-0331224addae.png",
-      createdAt: Date.now(),
-      params: ["electronic", "dance", "upbeat"],
+      id: "mock2", 
+      url: "https://www.soundjay.com/misc/sounds/magic-chime-02.mp3",
+      title: "Neon Nights",
+      coverUrl: "/lovable-uploads/b1f7ab9f-3051-49c9-ace1-0331224addae.png", 
+      createdAt: Date.now() - 1800000, // 30 minutes ago
+      params: ["synthwave", "retro", "electronic"],
       hasTimestamps: false,
-      hasBeenPlayed: false
+      words: [],
     }
   ];
 }
@@ -78,7 +78,7 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string>(GLOBAL_SESSION_ID);
 
-  // Initialize with a default Global session with empty tracks
+  // Initialize with a default Global session containing mock tracks
   const initialize = useCallback(() => {
     const globalSession: SessionData = {
       id: GLOBAL_SESSION_ID,
@@ -95,67 +95,28 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     setCurrentSessionId(GLOBAL_SESSION_ID);
   }, []);
 
-  // Load from localStorage without overwriting saved tracks
+  // Load from localStorage and clear all tracks except mock ones
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      console.log("[SessionManager] Raw localStorage data:", raw);
-      
       if (raw) {
         const data = JSON.parse(raw);
-        console.log("[SessionManager] Parsed localStorage data:", data);
-        
         if (data?.sessions?.length) {
-          console.log("[SessionManager] Found sessions in localStorage:", data.sessions.length);
-          
-          // Log track details before filtering
-          data.sessions.forEach((session: SessionData, index: number) => {
-            console.log(`[SessionManager] Session ${index} (${session.id}): ${session.tracks?.length || 0} tracks`, 
-              session.tracks?.map((t: TrackItem) => `"${t.title}"`) || []);
-          });
-          
-          // Restore sessions as-is from localStorage, preserving all tracks
-          // Remove any lingering mock tracks ("Digital Dreams", "Mountain Echo")
-          const restoredSessions = data.sessions.map((session: SessionData) => {
-            const filteredTracks = (session.tracks || []).filter((track: TrackItem) => 
-              track.title !== "Digital Dreams" && track.title !== "Mountain Echo"
-            );
-            
-            console.log(`[SessionManager] Session ${session.id}: ${session.tracks?.length || 0} -> ${filteredTracks.length} tracks after filtering`);
-            
-            return {
-              ...session,
-              tracks: filteredTracks,
-              activeGenerations: []
-            };
-          });
-          
-          console.log("[SessionManager] Final restored sessions:", restoredSessions.map(s => ({
-            id: s.id,
-            trackCount: s.tracks.length,
-            trackTitles: s.tracks.map(t => t.title)
-          })));
-          
-          const totalTracks = restoredSessions.reduce((acc, s) => acc + (s.tracks?.length || 0), 0);
-          let finalSessions = restoredSessions;
-          if (totalTracks === 0) {
-            finalSessions = restoredSessions.map((s) =>
-              s.id === GLOBAL_SESSION_ID ? { ...s, tracks: getMockTracks() } : s
-            );
-          }
-          setSessions(finalSessions);
+          // Clear all tracks except keep only mock tracks in Global session
+          const mockTracks = getMockTracks();
+          const clearedSessions = data.sessions.map((session: SessionData) => ({
+            ...session,
+            tracks: session.id === GLOBAL_SESSION_ID ? mockTracks : [],
+            activeGenerations: []
+          }));
+          setSessions(clearedSessions);
           setCurrentSessionId(data.currentSessionId || GLOBAL_SESSION_ID);
           return;
-        } else {
-          console.log("[SessionManager] No sessions found in localStorage data");
         }
-      } else {
-        console.log("[SessionManager] No localStorage data found");
       }
     } catch (e) {
       console.error("[SessionManager] Failed to load from storage", e);
     }
-    console.log("[SessionManager] Initializing with empty session");
     initialize();
   }, [initialize]);
 
@@ -215,14 +176,6 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     for (;;) {
       try {
         const snapshot = buildSnapshot(level);
-        console.log(`[SessionManager] Saving to localStorage (level ${level}):`, {
-          sessionCount: snapshot.sessions.length,
-          sessions: snapshot.sessions.map(s => ({
-            id: s.id,
-            trackCount: s.tracks.length,
-            trackTitles: s.tracks.map(t => t.title)
-          }))
-        });
         localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
         break;
       } catch (err: any) {
@@ -285,12 +238,7 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
       }
     }
 
-    let allTracks = Array.from(map.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-
-    // If absolutely no tracks exist anywhere, show mock tracks for design testing
-    if (allTracks.length === 0) {
-      allTracks = getMockTracks();
-    }
+    const allTracks = Array.from(map.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
     // Aggregate all active generations from all sessions for Global view
     const allActiveGenerations: Array<{
