@@ -244,12 +244,12 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
                 {sortedSongs.map((song, index) => (
                   <div
                     key={song.id}
-                    className="group lg:grid lg:grid-cols-[48px_1fr_200px_120px_80px_80px] lg:gap-4 flex flex-col lg:flex-row px-3 sm:px-4 py-3 rounded-lg hover:bg-white/5 transition-colors"
+                    className="lg:grid lg:grid-cols-[48px_1fr_200px_120px_80px_80px] lg:gap-4 flex flex-col lg:flex-row px-3 sm:px-4 py-3 rounded-lg hover:bg-white/5 transition-colors"
                   >
                     {/* Mobile layout */}
                     <div className="flex lg:contents items-center gap-3">
                       {/* Album Art */}
-                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center shrink-0 relative group">
+                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center shrink-0 relative group/album">
                         <img
                           src={song.coverUrl || "/placeholder.svg"}
                           alt={`${song.title} cover`}
@@ -261,13 +261,13 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
                           }}
                         />
                         <div 
-                          className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
+                          className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover/album:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
                             onAlbumCoverClick?.(song);
                           }}
                         >
-                          <RotateCw className="w-3 h-3 text-white group-hover:animate-[spin_0.36s_ease-in-out] transition-transform" />
+                          <RotateCw className="w-3 h-3 text-white group-hover/album:animate-[spin_0.36s_ease-in-out] transition-transform" />
                         </div>
                       </div>
 
