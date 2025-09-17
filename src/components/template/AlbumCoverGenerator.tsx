@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, ChevronUp, ChevronDown, Loader2, Sparkles, RotateCcw, Check } from "lucide-react";
+import { X, ChevronUp, ChevronDown, Loader2, Sparkles, RotateCcw, Check, Send } from "lucide-react";
 import { Dialog, DialogContent, DialogOverlay } from "@/components/ui/dialog";
 import { CyberButton } from "@/components/cyber/CyberButton";
 import { ChatInput } from "@/components/chat/ChatInput";
@@ -39,6 +39,7 @@ export const AlbumCoverGenerator: React.FC<AlbumCoverGeneratorProps> = ({
     }
   ]);
   const [inputValue, setInputValue] = useState("");
+  const [scrollPosition, setScrollPosition] = useState(0);
 
   // Initialize with current cover if available
   useEffect(() => {
@@ -62,8 +63,8 @@ export const AlbumCoverGenerator: React.FC<AlbumCoverGeneratorProps> = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           prompt: inputValue,
-          aspectRatio: "1:1",
-          n: 1
+          model: "gemini-1.5-flash",
+          aspectRatio: "1:1"
         }),
       });
 
@@ -73,10 +74,10 @@ export const AlbumCoverGenerator: React.FC<AlbumCoverGeneratorProps> = ({
 
       const data = await response.json();
       
-      if (data.images && data.images.length > 0) {
-        const newCovers = [...generatedCovers, ...data.images];
+      if (data.imageUrl) {
+        const newCovers = [...generatedCovers, data.imageUrl];
         setGeneratedCovers(newCovers);
-        setSelectedCoverIndex(newCovers.length - 1); // Select the newly generated cover
+        setSelectedCoverIndex(newCovers.length - 1);
         
         const assistantMessage: ChatMessage = {
           role: "assistant",
@@ -85,7 +86,7 @@ export const AlbumCoverGenerator: React.FC<AlbumCoverGeneratorProps> = ({
         setChatMessages(prev => [...prev, assistantMessage]);
         toast.success("Album cover generated successfully!");
       } else {
-        throw new Error("No images were generated");
+        throw new Error("No image was generated");
       }
     } catch (error) {
       console.error("Error generating album cover:", error);
@@ -112,7 +113,7 @@ export const AlbumCoverGenerator: React.FC<AlbumCoverGeneratorProps> = ({
       if (newCovers.length > 0) {
         const updatedCovers = [...generatedCovers, ...newCovers];
         setGeneratedCovers(updatedCovers);
-        setSelectedCoverIndex(updatedCovers.length - newCovers.length); // Select first new cover
+        setSelectedCoverIndex(updatedCovers.length - newCovers.length);
         
         const assistantMessage: ChatMessage = {
           role: "assistant",
@@ -137,17 +138,30 @@ export const AlbumCoverGenerator: React.FC<AlbumCoverGeneratorProps> = ({
     }
   };
 
-  const canNavigate = generatedCovers.length > 5;
-  const visibleCovers = generatedCovers.slice(0, 5);
-  const hasMoreCovers = generatedCovers.length > 5;
+  const navigateUp = () => {
+    if (scrollPosition > 0) {
+      setScrollPosition(scrollPosition - 1);
+    }
+  };
+
+  const navigateDown = () => {
+    if (scrollPosition < generatedCovers.length - 5) {
+      setScrollPosition(scrollPosition + 1);
+    }
+  };
+
+  const visibleCovers = generatedCovers.slice(scrollPosition, scrollPosition + 5);
+  const canNavigateUp = scrollPosition > 0;
+  const canNavigateDown = scrollPosition < generatedCovers.length - 5;
+  const hasEnoughCovers = generatedCovers.length >= 3;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogOverlay className="bg-black/80" />
-      <DialogContent className="max-w-4xl h-[600px] bg-[#0a0a0a] border border-border-main p-0 overflow-hidden">
+      <DialogContent className="max-w-6xl h-[700px] bg-[#0a0a0a] border border-border-main p-0 overflow-hidden">
         <div className="flex h-full">
-          {/* Left Section - Image Preview */}
-          <div className="flex-1 p-6 border-r border-border-main">
+          {/* Left Section - Image Preview and Placeholders */}
+          <div className="w-[400px] p-6 border-r border-border-main flex flex-col">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-text-primary">Album Cover Generator</h2>
               <button
@@ -158,9 +172,9 @@ export const AlbumCoverGenerator: React.FC<AlbumCoverGeneratorProps> = ({
               </button>
             </div>
 
-            {/* Main Preview */}
+            {/* Main Preview - Large Image */}
             <div className="mb-6">
-              <div className="aspect-square w-full max-w-[300px] mx-auto bg-card-alt rounded-lg overflow-hidden border border-border-main">
+              <div className="aspect-square w-[350px] bg-card-alt rounded-lg overflow-hidden border border-border-main">
                 {generatedCovers[selectedCoverIndex] ? (
                   <img
                     src={generatedCovers[selectedCoverIndex]}
@@ -178,61 +192,69 @@ export const AlbumCoverGenerator: React.FC<AlbumCoverGeneratorProps> = ({
               </div>
             </div>
 
-            {/* Navigation Arrows */}
-            <div className="flex justify-center mb-4">
-              <div className="flex flex-col gap-2">
+            {/* Navigation Arrows - Above Placeholders */}
+            <div className="flex justify-start mb-2">
+              <div className="flex flex-col gap-1">
                 <button
+                  onClick={navigateUp}
                   className={cn(
-                    "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
-                    canNavigate 
-                      ? "text-text-primary hover:bg-card-alt" 
-                      : "text-text-secondary/30 cursor-not-allowed"
+                    "w-6 h-6 rounded flex items-center justify-center transition-all",
+                    hasEnoughCovers && canNavigateUp
+                      ? "text-text-primary hover:bg-card-alt opacity-100" 
+                      : "text-text-secondary opacity-30 cursor-not-allowed"
                   )}
-                  disabled={!canNavigate}
+                  disabled={!canNavigateUp || !hasEnoughCovers}
                 >
-                  <ChevronUp className="w-5 h-5" />
+                  <ChevronUp className="w-4 h-4" />
                 </button>
                 <button
+                  onClick={navigateDown}
                   className={cn(
-                    "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
-                    canNavigate 
-                      ? "text-text-primary hover:bg-card-alt" 
-                      : "text-text-secondary/30 cursor-not-allowed"
+                    "w-6 h-6 rounded flex items-center justify-center transition-all",
+                    hasEnoughCovers && canNavigateDown
+                      ? "text-text-primary hover:bg-card-alt opacity-100" 
+                      : "text-text-secondary opacity-30 cursor-not-allowed"
                   )}
-                  disabled={!canNavigate}
+                  disabled={!canNavigateDown || !hasEnoughCovers}
                 >
-                  <ChevronDown className="w-5 h-5" />
+                  <ChevronDown className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            {/* Thumbnail Grid */}
-            <div className="flex flex-col items-center gap-2">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => visibleCovers[index] && setSelectedCoverIndex(index)}
-                  className={cn(
-                    "w-16 h-16 rounded-lg border transition-all",
-                    selectedCoverIndex === index
-                      ? "border-accent-primary shadow-[0_0_12px_rgba(202,36,116,0.4)]"
-                      : "border-border-main hover:border-accent-primary/50",
-                    !visibleCovers[index] && "opacity-30"
-                  )}
-                >
-                  {visibleCovers[index] ? (
-                    <img
-                      src={visibleCovers[index]}
-                      alt={`Album cover option ${index + 1}`}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-card-alt rounded-lg flex items-center justify-center">
-                      <div className="w-6 h-6 border-2 border-dashed border-border-main rounded" />
-                    </div>
-                  )}
-                </button>
-              ))}
+            {/* Thumbnail Placeholders - Vertically underneath, left-aligned */}
+            <div className="flex flex-col gap-2">
+              {Array.from({ length: 5 }).map((_, index) => {
+                const coverIndex = scrollPosition + index;
+                const isSelected = selectedCoverIndex === coverIndex;
+                const hasCover = generatedCovers[coverIndex];
+                
+                return (
+                  <button
+                    key={index}
+                    onClick={() => hasCover && setSelectedCoverIndex(coverIndex)}
+                    className={cn(
+                      "w-16 h-16 rounded-lg border transition-all",
+                      isSelected && hasCover
+                        ? "border-accent-primary shadow-[0_0_12px_rgba(202,36,116,0.4)]"
+                        : "border-border-main hover:border-accent-primary/50",
+                      !hasCover && "opacity-30"
+                    )}
+                  >
+                    {hasCover ? (
+                      <img
+                        src={generatedCovers[coverIndex]}
+                        alt={`Album cover option ${coverIndex + 1}`}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-card-alt rounded-lg flex items-center justify-center">
+                        <div className="w-6 h-6 border-2 border-dashed border-border-main rounded" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -255,20 +277,38 @@ export const AlbumCoverGenerator: React.FC<AlbumCoverGeneratorProps> = ({
 
             {/* Chat Input */}
             <div className="p-4 border-t border-border-main">
-            <ChatInput
-              value={inputValue}
-              onChange={setInputValue}
-              onSend={handleGenerate}
-              disabled={isGenerating}
-              onFileAttach={() => {}}
-              attachedFiles={[]}
-              onRemoveAttachment={() => {}}
-            />
+              <ChatInput
+                value={inputValue}
+                onChange={setInputValue}
+                onSend={handleGenerate}
+                disabled={isGenerating}
+                onFileAttach={() => {}}
+                attachedFiles={[]}
+                onRemoveAttachment={() => {}}
+              />
             </div>
 
-            {/* Action Buttons */}
+            {/* Action Buttons - Three separate buttons */}
             <div className="p-4 border-t border-border-main">
               <div className="flex gap-3">
+                <CyberButton
+                  variant="secondary"
+                  onClick={handleGenerate}
+                  disabled={isGenerating || !inputValue.trim()}
+                  className="flex-1"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      Generate
+                    </>
+                  )}
+                </CyberButton>
                 <CyberButton
                   variant="secondary"
                   onClick={handleRetry}
