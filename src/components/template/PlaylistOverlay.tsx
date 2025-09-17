@@ -220,7 +220,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                 {/* Header row - hidden on mobile */}
                 <div className="hidden lg:grid grid-cols-[48px_1fr_200px_120px_80px_80px] gap-4 px-4 py-2 text-sm text-white/60 border-b border-white/10 mb-2">
                   <div></div>
-                  <div>Title</div>
+                  <div className="text-left">Title</div>
                   <div>Artist</div>
                   <div>Date Added</div>
                   <div className="flex items-center gap-1">
