@@ -255,7 +255,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                       <div className="flex-1 min-w-0 lg:contents">
                         <div className="lg:flex lg:flex-col lg:justify-center lg:min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-white font-medium truncate">{song.title || "Untitled"}</span>
+                            <span className="text-white font-medium truncate text-left">{song.title || "Untitled"}</span>
                             <div className="flex items-center gap-1 lg:hidden">
                               <button 
                                 onClick={() => handleSongAction(song.id, 'play')}
