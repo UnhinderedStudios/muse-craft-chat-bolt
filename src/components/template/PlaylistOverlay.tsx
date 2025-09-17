@@ -216,10 +216,10 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
             </div>
           ) : (
             <ScrollArea className="h-full">
-              <div className="p-3 sm:p-6 pt-2 sm:pt-4 space-y-2">
+              <div className="p-3 sm:p-6 pt-2 sm:pt-4 space-y-2 lg:pl-0">
                 {/* Header row - hidden on mobile */}
-                <div className="hidden lg:grid grid-cols-[48px_1fr_200px_120px_80px_80px] gap-4 px-4 py-2 text-sm text-white/60 border-b border-white/10 mb-2">
-                  <div className="text-left col-span-2 -ml-4">Title</div>
+                <div className="hidden lg:grid grid-cols-[48px_1fr_200px_120px_80px_80px] gap-4 px-4 py-2 text-sm text-white/60 border-b border-white/10 mb-2 lg:px-0">
+                  <div className="text-left col-span-2">Title</div>
                   <div>Artist</div>
                   <div>Date Added</div>
                   <div className="flex items-center gap-1">
@@ -232,7 +232,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                 {sortedSongs.map((song, index) => (
                   <div
                     key={song.id}
-                    className="group lg:grid lg:grid-cols-[48px_1fr_200px_120px_80px_80px] lg:gap-4 flex flex-col lg:flex-row px-3 sm:px-4 py-3 rounded-lg hover:bg-white/5 transition-colors"
+                    className="group lg:grid lg:grid-cols-[48px_1fr_200px_120px_80px_80px] lg:gap-4 flex flex-col lg:flex-row px-3 sm:px-4 lg:px-0 py-3 rounded-lg hover:bg-white/5 transition-colors"
                   >
                     {/* Mobile layout */}
                     <div className="flex lg:contents items-center gap-3">
