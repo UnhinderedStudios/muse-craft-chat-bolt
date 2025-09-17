@@ -208,23 +208,19 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                 </div>
               </div>
 
-              {/* Right: Chat */}
+              {/* Right: Prompt Controls */}
               <aside className="flex flex-col rounded-xl border border-white/10 bg-black/30 p-4">
-                <header className="mb-3">
+                <header className="mb-4">
                   <h3 className="text-white font-medium">Custom Cover via Gemini</h3>
                   <p className="text-white/50 text-sm">Describe your cover. We'll generate images using Gemini.</p>
                 </header>
 
-                <div className="flex-1 min-h-0 rounded-lg bg-black/20 border border-white/10 p-3 overflow-y-auto">
-                  <div className="text-white/50 text-sm">Type a prompt below and click Generate.</div>
-                </div>
-
-                <div className="mt-3">
+                <div className="mb-4">
                   <textarea
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     placeholder="e.g., Neon-lit city skyline with rain reflections, moody cinematic, no people, no text"
-                    className="w-full h-24 resize-none rounded-lg bg-black/40 border border-white/10 text-white placeholder:text-white/40 p-3 focus:outline-none focus:ring-1 focus:ring-white/20"
+                    className="w-full h-32 resize-none rounded-lg bg-black/40 border border-white/10 text-white placeholder:text-white/40 p-3 focus:outline-none focus:ring-1 focus:ring-white/20"
                   />
                 </div>
 
