@@ -1,5 +1,7 @@
 import React, { createContext, useCallback, useEffect, useMemo, useState } from "react";
 import { ChatMessage, TrackItem } from "@/types";
+import digitalDreamsCover from '@/assets/digital-dreams-cover.jpg';
+import mountainEchoCover from '@/assets/mountain-echo-cover.jpg';
 
 export interface SessionData {
   id: string;
@@ -54,22 +56,66 @@ function getMockTracks(): TrackItem[] {
     {
       id: "mock1",
       url: "https://www.soundjay.com/misc/sounds/magic-chime-02.mp3",
-      title: "Ethereal Dreams",
-      coverUrl: "/lovable-uploads/92dd2dde-eb4e-44a1-a2a3-b24829727f7a.png",
+      title: "Digital Dreams",
+      coverUrl: digitalDreamsCover,
       createdAt: Date.now() - 3600000, // 1 hour ago
-      params: ["ambient", "dreamy", "ethereal"],
-      hasTimestamps: false,
-      words: [],
+      params: ["electronic", "cyberpunk", "futuristic"],
+      hasTimestamps: true,
+      words: [
+        { word: "In", start: 0.5, end: 0.8, success: true },
+        { word: "the", start: 0.8, end: 1.0, success: true },
+        { word: "neon", start: 1.0, end: 1.5, success: true },
+        { word: "glow", start: 1.5, end: 2.0, success: true },
+        { word: "of", start: 2.0, end: 2.3, success: true },
+        { word: "digital", start: 2.3, end: 3.0, success: true },
+        { word: "dreams", start: 3.0, end: 3.8, success: true },
+        { word: "We", start: 4.5, end: 4.8, success: true },
+        { word: "dance", start: 4.8, end: 5.3, success: true },
+        { word: "through", start: 5.3, end: 5.8, success: true },
+        { word: "electric", start: 5.8, end: 6.5, success: true },
+        { word: "streams", start: 6.5, end: 7.2, success: true },
+        { word: "Lost", start: 8.0, end: 8.5, success: true },
+        { word: "in", start: 8.5, end: 8.8, success: true },
+        { word: "the", start: 8.8, end: 9.0, success: true },
+        { word: "circuit", start: 9.0, end: 9.7, success: true },
+        { word: "maze", start: 9.7, end: 10.3, success: true },
+        { word: "of", start: 10.3, end: 10.6, success: true },
+        { word: "endless", start: 10.6, end: 11.3, success: true },
+        { word: "nights", start: 11.3, end: 12.0, success: true }
+      ],
     },
     {
       id: "mock2", 
       url: "https://www.soundjay.com/misc/sounds/magic-chime-02.mp3",
-      title: "Neon Nights",
-      coverUrl: "/lovable-uploads/b1f7ab9f-3051-49c9-ace1-0331224addae.png", 
+      title: "Mountain Echo",
+      coverUrl: mountainEchoCover, 
       createdAt: Date.now() - 1800000, // 30 minutes ago
-      params: ["synthwave", "retro", "electronic"],
-      hasTimestamps: false,
-      words: [],
+      params: ["acoustic", "folk", "nature"],
+      hasTimestamps: true,
+      words: [
+        { word: "High", start: 0.3, end: 0.8, success: true },
+        { word: "above", start: 0.8, end: 1.3, success: true },
+        { word: "the", start: 1.3, end: 1.5, success: true },
+        { word: "valley", start: 1.5, end: 2.2, success: true },
+        { word: "floor", start: 2.2, end: 2.8, success: true },
+        { word: "Where", start: 3.5, end: 3.9, success: true },
+        { word: "eagles", start: 3.9, end: 4.5, success: true },
+        { word: "learn", start: 4.5, end: 4.9, success: true },
+        { word: "to", start: 4.9, end: 5.1, success: true },
+        { word: "soar", start: 5.1, end: 5.7, success: true },
+        { word: "The", start: 6.5, end: 6.8, success: true },
+        { word: "mountain", start: 6.8, end: 7.5, success: true },
+        { word: "echo", start: 7.5, end: 8.0, success: true },
+        { word: "calls", start: 8.0, end: 8.5, success: true },
+        { word: "your", start: 8.5, end: 8.8, success: true },
+        { word: "name", start: 8.8, end: 9.5, success: true },
+        { word: "Through", start: 10.0, end: 10.5, success: true },
+        { word: "whispers", start: 10.5, end: 11.2, success: true },
+        { word: "of", start: 11.2, end: 11.4, success: true },
+        { word: "wind", start: 11.4, end: 12.0, success: true },
+        { word: "and", start: 12.0, end: 12.3, success: true },
+        { word: "flame", start: 12.3, end: 13.0, success: true }
+      ],
     }
   ];
 }
