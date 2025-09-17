@@ -50,7 +50,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
     }
     try {
       setLoading(true);
-      const newImages = await api.generateAlbumCoversByPrompt(prompt.trim(), 4);
+      const newImages = await api.generateAlbumCoversByPrompt(prompt.trim(), 1);
       if (!newImages || newImages.length === 0) {
         toast({ title: "No images returned", description: "Try a different prompt.", variant: "destructive" });
         return;
