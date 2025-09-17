@@ -52,32 +52,7 @@ const STORAGE_KEY = "session_manager_data";
 const GLOBAL_SESSION_ID = "global";
 
 function getMockTracks(): TrackItem[] {
-  return [
-    {
-      id: "82fa18ec-80fd-4e50-b149-b5c418601833",
-      url: "https://mfile.erweima.ai/ODJmYTE4ZWMtODBmZC00ZTUwLWIxNDktYjVjNDE4NjAxODMz",
-      title: "Generated Track 1",
-      coverUrl: digitalDreamsCover,
-      createdAt: Date.now() - 3600000,
-      params: ["electronic", "atmospheric", "modern"],
-      hasTimestamps: false,
-      words: [],
-      audioId: "82fa18ec-80fd-4e50-b149-b5c418601833",
-      jobId: "56785f72a26348ca403bc3a8b79ab884"
-    },
-    {
-      id: "370d1376-e3a6-4a78-8166-0ea4d89ae235", 
-      url: "https://apiboxfiles.erweima.ai/MzcwZDEzNzYtZTNhNi00YTc4LTgxNjYtMGVhNGQ4OWFlMjM1.mp3",
-      title: "Generated Track 2",
-      coverUrl: mountainEchoCover, 
-      createdAt: Date.now() - 1800000,
-      params: ["ambient", "cinematic", "emotional"],
-      hasTimestamps: false,
-      words: [],
-      audioId: "370d1376-e3a6-4a78-8166-0ea4d89ae235",
-      jobId: "56785f72a26348ca403bc3a8b79ab884"
-    }
-  ];
+  return [];
 }
 
 export function SessionManagerProvider({ children }: { children: React.ReactNode }) {
