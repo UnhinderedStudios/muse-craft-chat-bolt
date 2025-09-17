@@ -120,14 +120,6 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
             <X className="w-5 h-5" />
           </button>
 
-          {/* Title */}
-          <div className="flex-shrink-0 pt-12 pb-4 text-center">
-            <h2 className="text-2xl font-semibold text-white">Quick Album Cover Generator</h2>
-            {track && (
-              <p className="text-white/60 mt-2">Regenerating cover for "{track.title || 'Song'}"</p>
-            )}
-          </div>
-
           {/* Content */}
           <div className="flex-1 min-h-0 px-6 pb-6">
             <div className="h-full w-full grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6">
