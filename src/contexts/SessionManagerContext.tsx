@@ -102,14 +102,22 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
       if (raw) {
         const data = JSON.parse(raw);
         if (data?.sessions?.length) {
-          // Clear all tracks except keep only mock tracks in Global session
+          // Preserve existing tracks and add mock tracks only if Global session is empty
           const mockTracks = getMockTracks();
-          const clearedSessions = data.sessions.map((session: SessionData) => ({
-            ...session,
-            tracks: session.id === GLOBAL_SESSION_ID ? mockTracks : [],
-            activeGenerations: []
-          }));
-          setSessions(clearedSessions);
+          const preservedSessions = data.sessions.map((session: SessionData) => {
+            if (session.id === GLOBAL_SESSION_ID) {
+              // Keep existing tracks, add mock tracks only if no tracks exist
+              const existingTracks = session.tracks || [];
+              const hasRealTracks = existingTracks.some(track => !track.id.startsWith('mock'));
+              return {
+                ...session,
+                tracks: hasRealTracks ? existingTracks : [...existingTracks, ...mockTracks.filter(mock => !existingTracks.find(t => t.id === mock.id))],
+                activeGenerations: []
+              };
+            }
+            return { ...session, activeGenerations: [] };
+          });
+          setSessions(preservedSessions);
           setCurrentSessionId(data.currentSessionId || GLOBAL_SESSION_ID);
           return;
         }
