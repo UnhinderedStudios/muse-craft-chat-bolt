@@ -272,8 +272,8 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                             </div>
                           </div>
                           <div className="flex items-center gap-2 text-white/60 text-sm lg:hidden">
-                            <div className="w-4 h-4 rounded bg-white/10 flex items-center justify-center shrink-0">
-                              <User className="w-2.5 h-2.5 text-white/40" />
+                            <div className="w-6 h-6 rounded bg-white/10 flex items-center justify-center shrink-0">
+                              <User className="w-3 h-3 text-white/40" />
                             </div>
                             <span className="truncate">Generated Song</span>
                           </div>
@@ -281,8 +281,8 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                         
                         {/* Artist - Desktop */}
                         <div className="hidden lg:flex lg:items-center gap-2 text-white/60 truncate">
-                          <div className="w-6 h-6 rounded bg-white/10 flex items-center justify-center shrink-0">
-                            <User className="w-3 h-3 text-white/40" />
+                          <div className="w-8 h-8 rounded bg-white/10 flex items-center justify-center shrink-0">
+                            <User className="w-4 h-4 text-white/40" />
                           </div>
                           <span>Generated Song</span>
                         </div>
@@ -298,7 +298,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                         </div>
 
                         {/* Play & Bin buttons - Desktop */}
-                        <div className="hidden lg:flex lg:items-center gap-2">
+                        <div className="hidden lg:flex lg:items-center gap-1">
                           <button 
                             onClick={() => handleSongAction(song.id, 'play')}
                             className="w-8 h-8 flex items-center justify-center text-white/60 hover:text-white transition-colors rounded hover:bg-white/10"
@@ -311,6 +311,45 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white transition-colors rounded opacity-0 group-hover:opacity-100">
+                                <MoreVertical className="w-4 h-4" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent 
+                              align="end" 
+                              className="bg-black/90 border-white/20 text-white min-w-[180px]"
+                            >
+                              <DropdownMenuItem 
+                                onClick={() => handleSongAction(song.id, 'play')}
+                                className="hover:bg-white/10 focus:bg-white/10"
+                              >
+                                <Play className="w-4 h-4 mr-2" />
+                                Play
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleSongAction(song.id, 'queue')}
+                                className="hover:bg-white/10 focus:bg-white/10"
+                              >
+                                Add to Queue
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator className="bg-white/20" />
+                              <DropdownMenuItem 
+                                onClick={() => handleSongAction(song.id, 'artist')}
+                                className="hover:bg-white/10 focus:bg-white/10"
+                              >
+                                Go to Artist
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator className="bg-white/20" />
+                              <DropdownMenuItem 
+                                onClick={() => handleSongAction(song.id, 'remove')}
+                                className="hover:bg-white/10 focus:bg-white/10 text-red-400"
+                              >
+                                Remove from Playlist
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
 
@@ -321,11 +360,11 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                         <span>{formatDate(song.createdAt)}</span>
                       </div>
 
-                      {/* Three-dot menu */}
-                      <div className="flex items-center">
+                      {/* Mobile three-dot menu */}
+                      <div className="flex lg:hidden items-center">
                         <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white transition-colors rounded lg:opacity-0 lg:group-hover:opacity-100">
+                          <button className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white transition-colors rounded">
                             <MoreVertical className="w-4 h-4" />
                           </button>
                         </DropdownMenuTrigger>
