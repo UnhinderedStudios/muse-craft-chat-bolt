@@ -261,7 +261,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
                           }}
                         />
                         <div 
-                          className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover/album:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
+                          className="absolute inset-0 rounded-lg overflow-hidden bg-black/50 backdrop-blur-sm opacity-0 group-hover/album:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
                             onAlbumCoverClick?.(song);
