@@ -308,4 +308,18 @@ export const api = {
     console.log("No images returned:", emptyCovers);
     return emptyCovers;
   },
+
+  // Generate album covers from a custom prompt using Gemini/Imagen edge function
+  async generateAlbumCoversByPrompt(prompt: string, n: number = 4): Promise<string[]> {
+    const response = await fetch(`${FUNCTIONS_BASE}/generate-album-cover`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt, aspectRatio: "1:1", n }),
+    });
+    const data = await handle(response);
+    if (data.images && Array.isArray(data.images)) {
+      return data.images as string[];
+    }
+    return [];
+  },
 };
