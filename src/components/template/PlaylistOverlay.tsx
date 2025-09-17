@@ -272,8 +272,8 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                             </div>
                           </div>
                           <div className="flex items-center gap-2 text-white/60 text-sm lg:hidden">
-                            <div className="w-6 h-6 rounded bg-white/10 flex items-center justify-center shrink-0">
-                              <User className="w-3 h-3 text-white/40" />
+                            <div className="w-12 h-12 rounded bg-white/10 flex items-center justify-center shrink-0">
+                              <User className="w-5 h-5 text-white/40" />
                             </div>
                             <span className="truncate">Generated Song</span>
                           </div>
@@ -281,8 +281,8 @@ export function PlaylistOverlay({ playlist, isOpen, onClose }: PlaylistOverlayPr
                         
                         {/* Artist - Desktop */}
                         <div className="hidden lg:flex lg:items-center gap-2 text-white/60 truncate">
-                          <div className="w-8 h-8 rounded bg-white/10 flex items-center justify-center shrink-0">
-                            <User className="w-4 h-4 text-white/40" />
+                          <div className="w-12 h-12 rounded bg-white/10 flex items-center justify-center shrink-0">
+                            <User className="w-5 h-5 text-white/40" />
                           </div>
                           <span>Generated Song</span>
                         </div>
