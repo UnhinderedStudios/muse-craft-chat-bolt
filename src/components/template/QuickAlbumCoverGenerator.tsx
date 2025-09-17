@@ -243,7 +243,10 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
               </div>
 
               {/* Right: Prompt Controls */}
-              <aside className="flex flex-col rounded-xl border border-white/10 bg-black/30 p-4">
+              <aside 
+                className="flex flex-col rounded-xl border border-white/10 bg-black/30 p-4"
+                style={{ height: "min(520px, 60vh)" }}
+              >
                 <header className="mb-4">
                   <h3 className="text-white font-medium">Custom Cover via Gemini</h3>
                   <p className="text-white/50 text-sm">Describe your cover. We'll generate images using Gemini.</p>
