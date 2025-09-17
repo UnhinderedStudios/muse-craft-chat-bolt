@@ -535,6 +535,10 @@ const Index = () => {
   const [selectedPlaylist, setSelectedPlaylist] = useState<any>(null);
   const [showPlaylistOverlay, setShowPlaylistOverlay] = useState(false);
   
+  // Quick Album Generator overlay state
+  const [showQuickAlbumGenerator, setShowQuickAlbumGenerator] = useState(false);
+  const [selectedTrackForRegen, setSelectedTrackForRegen] = useState<TrackItem | null>(null);
+  
   // Sync karaoke version selection with karaoke track (smarter version dependency)
   useEffect(() => {
     if (!karaokeTrackId) {
@@ -2262,9 +2266,13 @@ const Index = () => {
                   handleAudioPlay(trackIndex);
                 }
               }}
-              currentlyPlayingTrackId={playingTrackId}
-              isPlaying={isPlaying}
-            />
+               currentlyPlayingTrackId={playingTrackId}
+               isPlaying={isPlaying}
+               onAlbumCoverClick={(track) => {
+                 setSelectedTrackForRegen(track);
+                 setShowQuickAlbumGenerator(true);
+               }}
+             />
           </div>
         </div>
 
@@ -2305,6 +2313,37 @@ const Index = () => {
           messages={messages}
           sendMessage={sendMessage}
         />
+        </DialogContent>
+      </Dialog>
+
+      {/* Quick Album Cover Generator Overlay */}
+      <Dialog open={showQuickAlbumGenerator} onOpenChange={setShowQuickAlbumGenerator}>
+        <DialogContent className="max-w-none w-full h-full bg-black/10 backdrop-blur border-0 p-0 flex flex-col">
+          <div className="relative w-full h-full flex flex-col">
+            {/* Custom X button */}
+            <button
+              className="absolute top-6 right-6 z-10 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+              onClick={() => setShowQuickAlbumGenerator(false)}
+            >
+              <X className="w-6 h-6" />
+            </button>
+            
+            {/* Title */}
+            <div className="flex-shrink-0 pt-12 pb-8 text-center">
+              <h2 className="text-2xl font-semibold text-white">Quick Album Cover Generator</h2>
+              {selectedTrackForRegen && (
+                <p className="text-white/60 mt-2">Regenerating cover for "{selectedTrackForRegen.title}"</p>
+              )}
+            </div>
+            
+            {/* Content area for future implementation */}
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-white/40 text-center">
+                <div className="text-lg mb-2">Album cover generation coming soon...</div>
+                <div className="text-sm">This feature will allow you to regenerate album covers</div>
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 

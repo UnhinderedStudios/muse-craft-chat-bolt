@@ -38,6 +38,7 @@ interface TemplatePanelProps {
   onPlayTrack?: (trackId: string) => void;
   currentlyPlayingTrackId?: string;
   isPlaying?: boolean;
+  onAlbumCoverClick?: (track: TrackItem) => void;
 }
 
 const mockArtists = [
@@ -54,7 +55,8 @@ export function TemplatePanel({
   onClosePlaylistOverlay,
   onPlayTrack,
   currentlyPlayingTrackId,
-  isPlaying
+  isPlaying,
+  onAlbumCoverClick
 }: TemplatePanelProps) {
   const [viewMode, setViewMode] = useState<"playlists" | "artists">("playlists");
   const [searchQuery, setSearchQuery] = useState("");
@@ -363,6 +365,7 @@ export function TemplatePanel({
           onPlayTrack={onPlayTrack}
           currentlyPlayingTrackId={currentlyPlayingTrackId}
           isPlaying={isPlaying}
+          onAlbumCoverClick={onAlbumCoverClick}
         />
       )}
     </div>

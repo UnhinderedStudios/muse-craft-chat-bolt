@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { X, Search, Filter, MoreVertical, Play, Pause, Clock, User, Trash2 } from "lucide-react";
+import { X, Search, Filter, MoreVertical, Play, Pause, Clock, User, Trash2, RotateCw } from "lucide-react";
 import { SessionPlaylist, useSessionPlaylists } from "@/hooks/use-session-playlists";
 import { TrackItem } from "@/types";
 import { cn } from "@/lib/utils";
@@ -28,11 +28,12 @@ interface PlaylistOverlayProps {
   onPlayTrack?: (trackId: string) => void;
   currentlyPlayingTrackId?: string;
   isPlaying?: boolean;
+  onAlbumCoverClick?: (track: TrackItem) => void;
 }
 
 type SortOption = "newest" | "oldest" | "title" | "artist";
 
-export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, currentlyPlayingTrackId, isPlaying }: PlaylistOverlayProps) {
+export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, currentlyPlayingTrackId, isPlaying, onAlbumCoverClick }: PlaylistOverlayProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   
@@ -248,7 +249,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
                     {/* Mobile layout */}
                     <div className="flex lg:contents items-center gap-3">
                       {/* Album Art */}
-                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center shrink-0">
+                      <div className="w-12 h-12 rounded-lg overflow-hidden bg-white/10 flex items-center justify-center shrink-0 relative group">
                         <img
                           src={song.coverUrl || "/placeholder.svg"}
                           alt={`${song.title} cover`}
@@ -259,6 +260,15 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
                             target.parentElement!.innerHTML = '<div class="w-full h-full bg-white/10 flex items-center justify-center"><Play class="w-4 h-4 text-white/40" /></div>';
                           }}
                         />
+                        <div 
+                          className="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onAlbumCoverClick?.(song);
+                          }}
+                        >
+                          <RotateCw className="w-3 h-3 text-white group-hover:animate-[spin_0.36s_ease-in-out] transition-transform" />
+                        </div>
                       </div>
 
                       {/* Title & Artist - Mobile */}
