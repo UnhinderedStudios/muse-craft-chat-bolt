@@ -467,8 +467,27 @@ const Index = () => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentAudioIndex, setCurrentAudioIndex] = useState<number>(0);
   // Get tracks from current session
-  const tracks = currentSession?.tracks || [];
-  const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
+  const realTracks = currentSession?.tracks || [];
+  const tracks: TrackItem[] = realTracks.length ? realTracks : [
+    {
+      id: 'placeholder-1',
+      title: 'Dance Under Lights',
+      url: 'https://example.com/mock-audio-1.mp3',
+      coverUrl: '/lovable-uploads/92dd2dde-eb4e-44a1-a2a3-b24829727f7a.png',
+      createdAt: Date.now(),
+      params: ['electronic','dance','upbeat'],
+      hasTimestamps: false,
+    },
+    {
+      id: 'placeholder-2',
+      title: 'Dance Under Lights',
+      url: 'https://example.com/mock-audio-2.mp3',
+      coverUrl: '/lovable-uploads/b1f7ab9f-3051-49c9-ace1-0331224addae.png',
+      createdAt: Date.now(),
+      params: ['electronic','dance','upbeat'],
+      hasTimestamps: false,
+    },
+  ];
   
   // One-time cleanup: if both mock placeholders and real songs exist, keep only the 2 mocks
   useEffect(() => {

@@ -83,7 +83,7 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     const globalSession: SessionData = {
       id: GLOBAL_SESSION_ID,
       title: "Global",
-      tracks: [],
+      tracks: getMockTracks(),
       chatMessages: [
         { role: "assistant", content: "Hey! I can help write and generate a song. What vibe are you going for?" },
       ],
@@ -136,7 +136,14 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
             trackTitles: s.tracks.map(t => t.title)
           })));
           
-          setSessions(restoredSessions);
+          const totalTracks = restoredSessions.reduce((acc, s) => acc + (s.tracks?.length || 0), 0);
+          let finalSessions = restoredSessions;
+          if (totalTracks === 0) {
+            finalSessions = restoredSessions.map((s) =>
+              s.id === GLOBAL_SESSION_ID ? { ...s, tracks: getMockTracks() } : s
+            );
+          }
+          setSessions(finalSessions);
           setCurrentSessionId(data.currentSessionId || GLOBAL_SESSION_ID);
           return;
         } else {
@@ -278,7 +285,12 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
       }
     }
 
-    const allTracks = Array.from(map.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    let allTracks = Array.from(map.values()).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+    // If absolutely no tracks exist anywhere, show mock tracks for design testing
+    if (allTracks.length === 0) {
+      allTracks = getMockTracks();
+    }
 
     // Aggregate all active generations from all sessions for Global view
     const allActiveGenerations: Array<{
