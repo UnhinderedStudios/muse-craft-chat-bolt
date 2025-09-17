@@ -132,31 +132,14 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
           {/* Content */}
           <div className="flex-1 min-h-0 px-6 pb-6">
             <div className="h-full w-full grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6">
-              {/* Left: Preview + Thumbnails */}
-              <div className="flex flex-col">
-                {/* Large Preview */}
-                <div className="mx-auto w-[min(520px,90%)] aspect-square rounded-xl overflow-hidden bg-white/10 border border-white/10 flex items-center justify-center">
-                  {images[selectedIndex] ? (
-                    <img
-                      src={images[selectedIndex]}
-                      alt={`Selected album cover ${selectedIndex + 1}`}
-                      className="w-full h-full object-cover"
-                      loading="eager"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-white/40">
-                      <ImageIcon className="w-10 h-10 mb-2" />
-                      <span>No image selected</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Thumbnails column under the image, left-aligned */}
-                <div className="relative mt-4 mx-auto w-[min(520px,90%)]">
+              {/* Left: Preview + Thumbnails (side-by-side) */}
+              <div className="flex items-start justify-center gap-6">
+                {/* Thumbnails column (left) */}
+                <div className="flex flex-col items-center gap-2 w-20">
                   {/* Top arrow */}
                   <button
                     className={cn(
-                      "absolute -top-3 left-0 right-0 mx-auto w-8 h-8 flex items-center justify-center rounded-full transition-opacity",
+                      "w-8 h-8 flex items-center justify-center rounded-full transition-opacity",
                       canScrollUp ? "opacity-100 hover:bg-white/10" : "opacity-30 pointer-events-none"
                     )}
                     onClick={() => canScrollUp && setOffset(o => Math.max(0, o - 1))}
@@ -166,7 +149,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   </button>
 
                   {/* Thumbs */}
-                  <div className="flex flex-col items-start gap-2">
+                  <div className="flex flex-col items-center gap-2">
                     {Array.from({ length: VISIBLE_COUNT }).map((_, i) => {
                       const img = visibleThumbs[i];
                       const idx = offset + i;
@@ -194,7 +177,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   {/* Bottom arrow */}
                   <button
                     className={cn(
-                      "absolute -bottom-3 left-0 right-0 mx-auto w-8 h-8 flex items-center justify-center rounded-full transition-opacity",
+                      "w-8 h-8 flex items-center justify-center rounded-full transition-opacity",
                       canScrollDown ? "opacity-100 hover:bg-white/10" : "opacity-30 pointer-events-none"
                     )}
                     onClick={() => canScrollDown && setOffset(o => o + 1)}
@@ -202,6 +185,26 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   >
                     <ChevronDown className="w-5 h-5 text-white" />
                   </button>
+                </div>
+
+                {/* Large Preview (right) */}
+                <div
+                  className="rounded-xl overflow-hidden bg-white/10 border border-white/10 flex items-center justify-center"
+                  style={{ width: "min(520px, 60vh)", height: "min(520px, 60vh)" }}
+                >
+                  {images[selectedIndex] ? (
+                    <img
+                      src={images[selectedIndex]}
+                      alt={`Selected album cover ${selectedIndex + 1}`}
+                      className="w-full h-full object-cover"
+                      loading="eager"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-white/40">
+                      <ImageIcon className="w-10 h-10 mb-2" />
+                      <span>No image selected</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
