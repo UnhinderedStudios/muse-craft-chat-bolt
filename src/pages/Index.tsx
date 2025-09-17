@@ -30,7 +30,6 @@ import TrackListPanel from "@/components/tracklist/TrackListPanel";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { VoiceInterface } from "@/components/voice/VoiceInterface";
 import { TemplatePanel } from "@/components/template/TemplatePanel";
-import { AlbumCoverGenerator } from "@/components/template/AlbumCoverGenerator";
 import { SessionsPanel } from "@/components/sessions/SessionsPanel";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
@@ -2318,26 +2317,35 @@ const Index = () => {
       </Dialog>
 
       {/* Quick Album Cover Generator Overlay */}
-      <AlbumCoverGenerator
-        isOpen={showQuickAlbumGenerator}
-        onClose={() => setShowQuickAlbumGenerator(false)}
-        songDetails={selectedTrackForRegen ? {
-          title: selectedTrackForRegen.title,
-          style: selectedTrackForRegen.params?.join(", ")
-        } : undefined}
-        currentCover={selectedTrackForRegen?.coverUrl}
-        onApply={(coverUrl) => {
-          if (selectedTrackForRegen && currentSession) {
-            // Update the track's cover URL in the session
-            const updatedTracks = currentSession.tracks.map(track => 
-              track.id === selectedTrackForRegen.id 
-                ? { ...track, coverUrl }
-                : track
-            );
-            updateSession(currentSession.id, { tracks: updatedTracks });
-          }
-        }}
-      />
+      <Dialog open={showQuickAlbumGenerator} onOpenChange={setShowQuickAlbumGenerator}>
+        <DialogContent className="max-w-none w-full h-full bg-black/10 backdrop-blur border-0 p-0 flex flex-col">
+          <div className="relative w-full h-full flex flex-col">
+            {/* Custom X button */}
+            <button
+              className="absolute top-6 right-6 z-10 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+              onClick={() => setShowQuickAlbumGenerator(false)}
+            >
+              <X className="w-6 h-6" />
+            </button>
+            
+            {/* Title */}
+            <div className="flex-shrink-0 pt-12 pb-8 text-center">
+              <h2 className="text-2xl font-semibold text-white">Quick Album Cover Generator</h2>
+              {selectedTrackForRegen && (
+                <p className="text-white/60 mt-2">Regenerating cover for "{selectedTrackForRegen.title}"</p>
+              )}
+            </div>
+            
+            {/* Content area for future implementation */}
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-white/40 text-center">
+                <div className="text-lg mb-2">Album cover generation coming soon...</div>
+                <div className="text-sm">This feature will allow you to regenerate album covers</div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <script
         type="application/ld+json"
