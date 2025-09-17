@@ -59,70 +59,58 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
     }
   };
 
-  // Handle drag over detection
+  // Handle drag over detection using mouse position instead of unreliable enter/leave events
   useEffect(() => {
-    if (!dragState.isDragging) {
+    if (!dragState.isDragging || !dragState.draggedTrack) {
       setIsDropReady(false);
+      setActiveDropZone(null);
       return;
     }
 
     const element = document.getElementById(`playlist-${playlist.id}`);
     if (!element) return;
 
-    const handleMouseEnter = () => {
+    // Check if mouse is over this playlist using coordinates
+    const rect = element.getBoundingClientRect();
+    const isMouseOver = 
+      dragState.mousePosition.x >= rect.left &&
+      dragState.mousePosition.x <= rect.right &&
+      dragState.mousePosition.y >= rect.top &&
+      dragState.mousePosition.y <= rect.bottom;
+
+    if (isMouseOver && !isDropReady) {
       setIsDropReady(true);
       setActiveDropZone(playlist.id);
-    };
-
-    const handleMouseLeave = () => {
+    } else if (!isMouseOver && isDropReady) {
       setIsDropReady(false);
       setActiveDropZone(null);
-    };
+    }
+  }, [dragState.isDragging, dragState.mousePosition, dragState.draggedTrack, playlist.id, setActiveDropZone, isDropReady]);
 
-    element.addEventListener('mouseenter', handleMouseEnter);
-    element.addEventListener('mouseleave', handleMouseLeave);
-
-    return () => {
-      element.removeEventListener('mouseenter', handleMouseEnter);
-      element.removeEventListener('mouseleave', handleMouseLeave);
-    };
-  }, [dragState.isDragging, playlist.id, setActiveDropZone]);
-
-  // Handle drop
+  // Handle drop when drag ends and we're the active drop zone
   useEffect(() => {
-    if (!dragState.isDragging) return;
-
-    const handleMouseUp = (e: MouseEvent) => {
-      console.log('🎯 PlaylistItem mouseup triggered, isDropReady:', isDropReady, 'draggedTrack:', dragState.draggedTrack?.title);
-      if (isDropReady && dragState.draggedTrack && onTrackAdd) {
-        e.stopPropagation();
-        e.preventDefault();
-        console.log('🎵 Track dropped on playlist:', playlist.name, dragState.draggedTrack.title);
-        
-        // Set success state immediately
-        setShowDropSuccess(true);
-        console.log('✨ Drop success state set to true for playlist:', playlist.name);
-        
-        // Call the track add handler
-        addTrackToPlaylist(playlist.id, dragState.draggedTrack);
-        onTrackAdd?.(playlist.id, dragState.draggedTrack);
-        console.log('🎵 onTrackAdd called successfully');
-        
-        // End drag immediately - no delay
-        endDrag();
-        console.log('🏁 Drag ended');
-        
-        // Reset success animation after longer duration
-        setTimeout(() => {
-          setShowDropSuccess(false);
-          console.log('🎯 Drop success animation reset for playlist:', playlist.name);
-        }, 2000);
-      }
-    };
-
-    document.addEventListener('mouseup', handleMouseUp, { capture: true });
-    return () => document.removeEventListener('mouseup', handleMouseUp, { capture: true });
-  }, [isDropReady, dragState.draggedTrack, playlist.id, onTrackAdd, dragState.isDragging, endDrag]);
+    if (dragState.isDragging || !dragState.draggedTrack) return;
+    
+    // Check if this playlist was the active drop zone when drag ended
+    if (dragState.activeDropZone === playlist.id && onTrackAdd) {
+      console.log('🎵 Track dropped on playlist:', playlist.name, dragState.draggedTrack.title);
+      
+      // Set success state immediately
+      setShowDropSuccess(true);
+      
+      // Call the track add handler
+      addTrackToPlaylist(playlist.id, dragState.draggedTrack);
+      onTrackAdd(playlist.id, dragState.draggedTrack);
+      
+      // Reset success animation after duration
+      setTimeout(() => {
+        setShowDropSuccess(false);
+      }, 2000);
+    }
+    
+    // Always reset drop ready state when drag ends
+    setIsDropReady(false);
+  }, [dragState.isDragging, dragState.draggedTrack, dragState.activeDropZone, playlist.id, onTrackAdd, addTrackToPlaylist]);
 
   const handlePlaylistClick = (e: React.MouseEvent) => {
     // Don't trigger if clicking on edit area, dropdown, or during editing

@@ -57,7 +57,15 @@ export const DragProvider: React.FC<DragProviderProps> = ({ children }) => {
 
   const endDrag = useCallback(() => {
     console.log('🏁 Ending drag operation');
-    setDragState(initialDragState);
+    setDragState(prev => {
+      // Idempotent cleanup - only clean up if we're actually dragging
+      if (prev.isDragging || prev.draggedTrack) {
+        // Remove any lingering event listeners
+        document.body.style.userSelect = '';
+        return initialDragState;
+      }
+      return prev;
+    });
   }, []);
 
   const startDrag = useCallback((track: TrackItem, event: React.MouseEvent) => {
