@@ -77,13 +77,12 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
       const result = await api.generateAlbumCovers(details);
       const covers: string[] = [];
       if (result.cover1) covers.push(result.cover1);
-      if (result.cover2) covers.push(result.cover2);
       if (covers.length === 0) {
         toast({ title: "No covers returned", description: "Try again in a moment.", variant: "destructive" });
         return;
       }
       setImages(prev => [...prev, ...covers]);
-      toast({ title: "Regenerated", description: `${covers.length} new cover${covers.length > 1 ? 's' : ''} added` });
+      toast({ title: "Regenerated", description: "1 new cover added" });
     } catch (e: any) {
       console.error("[Covers] Retry error", e);
       toast({ title: "Retry failed", description: e?.message || "Please try again.", variant: "destructive" });
