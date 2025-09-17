@@ -488,6 +488,7 @@ const Index = () => {
       hasTimestamps: false,
     },
   ];
+  const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
   
   // One-time cleanup: if both mock placeholders and real songs exist, keep only the 2 mocks
   useEffect(() => {
