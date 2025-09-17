@@ -160,21 +160,6 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
                 isPlaying={isPlaying}
                 className="h-full border-0 bg-transparent"
               />
-              
-              {/* Show refresh button for tracks with lyrics */}
-              {hasContent && currentVersion && currentVersion.hasTimestamps && currentVersion.words?.length > 0 && (
-                <div className="mt-2 flex justify-center">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onRefreshLyrics?.(currentAudioIndex)}
-                    className="h-8 px-3 text-xs flex items-center gap-2"
-                  >
-                    <RefreshCw size={12} />
-                    Refresh Lyrics
-                  </Button>
-                </div>
-              )}
             </>
           ) : (
             <div className="h-full flex items-center justify-center text-muted-foreground text-center">
