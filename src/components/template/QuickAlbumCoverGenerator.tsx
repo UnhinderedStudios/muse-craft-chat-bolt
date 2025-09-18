@@ -357,7 +357,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                     disabled={loading}
                     className="col-span-1 text-xs px-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 border-0 flex items-center justify-center leading-none"
                   >
-                    <Wand2 className="w-3 h-3 mr-0.5" />
+                    <Wand2 className="w-3 h-3 mr-0.25" />
                     Generate
                   </Button>
                   <Button
@@ -366,7 +366,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                     disabled={loading}
                     className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center leading-none"
                   >
-                    <Repeat className="w-3 h-3 mr-0.5" />
+                    <Repeat className="w-3 h-3 mr-0.25" />
                     Retry
                   </Button>
                   <Button
@@ -375,7 +375,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                     disabled={loading}
                     className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center leading-none"
                   >
-                    <Download className="w-3 h-3 mr-0.5" />
+                    <Download className="w-3 h-3 mr-0.25" />
                     Download
                   </Button>
                   <Button
@@ -384,7 +384,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                     disabled={loading}
                     className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center leading-none"
                   >
-                    <ArrowRight className="w-3 h-3 mr-0.5" />
+                    <ArrowRight className="w-3 h-3 mr-0.25" />
                     Apply
                   </Button>
                 </div>
