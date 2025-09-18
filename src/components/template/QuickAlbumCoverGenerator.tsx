@@ -263,9 +263,10 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
 
                 <div className="grid grid-cols-3 gap-2">
                   <Button
+                    variant="secondary"
                     onClick={handleGenerate}
                     disabled={loading}
-                    className="col-span-1 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary))]/90 text-white"
+                    className="col-span-1"
                   >
                     <Send className="w-4 h-4 mr-2" /> Generate
                   </Button>
@@ -278,9 +279,9 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                     <Repeat className="w-4 h-4 mr-2" /> Retry
                   </Button>
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     onClick={handleApply}
-                    className="col-span-1 border-accent-primary text-white hover:bg-white/10"
+                    className="col-span-1"
                   >
                     <Check className="w-4 h-4 mr-2" /> Apply
                   </Button>
