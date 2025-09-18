@@ -222,10 +222,10 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                           ) : (
                             <div className="w-full h-full bg-white/5" />
                           )}
-                          {/* Loading scan only on placeholder */}
-                          {isPlaceholder && (
+                          {/* Loading scan only on first placeholder */}
+                          {loading && idx === 0 && isPlaceholder && (
                             <div className="absolute inset-0 overflow-hidden rounded-lg">
-                              <div className="w-full h-full bg-gradient-to-r from-transparent via-foreground/60 to-transparent animate-scanning" />
+                              <div className="w-full h-full bg-gradient-to-r from-transparent via-white/60 to-transparent animate-scanning" />
                             </div>
                           )}
                         </button>
@@ -267,7 +267,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   {/* Loading animation on main preview when generating */}
                   {loading && (
                     <div className="absolute inset-0 overflow-hidden rounded-xl">
-                      <div className="w-full h-full bg-gradient-to-r from-transparent via-foreground/60 to-transparent animate-scanning" />
+                      <div className="w-full h-full bg-gradient-to-r from-transparent via-white/60 to-transparent animate-scanning" />
                     </div>
                   )}
                 </div>
