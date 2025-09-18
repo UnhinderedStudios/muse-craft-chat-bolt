@@ -1,3 +1,5 @@
+import { supabase } from "@/integrations/supabase/client";
+
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
 export type SongDetails = {
@@ -10,16 +12,6 @@ export type SongDetails = {
   style?: string;
   lyrics?: string;
 };
-
-const FUNCTIONS_BASE = "https://afsyxzxwxszujnsmukff.supabase.co/functions/v1";
-
-async function handle(resp: Response) {
-  if (!resp.ok) {
-    const text = await resp.text();
-    throw new Error(text || `${resp.status} ${resp.statusText}`);
-  }
-  return resp.json();
-}
 
 export const api = {
   async chat(
@@ -35,26 +27,30 @@ export const api = {
       if (typeof systemOrOptions.temperature === 'number') payload.temperature = systemOrOptions.temperature;
     }
 
-    const resp = await fetch(`${FUNCTIONS_BASE}/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+    const { data, error } = await supabase.functions.invoke('chat', {
+      body: payload
     });
-    return handle(resp);
+    
+    if (error) throw new Error(error.message);
+    return data;
   },
 
   async startSong(details: SongDetails): Promise<{ jobId: string }> {
-    const resp = await fetch(`${FUNCTIONS_BASE}/suno`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(details),
+    const { data, error } = await supabase.functions.invoke('suno', {
+      body: details
     });
-    return handle(resp);
+    
+    if (error) throw new Error(error.message);
+    return data;
   },
 
   async pollSong(jobId: string): Promise<{ status: string; audioUrl?: string; audioUrls?: string[]; error?: string }> {
-    const resp = await fetch(`${FUNCTIONS_BASE}/suno?jobId=${encodeURIComponent(jobId)}`);
-    return handle(resp);
+    const { data, error } = await supabase.functions.invoke('suno', {
+      body: { jobId }
+    });
+    
+    if (error) throw new Error(error.message);
+    return data;
   },
 
   async getMusicGenerationDetails(jobId: string): Promise<{
@@ -68,8 +64,12 @@ export const api = {
     statusRaw: string;
     taskId: string;
   }> {
-    const resp = await fetch(`${FUNCTIONS_BASE}/suno?jobId=${encodeURIComponent(jobId)}&details=true`);
-    return handle(resp);
+    const { data, error } = await supabase.functions.invoke('suno', {
+      body: { jobId, details: true }
+    });
+    
+    if (error) throw new Error(error.message);
+    return data;
   },
 
   async getTimestampedLyrics(params: { taskId: string; audioId?: string; musicIndex?: number }): Promise<{ 
@@ -84,12 +84,12 @@ export const api = {
     hootCer?: number;
     isStreamed?: boolean;
   }> {
-    const resp = await fetch(`${FUNCTIONS_BASE}/timestamped-lyrics`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(params),
+    const { data, error } = await supabase.functions.invoke('timestamped-lyrics', {
+      body: params
     });
-    return handle(resp);
+    
+    if (error) throw new Error(error.message);
+    return data;
   },
 
   async generateAlbumCovers(songDetails: SongDetails): Promise<{ 
@@ -140,13 +140,15 @@ export const api = {
     console.log("📡 Sending to Imagen:", requestParams);
 
     // Generate album covers with new response format
-    const response = await fetch(`${FUNCTIONS_BASE}/generate-album-cover`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestParams),
+    const { data, error } = await supabase.functions.invoke('generate-album-cover', {
+      body: requestParams
     });
 
-    const data = await handle(response);
+    if (error) {
+      console.error("🖼️ Album cover generation error:", error);
+      throw new Error(error.message);
+    }
+    
     console.log("🖼️ Imagen response:", data);
 
     const debug = {
@@ -182,33 +184,28 @@ export const api = {
     model: string;
     jwtRequired: boolean;
   }> {
-    const response = await fetch(`${FUNCTIONS_BASE}/generate-album-cover/health`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-    return handle(response);
+    const { data, error } = await supabase.functions.invoke('generate-album-cover/health');
+    
+    if (error) throw new Error(error.message);
+    return data;
   },
 
   async startWavConversion(params: { audioId?: string; taskId?: string; musicIndex?: number }): Promise<{ jobId: string }> {
-    const resp = await fetch(`${FUNCTIONS_BASE}/suno/wav`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(params),
+    const { data, error } = await supabase.functions.invoke('suno/wav', {
+      body: params
     });
-    return handle(resp);
+    
+    if (error) throw new Error(error.message);
+    return data;
   },
 
   async pollWav(jobId: string): Promise<{ status: "pending" | "ready" | "error"; wavUrl?: string; error?: string; blob?: Blob }> {
-    const resp = await fetch(`${FUNCTIONS_BASE}/suno/wav?jobId=${encodeURIComponent(jobId)}`);
+    const { data, error } = await supabase.functions.invoke('suno/wav', {
+      body: { jobId }
+    });
     
-    // Check if response is a WAV file download
-    const contentType = resp.headers.get('content-type');
-    if (contentType === 'audio/wav' && resp.ok) {
-      const blob = await resp.blob();
-      return { status: "ready", blob };
-    }
-    
-    return handle(resp);
+    if (error) throw new Error(error.message);
+    return data;
   },
 
   async convertToWav(params: { audioId?: string; taskId?: string; musicIndex?: number }): Promise<string> {
@@ -271,13 +268,15 @@ export const api = {
     const testPrompt = "A vibrant abstract digital art album cover with swirling colors, musical notes floating in space, cosmic background, no humans, artistic and modern style";
     console.log("🧪 testAlbumCover - Using test prompt:", testPrompt);
     
-    const response = await fetch(`${FUNCTIONS_BASE}/generate-album-cover`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: testPrompt }),
+    const { data, error } = await supabase.functions.invoke('generate-album-cover', {
+      body: { prompt: testPrompt }
     });
 
-    const data = await handle(response);
+    if (error) {
+      console.error("Test album cover error:", error);
+      throw new Error(error.message);
+    }
+    
     console.log("Test album cover response:", data);
 
     const debug = {
@@ -311,13 +310,20 @@ export const api = {
 
   // Generate album covers from a custom prompt using Gemini/Imagen edge function
   async generateAlbumCoversByPrompt(prompt: string, n: number = 4): Promise<string[]> {
-    const response = await fetch(`${FUNCTIONS_BASE}/generate-album-cover`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, aspectRatio: "1:1", n }),
+    console.log("🎨 Calling edge function with prompt:", prompt);
+    
+    const { data, error } = await supabase.functions.invoke('generate-album-cover', {
+      body: { prompt, aspectRatio: "1:1", n }
     });
-    const data = await handle(response);
-    if (data.images && Array.isArray(data.images)) {
+    
+    if (error) {
+      console.error("❌ Edge function error:", error);
+      throw new Error(error.message || "Failed to generate album covers");
+    }
+    
+    console.log("✅ Edge function response:", data);
+    
+    if (data?.images && Array.isArray(data.images)) {
       return data.images as string[];
     }
     return [];
