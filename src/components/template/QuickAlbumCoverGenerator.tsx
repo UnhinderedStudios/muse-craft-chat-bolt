@@ -58,11 +58,18 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
     }
     try {
       setLoading(true);
+      console.log("🎨 Starting generation with prompt:", prompt.trim());
+      
       const newImages = await api.generateAlbumCoversByPrompt(prompt.trim(), 1);
+      console.log("🖼️ Generation response:", newImages);
+      
       if (!newImages || newImages.length === 0) {
+        console.error("❌ No images returned from API");
         toast({ title: "No images returned", description: "Try a different prompt.", variant: "destructive" });
         return;
       }
+      
+      console.log("✅ Generated", newImages.length, "images, updating state");
       
       // Add new images to the front (newest first)
       const updatedImages = [...newImages, ...images];
@@ -85,6 +92,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
       console.error("[Covers] Generate error", e);
       toast({ title: "Generation failed", description: e?.message || "Please try again.", variant: "destructive" });
     } finally {
+      console.log("🔄 Setting loading to false");
       setLoading(false);
     }
   };
