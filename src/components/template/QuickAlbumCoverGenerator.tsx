@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { TrackItem } from "@/types";
-import { ChevronUp, ChevronDown, X, ImageIcon, Send, Repeat, Check, Download } from "lucide-react";
+import { ChevronUp, ChevronDown, X, ImageIcon, Wand2, Repeat, Check, Download } from "lucide-react";
 import { useSessionManager } from "@/hooks/use-session-manager";
 
 interface QuickAlbumCoverGeneratorProps {
@@ -334,7 +334,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                     disabled={loading}
                     className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10"
                   >
-                    <Send className="w-3 h-3 mr-1" /> Generate
+                    <Wand2 className="w-3 h-3 mr-1" /> Generate
                   </Button>
                   <Button
                     variant="secondary"
