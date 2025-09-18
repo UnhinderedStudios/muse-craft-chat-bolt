@@ -350,38 +350,38 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   )}
                 </div>
 
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-4 gap-4">
                   <Button
                     variant="secondary"
                     onClick={handleGenerate}
                     disabled={loading}
-                    className="text-xs bg-gradient-to-r from-purple-600 to-pink-500 text-white hover:from-purple-700 hover:to-pink-600 border-0"
+                    className="w-full whitespace-nowrap bg-gradient-to-r from-purple-600 to-pink-500 text-white hover:from-purple-700 hover:to-pink-600 border-0"
                   >
-                    <Wand2 className="w-3 h-3 mr-1" /> Generate
+                    <Wand2 className="w-4 h-4 mr-2" /> Generate
                   </Button>
                   <Button
                     variant="secondary"
                     onClick={handleRetry}
                     disabled={loading}
-                    className="text-xs bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10"
+                    className="w-full whitespace-nowrap bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10"
                   >
-                    <Repeat className="w-3 h-3 mr-1" /> Retry
+                    <Repeat className="w-4 h-4 mr-2" /> Retry
                   </Button>
                   <Button
                     variant="secondary"
                     onClick={handleDownload}
                     disabled={loading}
-                    className="text-xs bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10"
+                    className="w-full whitespace-nowrap bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10"
                   >
-                    <Download className="w-3 h-3 mr-1" /> Download
+                    <Download className="w-4 h-4 mr-2" /> Download
                   </Button>
                   <Button
                     variant="secondary"
                     onClick={handleApply}
                     disabled={loading}
-                    className="text-xs bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10"
+                    className="w-full whitespace-nowrap bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10"
                   >
-                    <Check className="w-3 h-3 mr-1" /> Apply
+                    <Check className="w-4 h-4 mr-2" /> Apply
                   </Button>
                 </div>
               </aside>
