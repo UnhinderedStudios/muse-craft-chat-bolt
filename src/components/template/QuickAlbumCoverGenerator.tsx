@@ -253,12 +253,9 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   style={{ width: "min(520px, 60vh)", height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
                 >
                   {loading ? (
-                    <div className="flex flex-col items-center justify-center text-white/40 w-full h-full relative">
-                      <ImageIcon className="w-10 h-10 mb-2" />
-                      <span>Generating...</span>
-                      <div className="absolute inset-0 overflow-hidden rounded-xl">
-                        <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning" />
-                      </div>
+                    <div className="flex items-center justify-center w-full h-full relative">
+                      <div className="spinner1 absolute"></div>
+                      <div className="spinner relative"></div>
                     </div>
                   ) : images[selectedIndex] ? (
                     <img
