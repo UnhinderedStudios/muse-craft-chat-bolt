@@ -6,7 +6,7 @@ function cors(res: Response) {
   const headers = new Headers(res.headers);
   headers.set("Access-Control-Allow-Origin", "*");
   headers.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  headers.set("Access-Control-Allow-Headers", "authorization, x-client-info, apikey, content-type");
+  headers.set("Access-Control-Allow-Headers", "authorization, x-client-info, apikey, content-type, x-supabase-api-version");
   return new Response(res.body, { status: res.status, headers });
 }
 

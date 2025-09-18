@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
@@ -162,6 +162,9 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
   return (
     <Dialog open={isOpen} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-none w-full h-full bg-black/10 backdrop-blur border-0 p-0 flex flex-col">
+        {/* Accessible title/description for Radix Dialog */}
+        <DialogTitle className="sr-only">Quick Album Cover Generator</DialogTitle>
+        <DialogDescription className="sr-only">Generate and select album covers for the current track.</DialogDescription>
         <div className="relative w-full h-full flex flex-col">
           {/* Close Button */}
           <button
