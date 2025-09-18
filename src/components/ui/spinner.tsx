@@ -14,20 +14,16 @@ export const Spinner: React.FC<SpinnerProps> = ({ className, size = "md" }) => {
   };
 
   return (
-    <div className="flex justify-start">
-      <div className="max-w-[85%] px-4 py-3 rounded-[16px] bg-[#000000] border border-accent-primary shadow-[0_0_20px_rgba(202,36,116,0.4)] flex items-center justify-center">
-        <div
-          className={cn(
-            "animate-spin rounded-full border-2 border-transparent border-t-accent-primary",
-            "shadow-[0_0_10px_rgba(202,36,116,0.6)]",
-            sizeClasses[size],
-            className
-          )}
-          style={{
-            filter: "drop-shadow(0 0 4px rgba(202, 36, 116, 0.8))"
-          }}
-        />
-      </div>
-    </div>
+    <div
+      className={cn(
+        "animate-spin rounded-full border-2 border-transparent border-t-white",
+        "shadow-[0_0_10px_rgba(255,255,255,0.6)]",
+        sizeClasses[size],
+        className
+      )}
+      style={{
+        filter: "drop-shadow(0 0 4px rgba(255, 255, 255, 0.8))"
+      }}
+    />
   );
 };

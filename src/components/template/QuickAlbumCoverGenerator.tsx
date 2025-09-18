@@ -217,7 +217,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                           {/* Loading animation on top thumbnail when generating */}
                           {loading && i === 0 && (
                             <div className="absolute inset-0 overflow-hidden rounded-lg">
-                              <div className="w-full h-full bg-gradient-to-r from-transparent via-accent-primary/15 to-transparent animate-scanning" />
+                              <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning" />
                             </div>
                           )}
                         </button>
@@ -259,7 +259,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   {/* Loading animation on main preview when generating */}
                   {loading && (
                     <div className="absolute inset-0 overflow-hidden rounded-xl">
-                      <div className="w-full h-full bg-gradient-to-r from-transparent via-accent-primary/15 to-transparent animate-scanning" />
+                      <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning" />
                     </div>
                   )}
                 </div>
