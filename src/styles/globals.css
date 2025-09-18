@@ -9,17 +9,27 @@
 
 .bar {
   display: inline-block;
-  width: 6px;
-  height: 40px;
+  width: 3px;
+  height: 20px;
   background-color: rgba(255, 255, 255, .35);
   border-radius: 10px;
   animation: scale-up4 1s linear infinite;
 }
 
 .bar:nth-child(2) {
-  height: 70px;
+  height: 35px;
   margin: 0 5px;
   animation-delay: .25s;
+}
+
+/* Overlay-specific larger bars */
+.overlay-loader .bar {
+  width: 6px;
+  height: 40px;
+}
+.overlay-loader .bar:nth-child(2) {
+  height: 70px;
+  margin: 0 5px;
 }
 
 .bar:nth-child(3) {

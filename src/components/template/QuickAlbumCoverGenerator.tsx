@@ -299,7 +299,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   ) : (
                     <div className="flex flex-col items-center justify-center text-white/40">
                       {loading ? (
-                        <div className="loader">
+                        <div className="loader overlay-loader">
                           <div className="bar"></div>
                           <div className="bar"></div>
                           <div className="bar"></div>
