@@ -154,14 +154,15 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
     <Dialog open={isOpen} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-none w-full h-full bg-black/10 backdrop-blur border-0 p-0 flex flex-col">
         <div className="relative w-full h-full flex flex-col">
-          {/* Custom X button */}
-          <button
-            className="absolute top-6 right-6 z-10 w-8 h-8 flex items-center justify-center text-white/60 hover:text-white transition-colors rounded-full hover:bg-white/10"
+          {/* Close Button */}
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
-            aria-label="Close"
+            className="absolute top-4 right-4 z-50 text-text-secondary hover:text-text-primary"
           >
-            <X className="w-5 h-5" />
-          </button>
+            <X className="w-6 h-6" />
+          </Button>
 
           {/* Content */}
           <div className="flex-1 min-h-0 px-6 pb-6 flex items-center justify-center">
