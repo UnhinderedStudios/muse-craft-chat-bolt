@@ -28,6 +28,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
   const VISIBLE_COUNT = 5;
 
   useEffect(() => {
+    console.log("🎯 QuickAlbumCoverGenerator opened:", { isOpen, track: track?.title, trackId: track?.id });
     if (isOpen && track) {
       // Load all previously generated covers for this track (newest first)
       const existingCovers = track.generatedCovers || [];
@@ -38,6 +39,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
         initial.push(track.coverUrl);
       }
       
+      console.log("📸 Setting up initial images:", initial);
       setImages(initial);
       setSelectedIndex(0);
       setOffset(0);
@@ -55,7 +57,9 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
   }, [loading, images, offset]);
 
   const handleGenerate = async () => {
+    console.log("🚀 Generate button clicked, prompt:", prompt.trim());
     if (!prompt.trim()) {
+      console.log("❌ Empty prompt, showing toast");
       toast({ title: "Enter a prompt", description: "Type what you want to see on the album cover." });
       return;
     }
