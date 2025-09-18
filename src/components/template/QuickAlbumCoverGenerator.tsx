@@ -350,38 +350,42 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   )}
                 </div>
 
-                <div className="grid grid-cols-4 gap-1">
+                <div className="grid grid-cols-4 gap-0.5">
                   <Button
                     variant="secondary"
                     onClick={handleGenerate}
                     disabled={loading}
-                    className="col-span-1 text-xs px-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 border-0"
+                    className="col-span-1 text-xs px-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 border-0 flex items-center justify-center"
                   >
-                    <Wand2 className="w-3 h-3 mr-1" /> Generate
+                    <Wand2 className="w-3 h-3 mr-1" />
+                    Generate
                   </Button>
                   <Button
                     variant="secondary"
                     onClick={handleRetry}
                     disabled={loading}
-                    className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10"
+                    className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center"
                   >
-                    <Repeat className="w-3 h-3 mr-1" /> Retry
+                    <Repeat className="w-3 h-3 mr-1" />
+                    Retry
                   </Button>
                   <Button
                     variant="secondary"
                     onClick={handleDownload}
                     disabled={loading}
-                    className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10"
+                    className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center"
                   >
-                    <Download className="w-3 h-3 mr-1" /> Download
+                    <Download className="w-3 h-3 mr-1" />
+                    Download
                   </Button>
                   <Button
                     variant="secondary"
                     onClick={handleApply}
                     disabled={loading}
-                    className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10"
+                    className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center"
                   >
-                    <Check className="w-3 h-3 mr-1" /> Apply
+                    <Check className="w-3 h-3 mr-1" />
+                    Apply
                   </Button>
                 </div>
               </aside>
