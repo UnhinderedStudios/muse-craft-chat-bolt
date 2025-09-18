@@ -350,12 +350,12 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   )}
                 </div>
 
-                <div className="grid grid-cols-4 gap-1">
+                <div className="grid grid-cols-4 gap-3">
                   <Button
                     variant="secondary"
                     onClick={handleGenerate}
                     disabled={loading}
-                    className="col-span-1 text-xs px-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 border-0"
+                    className="col-span-1 text-xs px-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white hover:from-purple-700 hover:to-pink-600 border-0"
                   >
                     <Wand2 className="w-3 h-3 mr-1" /> Generate
                   </Button>
