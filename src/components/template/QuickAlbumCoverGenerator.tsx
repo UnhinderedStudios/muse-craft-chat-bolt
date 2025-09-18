@@ -332,7 +332,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                     variant="secondary"
                     onClick={handleGenerate}
                     disabled={loading}
-                    className="col-span-1 text-xs px-2"
+                    className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10"
                   >
                     <Send className="w-3 h-3 mr-1" /> Generate
                   </Button>
@@ -340,21 +340,21 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                     variant="secondary"
                     onClick={handleRetry}
                     disabled={retryLoading}
-                    className="col-span-1 text-xs px-2"
+                    className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10"
                   >
                     <Repeat className="w-3 h-3 mr-1" /> Retry
                   </Button>
                   <Button
                     variant="secondary"
                     onClick={handleDownload}
-                    className="col-span-1 text-xs px-2"
+                    className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10"
                   >
                     <Download className="w-3 h-3 mr-1" /> Download
                   </Button>
                   <Button
                     variant="secondary"
                     onClick={handleApply}
-                    className="col-span-1 text-xs px-2"
+                    className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10"
                   >
                     <Check className="w-3 h-3 mr-1" /> Apply
                   </Button>
