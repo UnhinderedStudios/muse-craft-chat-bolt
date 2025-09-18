@@ -244,7 +244,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
 
               {/* Right: Prompt Controls */}
               <aside 
-                className="flex flex-col rounded-xl border border-white/20 p-4"
+                className="flex flex-col rounded-xl border border-white/10 p-4"
                 style={{ height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
               >
                 <header className="mb-4">
