@@ -158,7 +158,11 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
   if (!words.length) {
     return (
       <div className={cn("min-h-[200px] flex items-center justify-center text-muted-foreground", className)}>
-        <span className="text-center">Lyrics not available</span>
+        <div className="flex items-center space-x-1">
+          <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+          <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+          <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
+        </div>
       </div>
     );
   }
