@@ -350,7 +350,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   )}
                 </div>
 
-                <div className="grid grid-cols-4 gap-0.5">
+                <div className="grid grid-cols-4 gap-1">
                   <Button
                     variant="secondary"
                     onClick={handleGenerate}
