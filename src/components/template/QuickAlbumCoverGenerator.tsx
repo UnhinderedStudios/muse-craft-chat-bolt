@@ -24,7 +24,6 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
   const [offset, setOffset] = useState(0); // thumbnail scroll offset
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
-  const [retryLoading, setRetryLoading] = useState(false);
 
   const VISIBLE_COUNT = 5;
 
@@ -104,7 +103,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
   const handleRetry = async () => {
     if (!track) return;
     try {
-      setRetryLoading(true);
+      setLoading(true);
       
       // Generate the same prompt that would be sent to ChatGPT for this track
       let chatInstruction = "";
@@ -158,7 +157,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
       console.error("[Covers] Retry error", e);
       toast({ title: "Retry failed", description: e?.message || "Please try again.", variant: "destructive" });
     } finally {
-      setRetryLoading(false);
+      setLoading(false);
     }
   };
 
@@ -352,14 +351,14 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                     variant="secondary"
                     onClick={handleGenerate}
                     disabled={loading}
-                    className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10"
+                    className="col-span-1 text-xs px-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 border-0"
                   >
                     <Wand2 className="w-3 h-3 mr-1" /> Generate
                   </Button>
                   <Button
                     variant="secondary"
                     onClick={handleRetry}
-                    disabled={retryLoading}
+                    disabled={loading}
                     className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10"
                   >
                     <Repeat className="w-3 h-3 mr-1" /> Retry
@@ -367,6 +366,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   <Button
                     variant="secondary"
                     onClick={handleDownload}
+                    disabled={loading}
                     className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10"
                   >
                     <Download className="w-3 h-3 mr-1" /> Download
@@ -374,6 +374,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   <Button
                     variant="secondary"
                     onClick={handleApply}
+                    disabled={loading}
                     className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10"
                   >
                     <Check className="w-3 h-3 mr-1" /> Apply
