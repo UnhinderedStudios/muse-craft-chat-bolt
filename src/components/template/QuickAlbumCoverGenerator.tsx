@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { TrackItem } from "@/types";
-import { ChevronUp, ChevronDown, X, ImageIcon, Send, Repeat, Check } from "lucide-react";
+import { ChevronUp, ChevronDown, X, ImageIcon, Send, Repeat, Check, Download } from "lucide-react";
 import { useSessionManager } from "@/hooks/use-session-manager";
 
 interface QuickAlbumCoverGeneratorProps {
@@ -163,6 +163,21 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
     onClose();
   };
 
+  const handleDownload = () => {
+    if (!images[selectedIndex]) {
+      toast({ title: "No image to download", description: "Select an image first.", variant: "destructive" });
+      return;
+    }
+    
+    const link = document.createElement('a');
+    link.href = images[selectedIndex];
+    link.download = `album-cover-${track?.title || 'untitled'}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({ title: "Downloaded", description: "Album cover saved to your device" });
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-none w-full h-full bg-black/10 backdrop-blur border-0 p-0 flex flex-col">
@@ -312,29 +327,36 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   )}
                 </div>
 
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-4 gap-1">
                   <Button
                     variant="secondary"
                     onClick={handleGenerate}
                     disabled={loading}
-                    className="col-span-1"
+                    className="col-span-1 text-xs px-2"
                   >
-                    <Send className="w-4 h-4 mr-2" /> Generate
+                    <Send className="w-3 h-3 mr-1" /> Generate
                   </Button>
                   <Button
                     variant="secondary"
                     onClick={handleRetry}
                     disabled={retryLoading}
-                    className="col-span-1"
+                    className="col-span-1 text-xs px-2"
                   >
-                    <Repeat className="w-4 h-4 mr-2" /> Retry
+                    <Repeat className="w-3 h-3 mr-1" /> Retry
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={handleDownload}
+                    className="col-span-1 text-xs px-2"
+                  >
+                    <Download className="w-3 h-3 mr-1" /> Download
                   </Button>
                   <Button
                     variant="secondary"
                     onClick={handleApply}
-                    className="col-span-1"
+                    className="col-span-1 text-xs px-2"
                   >
-                    <Check className="w-4 h-4 mr-2" /> Apply
+                    <Check className="w-3 h-3 mr-1" /> Apply
                   </Button>
                 </div>
               </aside>
