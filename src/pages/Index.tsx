@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { api, type SongDetails } from "@/lib/api";
 import { FileAttachment } from "@/types";
 import { sanitizeStyle } from "@/lib/styleSanitizer";
-import { GlowingRingSpinner } from "@/components/ui/GlowingRingSpinner";
+import { Spinner } from "@/components/ui/spinner";
 import { ImageAnalysisLoader } from "@/components/ui/image-analysis-loader";
 import { toast } from "sonner";
 import { Dice5, Mic, Upload, Plus, List, Play, Pause, X, SkipBack, SkipForward, Shuffle, Repeat, Volume2, VolumeX, Music, Compass, Users, HelpCircle, BookOpen, MoreHorizontal } from "lucide-react";
@@ -180,7 +180,7 @@ const VirtualizedChat = ({ chatFeed, scrollerRef, bottomPad }: VirtualizedChatPr
                 <div className="space-y-3" role="status" aria-live="polite">
                   {m.isAnalyzingImage && <ImageAnalysisLoader text="Analyzing Image..." />}
                   {m.isReadingText && <ImageAnalysisLoader text="Reading Document..." />}
-                  {!m.isAnalyzingImage && !m.isReadingText && <GlowingRingSpinner />}
+                  {!m.isAnalyzingImage && !m.isReadingText && <Spinner />}
                 </div>
               ) : (
                 <ChatBubble role={m.role} content={m.content} />
@@ -203,7 +203,7 @@ const VirtualizedChat = ({ chatFeed, scrollerRef, bottomPad }: VirtualizedChatPr
               <div key="__status__" className="space-y-3" role="status" aria-live="polite">
                 {m.isAnalyzingImage && <ImageAnalysisLoader text="Analyzing Image..." />}
                 {m.isReadingText && <ImageAnalysisLoader text="Reading Document..." />}
-                {!m.isAnalyzingImage && !m.isReadingText && <GlowingRingSpinner />}
+                {!m.isAnalyzingImage && !m.isReadingText && <Spinner />}
               </div>
             );
           }
@@ -1999,7 +1999,7 @@ const Index = () => {
                         >
                           {m.isAnalyzingImage && <ImageAnalysisLoader text="Analyzing Image..." />}
                           {m.isReadingText && <ImageAnalysisLoader text="Reading Document..." />}
-                          {!m.isAnalyzingImage && !m.isReadingText && <GlowingRingSpinner />}
+                          {!m.isAnalyzingImage && !m.isReadingText && <Spinner />}
                         </div>
                       );
                     }

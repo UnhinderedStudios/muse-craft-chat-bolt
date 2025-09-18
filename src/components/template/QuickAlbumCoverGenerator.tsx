@@ -47,16 +47,9 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
   }, [isOpen, track]);
 
   const canScrollUp = offset > 0;
-  const canScrollDown = (loading ? images.length + 1 : images.length) > offset + VISIBLE_COUNT;
+  const canScrollDown = images.length > offset + VISIBLE_COUNT;
 
-  const visibleThumbs = useMemo(() => {
-    if (loading) {
-      // When loading, show placeholder at first position, then existing images
-      const displayImages = [null, ...images];
-      return displayImages.slice(offset, offset + VISIBLE_COUNT);
-    }
-    return images.slice(offset, offset + VISIBLE_COUNT);
-  }, [images, offset, loading]);
+  const visibleThumbs = useMemo(() => images.slice(offset, offset + VISIBLE_COUNT), [images, offset]);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -206,27 +199,25 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                       const img = visibleThumbs[i];
                       const idx = offset + i;
                       const isActive = idx === selectedIndex;
-                      const isLoadingPlaceholder = loading && i === 0 && img === null;
-                      
                       return (
                         <button
-                          key={loading ? `loading-${i}` : idx}
+                          key={idx}
                           className={cn(
                             "w-20 h-20 rounded-lg overflow-hidden border transition-all relative",
                             isActive ? "border-accent-primary ring-2 ring-accent-primary/40" : "border-white/10 hover:border-white/20"
                           )}
-                          onClick={() => img && setSelectedIndex(loading ? idx - 1 : idx)}
+                          onClick={() => img && setSelectedIndex(idx)}
                           aria-label={`Thumbnail ${idx + 1}`}
                         >
                           {img ? (
                             <img src={img} alt={`Thumbnail ${idx + 1}`} className="block w-full h-full object-cover" />
                           ) : (
-                            <div className="w-full h-full bg-white/5 relative">
-                              {isLoadingPlaceholder && (
-                                <div className="absolute inset-0 overflow-hidden rounded-lg">
-                                  <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning" />
-                                </div>
-                              )}
+                            <div className="w-full h-full bg-white/5" />
+                          )}
+                          {/* Loading animation on top thumbnail when generating */}
+                          {loading && i === 0 && (
+                            <div className="absolute inset-0 overflow-hidden rounded-lg">
+                              <div className="w-full h-full bg-gradient-to-r from-transparent via-accent-primary/15 to-transparent animate-scanning" />
                             </div>
                           )}
                         </button>
@@ -252,14 +243,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   className="rounded-xl overflow-hidden border border-white/10 flex items-center justify-center relative"
                   style={{ width: "min(520px, 60vh)", height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
                 >
-                  {loading ? (
-                    <div className="flex items-center justify-center w-full h-full relative">
-                      <div className="w-16 h-16 rounded-full border-2 border-transparent border-t-accent-primary animate-spin shadow-[0_0_30px_hsl(var(--accent-primary)_/_0.8)]" />
-                      <div className="absolute inset-0 overflow-hidden rounded-xl">
-                        <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning" />
-                      </div>
-                    </div>
-                  ) : images[selectedIndex] ? (
+                  {images[selectedIndex] ? (
                     <img
                       src={images[selectedIndex]}
                       alt={`Selected album cover ${selectedIndex + 1}`}
@@ -267,9 +251,15 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                       loading="eager"
                     />
                   ) : (
-                    <div className="flex flex-col items-center justify-center text-white/40 w-full h-full relative">
+                    <div className="flex flex-col items-center justify-center text-white/40">
                       <ImageIcon className="w-10 h-10 mb-2" />
                       <span>No image selected</span>
+                    </div>
+                  )}
+                  {/* Loading animation on main preview when generating */}
+                  {loading && (
+                    <div className="absolute inset-0 overflow-hidden rounded-xl">
+                      <div className="w-full h-full bg-gradient-to-r from-transparent via-accent-primary/15 to-transparent animate-scanning" />
                     </div>
                   )}
                 </div>
