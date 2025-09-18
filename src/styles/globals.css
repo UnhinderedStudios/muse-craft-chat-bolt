@@ -38,14 +38,25 @@
 }
 
 .spinner {
-  background-image: linear-gradient(rgb(186, 66, 255) 35%,rgb(0, 225, 255));
   width: 100px;
   height: 100px;
-  animation: spinning82341 1.7s linear infinite;
-  text-align: center;
   border-radius: 50px;
+  background: conic-gradient(from 0deg, rgb(186, 66, 255), rgb(0, 225, 255), rgb(186, 66, 255));
+  animation: spinning82341 1.7s linear infinite;
+  position: relative;
   filter: blur(1px);
   box-shadow: 0px -5px 20px 0px rgb(186, 66, 255), 0px 5px 20px 0px rgb(0, 225, 255);
+}
+
+.spinner::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  background: rgb(36, 36, 36);
+  border-radius: 50px;
 }
 
 .spinner1 {
