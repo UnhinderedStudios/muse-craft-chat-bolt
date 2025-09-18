@@ -260,8 +260,18 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center text-white/40">
-                      <ImageIcon className="w-10 h-10 mb-2" />
-                      <span>{loading ? "Generating..." : "No image selected"}</span>
+                      {loading ? (
+                        <div className="loader">
+                          <div className="bar"></div>
+                          <div className="bar"></div>
+                          <div className="bar"></div>
+                        </div>
+                      ) : (
+                        <>
+                          <ImageIcon className="w-10 h-10 mb-2" />
+                          <span>No image selected</span>
+                        </>
+                      )}
                     </div>
                   )}
                   {/* Loading animation on main preview when generating */}
