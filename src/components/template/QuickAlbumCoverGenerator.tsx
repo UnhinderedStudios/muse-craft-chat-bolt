@@ -286,7 +286,11 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                 <div className="flex-1 mb-4 relative">
                   {loading ? (
                     <div className="w-full h-full flex items-center justify-center">
-                      <Spinner />
+                      <div className="relative">
+                        <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                        <div className="absolute inset-0 w-8 h-8 border-2 border-transparent border-t-white/60 rounded-full animate-spin" style={{animationDuration: '1.5s'}}></div>
+                        <div className="absolute inset-0 w-8 h-8 rounded-full bg-white/10 animate-pulse"></div>
+                      </div>
                     </div>
                   ) : (
                     <textarea
