@@ -199,6 +199,8 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                       const img = visibleThumbs[i];
                       const idx = offset + i;
                       const isActive = idx === selectedIndex;
+                      const isLoadingPlaceholder = loading && i === 0 && !img;
+                      
                       return (
                         <button
                           key={idx}
@@ -212,12 +214,12 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                           {img ? (
                             <img src={img} alt={`Thumbnail ${idx + 1}`} className="block w-full h-full object-cover" />
                           ) : (
-                            <div className="w-full h-full bg-white/5" />
-                          )}
-                          {/* Loading animation on top thumbnail when generating */}
-                          {loading && i === 0 && (
-                            <div className="absolute inset-0 overflow-hidden rounded-lg">
-                              <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning" />
+                            <div className="w-full h-full bg-white/5 relative">
+                              {isLoadingPlaceholder && (
+                                <div className="absolute inset-0 overflow-hidden rounded-lg">
+                                  <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning" />
+                                </div>
+                              )}
                             </div>
                           )}
                         </button>
@@ -251,15 +253,15 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                       loading="eager"
                     />
                   ) : (
-                    <div className="flex flex-col items-center justify-center text-white/40">
+                    <div className="flex flex-col items-center justify-center text-white/40 w-full h-full relative">
                       <ImageIcon className="w-10 h-10 mb-2" />
                       <span>No image selected</span>
-                    </div>
-                  )}
-                  {/* Loading animation on main preview when generating */}
-                  {loading && (
-                    <div className="absolute inset-0 overflow-hidden rounded-xl">
-                      <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning" />
+                      {/* Loading animation on main preview when generating and no image selected */}
+                      {loading && (
+                        <div className="absolute inset-0 overflow-hidden rounded-xl">
+                          <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning" />
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
