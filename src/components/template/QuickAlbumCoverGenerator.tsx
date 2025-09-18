@@ -223,8 +223,8 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
 
                 {/* Large Preview (right) */}
                 <div
-                  className="rounded-xl overflow-hidden bg-white/10 border border-white/10 flex items-center justify-center"
-                  style={{ width: "min(520px, 60vh)", height: "min(520px, 60vh)" }}
+                  className="rounded-xl overflow-hidden border border-white/10 flex items-center justify-center"
+                  style={{ width: "min(520px, 60vh)", height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
                 >
                   {images[selectedIndex] ? (
                     <img
