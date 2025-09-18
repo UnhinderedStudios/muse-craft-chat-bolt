@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
@@ -191,7 +192,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                         <button
                           key={idx}
                           className={cn(
-                            "w-20 h-20 rounded-lg overflow-hidden border transition-all",
+                            "w-20 h-20 rounded-lg overflow-hidden border transition-all relative",
                             isActive ? "border-accent-primary ring-2 ring-accent-primary/40" : "border-white/10 hover:border-white/20"
                           )}
                           onClick={() => img && setSelectedIndex(idx)}
@@ -201,6 +202,12 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                             <img src={img} alt={`Thumbnail ${idx + 1}`} className="block w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full bg-white/5" />
+                          )}
+                          {/* Loading animation on top thumbnail when generating */}
+                          {loading && i === 0 && (
+                            <div className="absolute inset-0 overflow-hidden rounded-lg">
+                              <div className="w-full h-full bg-gradient-to-r from-transparent via-accent-primary/15 to-transparent animate-scanning" />
+                            </div>
                           )}
                         </button>
                       );
@@ -222,7 +229,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
 
                 {/* Large Preview (right) */}
                 <div
-                  className="rounded-xl overflow-hidden border border-white/10 flex items-center justify-center"
+                  className="rounded-xl overflow-hidden border border-white/10 flex items-center justify-center relative"
                   style={{ width: "min(520px, 60vh)", height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
                 >
                   {images[selectedIndex] ? (
@@ -238,6 +245,12 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                       <span>No image selected</span>
                     </div>
                   )}
+                  {/* Loading animation on main preview when generating */}
+                  {loading && (
+                    <div className="absolute inset-0 overflow-hidden rounded-xl">
+                      <div className="w-full h-full bg-gradient-to-r from-transparent via-accent-primary/15 to-transparent animate-scanning" />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -251,13 +264,19 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   <p className="text-white/50 text-sm">Describe your cover. We'll generate images using Gemini.</p>
                 </header>
 
-                <div className="flex-1 mb-4">
-                  <textarea
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="e.g., Neon-lit city skyline with rain reflections, moody cinematic, no people, no text"
-                    className="w-full h-full resize-none rounded-lg bg-black/40 border border-white/10 text-white placeholder:text-white/40 p-3 focus:outline-none focus:ring-1 focus:ring-white/20"
-                  />
+                <div className="flex-1 mb-4 relative">
+                  {loading ? (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Spinner />
+                    </div>
+                  ) : (
+                    <textarea
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      placeholder="e.g., Neon-lit city skyline with rain reflections, moody cinematic, no people, no text"
+                      className="w-full h-full resize-none rounded-lg bg-black/40 border border-white/10 text-white placeholder:text-white/40 p-3 focus:outline-none focus:ring-1 focus:ring-white/20"
+                    />
+                  )}
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
