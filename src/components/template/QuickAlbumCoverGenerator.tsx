@@ -105,6 +105,26 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
     if (!track) return;
     try {
       setRetryLoading(true);
+      
+      // Generate the same prompt that would be sent to ChatGPT for this track
+      let chatInstruction = "";
+      
+      if (track.title?.trim()) {
+        chatInstruction = `Create a simple 1 sentence prompt for an image generation tool for a musical album cover based on this song title. Keep it cinematic and realistic, do not show humans or text in it. Do not use any parameter instructions such as AR16:9.\n\nSong Title: ${track.title.trim()}`;
+      } else if (Array.isArray(track.params) && track.params.length > 0) {
+        const style = track.params.join(", ");
+        chatInstruction = `Create a simple 1 sentence prompt for an image generation tool for a musical album cover based on this music style. Keep it cinematic and realistic, do not show humans or text in it. Do not use any parameter instructions such as AR16:9.\n\nMusic Style: ${style}`;
+      }
+      
+      // Get the album cover prompt from ChatGPT to show in input field
+      if (chatInstruction) {
+        const promptResponse = await api.chat([{
+          role: "user",
+          content: chatInstruction
+        }]);
+        setPrompt(promptResponse.content);
+      }
+      
       const details = {
         title: track.title || undefined,
         style: Array.isArray(track.params) ? track.params.join(", ") : undefined,
