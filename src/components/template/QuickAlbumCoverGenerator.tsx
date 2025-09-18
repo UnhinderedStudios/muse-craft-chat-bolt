@@ -47,9 +47,13 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
   }, [isOpen, track]);
 
   const canScrollUp = offset > 0;
-  const canScrollDown = images.length > offset + VISIBLE_COUNT;
+  const totalThumbs = loading ? images.length + 1 : images.length;
+  const canScrollDown = totalThumbs > offset + VISIBLE_COUNT;
 
-  const visibleThumbs = useMemo(() => images.slice(offset, offset + VISIBLE_COUNT), [images, offset]);
+  const displayThumbs = useMemo<(string | null)[]>(() => {
+    const list: (string | null)[] = loading ? [null, ...images] : [...images];
+    return list.slice(offset, offset + VISIBLE_COUNT);
+  }, [loading, images, offset]);
 
   const handleGenerate = async () => {
     if (!prompt.trim()) {
@@ -196,9 +200,11 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   {/* Thumbs */}
                   <div className="flex flex-col items-center gap-2">
                     {Array.from({ length: VISIBLE_COUNT }).map((_, i) => {
-                      const img = visibleThumbs[i];
-                      const idx = offset + i;
-                      const isActive = idx === selectedIndex;
+                      const img = displayThumbs[i];
+                      const idx = offset + i; // position within display list
+                      const imageIndexInImages = loading ? idx - 1 : idx;
+                      const isPlaceholder = img == null;
+                      const isActive = !isPlaceholder && imageIndexInImages === selectedIndex;
                       return (
                         <button
                           key={idx}
@@ -206,7 +212,9 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                             "w-20 h-20 rounded-lg overflow-hidden border transition-all relative",
                             isActive ? "border-accent-primary ring-2 ring-accent-primary/40" : "border-white/10 hover:border-white/20"
                           )}
-                          onClick={() => img && setSelectedIndex(idx)}
+                          onClick={() => {
+                            if (!isPlaceholder && imageIndexInImages >= 0) setSelectedIndex(imageIndexInImages);
+                          }}
                           aria-label={`Thumbnail ${idx + 1}`}
                         >
                           {img ? (
@@ -214,10 +222,10 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                           ) : (
                             <div className="w-full h-full bg-white/5" />
                           )}
-                          {/* Loading animation on top thumbnail when generating */}
-                          {loading && i === 0 && (
+                          {/* Loading scan only on placeholder */}
+                          {isPlaceholder && (
                             <div className="absolute inset-0 overflow-hidden rounded-lg">
-                              <div className="w-full h-full bg-gradient-to-r from-transparent via-accent-primary/15 to-transparent animate-scanning" />
+                              <div className="w-full h-full bg-gradient-to-r from-transparent via-foreground/60 to-transparent animate-scanning" />
                             </div>
                           )}
                         </button>
@@ -259,7 +267,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   {/* Loading animation on main preview when generating */}
                   {loading && (
                     <div className="absolute inset-0 overflow-hidden rounded-xl">
-                      <div className="w-full h-full bg-gradient-to-r from-transparent via-accent-primary/15 to-transparent animate-scanning" />
+                      <div className="w-full h-full bg-gradient-to-r from-transparent via-foreground/60 to-transparent animate-scanning" />
                     </div>
                   )}
                 </div>
