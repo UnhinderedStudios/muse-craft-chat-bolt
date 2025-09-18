@@ -254,8 +254,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                 >
                   {loading ? (
                     <div className="flex items-center justify-center w-full h-full relative">
-                      <div className="spinner1 absolute"></div>
-                      <div className="spinner relative"></div>
+                      <div className="w-16 h-16 rounded-full border-2 border-transparent border-t-accent-primary animate-spin shadow-[0_0_30px_hsl(var(--accent-primary)_/_0.8)]" />
                       <div className="absolute inset-0 overflow-hidden rounded-xl">
                         <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning" />
                       </div>
