@@ -199,7 +199,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                           aria-label={`Thumbnail ${idx + 1}`}
                         >
                           {img ? (
-                            <img src={img} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                            <img src={img} alt={`Thumbnail ${idx + 1}`} className="block w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full bg-white/5" />
                           )}
@@ -230,7 +230,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                     <img
                       src={images[selectedIndex]}
                       alt={`Selected album cover ${selectedIndex + 1}`}
-                      className="w-full h-full object-cover"
+                      className="block w-full h-full object-cover"
                       loading="eager"
                     />
                   ) : (
