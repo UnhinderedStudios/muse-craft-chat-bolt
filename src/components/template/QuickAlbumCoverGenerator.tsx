@@ -251,7 +251,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   className="rounded-xl overflow-hidden border border-white/10 flex items-center justify-center relative"
                   style={{ width: "min(520px, 60vh)", height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
                 >
-                  {images[selectedIndex] ? (
+                  {!loading && images[selectedIndex] ? (
                     <img
                       src={images[selectedIndex]}
                       alt={`Selected album cover ${selectedIndex + 1}`}
@@ -261,7 +261,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   ) : (
                     <div className="flex flex-col items-center justify-center text-white/40">
                       <ImageIcon className="w-10 h-10 mb-2" />
-                      <span>No image selected</span>
+                      <span>{loading ? "Generating..." : "No image selected"}</span>
                     </div>
                   )}
                   {/* Loading animation on main preview when generating */}
