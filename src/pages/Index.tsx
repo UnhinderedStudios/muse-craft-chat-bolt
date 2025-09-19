@@ -471,26 +471,9 @@ const Index = () => {
   const tracks = currentSession?.tracks || [];
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
   
-  // One-time cleanup: if both mock placeholders and real songs exist, keep only the 2 mocks
-  useEffect(() => {
-    try {
-      const doneFlag = localStorage.getItem('cleanup_real_tracks_done');
-      if (doneFlag === '1') return;
-      const session = currentSession;
-      if (!session) return;
-      const placeholders = (session.tracks || []).filter(t => t.id?.startsWith('placeholder-'));
-      const reals = (session.tracks || []).filter(t => !t.id?.startsWith('placeholder-'));
-      // If there are placeholders (mocks) and also real songs, keep only the mocks
-      if (placeholders.length >= 2 && reals.length > 0) {
-        console.log('[Cleanup] Removing real songs, keeping only mock placeholders');
-        updateSession(session.id, { tracks: placeholders });
-        setCurrentTrackIndex(0);
-        localStorage.setItem('cleanup_real_tracks_done', '1');
-      }
-    } catch (e) {
-      console.warn('[Cleanup] Failed:', e);
-    }
-  }, [currentSession?.id]);
+  // Removed legacy cleanup that mistakenly deleted real songs
+  // Previously attempted to keep only placeholder tracks; no longer needed.
+
   
   const [karaokeTrackId, setKaraokeTrackId] = useState<string>("");
   const [karaokeAudioIndex, setKaraokeAudioIndex] = useState<number>(-1);
@@ -504,7 +487,17 @@ const Index = () => {
   useEffect(() => {
     setPlayingTrackIndex(resolvedPlayingIndex);
   }, [resolvedPlayingIndex]);
-  
+
+  // During playback, always keep the selected track expanded on the one that's actually playing
+  useEffect(() => {
+    if (!isPlaying) return;
+    const resolved = tracks.findIndex(t => t.id === playingTrackId);
+    if (resolved >= 0 && currentTrackIndex !== resolved) {
+      console.log('[Sync] Restoring selection to playing track', { from: currentTrackIndex, to: resolved });
+      setCurrentTrackIndex(resolved);
+    }
+  }, [tracks.length, isPlaying, playingTrackId]);
+
   // Sync karaoke panel to the currently selected track when not actively playing
   useEffect(() => {
     if (isPlaying || karaokePinnedRef.current) return;
