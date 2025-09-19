@@ -722,7 +722,7 @@ export default function TrackListPanel({
                             onPlayPause(actualIndex);
                           }}
                         >
-                          {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                          {(isPlaying && actualIndex === currentIndex) ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                         </button>
 
                         {/* Progress bar */}
