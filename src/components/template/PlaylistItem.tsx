@@ -29,8 +29,8 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
   const [showDropSuccess, setShowDropSuccess] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(playlist.name);
-  const { dragState, setActiveDropZone, endDrag } = useDrag();
-  const { addTrackToPlaylist } = useSessionPlaylists();
+  const { dragState, setActiveDropZone, endDrag, setDuplicateStatus } = useDrag();
+  const { addTrackToPlaylist, isTrackInPlaylist } = useSessionPlaylists();
   
   const handleMenuAction = (action: string) => {
     onMenuAction(playlist.id, action);
@@ -72,11 +72,17 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
     const handleMouseEnter = () => {
       setIsDropReady(true);
       setActiveDropZone(playlist.id);
+      
+      // Check for duplicate track
+      if (dragState.draggedTrack && isTrackInPlaylist(playlist.id, dragState.draggedTrack.id)) {
+        setDuplicateStatus(true, "Duplicate Track");
+      }
     };
 
     const handleMouseLeave = () => {
       setIsDropReady(false);
       setActiveDropZone(null);
+      setDuplicateStatus(false, null);
     };
 
     element.addEventListener('mouseenter', handleMouseEnter);
@@ -99,7 +105,7 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
       const pointEl = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
       const overThis = !!pointEl && (pointEl.id === `playlist-${playlist.id}` || !!pointEl.closest(`#playlist-${playlist.id}`));
 
-      if (overThis && onTrackAdd) {
+      if (overThis && onTrackAdd && !dragState.isDuplicateDetected) {
         setShowDropSuccess(true);
         addTrackToPlaylist(playlist.id, dragState.draggedTrack);
         onTrackAdd(playlist.id, dragState.draggedTrack);

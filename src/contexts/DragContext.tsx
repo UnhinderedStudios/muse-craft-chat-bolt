@@ -8,6 +8,8 @@ const initialDragState: DragState = {
   mousePosition: { x: 0, y: 0 },
   activeDropZone: null,
   dragStartPos: { x: 0, y: 0 },
+  isDuplicateDetected: false,
+  duplicateTooltipMessage: null,
 };
 
 const DragContext = createContext<DragContextType | undefined>(undefined);
@@ -62,6 +64,7 @@ export const DragProvider: React.FC<DragProviderProps> = ({ children }) => {
       if (prev.isDragging || prev.draggedTrack) {
         // Remove any lingering event listeners
         document.body.style.userSelect = '';
+        document.body.style.cursor = '';
         return initialDragState;
       }
       return prev;
@@ -116,12 +119,24 @@ export const DragProvider: React.FC<DragProviderProps> = ({ children }) => {
     }));
   }, []);
 
+  const setDuplicateStatus = useCallback((isDuplicate: boolean, message: string | null = null) => {
+    setDragState(prev => ({
+      ...prev,
+      isDuplicateDetected: isDuplicate,
+      duplicateTooltipMessage: message,
+    }));
+    
+    // Update cursor style
+    document.body.style.cursor = isDuplicate ? 'not-allowed' : '';
+  }, []);
+
   const contextValue: DragContextType = {
     dragState,
     startDrag,
     endDrag,
     updateDragPosition,
     setActiveDropZone,
+    setDuplicateStatus,
   };
 
   return (

@@ -2,6 +2,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { TrackItem } from '@/types';
 import { Music } from 'lucide-react';
+import { useDrag } from '@/contexts/DragContext';
 
 interface DragTrackCloneProps {
   track: TrackItem;
@@ -9,6 +10,7 @@ interface DragTrackCloneProps {
 }
 
 export const DragTrackClone: React.FC<DragTrackCloneProps> = ({ track, position }) => {
+  const { dragState } = useDrag();
   const clone = (
     <div
       className="fixed pointer-events-none z-50 transform transition-transform duration-75"
@@ -18,7 +20,11 @@ export const DragTrackClone: React.FC<DragTrackCloneProps> = ({ track, position 
         transform: 'rotate(-2deg) scale(0.95)',
       }}
     >
-      <div className="bg-[#1e1e1e] rounded-xl p-3 border border-white/10 shadow-2xl backdrop-blur-sm bg-opacity-90">
+      <div className={`bg-[#1e1e1e] rounded-xl p-3 border shadow-2xl backdrop-blur-sm bg-opacity-90 transition-all duration-200 ${
+        dragState.isDuplicateDetected 
+          ? 'border-red-500/50 opacity-60' 
+          : 'border-white/10'
+      }`}>
         <div className="flex items-center gap-3">
           <div className="shrink-0 w-10 h-10 rounded-md bg-black/30 overflow-hidden">
             {track.coverUrl ? (
@@ -39,6 +45,20 @@ export const DragTrackClone: React.FC<DragTrackCloneProps> = ({ track, position 
           </div>
         </div>
       </div>
+      
+      {/* Duplicate tooltip */}
+      {dragState.isDuplicateDetected && dragState.duplicateTooltipMessage && (
+        <div 
+          className="absolute bg-red-500/90 text-white text-xs px-2 py-1 rounded shadow-lg backdrop-blur-sm"
+          style={{
+            left: 80,
+            top: -8,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {dragState.duplicateTooltipMessage}
+        </div>
+      )}
     </div>
   );
 

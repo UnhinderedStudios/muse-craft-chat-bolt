@@ -6,6 +6,8 @@ export interface DragState {
   mousePosition: { x: number; y: number };
   activeDropZone: string | null;
   dragStartPos: { x: number; y: number };
+  isDuplicateDetected: boolean;
+  duplicateTooltipMessage: string | null;
 }
 
 export interface DragContextType {
@@ -14,4 +16,5 @@ export interface DragContextType {
   endDrag: () => void;
   updateDragPosition: (x: number, y: number) => void;
   setActiveDropZone: (zoneId: string | null) => void;
+  setDuplicateStatus: (isDuplicate: boolean, message?: string | null) => void;
 }
