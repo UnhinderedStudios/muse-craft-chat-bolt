@@ -2118,6 +2118,10 @@ const Index = () => {
                 const karaokeTrack = tracks.find(t => t.id === karaokeTrackId);
                 return karaokeTrack?.coverUrl;
               })()}
+              currentTrackTitle={(() => {
+                const karaokeTrack = tracks.find(t => t.id === karaokeTrackId);
+                return karaokeTrack?.title;
+              })()}
               isGeneratingCovers={isGeneratingCovers}
               audioRefs={audioRefs}
               onPlayPause={handleAudioPlay}

@@ -21,6 +21,7 @@ interface KaraokeRightPanelProps {
   isPlaying: boolean;
   albumCovers: { cover1: string; cover2: string } | null;
   currentTrackCoverUrl?: string;
+  currentTrackTitle?: string;
   isGeneratingCovers: boolean;
   audioRefs: React.MutableRefObject<HTMLAudioElement[]>;
   onPlayPause: (index: number) => void;
@@ -39,6 +40,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   isPlaying,
   albumCovers,
   currentTrackCoverUrl,
+  currentTrackTitle,
   isGeneratingCovers,
   audioRefs,
   onPlayPause,
@@ -107,21 +109,21 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
                 onClick={handlePlayPause}
                 className={cn(
                   "flex items-center justify-center w-7 h-7 rounded-full transition-colors",
-                  audioElement ? "bg-primary hover:bg-primary/80" : "bg-muted cursor-not-allowed"
+                  audioElement ? "hover:bg-white/10" : "cursor-not-allowed"
                 )}
                 disabled={!audioElement}
               >
                 {hasContent && isPlaying ? (
-                  <Pause size={14} className="text-primary-foreground" />
+                  <Pause size={14} className="text-white fill-white" />
                 ) : (
-                  <Play size={14} className="text-primary-foreground ml-0.5" />
+                  <Play size={14} className="text-white fill-white ml-0.5" />
                 )}
               </button>
 
               {/* Track Info & Progress */}
               <div className="flex-1 min-w-0">
                 <div className="text-xs text-white/80 mb-0.5">
-                  {currentVersion ? `Version ${currentAudioIndex + 1}` : "Waiting for audio..."}
+                  {currentTrackTitle || "Waiting for audio..."}
                 </div>
                 
                 {/* Progress Bar - Made more compact */}
@@ -132,7 +134,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
                     onClick={handleProgressClick}
                   >
                     <div
-                      className="h-full bg-primary transition-all duration-200"
+                      className="h-full bg-white transition-all duration-200"
                       style={{ width: audioElement ? `${progressPercentage}%` : '0%' }}
                     />
                   </div>
