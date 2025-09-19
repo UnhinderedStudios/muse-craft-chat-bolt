@@ -1068,6 +1068,7 @@ export default function TrackListPanel({
                                             
                                             // Create operation key to prevent race conditions
                                             const operationKey = `${playlist.id}-${t.id}`;
+                                            console.log('🔍 Starting playlist operation:', { playlistId: playlist.id, trackId: t.id, operationKey });
                                             
                                             // Prevent rapid clicks by checking if operation is already pending
                                             if (playlistOperationsPending.has(operationKey)) {
@@ -1076,25 +1077,42 @@ export default function TrackListPanel({
                                             }
                                             
                                             // Mark operation as pending
-                                            setPlaylistOperationsPending(prev => new Set(prev).add(operationKey));
+                                            setPlaylistOperationsPending(prev => {
+                                              const newSet = new Set(prev).add(operationKey);
+                                              console.log('📝 Marked operation as pending:', operationKey, 'Total pending:', newSet.size);
+                                              return newSet;
+                                            });
                                             
                                             try {
                                               // Add/remove song to/from playlist with proper state checking
                                               const isCurrentlyInPlaylist = isTrackInPlaylist(playlist.id, t.id);
                                               console.log(`🎵 Track ${t.id} in playlist ${playlist.id}:`, isCurrentlyInPlaylist);
+                                              console.log('🎯 Available playlist functions:', { 
+                                                addTrackToPlaylist: typeof addTrackToPlaylist, 
+                                                removeTrackFromPlaylist: typeof removeTrackFromPlaylist,
+                                                playlistsLength: playlists.length 
+                                              });
                                               
                                               if (isCurrentlyInPlaylist) {
+                                                console.log('🗑️ Attempting to remove track from playlist...');
                                                 removeTrackFromPlaylist(playlist.id, t.id);
-                                                console.log('➖ Removed track from playlist');
+                                                console.log('✅ Successfully removed track from playlist');
                                               } else {
+                                                console.log('➕ Attempting to add track to playlist...');
                                                 addTrackToPlaylist(playlist.id, t);
-                                                console.log('➕ Added track to playlist');
+                                                console.log('✅ Successfully added track to playlist');
                                               }
                                             } catch (error) {
                                               console.error('❌ Error in playlist operation:', error);
+                                              console.error('❌ Error details:', {
+                                                message: error.message,
+                                                stack: error.stack,
+                                                playlistId: playlist.id,
+                                                trackId: t.id
+                                              });
                                               toast({
                                                 variant: "destructive",
-                                                description: "Failed to update playlist"
+                                                description: `Failed to update playlist: ${error.message || 'Unknown error'}`
                                               });
                                             } finally {
                                               // Clear pending operation after a short delay to prevent immediate re-clicks

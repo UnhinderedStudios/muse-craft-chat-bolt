@@ -131,47 +131,57 @@ export function useSessionPlaylists() {
   // Add track to playlist
   const addTrackToPlaylist = useCallback((playlistId: string, track: TrackItem) => {
     console.log('🎵 addTrackToPlaylist called:', { playlistId, trackTitle: track.title, trackId: track.id });
-    const updatedPlaylists = playlists.map(playlist => {
-      if (playlist.id === playlistId) {
-        // Check if track already exists
-        if (playlist.songs.some(song => song.id === track.id)) {
-          console.log('⚠️ Track already exists in playlist:', playlist.name);
-          return playlist;
+    try {
+      const updatedPlaylists = playlists.map(playlist => {
+        if (playlist.id === playlistId) {
+          // Check if track already exists
+          if (playlist.songs.some(song => song.id === track.id)) {
+            console.log('⚠️ Track already exists in playlist:', playlist.name);
+            return playlist;
+          }
+          
+          const updatedSongs = [...playlist.songs, track];
+          console.log('✅ Adding track to playlist:', playlist.name, 'New count:', updatedSongs.length);
+          return {
+            ...playlist,
+            songs: updatedSongs,
+            songCount: updatedSongs.length
+          };
         }
-        
-        const updatedSongs = [...playlist.songs, track];
-        console.log('✅ Adding track to playlist:', playlist.name, 'New count:', updatedSongs.length);
-        return {
-          ...playlist,
-          songs: updatedSongs,
-          songCount: updatedSongs.length
-        };
-      }
-      return playlist;
-    });
-    
-    savePlaylists(updatedPlaylists);
-    console.log('💾 Playlists saved to sessionStorage');
+        return playlist;
+      });
+      
+      savePlaylists(updatedPlaylists);
+      console.log('💾 Playlists saved to sessionStorage');
+    } catch (error) {
+      console.error('❌ [addTrackToPlaylist] Error:', error);
+      throw error;
+    }
   }, [playlists, savePlaylists]);
 
   // Remove track from playlist
   const removeTrackFromPlaylist = useCallback((playlistId: string, trackId: string) => {
     console.log('🗑️ removeTrackFromPlaylist called:', { playlistId, trackId });
-    const updatedPlaylists = playlists.map(playlist => {
-      if (playlist.id === playlistId) {
-        const updatedSongs = playlist.songs.filter(song => song.id !== trackId);
-        console.log('✅ Removing track from playlist:', playlist.name, 'New count:', updatedSongs.length);
-        return {
-          ...playlist,
-          songs: updatedSongs,
-          songCount: updatedSongs.length
-        };
-      }
-      return playlist;
-    });
-    
-    savePlaylists(updatedPlaylists);
-    console.log('💾 Playlists saved to sessionStorage');
+    try {
+      const updatedPlaylists = playlists.map(playlist => {
+        if (playlist.id === playlistId) {
+          const updatedSongs = playlist.songs.filter(song => song.id !== trackId);
+          console.log('✅ Removing track from playlist:', playlist.name, 'New count:', updatedSongs.length);
+          return {
+            ...playlist,
+            songs: updatedSongs,
+            songCount: updatedSongs.length
+          };
+        }
+        return playlist;
+      });
+      
+      savePlaylists(updatedPlaylists);
+      console.log('💾 Playlists saved to sessionStorage');
+    } catch (error) {
+      console.error('❌ [removeTrackFromPlaylist] Error:', error);
+      throw error;
+    }
   }, [playlists, savePlaylists]);
 
   // Add/remove track from favourites
