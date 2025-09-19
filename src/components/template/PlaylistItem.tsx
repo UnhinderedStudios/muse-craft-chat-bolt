@@ -75,7 +75,7 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
       
       // Check for duplicate track
       if (dragState.draggedTrack && isTrackInPlaylist(playlist.id, dragState.draggedTrack.id)) {
-        setDuplicateStatus(true, "Duplicate Track");
+        setDuplicateStatus(true, "Duplicate Error");
       }
     };
 
