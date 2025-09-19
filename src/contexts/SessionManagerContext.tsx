@@ -201,16 +201,30 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
       try {
         const snapshot = buildSnapshot(level);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+        console.log(`[SessionManager] Successfully persisted sessions (compression level: ${level})`);
         break;
       } catch (err: any) {
         const isQuota =
           (typeof DOMException !== "undefined" && err instanceof DOMException && err.name === "QuotaExceededError") ||
           (err && String(err).includes("QuotaExceededError"));
         if (isQuota && level < 2) {
+          console.warn(`[SessionManager] Storage quota exceeded at level ${level}, trying higher compression`);
           level = (level + 1) as 0 | 1 | 2;
           continue;
         }
         console.error("[SessionManager] Failed to persist sessions", err);
+        if (isQuota) {
+          // Clear old sessions to free up space
+          try {
+            console.log("[SessionManager] Attempting emergency cleanup due to storage quota");
+            localStorage.removeItem(STORAGE_KEY);
+            const emergencySnapshot = buildSnapshot(2);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(emergencySnapshot));
+            console.log("[SessionManager] Emergency cleanup successful");
+          } catch (cleanupErr) {
+            console.error("[SessionManager] Emergency cleanup failed", cleanupErr);
+          }
+        }
         break;
       }
     }
