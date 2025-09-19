@@ -95,6 +95,9 @@ export default function TrackListPanel({
   // Track which playlists have been clicked (show checkmark)
   const [clickedPlaylists, setClickedPlaylists] = useState<Set<string>>(new Set());
   
+  // Debouncing state for playlist operations to prevent race conditions
+  const [playlistOperationsPending, setPlaylistOperationsPending] = useState<Set<string>>(new Set());
+  
   // Session playlists
   const {
     playlists,
@@ -1061,23 +1064,68 @@ export default function TrackListPanel({
                                              newSet.add(playlist.id);
                                            }
                                            return newSet;
-                                         });
-                                           // Add/remove song to/from playlist
-                                           if (isTrackInPlaylist(playlist.id, t.id)) {
-                                             removeTrackFromPlaylist(playlist.id, t.id);
-                                           } else {
-                                             addTrackToPlaylist(playlist.id, t);
-                                           }
-                                        }}
-                                     >
-                                        <div className="relative w-4 h-4">
-                                           {isTrackInPlaylist(playlist.id, t.id) ? (
-                                             <Check className="w-4 h-4 text-green-400 animate-scale-in" />
-                                           ) : (
-                                             <Plus className="w-4 h-4 animate-scale-in" />
-                                           )}
-                                         </div>
-                                     </button>
+                                          });
+                                            
+                                            // Create operation key to prevent race conditions
+                                            const operationKey = `${playlist.id}-${t.id}`;
+                                            
+                                            // Prevent rapid clicks by checking if operation is already pending
+                                            if (playlistOperationsPending.has(operationKey)) {
+                                              console.log('⏳ Operation already pending for', operationKey);
+                                              return;
+                                            }
+                                            
+                                            // Mark operation as pending
+                                            setPlaylistOperationsPending(prev => new Set(prev).add(operationKey));
+                                            
+                                            try {
+                                              // Add/remove song to/from playlist with proper state checking
+                                              const isCurrentlyInPlaylist = isTrackInPlaylist(playlist.id, t.id);
+                                              console.log(`🎵 Track ${t.id} in playlist ${playlist.id}:`, isCurrentlyInPlaylist);
+                                              
+                                              if (isCurrentlyInPlaylist) {
+                                                removeTrackFromPlaylist(playlist.id, t.id);
+                                                console.log('➖ Removed track from playlist');
+                                              } else {
+                                                addTrackToPlaylist(playlist.id, t);
+                                                console.log('➕ Added track to playlist');
+                                              }
+                                            } catch (error) {
+                                              console.error('❌ Error in playlist operation:', error);
+                                              toast({
+                                                variant: "destructive",
+                                                description: "Failed to update playlist"
+                                              });
+                                            } finally {
+                                              // Clear pending operation after a short delay to prevent immediate re-clicks
+                                              setTimeout(() => {
+                                                setPlaylistOperationsPending(prev => {
+                                                  const newSet = new Set(prev);
+                                                  newSet.delete(operationKey);
+                                                  return newSet;
+                                                });
+                                              }, 300);
+                                            }
+                                         }}
+                                      >
+                                         <div className="relative w-4 h-4">
+                                            {(() => {
+                                              const operationKey = `${playlist.id}-${t.id}`;
+                                              const isPending = playlistOperationsPending.has(operationKey);
+                                              const isInPlaylist = isTrackInPlaylist(playlist.id, t.id);
+                                              
+                                              if (isPending) {
+                                                return <div className="w-4 h-4 border-2 border-white/30 border-t-white/60 rounded-full animate-spin" />;
+                                              }
+                                              
+                                              return isInPlaylist ? (
+                                                <Check className="w-4 h-4 text-green-400 animate-scale-in" />
+                                              ) : (
+                                                <Plus className="w-4 h-4 animate-scale-in" />
+                                              );
+                                            })()}
+                                          </div>
+                                      </button>
                                         </div>
                                       ))}
                                     </>

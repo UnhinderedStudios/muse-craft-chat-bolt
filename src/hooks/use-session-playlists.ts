@@ -107,12 +107,10 @@ export function useSessionPlaylists() {
     setPlaylists(newPlaylists);
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(newPlaylists));
     
-    // Notify other hook instances
-    setTimeout(() => {
-      console.log(`📢 [${instanceId.current}] Broadcasting playlist update event`);
-      window.dispatchEvent(new CustomEvent(PLAYLIST_UPDATE_EVENT, { detail: { instanceId: instanceId.current } }));
-      isUpdatingRef.current = false;
-    }, 10);
+    // Notify other hook instances immediately for better synchronization
+    console.log(`📢 [${instanceId.current}] Broadcasting playlist update event`);
+    window.dispatchEvent(new CustomEvent(PLAYLIST_UPDATE_EVENT, { detail: { instanceId: instanceId.current } }));
+    isUpdatingRef.current = false;
   }, []);
 
   // Create a new playlist
