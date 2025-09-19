@@ -160,7 +160,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
           <div className="text-white mb-4 sm:mb-6">
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 sm:mb-3 pr-8">{currentPlaylist.name}</h2>
             <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm sm:text-base text-white/60">
-              <span>{currentPlaylist.songCount} {currentPlaylist.songCount === 1 ? 'song' : 'songs'}</span>
+              <span>{currentPlaylist.songs.length} {currentPlaylist.songs.length === 1 ? 'song' : 'songs'}</span>
               <span>•</span>
               <span>Created {formatDate(currentPlaylist.createdAt)}</span>
               {currentPlaylist.isFavorited && (

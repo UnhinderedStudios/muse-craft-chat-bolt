@@ -150,7 +150,7 @@ export function useSessionPlaylists() {
     }
   }, []);
 
-  // Simple storage sync for cross-tab functionality only
+  // Storage sync for cross-tab functionality and same-tab real-time updates
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === STORAGE_KEY && event.newValue) {
@@ -164,8 +164,17 @@ export function useSessionPlaylists() {
       }
     };
     
+    const handlePlaylistUpdate = (event: CustomEvent) => {
+      console.log(`🔄 [${instanceId.current}] Playlist update event received`);
+      setPlaylists(event.detail);
+    };
+    
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener(PLAYLIST_UPDATE_EVENT, handlePlaylistUpdate as EventListener);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener(PLAYLIST_UPDATE_EVENT, handlePlaylistUpdate as EventListener);
+    };
   }, []);
 
   // Initialize with Favourites playlist
@@ -197,6 +206,11 @@ export function useSessionPlaylists() {
     
     // Save to storage
     const saveSuccess = safeStorageSet(STORAGE_KEY, normalizedPlaylists);
+    
+    // Dispatch event for same-tab sync
+    window.dispatchEvent(new CustomEvent(PLAYLIST_UPDATE_EVENT, { 
+      detail: normalizedPlaylists 
+    }));
     
     if (!saveSuccess) {
       console.warn('Failed to save playlists to storage - continuing with in-memory state');

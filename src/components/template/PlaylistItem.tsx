@@ -177,7 +177,7 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
             </div>
           )}
           <div className="text-xs text-white/60 truncate">
-            {playlist.songCount} {playlist.songCount === 1 ? 'song' : 'songs'}
+            {playlist.songs.length} {playlist.songs.length === 1 ? 'song' : 'songs'}
             {playlist.isFavorited && (
               <span className="ml-2 text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">
                 ★

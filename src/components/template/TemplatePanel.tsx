@@ -163,11 +163,10 @@ export function TemplatePanel({
     }
   };
 
-  // Handle track added to playlist
+  // Handle track added to playlist - show toast only (PlaylistItem handles the actual add)
   const handleTrackAdd = (playlistId: string, track: TrackItem) => {
     const playlist = playlists.find(p => p.id === playlistId);
     if (playlist) {
-      addTrackToPlaylist(playlistId, track);
       toast.success(`Added "${track.title || "Song"}" to "${playlist.name}"`);
     }
   };
