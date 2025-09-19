@@ -484,11 +484,13 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
         aggregatedTracks.push(...session.tracks);
       }
 
-      // Hide jobs that are too old or already have 2 tracks created after they started
+      // Hide jobs that are too old or that have produced their expected 2 tracks
       const filtered = allActiveGenerations.filter((g) => {
         const ageOk = Date.now() - (g.startTime || 0) <= MAX_AGE_MS;
-        const replacements = aggregatedTracks.filter((t) => (t.createdAt || 0) >= (g.startTime || 0)).length;
-        return ageOk && replacements < 2;
+        // Only count tracks that belong to THIS specific job
+        const jobTracks = aggregatedTracks.filter((t) => t.jobId === g.id).length;
+        console.log(`[ActiveGen Filter] Job ${g.id}: age=${ageOk}, tracks=${jobTracks}/2`);
+        return ageOk && jobTracks < 2;
       });
 
       return filtered;
@@ -499,8 +501,10 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
 
     const filtered = (current.activeGenerations || []).filter((g) => {
       const ageOk = Date.now() - (g.startTime || 0) <= MAX_AGE_MS;
-      const replacements = (current.tracks || []).filter((t) => (t.createdAt || 0) >= (g.startTime || 0)).length;
-      return ageOk && replacements < 2;
+      // Only count tracks that belong to THIS specific job
+      const jobTracks = (current.tracks || []).filter((t) => t.jobId === g.id).length;
+      console.log(`[ActiveGen Filter] Job ${g.id}: age=${ageOk}, tracks=${jobTracks}/2`);
+      return ageOk && jobTracks < 2;
     });
 
     return filtered;
