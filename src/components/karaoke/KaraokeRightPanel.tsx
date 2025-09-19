@@ -108,8 +108,8 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
               <button
                 onClick={handlePlayPause}
                 className={cn(
-                  "flex items-center justify-center w-7 h-7 rounded-full transition-colors",
-                  audioElement ? "hover:bg-white/10" : "cursor-not-allowed"
+                  "flex items-center justify-center w-7 h-7 transition-opacity",
+                  audioElement ? "hover:opacity-60" : "cursor-not-allowed opacity-50"
                 )}
                 disabled={!audioElement}
               >
@@ -123,7 +123,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
               {/* Track Info & Progress */}
               <div className="flex-1 min-w-0">
                 <div className="text-xs text-white/80 mb-0.5">
-                  {currentTrackTitle || "Waiting for audio..."}
+                  {currentTrackTitle ? `No Artist - ${currentTrackTitle}` : "Waiting for audio..."}
                 </div>
                 
                 {/* Progress Bar - Made more compact */}
