@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useScrollDelegationHook } from "@/utils/scrollDelegation";
 import { PlaceholderOrb } from "@/components/ui/PlaceholderOrb";
+import EllipsisMarquee from "@/components/ui/EllipsisMarquee";
 
 interface KaraokeRightPanelProps {
   versions: Array<{
@@ -122,8 +123,12 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
 
               {/* Track Info & Progress */}
               <div className="flex-1 min-w-0">
-                <div className="text-xs text-white/80 mb-0.5">
-                  {currentTrackTitle ? `No Artist - ${currentTrackTitle}` : "Waiting for audio..."}
+                <div className="text-xs text-white/80 mb-0.5 min-w-0">
+                  <EllipsisMarquee
+                    text={currentTrackTitle ? `No Artist - ${currentTrackTitle}` : "Waiting for audio..."}
+                    className="text-xs text-white/80"
+                    speedPxPerSec={30}
+                  />
                 </div>
                 
                 {/* Progress Bar - Made more compact */}
