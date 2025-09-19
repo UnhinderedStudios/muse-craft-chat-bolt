@@ -38,7 +38,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   
   // Access session playlists for removing tracks and getting current playlist state
-  const { removeTrackFromPlaylist, playlists } = useSessionPlaylists();
+  const { removeTrackFromPlaylist, playlists, snapshotToTrack } = useSessionPlaylists();
   
   // Get the current playlist from the hook state to ensure real-time updates
   const currentPlaylist = playlist ? playlists.find(p => p.id === playlist.id) || playlist : null;
@@ -267,7 +267,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
                           className="absolute inset-0 rounded-lg overflow-hidden bg-black/50 backdrop-blur-sm opacity-0 group-hover/album:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
-                            onAlbumCoverClick?.(song);
+                            onAlbumCoverClick?.(snapshotToTrack(song));
                           }}
                         >
                           <RotateCw className="w-3 h-3 text-white group-hover/album:animate-[spin_0.36s_ease-in-out] transition-transform" />

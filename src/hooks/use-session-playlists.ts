@@ -1,13 +1,24 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { TrackItem } from "@/types";
 
+// Lightweight track snapshot for storage
+export interface TrackSnapshot {
+  id: string;
+  title?: string;
+  url: string;
+  coverUrl?: string;
+  createdAt: number;
+  audioId?: string;
+  jobId?: string;
+}
+
 export interface SessionPlaylist {
   id: string;
   name: string;
   songCount: number;
   isFavorited?: boolean;
   createdAt: number;
-  songs: TrackItem[];
+  songs: TrackSnapshot[];
 }
 
 const STORAGE_KEY = "session_playlists";
@@ -17,6 +28,71 @@ const PLAYLIST_UPDATE_EVENT = "playlist-update";
 // Generate unique instance ID for debugging
 const generateInstanceId = () => Math.random().toString(36).substr(2, 9);
 
+// Convert TrackItem to lightweight snapshot
+const trackToSnapshot = (track: TrackItem): TrackSnapshot => ({
+  id: track.id,
+  title: track.title,
+  url: track.url,
+  coverUrl: track.coverUrl,
+  createdAt: track.createdAt,
+  audioId: track.audioId,
+  jobId: track.jobId
+});
+
+// Convert TrackSnapshot back to TrackItem with default values
+const snapshotToTrack = (snapshot: TrackSnapshot): TrackItem => ({
+  id: snapshot.id,
+  title: snapshot.title,
+  url: snapshot.url,
+  coverUrl: snapshot.coverUrl,
+  createdAt: snapshot.createdAt,
+  audioId: snapshot.audioId,
+  jobId: snapshot.jobId,
+  params: [], // Default empty array
+  hasTimestamps: false, // Default false
+  hasBeenPlayed: false, // Default false
+});
+
+// Safe storage operation with error handling
+const safeStorageSet = (key: string, data: any): boolean => {
+  try {
+    const jsonString = JSON.stringify(data);
+    sessionStorage.setItem(key, jsonString);
+    return true;
+  } catch (error) {
+    console.error('Storage quota exceeded, attempting cleanup:', error);
+    
+    // Try to free up space by removing old entries
+    try {
+      const stored = sessionStorage.getItem(key);
+      if (stored) {
+        const parsedData = JSON.parse(stored);
+        if (Array.isArray(parsedData)) {
+          // Keep only the first 10 playlists and limit songs per playlist to 50
+          const trimmedData = parsedData.slice(0, 10).map(playlist => ({
+            ...playlist,
+            songs: playlist.songs?.slice(0, 50) || []
+          }));
+          sessionStorage.setItem(key, JSON.stringify(trimmedData));
+          return true;
+        }
+      }
+    } catch (retryError) {
+      console.error('Failed to save even after cleanup:', retryError);
+      // Fallback to localStorage
+      try {
+        localStorage.setItem(key, JSON.stringify(data));
+        console.log('Saved to localStorage as fallback');
+        return true;
+      } catch (fallbackError) {
+        console.error('All storage methods failed:', fallbackError);
+        return false;
+      }
+    }
+    return false;
+  }
+};
+
 export function useSessionPlaylists() {
   const [playlists, setPlaylists] = useState<SessionPlaylist[]>([]);
   const instanceId = useRef(generateInstanceId());
@@ -25,12 +101,45 @@ export function useSessionPlaylists() {
   // Load playlists from sessionStorage on mount
   useEffect(() => {
     console.log(`🔧 [${instanceId.current}] Loading playlists from sessionStorage on mount`);
-    const stored = sessionStorage.getItem(STORAGE_KEY);
+    let stored = sessionStorage.getItem(STORAGE_KEY);
+    
+    // Fallback to localStorage if sessionStorage is empty
+    if (!stored) {
+      stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        console.log(`📂 [${instanceId.current}] Found data in localStorage, migrating to sessionStorage`);
+        safeStorageSet(STORAGE_KEY, JSON.parse(stored));
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    }
+    
     if (stored) {
       try {
         const parsedPlaylists = JSON.parse(stored);
         console.log(`📂 [${instanceId.current}] Loaded ${parsedPlaylists.length} playlists from storage`);
-        setPlaylists(parsedPlaylists);
+        
+        // Migrate legacy data if needed (check if songs contain full TrackItems)
+        const migratedPlaylists = parsedPlaylists.map(playlist => {
+          if (playlist.songs && playlist.songs.length > 0) {
+            const firstSong = playlist.songs[0];
+            // Check if this is a legacy full TrackItem (has params or words fields)
+            if (firstSong.params || firstSong.words || firstSong.hasTimestamps !== undefined) {
+              console.log(`🔄 [${instanceId.current}] Migrating legacy playlist: ${playlist.name}`);
+              return {
+                ...playlist,
+                songs: playlist.songs.map(trackToSnapshot)
+              };
+            }
+          }
+          return playlist;
+        });
+        
+        setPlaylists(migratedPlaylists);
+        
+        // Save migrated data if changes were made
+        if (JSON.stringify(migratedPlaylists) !== stored) {
+          safeStorageSet(STORAGE_KEY, migratedPlaylists);
+        }
       } catch (error) {
         console.error("Error parsing stored playlists:", error);
         initializeFavourites();
@@ -97,15 +206,24 @@ export function useSessionPlaylists() {
       songs: []
     };
     setPlaylists([favourites]);
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify([favourites]));
+    safeStorageSet(STORAGE_KEY, [favourites]);
   }, []);
 
   // Save playlists to sessionStorage and notify other instances
   const savePlaylists = useCallback((newPlaylists: SessionPlaylist[]) => {
     isUpdatingRef.current = true;
     console.log(`💾 [${instanceId.current}] Saving playlists to sessionStorage:`, newPlaylists.map(p => ({ id: p.id, name: p.name, songCount: p.songCount })));
+    
+    // Update state immediately for responsive UI
     setPlaylists(newPlaylists);
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(newPlaylists));
+    
+    // Attempt to save to storage
+    const saveSuccess = safeStorageSet(STORAGE_KEY, newPlaylists);
+    
+    if (!saveSuccess) {
+      console.warn('Failed to save playlists to storage - continuing with in-memory state');
+      // TODO: Show user notification about storage issue
+    }
     
     // Notify other hook instances immediately for better synchronization
     console.log(`📢 [${instanceId.current}] Broadcasting playlist update event`);
@@ -132,6 +250,7 @@ export function useSessionPlaylists() {
   const addTrackToPlaylist = useCallback((playlistId: string, track: TrackItem) => {
     console.log('🎵 addTrackToPlaylist called:', { playlistId, trackTitle: track.title, trackId: track.id });
     try {
+      const trackSnapshot = trackToSnapshot(track);
       const updatedPlaylists = playlists.map(playlist => {
         if (playlist.id === playlistId) {
           // Check if track already exists
@@ -140,7 +259,7 @@ export function useSessionPlaylists() {
             return playlist;
           }
           
-          const updatedSongs = [...playlist.songs, track];
+          const updatedSongs = [...playlist.songs, trackSnapshot];
           console.log('✅ Adding track to playlist:', playlist.name, 'New count:', updatedSongs.length);
           return {
             ...playlist,
@@ -152,10 +271,10 @@ export function useSessionPlaylists() {
       });
       
       savePlaylists(updatedPlaylists);
-      console.log('💾 Playlists saved to sessionStorage');
+      console.log('💾 Playlists saved successfully');
     } catch (error) {
       console.error('❌ [addTrackToPlaylist] Error:', error);
-      throw error;
+      throw new Error('Failed to update playlist');
     }
   }, [playlists, savePlaylists]);
 
@@ -263,6 +382,7 @@ export function useSessionPlaylists() {
     renamePlaylist,
     deletePlaylist,
     togglePlaylistFavourite,
-    debugSessionStorage
+    debugSessionStorage,
+    snapshotToTrack
   };
 }
