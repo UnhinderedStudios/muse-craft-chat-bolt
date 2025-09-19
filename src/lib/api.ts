@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/integrations/supabase/client";
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -45,12 +45,20 @@ export const api = {
   },
 
   async pollSong(jobId: string): Promise<{ status: string; audioUrl?: string; audioUrls?: string[]; error?: string }> {
-    const { data, error } = await supabase.functions.invoke('suno', {
-      body: { jobId }
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/suno?jobId=${jobId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+        'apikey': SUPABASE_PUBLISHABLE_KEY,
+        'Content-Type': 'application/json'
+      }
     });
     
-    if (error) throw new Error(error.message);
-    return data;
+    if (!response.ok) {
+      throw new Error(`Edge Function returned a non-2xx status code`);
+    }
+    
+    return await response.json();
   },
 
   async getMusicGenerationDetails(jobId: string): Promise<{
@@ -64,12 +72,20 @@ export const api = {
     statusRaw: string;
     taskId: string;
   }> {
-    const { data, error } = await supabase.functions.invoke('suno', {
-      body: { jobId, details: true }
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/suno?jobId=${jobId}&details=true`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+        'apikey': SUPABASE_PUBLISHABLE_KEY,
+        'Content-Type': 'application/json'
+      }
     });
     
-    if (error) throw new Error(error.message);
-    return data;
+    if (!response.ok) {
+      throw new Error(`Edge Function returned a non-2xx status code`);
+    }
+    
+    return await response.json();
   },
 
   async getTimestampedLyrics(params: { taskId: string; audioId?: string; musicIndex?: number }): Promise<{ 
@@ -200,12 +216,20 @@ export const api = {
   },
 
   async pollWav(jobId: string): Promise<{ status: "pending" | "ready" | "error"; wavUrl?: string; error?: string; blob?: Blob }> {
-    const { data, error } = await supabase.functions.invoke('suno/wav', {
-      body: { jobId }
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/suno/wav?jobId=${jobId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+        'apikey': SUPABASE_PUBLISHABLE_KEY,
+        'Content-Type': 'application/json'
+      }
     });
     
-    if (error) throw new Error(error.message);
-    return data;
+    if (!response.ok) {
+      throw new Error(`Edge Function returned a non-2xx status code`);
+    }
+    
+    return await response.json();
   },
 
   async convertToWav(params: { audioId?: string; taskId?: string; musicIndex?: number }): Promise<string> {
