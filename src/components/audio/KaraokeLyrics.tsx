@@ -159,9 +159,9 @@ export const KaraokeLyrics: React.FC<KaraokeLyricsProps> = ({
     return (
       <div className={cn("min-h-[200px] flex items-center justify-center text-muted-foreground", className)}>
         <div className="flex items-center space-x-1">
-          <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-          <div className="w-2 h-2 bg-current rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-          <div className="w-2 h-2 bg-current rounded-full animate-bounce"></div>
+          <div className="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+          <div className="w-2 h-2 bg-white rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+          <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
         </div>
       </div>
     );
