@@ -106,12 +106,21 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
           const mockTracks = getMockTracks();
           const preservedSessions = data.sessions.map((session: SessionData) => {
             if (session.id === GLOBAL_SESSION_ID) {
-              // Keep existing tracks, add mock tracks only if no tracks exist
+              // Always ensure mock tracks are present alongside real tracks
               const existingTracks = session.tracks || [];
-              const hasRealTracks = existingTracks.some(track => !track.id.startsWith('mock'));
+              const mockTracks = getMockTracks();
+              
+              // Combine existing tracks with any missing mock tracks
+              const allTracks = [...existingTracks];
+              mockTracks.forEach(mockTrack => {
+                if (!allTracks.find(t => t.id === mockTrack.id)) {
+                  allTracks.push(mockTrack);
+                }
+              });
+              
               return {
                 ...session,
-                tracks: hasRealTracks ? existingTracks : [...existingTracks, ...mockTracks.filter(mock => !existingTracks.find(t => t.id === mock.id))],
+                tracks: allTracks,
                 activeGenerations: []
               };
             }
