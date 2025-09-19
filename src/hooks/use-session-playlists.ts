@@ -184,13 +184,19 @@ export function useSessionPlaylists() {
 
   // Save playlists to sessionStorage with immediate state update
   const savePlaylists = useCallback((newPlaylists: SessionPlaylist[]) => {
-    console.log(`💾 [${instanceId.current}] Saving playlists:`, newPlaylists.map(p => ({ id: p.id, name: p.name, songCount: p.songCount })));
+    // Ensure songCount always matches actual songs array length
+    const normalizedPlaylists = newPlaylists.map(playlist => ({
+      ...playlist,
+      songCount: playlist.songs?.length || 0
+    }));
+    
+    console.log(`💾 [${instanceId.current}] Saving playlists:`, normalizedPlaylists.map(p => ({ id: p.id, name: p.name, songCount: p.songCount, actualSongs: p.songs?.length })));
     
     // Update state immediately for responsive UI
-    setPlaylists(newPlaylists);
+    setPlaylists(normalizedPlaylists);
     
     // Save to storage
-    const saveSuccess = safeStorageSet(STORAGE_KEY, newPlaylists);
+    const saveSuccess = safeStorageSet(STORAGE_KEY, normalizedPlaylists);
     
     if (!saveSuccess) {
       console.warn('Failed to save playlists to storage - continuing with in-memory state');
@@ -239,8 +245,8 @@ export function useSessionPlaylists() {
           console.log('✅ Adding track to playlist:', playlist.name, 'New count:', updatedSongs.length);
           return {
             ...playlist,
-            songs: updatedSongs,
-            songCount: updatedSongs.length
+            songs: updatedSongs
+            // songCount will be calculated in savePlaylists
           };
         }
         return playlist;
@@ -267,11 +273,11 @@ export function useSessionPlaylists() {
       const updatedPlaylists = playlists.map(playlist => {
         if (playlist.id === playlistId) {
           const updatedSongs = playlist.songs.filter(song => song.id !== trackId);
-          console.log('✅ Removing track from playlist:', playlist.name, 'New count:', updatedSongs.length);
+          console.log('✅ Removing track from playlist:', playlist.name, 'Songs before:', playlist.songs.length, 'Songs after:', updatedSongs.length);
           return {
             ...playlist,
-            songs: updatedSongs,
-            songCount: updatedSongs.length
+            songs: updatedSongs
+            // songCount will be calculated in savePlaylists
           };
         }
         return playlist;
