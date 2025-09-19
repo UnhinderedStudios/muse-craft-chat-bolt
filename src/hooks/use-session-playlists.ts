@@ -96,7 +96,7 @@ const safeStorageSet = (key: string, data: any): boolean => {
 export function useSessionPlaylists() {
   const [playlists, setPlaylists] = useState<SessionPlaylist[]>([]);
   const instanceId = useRef(generateInstanceId());
-  const isUpdatingRef = useRef(false);
+  const pendingOperations = useRef(new Set<string>());
 
   // Load playlists from sessionStorage on mount
   useEffect(() => {
@@ -150,33 +150,10 @@ export function useSessionPlaylists() {
     }
   }, []);
 
-  // Listen for playlist updates from other hook instances
+  // Simple storage sync for cross-tab functionality only
   useEffect(() => {
-    const handlePlaylistUpdate = (event: CustomEvent) => {
-      if (isUpdatingRef.current) {
-        console.log(`🔄 [${instanceId.current}] Ignoring playlist update (currently updating)`);
-        return;
-      }
-      
-      console.log(`🔄 [${instanceId.current}] Received playlist update event, refreshing from storage`);
-      const stored = sessionStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        try {
-          const parsedPlaylists = JSON.parse(stored);
-          console.log(`📂 [${instanceId.current}] Synced ${parsedPlaylists.length} playlists from storage`);
-          setPlaylists(parsedPlaylists);
-        } catch (error) {
-          console.error(`❌ [${instanceId.current}] Error parsing synced playlists:`, error);
-        }
-      }
-    };
-
-    // Listen for custom playlist update events
-    window.addEventListener(PLAYLIST_UPDATE_EVENT, handlePlaylistUpdate as EventListener);
-    
-    // Listen for storage events (for cross-tab sync)
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === STORAGE_KEY && event.newValue && !isUpdatingRef.current) {
+      if (event.key === STORAGE_KEY && event.newValue) {
         console.log(`🔄 [${instanceId.current}] Storage changed externally, syncing`);
         try {
           const parsedPlaylists = JSON.parse(event.newValue);
@@ -188,11 +165,7 @@ export function useSessionPlaylists() {
     };
     
     window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener(PLAYLIST_UPDATE_EVENT, handlePlaylistUpdate as EventListener);
-      window.removeEventListener('storage', handleStorageChange);
-    };
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   // Initialize with Favourites playlist
@@ -209,26 +182,19 @@ export function useSessionPlaylists() {
     safeStorageSet(STORAGE_KEY, [favourites]);
   }, []);
 
-  // Save playlists to sessionStorage and notify other instances
+  // Save playlists to sessionStorage with immediate state update
   const savePlaylists = useCallback((newPlaylists: SessionPlaylist[]) => {
-    isUpdatingRef.current = true;
-    console.log(`💾 [${instanceId.current}] Saving playlists to sessionStorage:`, newPlaylists.map(p => ({ id: p.id, name: p.name, songCount: p.songCount })));
+    console.log(`💾 [${instanceId.current}] Saving playlists:`, newPlaylists.map(p => ({ id: p.id, name: p.name, songCount: p.songCount })));
     
     // Update state immediately for responsive UI
     setPlaylists(newPlaylists);
     
-    // Attempt to save to storage
+    // Save to storage
     const saveSuccess = safeStorageSet(STORAGE_KEY, newPlaylists);
     
     if (!saveSuccess) {
       console.warn('Failed to save playlists to storage - continuing with in-memory state');
-      // TODO: Show user notification about storage issue
     }
-    
-    // Notify other hook instances immediately for better synchronization
-    console.log(`📢 [${instanceId.current}] Broadcasting playlist update event`);
-    window.dispatchEvent(new CustomEvent(PLAYLIST_UPDATE_EVENT, { detail: { instanceId: instanceId.current } }));
-    isUpdatingRef.current = false;
   }, []);
 
   // Create a new playlist
@@ -246,9 +212,19 @@ export function useSessionPlaylists() {
     return newPlaylist;
   }, [playlists, savePlaylists]);
 
-  // Add track to playlist
+  // Add track to playlist with operation tracking
   const addTrackToPlaylist = useCallback((playlistId: string, track: TrackItem) => {
+    const operationKey = `${playlistId}-${track.id}`;
+    
+    // Prevent duplicate operations
+    if (pendingOperations.current.has(operationKey)) {
+      console.log('⚠️ Operation already pending:', operationKey);
+      return;
+    }
+    
     console.log('🎵 addTrackToPlaylist called:', { playlistId, trackTitle: track.title, trackId: track.id });
+    pendingOperations.current.add(operationKey);
+    
     try {
       const trackSnapshot = trackToSnapshot(track);
       const updatedPlaylists = playlists.map(playlist => {
@@ -270,9 +246,15 @@ export function useSessionPlaylists() {
         return playlist;
       });
       
-      savePlaylists(updatedPlaylists);
-      console.log('💾 Playlists saved successfully');
+      // Use setTimeout to ensure state is updated atomically
+      setTimeout(() => {
+        savePlaylists(updatedPlaylists);
+        pendingOperations.current.delete(operationKey);
+        console.log('💾 Track added successfully');
+      }, 0);
+      
     } catch (error) {
+      pendingOperations.current.delete(operationKey);
       console.error('❌ [addTrackToPlaylist] Error:', error);
       throw new Error('Failed to update playlist');
     }
@@ -330,8 +312,15 @@ export function useSessionPlaylists() {
     return favouritesPlaylist?.songs.some(song => song.id === trackId) || false;
   }, [playlists]);
 
-  // Check if track is in specific playlist
+  // Check if track is in specific playlist with pending operation check
   const isTrackInPlaylist = useCallback((playlistId: string, trackId: string) => {
+    const operationKey = `${playlistId}-${trackId}`;
+    
+    // If operation is pending, assume track will be added
+    if (pendingOperations.current.has(operationKey)) {
+      return true;
+    }
+    
     const playlist = playlists.find(p => p.id === playlistId);
     return playlist?.songs.some(song => song.id === trackId) || false;
   }, [playlists]);
