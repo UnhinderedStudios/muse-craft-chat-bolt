@@ -42,9 +42,9 @@ interface TemplatePanelProps {
 }
 
 const mockArtists = [
-  { id: "artist1", name: "Synthwave Master", songCount: 5, createdAt: Date.now() - 86400000, songs: [] },
-  { id: "artist2", name: "Jazz Ensemble", songCount: 9, createdAt: Date.now() - 172800000, songs: [] },
-  { id: "artist3", name: "Rock Legend", songCount: 12, createdAt: Date.now() - 259200000, songs: [] },
+  { id: "artist1", name: "Synthwave Master", songCount: 5, createdAt: Date.now() - 86400000, songs: [], sessionId: "global" },
+  { id: "artist2", name: "Jazz Ensemble", songCount: 9, createdAt: Date.now() - 172800000, songs: [], sessionId: "global" },
+  { id: "artist3", name: "Rock Legend", songCount: 12, createdAt: Date.now() - 259200000, songs: [], sessionId: "global" },
 ];
 
 export function TemplatePanel({ 

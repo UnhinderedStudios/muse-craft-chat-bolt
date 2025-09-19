@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { X, Search, Filter, MoreVertical, Play, Pause, Clock, User, Trash2, RotateCw } from "lucide-react";
+import { X, Search, Filter, MoreVertical, Play, Pause, Clock, User, Trash2, RotateCw, Radio } from "lucide-react";
 import { SessionPlaylist, useSessionPlaylists } from "@/hooks/use-session-playlists";
 import { TrackItem } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useSessionManager } from "@/hooks/use-session-manager";
+import { useGlobalPlayer } from "@/contexts/GlobalPlayerContext";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -39,6 +41,8 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
   
   // Access session playlists for removing tracks and getting current playlist state
   const { removeTrackFromPlaylist, playlists, snapshotToTrack } = useSessionPlaylists();
+  const { currentSessionId } = useSessionManager();
+  const { state: globalPlayerState, playGlobalTrack, pauseGlobalPlayer, resumeGlobalPlayer } = useGlobalPlayer();
   
   // Get the current playlist from the hook state to ensure real-time updates
   const currentPlaylist = playlist ? playlists.find(p => p.id === playlist.id) || playlist : null;
@@ -112,7 +116,21 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
         toast.success(`Removed song from "${currentPlaylist.name}"`);
         break;
       case 'play':
-        if (onPlayTrack) {
+        const track = currentPlaylist.songs.find(s => s.id === songId);
+        if (!track) return;
+        
+        const trackItem = snapshotToTrack(track);
+        const playlistTracks = currentPlaylist.songs.map(s => snapshotToTrack(s));
+        
+        // Check if this is cross-session playback (playlist from different session)
+        const isCrossSession = currentPlaylist.sessionId !== currentSessionId;
+        
+        if (isCrossSession) {
+          // Enable radio mode for cross-session playback
+          playGlobalTrack(trackItem, playlistTracks, currentPlaylist.sessionId);
+          toast.success(`Playing "${track.title}" in radio mode`);
+        } else if (onPlayTrack) {
+          // Normal session playback
           onPlayTrack(songId);
         } else {
           console.log(`Playing song ${songId}`);
@@ -133,8 +151,14 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
 
   // Helper to determine if a song is currently playing
   const isSongPlaying = (songId: string) => {
-    return currentlyPlayingTrackId === songId && isPlaying;
+    // Check both session player and global radio
+    const isSessionPlaying = currentlyPlayingTrackId === songId && isPlaying;
+    const isGlobalPlaying = globalPlayerState.currentTrack?.id === songId && globalPlayerState.isPlaying;
+    return isSessionPlaying || isGlobalPlaying;
   };
+
+  // Check if we're in cross-session mode
+  const isCrossSession = currentPlaylist && currentPlaylist.sessionId !== currentSessionId;
 
   return (
     <div 
@@ -158,7 +182,15 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
 
           {/* Playlist info */}
           <div className="text-white mb-4 sm:mb-6">
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 sm:mb-3 pr-8">{currentPlaylist.name}</h2>
+            <div className="flex items-center gap-3 mb-2 sm:mb-3">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold pr-8">{currentPlaylist.name}</h2>
+              {isCrossSession && (
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm">
+                  <Radio className="w-3 h-3" />
+                  <span>Radio Mode</span>
+                </div>
+              )}
+            </div>
             <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm sm:text-base text-white/60">
               <span>{currentPlaylist.songs.length} {currentPlaylist.songs.length === 1 ? 'song' : 'songs'}</span>
               <span>•</span>

@@ -25,7 +25,7 @@ import { FullscreenKaraoke } from "@/components/karaoke/FullscreenKaraoke";
 import { KaraokeRightPanel } from "@/components/karaoke/KaraokeRightPanel";
 import { ResizableContainer } from "@/components/layout/ResizableContainer";
 import { TagInput } from "@/components/song/TagInput";
-import PlayerDock from "@/components/audio/PlayerDock";
+import { EnhancedGlobalPlayerBar } from "@/components/audio/EnhancedGlobalPlayerBar";
 import TrackListPanel from "@/components/tracklist/TrackListPanel";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { VoiceInterface } from "@/components/voice/VoiceInterface";
@@ -2365,7 +2365,7 @@ const Index = () => {
           "
           style={{ paddingBottom: `env(safe-area-inset-bottom, 0px)` }}
         >
-        <PlayerDock
+        <EnhancedGlobalPlayerBar
           title={tracks.length > 0 ? (tracks[(resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex)]?.title || "No track yet") : "No track yet"}
           audioRefs={audioRefs}
           currentAudioIndex={tracks.length > 0 ? (resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex) : 0}
@@ -2378,18 +2378,7 @@ const Index = () => {
           onSeek={(t) => handleSeek(t)}
           accent="#f92c8f"
           disabled={tracks.length === 0 || !tracks[(resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex)]}
-          albumCoverUrl={tracks.length > 0 ? tracks[(resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex)]?.coverUrl : undefined}
-          onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
-          onTitleUpdate={(newTitle) => {
-            if (tracks.length > 0 && currentSession) {
-              const targetIndex = (resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex);
-              const updatedTracks = tracks.map((track, index) => 
-                index === targetIndex ? { ...track, title: newTitle } : track
-              );
-              updateSession(currentSession.id, { tracks: updatedTracks });
-              console.log('[Title] Updated player track title:', targetIndex, newTitle);
-            }
-          }}
+          showGlobalPlayer={true}
         />
         </div>
       </footer>

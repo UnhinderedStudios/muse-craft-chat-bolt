@@ -19,6 +19,7 @@ export interface SessionPlaylist {
   isFavorited?: boolean;
   createdAt: number;
   songs: TrackSnapshot[];
+  sessionId: string; // Track which session this playlist belongs to
 }
 
 const STORAGE_KEY = "session_playlists";
@@ -185,7 +186,8 @@ export function useSessionPlaylists() {
       songCount: 0,
       isFavorited: false,
       createdAt: Date.now(),
-      songs: []
+      songs: [],
+      sessionId: "global" // Favourites belong to global session
     };
     setPlaylists([favourites]);
     safeStorageSet(STORAGE_KEY, [favourites]);
@@ -218,13 +220,14 @@ export function useSessionPlaylists() {
   }, []);
 
   // Create a new playlist
-  const createPlaylist = useCallback((name: string) => {
+  const createPlaylist = useCallback((name: string, sessionId = "global") => {
     const newPlaylist: SessionPlaylist = {
       id: `playlist_${Date.now()}`,
       name: name.trim(),
       songCount: 0,
       createdAt: Date.now(),
-      songs: []
+      songs: [],
+      sessionId
     };
     
     const updatedPlaylists = [...playlists, newPlaylist];
