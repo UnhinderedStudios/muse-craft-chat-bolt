@@ -99,8 +99,10 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
+      console.log("[SessionManager] Raw localStorage data:", raw);
       if (raw) {
         const data = JSON.parse(raw);
+        console.log("[SessionManager] Parsed localStorage data:", data);
         if (data?.sessions?.length) {
           // Preserve existing tracks and add mock tracks only if Global session is empty
           const mockTracks = getMockTracks();
@@ -127,7 +129,7 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
             return { ...session, activeGenerations: [] };
           });
           setSessions(preservedSessions);
-          setCurrentSessionId(data.currentSessionId || GLOBAL_SESSION_ID);
+          console.log("[SessionManager] Loaded sessions:", preservedSessions);
           return;
         }
       }
