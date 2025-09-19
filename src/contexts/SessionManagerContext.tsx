@@ -105,12 +105,12 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
         console.log("[SessionManager] Parsed localStorage data:", data);
         if (data?.sessions?.length) {
           // Preserve existing tracks and add mock tracks only if Global session is empty
-          const mockTracks = getMockTracks();
+              const mockTracks = getMockTracks();
           const preservedSessions = data.sessions.map((session: SessionData) => {
             if (session.id === GLOBAL_SESSION_ID) {
               // Always ensure mock tracks are present alongside real tracks
               const existingTracks = session.tracks || [];
-              const mockTracks = getMockTracks();
+              console.log("[SessionManager] Existing tracks from storage:", existingTracks);
               
               // Combine existing tracks with any missing mock tracks
               const allTracks = [...existingTracks];
@@ -120,6 +120,7 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
                 }
               });
               
+              console.log("[SessionManager] Final tracks after adding mocks:", allTracks);
               return {
                 ...session,
                 tracks: allTracks,
@@ -152,10 +153,14 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
             url: t.url,
             title: t.title,
             coverUrl: t.coverUrl,
+            generatedCovers: t.generatedCovers,
             createdAt: t.createdAt,
             // keep light metadata only
             params: level < 2 ? t.params : undefined,
             hasTimestamps: t.hasTimestamps,
+            hasBeenPlayed: t.hasBeenPlayed,
+            jobId: t.jobId,
+            audioId: t.audioId,
             // do not persist heavy word timings
             words: [],
           }));
