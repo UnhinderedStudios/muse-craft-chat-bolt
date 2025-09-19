@@ -2159,8 +2159,13 @@ const Index = () => {
               }}
               onTimeUpdate={handleTimeUpdate}
               onTrackTitleUpdate={(trackIndex, newTitle) => {
-                // Update track title in session - to be implemented
-                console.log('[Title] Updating track title:', trackIndex, newTitle);
+                if (currentSession && tracks.length > trackIndex) {
+                  const updatedTracks = tracks.map((track, index) => 
+                    index === trackIndex ? { ...track, title: newTitle } : track
+                  );
+                  updateSession(currentSession.id, { tracks: updatedTracks });
+                  console.log('[Title] Updated track title:', trackIndex, newTitle);
+                }
               }}
               isGenerating={isMusicGenerating}
               generationProgress={generationProgress}
@@ -2371,10 +2376,13 @@ const Index = () => {
           albumCoverUrl={tracks.length > 0 ? tracks[(resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex)]?.coverUrl : undefined}
           onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
           onTitleUpdate={(newTitle) => {
-            if (tracks.length > 0) {
+            if (tracks.length > 0 && currentSession) {
               const targetIndex = (resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex);
-              // Update track title in session - to be implemented
-              console.log('[Title] Updating player track title:', targetIndex, newTitle);
+              const updatedTracks = tracks.map((track, index) => 
+                index === targetIndex ? { ...track, title: newTitle } : track
+              );
+              updateSession(currentSession.id, { tracks: updatedTracks });
+              console.log('[Title] Updated player track title:', targetIndex, newTitle);
             }
           }}
         />
