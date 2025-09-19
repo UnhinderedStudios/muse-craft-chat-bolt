@@ -37,8 +37,11 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   
-  // Access session playlists for removing tracks
-  const { removeTrackFromPlaylist } = useSessionPlaylists();
+  // Access session playlists for removing tracks and getting current playlist state
+  const { removeTrackFromPlaylist, playlists } = useSessionPlaylists();
+  
+  // Get the current playlist from the hook state to ensure real-time updates
+  const currentPlaylist = playlist ? playlists.find(p => p.id === playlist.id) || playlist : null;
 
   // Handle escape key
   useEffect(() => {
@@ -69,10 +72,10 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
     }
   }, [isOpen]);
 
-  if (!isOpen || !playlist) return null;
+  if (!isOpen || !currentPlaylist) return null;
 
   // Filter and sort songs
-  const filteredSongs = playlist.songs.filter(song =>
+  const filteredSongs = currentPlaylist.songs.filter(song =>
     (song.title || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -101,12 +104,12 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
   };
 
   const handleSongAction = (songId: string, action: string) => {
-    if (!playlist) return;
+    if (!currentPlaylist) return;
     
     switch (action) {
       case 'remove':
-        removeTrackFromPlaylist(playlist.id, songId);
-        toast.success(`Removed song from "${playlist.name}"`);
+        removeTrackFromPlaylist(currentPlaylist.id, songId);
+        toast.success(`Removed song from "${currentPlaylist.name}"`);
         break;
       case 'play':
         if (onPlayTrack) {
@@ -155,12 +158,12 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
 
           {/* Playlist info */}
           <div className="text-white mb-4 sm:mb-6">
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 sm:mb-3 pr-8">{playlist.name}</h2>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 sm:mb-3 pr-8">{currentPlaylist.name}</h2>
             <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm sm:text-base text-white/60">
-              <span>{playlist.songCount} {playlist.songCount === 1 ? 'song' : 'songs'}</span>
+              <span>{currentPlaylist.songCount} {currentPlaylist.songCount === 1 ? 'song' : 'songs'}</span>
               <span>•</span>
-              <span>Created {formatDate(playlist.createdAt)}</span>
-              {playlist.isFavorited && (
+              <span>Created {formatDate(currentPlaylist.createdAt)}</span>
+              {currentPlaylist.isFavorited && (
                 <>
                   <span>•</span>
                   <div className="inline-flex items-center gap-2 px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-full text-sm">
@@ -201,7 +204,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
           {/* Search results count */}
           {searchQuery && (
             <div className="text-xs sm:text-sm text-white/40 mt-2 sm:mt-3">
-              {filteredSongs.length} of {playlist.songs.length} songs
+              {filteredSongs.length} of {currentPlaylist.songs.length} songs
             </div>
           )}
         </div>
