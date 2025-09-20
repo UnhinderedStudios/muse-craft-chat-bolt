@@ -226,8 +226,9 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
         const next = prev.map((session) => {
           const filtered = (session.activeGenerations || []).filter((g) => {
             const tooOld = Date.now() - (g.startTime || 0) > MAX_AGE_MS;
-            const replacements = (session.tracks || []).filter((t) => (t.createdAt || 0) >= (g.startTime || 0)).length;
-            if (tooOld || replacements >= 2) {
+            const jobTracks = (session.tracks || []).filter((t) => t.jobId === g.id).length;
+            if (tooOld || jobTracks >= 2) {
+              console.debug('[SessionManager] prune activeGeneration', { sessionId: session.id, jobId: g.id, tooOld, jobTracks });
               changed = true;
               return false;
             }

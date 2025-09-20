@@ -496,8 +496,9 @@ export default function TrackListPanel({
                 if (!job) return false;
                 const age = Date.now() - (job.startTime || 0);
                 if (age > MAX_AGE_MS) return false;
-                // Keep shells visible until any tracks for this job are visible
-                const jobTracksInView = paginatedTracks.filter(t => t.jobId === job.id).length;
+                // Keep shells visible until any tracks for this job are visible (check across all filteredTracks)
+                const jobTracksInView = filteredTracks.filter(t => t.jobId === job.id).length;
+                console.debug('[TrackListPanel] shell visibility', { jobId: job.id, jobTracksInFiltered: jobTracksInView, totalFiltered: filteredTracks.length });
                 return jobTracksInView === 0;
               });
               return jobsToShow.flatMap((job, jobIndex) => [0, 1].map((trackInJob) => {
