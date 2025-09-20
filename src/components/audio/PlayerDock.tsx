@@ -136,12 +136,6 @@ export default function PlayerDock({
       <div className="flex items-center justify-between pt-1 pb-0 px-3">
         {/* Left: album art + title + time - compact */}
         <div className="flex items-center gap-2 min-w-0 w-48">
-          {isRadioMode && (
-            <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-full border border-pink-500/30">
-              <Radio size={12} className="text-pink-400" />
-              <span className="text-xs text-pink-400 font-medium">RADIO</span>
-            </div>
-          )}
           {activeAlbumCover && (
             <button
               onClick={onFullscreenKaraoke}
