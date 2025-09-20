@@ -770,6 +770,15 @@ const Index = () => {
       setPlayingTrackId(playingTrack.id);
       setPlayingTrackIndex(index);
       
+      // Mark track as played when audio starts playing
+      if (currentSession && !playingTrack.hasBeenPlayed) {
+        const updatedTracks = tracks.map((track, trackIndex) => 
+          trackIndex === index ? { ...track, hasBeenPlayed: true } : track
+        );
+        updateSession(currentSession.id, { tracks: updatedTracks });
+        console.log('[Pink dot] Marked track as played on audio play:', index);
+      }
+      
       // Use wavRegistry for accurate audioId/musicIndex mapping
       const refs = wavRegistry.get(playingTrack.id);
       const audioId = refs?.audioId || playingTrack.id;
@@ -2221,6 +2230,15 @@ const Index = () => {
                   console.log('[Manual selection] User selected track:', idx, tracks[idx]);
                   setCurrentTrackIndex(idx);
                   setCurrentTime(0);
+                  
+                  // Mark track as played when manually selected
+                  if (currentSession && tracks.length > idx) {
+                    const updatedTracks = tracks.map((track, index) => 
+                      index === idx ? { ...track, hasBeenPlayed: true } : track
+                    );
+                    updateSession(currentSession.id, { tracks: updatedTracks });
+                    console.log('[Pink dot] Marked track as played on selection:', idx);
+                  }
                 }
               }}
               onTimeUpdate={handleTimeUpdate}
