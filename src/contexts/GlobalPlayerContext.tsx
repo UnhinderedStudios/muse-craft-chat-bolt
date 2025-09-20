@@ -123,6 +123,7 @@ export function GlobalPlayerProvider({ children }: { children: React.ReactNode }
       playPromise
         .then(() => {
           setState(prev => ({ ...prev, isPlaying: true }));
+          console.log('[GlobalPlayer] Started playing:', track.title, 'in radio mode');
         })
         .catch(err => {
           console.error('[GlobalPlayer] Play failed:', err);

@@ -1,7 +1,8 @@
-import { Play, Pause, SkipBack, SkipForward, Heart, Share2, Plus, Volume2, Pencil } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Heart, Share2, Plus, Volume2, Pencil, Radio } from "lucide-react";
 import BarWaveform from "@/components/audio/BarWaveform";
 import EllipsisMarquee from "@/components/ui/EllipsisMarquee";
 import { useState } from "react";
+import { useGlobalPlayer } from "@/contexts/GlobalPlayerContext";
 
 type Props = {
   title: string;
@@ -38,15 +39,25 @@ export default function PlayerDock({
   onFullscreenKaraoke,
   onTitleUpdate,
 }: Props) {
+  const { state: globalState, pauseGlobalPlayer, resumeGlobalPlayer, playNext: globalNext, playPrevious: globalPrev } = useGlobalPlayer();
+  
+  // Determine active player state - use global if radio mode is active
+  const isRadioMode = globalState.isRadioMode && globalState.currentTrack;
+  const activeTitle = isRadioMode ? globalState.currentTrack?.title || "No track yet" : title;
+  const activeIsPlaying = isRadioMode ? globalState.isPlaying : isPlaying;
+  const activeCurrentTime = isRadioMode ? globalState.currentTime : currentTime;
+  const activeDuration = isRadioMode ? globalState.duration : (audioRefs.current[currentAudioIndex]?.duration ?? 0);
+  const activeAlbumCover = isRadioMode ? globalState.currentTrack?.coverUrl : albumCoverUrl;
+  
   const audio = audioRefs.current[currentAudioIndex];
   const duration = audio?.duration ?? 0;
-  const progress = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+  const progress = activeDuration > 0 ? Math.min((activeCurrentTime / activeDuration) * 100, 100) : 0;
 
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
 
   const handleEditStart = () => {
-    setEditValue(title);
+    setEditValue(activeTitle);
     setIsEditing(true);
   };
 
@@ -70,15 +81,50 @@ export default function PlayerDock({
     }
   };
 
+  // Handle play/pause with global awareness
+  const handlePlayPause = () => {
+    if (isRadioMode) {
+      if (activeIsPlaying) {
+        pauseGlobalPlayer();
+      } else {
+        resumeGlobalPlayer();
+      }
+    } else {
+      if (isPlaying) {
+        onPause();
+      } else {
+        onPlay();
+      }
+    }
+  };
+
+  // Handle previous with global awareness
+  const handlePrev = () => {
+    if (isRadioMode) {
+      globalPrev();
+    } else {
+      onPrev();
+    }
+  };
+
+  // Handle next with global awareness
+  const handleNext = () => {
+    if (isRadioMode) {
+      globalNext();
+    } else {
+      onNext();
+    }
+  };
+
 
   return (
     <div className="w-full h-full flex flex-col relative z-10 pt-2">
       <div className="h-[28px] bg-transparent">
         {/* Bar Waveform - tall sticks, edge to edge */}
         <BarWaveform
-          audio={audioRefs.current[currentAudioIndex] || null}
-          currentTime={currentTime}
-          onSeek={onSeek}
+          audio={isRadioMode ? null : (audioRefs.current[currentAudioIndex] || null)}
+          currentTime={activeCurrentTime}
+          onSeek={isRadioMode ? () => {} : onSeek}
           accent={accent}
           height={28}        // proportionally reduced with container
           barWidth={3}       // chunky sticks
@@ -90,14 +136,20 @@ export default function PlayerDock({
       <div className="flex items-center justify-between pt-1 pb-0 px-3">
         {/* Left: album art + title + time - compact */}
         <div className="flex items-center gap-2 min-w-0 w-48">
-          {albumCoverUrl && (
+          {isRadioMode && (
+            <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-full border border-pink-500/30">
+              <Radio size={12} className="text-pink-400" />
+              <span className="text-xs text-pink-400 font-medium">RADIO</span>
+            </div>
+          )}
+          {activeAlbumCover && (
             <button
               onClick={onFullscreenKaraoke}
               className="w-8 h-8 aspect-square rounded overflow-hidden border border-white/20 hover:border-white/40 transition-colors flex-shrink-0"
               disabled={disabled || !onFullscreenKaraoke}
             >
               <img 
-                src={albumCoverUrl} 
+                src={activeAlbumCover} 
                 alt="Album cover"
                 className="w-full h-full object-cover"
               />
@@ -121,14 +173,14 @@ export default function PlayerDock({
                 <>
                   <div className="flex items-center min-w-0 flex-1">
                     <EllipsisMarquee
-                      text={title || "No track yet"}
+                      text={activeTitle || "No track yet"}
                       className="text-sm text-white/90"
                       speedPxPerSec={30}
                     />
-                    {onTitleUpdate && (
+                    {onTitleUpdate && !isRadioMode && (
                       <button
                         onClick={() => {
-                          console.log("Edit button clicked, title:", title, "onTitleUpdate:", !!onTitleUpdate);
+                          console.log("Edit button clicked, title:", activeTitle, "onTitleUpdate:", !!onTitleUpdate);
                           handleEditStart();
                         }}
                         className="p-1 hover:bg-white/10 rounded opacity-60 hover:opacity-100 transition-opacity flex-shrink-0 ml-1"
@@ -142,20 +194,20 @@ export default function PlayerDock({
               )}
             </div>
             <div className="text-[11px] text-white/50">
-              {formatTime(currentTime)} • {formatTime(duration)}
+              {formatTime(activeCurrentTime)} • {formatTime(activeDuration)}
             </div>
           </div>
         </div>
 
         {/* Center: transport - prominent */}
         <div className="flex items-center gap-3">
-          <IconBtn onClick={onPrev} disabled={disabled} className="h-8 w-8"><SkipBack size={16} /></IconBtn>
-          {isPlaying ? (
-            <IconBtn onClick={onPause} primary disabled={disabled} className="h-10 w-10"><Pause size={18} /></IconBtn>
+          <IconBtn onClick={handlePrev} disabled={disabled} className="h-8 w-8"><SkipBack size={16} /></IconBtn>
+          {activeIsPlaying ? (
+            <IconBtn onClick={handlePlayPause} primary disabled={disabled} className="h-10 w-10"><Pause size={18} /></IconBtn>
           ) : (
-            <IconBtn onClick={onPlay} primary disabled={disabled} className="h-10 w-10"><Play size={18} /></IconBtn>
+            <IconBtn onClick={handlePlayPause} primary disabled={disabled} className="h-10 w-10"><Play size={18} /></IconBtn>
           )}
-          <IconBtn onClick={onNext} disabled={disabled} className="h-8 w-8"><SkipForward size={16} /></IconBtn>
+          <IconBtn onClick={handleNext} disabled={disabled} className="h-8 w-8"><SkipForward size={16} /></IconBtn>
         </div>
 
         {/* Right: actions - compact */}

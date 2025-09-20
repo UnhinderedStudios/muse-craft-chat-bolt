@@ -41,7 +41,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
   
   // Access session playlists for removing tracks and getting current playlist state
   const { removeTrackFromPlaylist, playlists, snapshotToTrack } = useSessionPlaylists();
-  const { currentSessionId } = useSessionManager();
+  const { currentSessionId, switchToSession } = useSessionManager();
   const { state: globalPlayerState, playGlobalTrack, pauseGlobalPlayer, resumeGlobalPlayer } = useGlobalPlayer();
   
   // Get the current playlist from the hook state to ensure real-time updates
@@ -128,6 +128,13 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
         if (isCrossSession) {
           // Enable radio mode for cross-session playback
           playGlobalTrack(trackItem, playlistTracks, currentPlaylist.sessionId);
+          
+          // Also switch to originating session and play there for lyrics sync
+          switchToSession(currentPlaylist.sessionId);
+          if (onPlayTrack) {
+            onPlayTrack(songId);
+          }
+          
           toast.success(`Playing "${track.title}" in radio mode`);
         } else if (onPlayTrack) {
           // Normal session playback
@@ -154,6 +161,12 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
     // Check both session player and global radio
     const isSessionPlaying = currentlyPlayingTrackId === songId && isPlaying;
     const isGlobalPlaying = globalPlayerState.currentTrack?.id === songId && globalPlayerState.isPlaying;
+    
+    // For cross-session playlists, primarily check global player
+    if (isCrossSession) {
+      return isGlobalPlaying;
+    }
+    
     return isSessionPlaying || isGlobalPlaying;
   };
 
