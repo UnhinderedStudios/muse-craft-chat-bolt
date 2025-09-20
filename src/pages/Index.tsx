@@ -317,6 +317,9 @@ const Index = () => {
     setIsPlaying(false);
     setCurrentTime(0);
     
+    // Reset versions (lyrics) to prevent persistence across sessions
+    setVersions([]);
+    
     // Reset virtual track state
     setVirtualTrack(null);
     setIsVirtualPlayback(false);

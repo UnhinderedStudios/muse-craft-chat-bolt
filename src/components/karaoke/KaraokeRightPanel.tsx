@@ -52,7 +52,9 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   onRefreshLyrics,
 }) => {
   const currentVersion = versions.length > 0 && currentAudioIndex >= 0 && currentAudioIndex < versions.length ? versions[currentAudioIndex] : null;
-  const hasContent = !!currentVersion; // Treat having a selected version as content
+  // Safety check: only show content if we have both versions and valid audio refs indicating active tracks
+  const hasValidTracks = audioRefs.current && audioRefs.current.length > 0 && audioRefs.current.some(ref => ref !== null);
+  const hasContent = !!currentVersion && hasValidTracks;
   const currentAlbumCover = currentTrackCoverUrl;
   const audioElement = audioRefs.current[currentTrackIndex] || null;
   const duration = audioElement?.duration || 0;
