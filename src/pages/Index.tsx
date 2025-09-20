@@ -41,6 +41,7 @@ import { useResize } from "@/hooks/use-resize";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useSongGeneration } from "@/hooks/use-song-generation";
 import { useSessionManager } from "@/hooks/use-session-manager";
+import { useSessionPlaylists } from "@/hooks/use-session-playlists";
 
 // Types
 import { type TimestampedWord, type ChatMessage, type TrackItem } from "@/types";
@@ -242,6 +243,53 @@ const Index = () => {
     updateSession,
   } = useSessionManager();
   
+  // Virtual track state for cross-session playback
+  const [virtualTrack, setVirtualTrack] = useState<TrackItem | null>(null);
+  const [isVirtualPlayback, setIsVirtualPlayback] = useState(false);
+  const virtualAudioRef = useRef<HTMLAudioElement | null>(null);
+  
+  // Access playlists for cross-session track lookup
+  const { playlists, snapshotToTrack } = useSessionPlaylists();
+  
+  // Virtual audio event handlers
+  useEffect(() => {
+    const audio = virtualAudioRef.current;
+    if (!audio) return;
+    
+    const handleTimeUpdate = () => {
+      if (isVirtualPlayback) {
+        setCurrentTime(audio.currentTime);
+      }
+    };
+    
+    const handleEnded = () => {
+      if (isVirtualPlayback) {
+        setIsPlaying(false);
+        setIsVirtualPlayback(false);
+        setVirtualTrack(null);
+      }
+    };
+    
+    const handleError = () => {
+      if (isVirtualPlayback) {
+        console.error('[Virtual Play] Audio error');
+        setIsPlaying(false);
+        setIsVirtualPlayback(false);
+        setVirtualTrack(null);
+      }
+    };
+    
+    audio.addEventListener('timeupdate', handleTimeUpdate);
+    audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
+    
+    return () => {
+      audio.removeEventListener('timeupdate', handleTimeUpdate);
+      audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
+    };
+  }, [isVirtualPlayback]);
+  
   // Karaoke pinning refs to prevent overwrite during active playback
   const karaokePinnedRef = useRef<boolean>(false);
   const pinnedAudioIdRef = useRef<string | null>(null);
@@ -268,6 +316,14 @@ const Index = () => {
     // Reset audio state
     setIsPlaying(false);
     setCurrentTime(0);
+    
+    // Reset virtual track state
+    setVirtualTrack(null);
+    setIsVirtualPlayback(false);
+    if (virtualAudioRef.current) {
+      virtualAudioRef.current.pause();
+      virtualAudioRef.current.currentTime = 0;
+    }
     
     // Reset karaoke pinning
     karaokePinnedRef.current = false;
@@ -2263,10 +2319,59 @@ const Index = () => {
                 setSelectedPlaylist(null);
               }}
               onPlayTrack={(trackId) => {
-                // Find the track in the current session and play it
+                // First try to find the track in the current session
                 const trackIndex = tracks.findIndex(track => track.id === trackId);
                 if (trackIndex >= 0) {
+                  // Track exists in current session - play normally
                   handleAudioPlay(trackIndex);
+                } else {
+                  // Track doesn't exist in current session - find it in playlists for virtual playback
+                  let foundTrack = null;
+                  
+                  // Search all playlists for the track
+                  for (const playlist of playlists) {
+                    const trackSnapshot = playlist.songs.find(song => song.id === trackId);
+                    if (trackSnapshot) {
+                      foundTrack = snapshotToTrack(trackSnapshot);
+                      break;
+                    }
+                  }
+                  
+                  if (foundTrack) {
+                    console.log('[Virtual Play] Starting virtual playback:', foundTrack);
+                    
+                    // Stop any current session playback
+                    setIsPlaying(false);
+                    audioRefs.current.forEach(audio => {
+                      if (audio) {
+                        audio.pause();
+                      }
+                    });
+                    
+                    // Set up virtual track
+                    setVirtualTrack(foundTrack);
+                    setIsVirtualPlayback(true);
+                    setPlayingTrackId(trackId);
+                    
+                    // Create and play virtual audio element
+                    if (!virtualAudioRef.current) {
+                      virtualAudioRef.current = new Audio();
+                    }
+                    
+                    const audio = virtualAudioRef.current;
+                    audio.src = foundTrack.url;
+                    audio.currentTime = 0;
+                    setCurrentTime(0);
+                    
+                    audio.play().then(() => {
+                      setIsPlaying(true);
+                    }).catch(err => {
+                      console.error('[Virtual Play] Failed to play virtual track:', err);
+                      setIsVirtualPlayback(false);
+                      setVirtualTrack(null);
+                      setPlayingTrackId("");
+                    });
+                  }
                 }
               }}
                currentlyPlayingTrackId={playingTrackId}
@@ -2354,22 +2459,75 @@ const Index = () => {
           style={{ paddingBottom: `env(safe-area-inset-bottom, 0px)` }}
         >
         <PlayerDock
-          title={tracks.length > 0 ? (tracks[(resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex)]?.title || "No track yet") : "No track yet"}
-          audioRefs={audioRefs}
-          currentAudioIndex={tracks.length > 0 ? (resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex) : 0}
+          title={isVirtualPlayback && virtualTrack ? 
+            virtualTrack.title || "Virtual Track" : 
+            (tracks.length > 0 ? (tracks[(resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex)]?.title || "No track yet") : "No track yet")
+          }
+          audioRefs={isVirtualPlayback ? { current: virtualAudioRef.current ? [virtualAudioRef.current] : [] } : audioRefs}
+          currentAudioIndex={0}
           isPlaying={isPlaying}
           currentTime={currentTime}
-          onPrev={playPrev}
-          onNext={playNext}
-          onPlay={() => tracks.length > 0 && handleAudioPlay((resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex))}
-          onPause={handleAudioPause}
-          onSeek={(t) => handleSeek(t)}
+          onPrev={() => {
+            if (isVirtualPlayback) {
+              // Exit virtual playback and go back to session
+              setIsVirtualPlayback(false);
+              setVirtualTrack(null);
+              setIsPlaying(false);
+              if (virtualAudioRef.current) {
+                virtualAudioRef.current.pause();
+              }
+            } else {
+              playPrev();
+            }
+          }}
+          onNext={() => {
+            if (isVirtualPlayback) {
+              // Exit virtual playback and go back to session
+              setIsVirtualPlayback(false);
+              setVirtualTrack(null);
+              setIsPlaying(false);
+              if (virtualAudioRef.current) {
+                virtualAudioRef.current.pause();
+              }
+            } else {
+              playNext();
+            }
+          }}
+          onPlay={() => {
+            if (isVirtualPlayback && virtualAudioRef.current) {
+              virtualAudioRef.current.play().then(() => setIsPlaying(true));
+            } else {
+              tracks.length > 0 && handleAudioPlay((resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex));
+            }
+          }}
+          onPause={() => {
+            if (isVirtualPlayback && virtualAudioRef.current) {
+              virtualAudioRef.current.pause();
+              setIsPlaying(false);
+            } else {
+              handleAudioPause();
+            }
+          }}
+          onSeek={(t) => {
+            if (isVirtualPlayback && virtualAudioRef.current) {
+              virtualAudioRef.current.currentTime = t;
+              setCurrentTime(t);
+            } else {
+              handleSeek(t);
+            }
+          }}
           accent="#f92c8f"
-          disabled={tracks.length === 0 || !tracks[(resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex)]}
-          albumCoverUrl={tracks.length > 0 ? tracks[(resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex)]?.coverUrl : undefined}
+          disabled={(!isVirtualPlayback && (tracks.length === 0 || !tracks[(resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex)])) || (isVirtualPlayback && !virtualTrack)}
+          albumCoverUrl={isVirtualPlayback && virtualTrack ? 
+            virtualTrack.coverUrl : 
+            (tracks.length > 0 ? tracks[(resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex)]?.coverUrl : undefined)
+          }
           onFullscreenKaraoke={() => setShowFullscreenKaraoke(true)}
           onTitleUpdate={(newTitle) => {
-            if (tracks.length > 0 && currentSession) {
+            if (isVirtualPlayback && virtualTrack) {
+              // For virtual tracks, don't update session but could update playlist in future
+              console.log('[Title] Virtual track title update not implemented:', newTitle);
+            } else if (tracks.length > 0 && currentSession) {
               const targetIndex = (resolvedPlayingIndex >= 0 ? resolvedPlayingIndex : currentTrackIndex);
               const updatedTracks = tracks.map((track, index) => 
                 index === targetIndex ? { ...track, title: newTitle } : track
