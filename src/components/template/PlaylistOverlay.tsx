@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { X, Search, Filter, MoreVertical, Play, Pause, Clock, User, Trash2, RotateCw, Radio } from "lucide-react";
+import { X, Search, Filter, MoreVertical, Play, Pause, Clock, User, Trash2, RotateCw } from "lucide-react";
 import { SessionPlaylist, useSessionPlaylists } from "@/hooks/use-session-playlists";
 import { TrackItem } from "@/types";
 import { cn } from "@/lib/utils";
@@ -126,7 +126,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
         const isCrossSession = currentPlaylist.sessionId !== currentSessionId;
         
         if (isCrossSession) {
-          // Enable radio mode for cross-session playback
+          // Enable cross-session playback
           playGlobalTrack(trackItem, playlistTracks, currentPlaylist.sessionId);
           
           // Also switch to originating session and play there for lyrics sync
@@ -135,7 +135,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
             onPlayTrack(songId);
           }
           
-          toast.success(`Playing "${track.title}" in radio mode`);
+          toast.success(`Playing "${track.title}"`);
         } else if (onPlayTrack) {
           // Normal session playback
           onPlayTrack(songId);
@@ -197,12 +197,6 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
           <div className="text-white mb-4 sm:mb-6">
             <div className="flex items-center gap-3 mb-2 sm:mb-3">
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold pr-8">{currentPlaylist.name}</h2>
-              {isCrossSession && (
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm">
-                  <Radio className="w-3 h-3" />
-                  <span>Radio Mode</span>
-                </div>
-              )}
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm sm:text-base text-white/60">
               <span>{currentPlaylist.songs.length} {currentPlaylist.songs.length === 1 ? 'song' : 'songs'}</span>

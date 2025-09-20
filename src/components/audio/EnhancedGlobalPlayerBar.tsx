@@ -167,22 +167,6 @@ export const EnhancedGlobalPlayerBar = ({
 
   return (
     <div className="rounded-xl bg-[#101010] shadow-sm w-full overflow-hidden select-none">
-      {/* Radio mode indicator */}
-      {useGlobalPlayerMode && (
-        <div className="flex items-center justify-between px-4 py-2 bg-purple-500/10 border-b border-purple-500/20">
-          <div className="flex items-center gap-2 text-purple-400 text-sm">
-            <Radio className="w-4 h-4" />
-            <span>Radio Mode • Playing from {globalState.originatingSessionId}</span>
-          </div>
-          <button 
-            onClick={stopGlobalPlayer}
-            className="text-purple-400 hover:text-white transition-colors"
-            aria-label="Stop radio"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
 
       {/* Waveform — edge to edge */}
       <div className="relative w-full overflow-hidden" onPointerDown={handleWavePointer}>
