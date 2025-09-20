@@ -496,9 +496,9 @@ export default function TrackListPanel({
                 if (!job) return false;
                 const age = Date.now() - (job.startTime || 0);
                 if (age > MAX_AGE_MS) return false;
-                // Only hide this job's shells if this specific job has produced tracks
-                const jobTracks = tracks.filter(t => t.jobId === job.id).length;
-                return jobTracks < 2;
+                // Only hide this job's shells if this specific job has tracks visible in current pagination view
+                const jobTracksInView = paginatedTracks.filter(t => t.jobId === job.id).length;
+                return jobTracksInView < 2;
               });
               return jobsToShow.flatMap((job, jobIndex) => [0, 1].map((trackInJob) => {
                 const jobProgress = job?.progress || 0;
