@@ -4,8 +4,6 @@ import { SessionPlaylist, useSessionPlaylists } from "@/hooks/use-session-playli
 import { TrackItem } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { useSessionManager } from "@/hooks/use-session-manager";
-import { useGlobalPlayer } from "@/contexts/GlobalPlayerContext";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -41,8 +39,6 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
   
   // Access session playlists for removing tracks and getting current playlist state
   const { removeTrackFromPlaylist, playlists, snapshotToTrack } = useSessionPlaylists();
-  const { currentSessionId, switchToSession } = useSessionManager();
-  const { state: globalPlayerState, playGlobalTrack, pauseGlobalPlayer, resumeGlobalPlayer } = useGlobalPlayer();
   
   // Get the current playlist from the hook state to ensure real-time updates
   const currentPlaylist = playlist ? playlists.find(p => p.id === playlist.id) || playlist : null;
@@ -116,28 +112,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
         toast.success(`Removed song from "${currentPlaylist.name}"`);
         break;
       case 'play':
-        const track = currentPlaylist.songs.find(s => s.id === songId);
-        if (!track) return;
-        
-        const trackItem = snapshotToTrack(track);
-        const playlistTracks = currentPlaylist.songs.map(s => snapshotToTrack(s));
-        
-        // Check if this is cross-session playback (playlist from different session)
-        const isCrossSession = currentPlaylist.sessionId !== currentSessionId;
-        
-        if (isCrossSession) {
-          // Enable cross-session playback
-          playGlobalTrack(trackItem, playlistTracks, currentPlaylist.sessionId);
-          
-          // Also switch to originating session and play there for lyrics sync
-          switchToSession(currentPlaylist.sessionId);
-          if (onPlayTrack) {
-            onPlayTrack(songId);
-          }
-          
-          toast.success(`Playing "${track.title}"`);
-        } else if (onPlayTrack) {
-          // Normal session playback
+        if (onPlayTrack) {
           onPlayTrack(songId);
         } else {
           console.log(`Playing song ${songId}`);
@@ -158,20 +133,8 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
 
   // Helper to determine if a song is currently playing
   const isSongPlaying = (songId: string) => {
-    // Check both session player and global radio
-    const isSessionPlaying = currentlyPlayingTrackId === songId && isPlaying;
-    const isGlobalPlaying = globalPlayerState.currentTrack?.id === songId && globalPlayerState.isPlaying;
-    
-    // For cross-session playlists, primarily check global player
-    if (isCrossSession) {
-      return isGlobalPlaying;
-    }
-    
-    return isSessionPlaying || isGlobalPlaying;
+    return currentlyPlayingTrackId === songId && isPlaying;
   };
-
-  // Check if we're in cross-session mode
-  const isCrossSession = currentPlaylist && currentPlaylist.sessionId !== currentSessionId;
 
   return (
     <div 
@@ -195,9 +158,7 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
 
           {/* Playlist info */}
           <div className="text-white mb-4 sm:mb-6">
-            <div className="flex items-center gap-3 mb-2 sm:mb-3">
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold pr-8">{currentPlaylist.name}</h2>
-            </div>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2 sm:mb-3 pr-8">{currentPlaylist.name}</h2>
             <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm sm:text-base text-white/60">
               <span>{currentPlaylist.songs.length} {currentPlaylist.songs.length === 1 ? 'song' : 'songs'}</span>
               <span>•</span>

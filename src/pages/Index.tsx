@@ -269,10 +269,6 @@ const Index = () => {
     setIsPlaying(false);
     setCurrentTime(0);
     
-    // CRITICAL: Reset versions to clear phantom lyrics from previous sessions
-    setVersions([]);
-    console.log('[Versions] Cleared on session switch');
-    
     // Reset karaoke pinning
     karaokePinnedRef.current = false;
     pinnedAudioIdRef.current = null;
@@ -474,14 +470,6 @@ const Index = () => {
   // Get tracks from current session
   const tracks = currentSession?.tracks || [];
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
-  
-  // Clear versions when no tracks are available (safety net for empty sessions)
-  useEffect(() => {
-    if (tracks.length === 0) {
-      console.log('[Versions] Clearing due to no tracks available');
-      setVersions([]);
-    }
-  }, [tracks.length]);
   
   // Removed legacy cleanup that mistakenly deleted real songs
   // Previously attempted to keep only placeholder tracks; no longer needed.

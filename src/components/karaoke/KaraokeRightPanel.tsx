@@ -52,10 +52,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   onRefreshLyrics,
 }) => {
   const currentVersion = versions.length > 0 && currentAudioIndex >= 0 && currentAudioIndex < versions.length ? versions[currentAudioIndex] : null;
-  
-  // Enhanced validation: only show content if we have a valid current version AND a track title
-  // This prevents phantom lyrics from appearing when switching to empty sessions
-  const hasContent = !!currentVersion && !!currentTrackTitle;
+  const hasContent = !!currentVersion; // Treat having a selected version as content
   const currentAlbumCover = currentTrackCoverUrl;
   const audioElement = audioRefs.current[currentTrackIndex] || null;
   const duration = audioElement?.duration || 0;

@@ -8,7 +8,6 @@ import { DragOverlay } from "@/components/drag/DragOverlay";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { SessionManagerProvider } from "@/contexts/SessionManagerContext";
-import { GlobalPlayerProvider } from "@/contexts/GlobalPlayerContext";
 
 const queryClient = new QueryClient();
 
@@ -16,7 +15,6 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <SessionManagerProvider>
-        <GlobalPlayerProvider>
         <DragProvider>
           <Toaster />
           <Sonner />
@@ -29,7 +27,6 @@ const App = () => (
             </Routes>
           </BrowserRouter>
         </DragProvider>
-        </GlobalPlayerProvider>
       </SessionManagerProvider>
     </TooltipProvider>
   </QueryClientProvider>
