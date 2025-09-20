@@ -36,7 +36,7 @@ type Props = {
   isGenerating?: boolean;
   generationProgress?: number;
   activeJobCount?: number;
-  activeGenerations?: Array<{id: string, startTime: number, progress: number, details: any, covers?: { cover1: string; cover2: string } | null}>;
+  activeGenerations?: Array<{id: string, startTime: number, progress: number, details: any, covers?: { cover1: string; cover2: string } | null, isCompleting?: boolean}>;
   onPlaylistClick?: (playlist: SessionPlaylist) => void;
 };
 
@@ -496,9 +496,10 @@ export default function TrackListPanel({
                 if (!job) return false;
                 const age = Date.now() - (job.startTime || 0);
                 if (age > MAX_AGE_MS) return false;
-                // Only hide this job's shells if this specific job has tracks visible in current pagination view
+                // Only hide this job's shells if this specific job has tracks visible OR is completing
                 const jobTracksInView = paginatedTracks.filter(t => t.jobId === job.id).length;
-                return jobTracksInView < 2;
+                const jobIsCompleting = job.isCompleting || false;
+                return jobTracksInView === 0 && !jobIsCompleting;
               });
               return jobsToShow.flatMap((job, jobIndex) => [0, 1].map((trackInJob) => {
                 const jobProgress = job?.progress || 0;

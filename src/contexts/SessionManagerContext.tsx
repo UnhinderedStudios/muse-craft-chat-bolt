@@ -15,6 +15,7 @@ export interface SessionData {
     progress: number;
     details: any;
     covers?: { cover1: string; cover2: string } | null;
+    isCompleting?: boolean;
   }>;
 }
 
@@ -37,11 +38,11 @@ export interface SessionManagerContextValue {
   updateCurrentSessionChat: (messages: ChatMessage[]) => void;
   
   // Generation management
-  addActiveGeneration: (generation: { id: string; sunoJobId?: string; startTime: number; progress: number; details: any; covers?: { cover1: string; cover2: string } | null }) => void;
-  updateActiveGeneration: (id: string, updates: Partial<{ sunoJobId?: string; progress: number; details: any; covers?: { cover1: string; cover2: string } | null }>) => void;
+  addActiveGeneration: (generation: { id: string; sunoJobId?: string; startTime: number; progress: number; details: any; covers?: { cover1: string; cover2: string } | null; isCompleting?: boolean }) => void;
+  updateActiveGeneration: (id: string, updates: Partial<{ sunoJobId?: string; progress: number; details: any; covers?: { cover1: string; cover2: string } | null; isCompleting?: boolean }>) => void;
   removeActiveGeneration: (id: string) => void;
-  getActiveGenerations: () => Array<{ id: string; sunoJobId?: string; startTime: number; progress: number; details: any; covers?: { cover1: string; cover2: string } | null }>;
-  findActiveGenerationById: (id: string) => { id: string; sunoJobId?: string; startTime: number; progress: number; details: any; covers?: { cover1: string; cover2: string } | null } | null;
+  getActiveGenerations: () => Array<{ id: string; sunoJobId?: string; startTime: number; progress: number; details: any; covers?: { cover1: string; cover2: string } | null; isCompleting?: boolean }>;
+  findActiveGenerationById: (id: string) => { id: string; sunoJobId?: string; startTime: number; progress: number; details: any; covers?: { cover1: string; cover2: string } | null; isCompleting?: boolean } | null;
 }
 
 export const SessionManagerContext = createContext<SessionManagerContextValue | null>(null);
@@ -272,6 +273,7 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
       progress: number;
       details: any;
       covers?: { cover1: string; cover2: string } | null;
+      isCompleting?: boolean;
     }> = [];
     
     for (const session of sessions) {
@@ -419,7 +421,7 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
   }, [sessions]);
 
   // Generation management functions
-  const addActiveGeneration = useCallback((generation: { id: string; sunoJobId?: string; startTime: number; progress: number; details: any; covers?: { cover1: string; cover2: string } | null }) => {
+  const addActiveGeneration = useCallback((generation: { id: string; sunoJobId?: string; startTime: number; progress: number; details: any; covers?: { cover1: string; cover2: string } | null; isCompleting?: boolean }) => {
     setSessions(prev => prev.map(s => {
       if (s.id !== currentSessionId) return s;
       // Ensure uniqueness by generation id
@@ -430,7 +432,7 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     }));
   }, [currentSessionId]);
 
-  const updateActiveGeneration = useCallback((id: string, updates: Partial<{ sunoJobId?: string; progress: number; details: any; covers?: { cover1: string; cover2: string } | null }>) => {
+  const updateActiveGeneration = useCallback((id: string, updates: Partial<{ sunoJobId?: string; progress: number; details: any; covers?: { cover1: string; cover2: string } | null; isCompleting?: boolean }>) => {
     setSessions(prevSessions => {
       // Find which session contains this generation and update it
       return prevSessions.map(session => {

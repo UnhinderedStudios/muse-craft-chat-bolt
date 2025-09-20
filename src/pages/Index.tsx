@@ -1477,6 +1477,13 @@ const Index = () => {
         
         if (status.status === "ready" && status.audioUrls?.length) {
           console.log("[Generation] Audio URLs ready:", status.audioUrls);
+          
+          // Set completion flag to prevent loading shells from disappearing
+          if (wrapperJobId) {
+            updateActiveGeneration(wrapperJobId, { isCompleting: true });
+            console.log(`[Generation] 🔄 Set isCompleting=true for job ${wrapperJobId}`);
+          }
+          
           setAudioUrls(status.audioUrls);
           setAudioUrl(status.audioUrls[0]);
           
@@ -1785,6 +1792,13 @@ const Index = () => {
             
             // Add ALL tracks atomically to prevent race conditions
             addTracksToCurrentSession(fresh);
+            
+            // Clear completion flag now that tracks are added
+            if (wrapperJobId) {
+              updateActiveGeneration(wrapperJobId, { isCompleting: false });
+              console.log(`[Generation] ✅ Set isCompleting=false for job ${wrapperJobId} - tracks added`);
+            }
+            
             console.log(`[Generation] Fresh tracks with covers: ${fresh.filter(t => t.coverUrl).length}`);
             console.log(`[Generation] Fresh tracks coverUrls:`, fresh.map(t => ({ id: t.id, hasCover: !!t.coverUrl, coverPreview: t.coverUrl?.substring(0, 50) })));
             
