@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.generate-album-cover]
 verify_jwt = false
+
+[functions.generate-artist-image]
+verify_jwt = false

@@ -352,4 +352,54 @@ export const api = {
     }
     return [];
   },
+
+  // Generate artist images using Gemini 2.5 Flash with optional image analysis
+  async generateArtistImages(prompt: string, referenceImage?: File): Promise<{ images: string[]; enhancedPrompt?: string }> {
+    console.log("🎨 Calling artist generator with prompt:", prompt);
+    console.log("🖼️ Reference image provided:", !!referenceImage);
+    
+    if (referenceImage) {
+      // Use FormData for image upload
+      const formData = new FormData();
+      formData.append('prompt', prompt);
+      formData.append('image', referenceImage);
+      
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-artist-image`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+          'apikey': SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: formData
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to generate artist images");
+      }
+      
+      const data = await response.json();
+      return {
+        images: data.images || [],
+        enhancedPrompt: data.enhancedPrompt
+      };
+    } else {
+      // Use regular JSON for text-only
+      const { data, error } = await supabase.functions.invoke('generate-artist-image', {
+        body: { prompt }
+      });
+      
+      if (error) {
+        console.error("❌ Artist generator error:", error);
+        throw new Error(error.message || "Failed to generate artist images");
+      }
+      
+      console.log("✅ Artist generator response:", data);
+      
+      return {
+        images: data?.images || [],
+        enhancedPrompt: data?.enhancedPrompt
+      };
+    }
+  },
 };

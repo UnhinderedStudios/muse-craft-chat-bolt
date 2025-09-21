@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { TrackItem } from "@/types";
-import { ChevronUp, ChevronDown, X, User, Wand2, Repeat, ArrowRight, Download } from "lucide-react";
+import { ChevronUp, ChevronDown, X, User, Wand2, Repeat, ArrowRight, Download, Upload, Image as ImageIcon } from "lucide-react";
 import { useSessionManager } from "@/hooks/use-session-manager";
 
 interface ArtistGeneratorProps {
@@ -24,6 +24,9 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   const [offset, setOffset] = useState(0); // thumbnail scroll offset
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
+  const [referenceImage, setReferenceImage] = useState<File | null>(null);
+  const [referenceImageUrl, setReferenceImageUrl] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const VISIBLE_COUNT = 5;
 
@@ -44,6 +47,8 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       setSelectedIndex(0);
       setOffset(0);
       setPrompt("");
+      setReferenceImage(null);
+      setReferenceImageUrl("");
     }
   }, [isOpen, track]);
 
@@ -66,22 +71,21 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
     try {
       setLoading(true);
       console.log("🎨 Starting artist generation with prompt:", prompt.trim());
+      console.log("🖼️ Reference image:", !!referenceImage);
       
-      // TODO: Replace with actual artist image generation API call
-      // For now, simulate with album cover generation
-      const newImages = await api.generateAlbumCoversByPrompt(prompt.trim(), 1);
-      console.log("🖼️ Artist generation response:", newImages);
+      const result = await api.generateArtistImages(prompt.trim(), referenceImage || undefined);
+      console.log("🖼️ Artist generation response:", result);
       
-      if (!newImages || newImages.length === 0) {
+      if (!result.images || result.images.length === 0) {
         console.error("❌ No images returned from API");
         toast({ title: "No images returned", description: "Try a different prompt.", variant: "destructive" });
         return;
       }
       
-      console.log("✅ Generated", newImages.length, "artist images, updating state");
+      console.log("✅ Generated", result.images.length, "artist images, updating state");
       
       // Add new images to the front (newest first)
-      const updatedImages = [...newImages, ...images];
+      const updatedImages = [...result.images, ...images];
       setImages(updatedImages);
       
       // Update track's generated covers in session (reusing same field for artist images)
@@ -96,7 +100,13 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       }
       
       setSelectedIndex(0); // Select the newest generated image
-      toast({ title: "Generated", description: `${newImages.length} artist image${newImages.length > 1 ? 's' : ''} added` });
+      
+      // Show enhanced prompt if available
+      const description = result.enhancedPrompt 
+        ? `Generated with enhanced prompt: "${result.enhancedPrompt.substring(0, 50)}..."`
+        : `${result.images.length} artist image${result.images.length > 1 ? 's' : ''} added`;
+      
+      toast({ title: "Generated", description });
     } catch (e: any) {
       console.error("[ArtistImages] Generate error", e);
       toast({ title: "Generation failed", description: e?.message || "Please try again.", variant: "destructive" });
@@ -202,6 +212,51 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
     link.click();
     document.body.removeChild(link);
     toast({ title: "Downloaded", description: "Artist image saved to your device" });
+  };
+
+  const handleImageUpload = (file: File) => {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({ title: "Invalid file", description: "Please select an image file.", variant: "destructive" });
+      return;
+    }
+    
+    // Validate file size (10MB limit)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Please select an image smaller than 10MB.", variant: "destructive" });
+      return;
+    }
+    
+    setReferenceImage(file);
+    const url = URL.createObjectURL(file);
+    setReferenceImageUrl(url);
+    toast({ title: "Image uploaded", description: "Reference image ready for analysis." });
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      handleImageUpload(file);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleImageUpload(file);
+    }
+  };
+
+  const removeReferenceImage = () => {
+    setReferenceImage(null);
+    if (referenceImageUrl) {
+      URL.revokeObjectURL(referenceImageUrl);
+      setReferenceImageUrl("");
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   return (
@@ -331,8 +386,50 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
               >
                 <header className="mb-4">
                   <h3 className="text-white font-medium">Artist Generator</h3>
-                  <p className="text-white/50 text-sm">Describe your artist. We'll generate portraits using Gemini.</p>
+                  <p className="text-white/50 text-sm">Describe your artist and optionally upload a reference image. We'll analyze and generate portraits using Gemini 2.5 Flash.</p>
                 </header>
+
+                {/* Image Upload Area */}
+                <div className="mb-4">
+                  {referenceImage ? (
+                    <div className="relative">
+                      <div className="w-full h-20 rounded-lg bg-black/40 border border-white/10 overflow-hidden flex items-center gap-3 p-2">
+                        <img 
+                          src={referenceImageUrl} 
+                          alt="Reference" 
+                          className="w-16 h-16 object-cover rounded border border-white/10"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white text-xs font-medium truncate">{referenceImage.name}</p>
+                          <p className="text-white/50 text-xs">{(referenceImage.size / 1024 / 1024).toFixed(1)}MB</p>
+                        </div>
+                        <button
+                          onClick={removeReferenceImage}
+                          className="text-white/60 hover:text-white p-1"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      className="w-full h-20 rounded-lg border-2 border-dashed border-white/20 hover:border-white/30 transition-colors cursor-pointer flex items-center justify-center gap-2 text-white/60 hover:text-white/80"
+                      onDrop={handleDrop}
+                      onDragOver={(e) => e.preventDefault()}
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="w-4 h-4" />
+                      <span className="text-xs">Drop image or click to upload</span>
+                    </div>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                </div>
 
                 <div className="flex-1 mb-4 relative">
                   {loading ? (
