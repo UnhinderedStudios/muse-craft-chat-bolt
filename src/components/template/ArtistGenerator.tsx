@@ -267,6 +267,10 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={onClose}
         onOpenAutoFocus={(e) => e.preventDefault()}
+        // Prevent parent click-away handlers from closing this overlay
+        onClickCapture={(e) => e.stopPropagation()}
+        onMouseDownCapture={(e) => e.stopPropagation()}
+        onPointerDownCapture={(e) => e.stopPropagation()}
       >
         {/* Accessible title/description for Radix Dialog */}
         <DialogTitle className="sr-only">Artist Generator</DialogTitle>
