@@ -185,13 +185,14 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Look for inline_data parts containing images
-    const imageParts = candidate?.content?.parts?.filter((part: any) => part?.inline_data) || [];
+    // Look for inline_data or inlineData parts containing images (API variants)
+    const parts = candidate?.content?.parts ?? [];
+    const imageParts = parts.filter((part: any) => part?.inline_data || part?.inlineData);
     
     const images: string[] = imageParts
       .map((part: any) => {
-        const mimeType = part.inline_data?.mime_type || "image/png";
-        const base64Data = part.inline_data?.data;
+        const mimeType = part.inline_data?.mime_type || part.inlineData?.mimeType || "image/png";
+        const base64Data = part.inline_data?.data || part.inlineData?.data;
         return base64Data ? `data:${mimeType};base64,${base64Data}` : null;
       })
       .filter(Boolean);
