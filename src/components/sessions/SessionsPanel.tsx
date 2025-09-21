@@ -15,6 +15,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { SessionConfirmationDialog } from "./SessionConfirmationDialog";
+import { NewSessionConfirmationDialog } from "./NewSessionConfirmationDialog";
 import { useSessionManager } from "@/hooks/use-session-manager";
 
 interface SessionsPanelProps {
@@ -47,6 +48,9 @@ export function SessionsPanel({ className, onSessionSwitch }: SessionsPanelProps
   // Session confirmation dialog state
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  // New session confirmation dialog state
+  const [isNewSessionDialogOpen, setIsNewSessionDialogOpen] = useState(false);
   
   const searchInputRef = useRef<HTMLInputElement>(null);
   
@@ -89,6 +93,11 @@ export function SessionsPanel({ className, onSessionSwitch }: SessionsPanelProps
 
   // Create new session
   const handleCreateSession = () => {
+    setIsNewSessionDialogOpen(true);
+  };
+
+  // Handle new session confirmation
+  const handleStartNewSession = () => {
     const sessionId = createSession();
     const newSession = sessions.find(s => s.id === sessionId);
     if (newSession) {
@@ -169,6 +178,10 @@ export function SessionsPanel({ className, onSessionSwitch }: SessionsPanelProps
     setSelectedSession(null);
   };
 
+  const handleCloseNewSessionDialog = () => {
+    setIsNewSessionDialogOpen(false);
+  };
+
   return (
     <div className={cn("h-full bg-[#151515] rounded-2xl flex flex-col", className)}>
       {/* Header with New Session Button */}
@@ -245,7 +258,7 @@ export function SessionsPanel({ className, onSessionSwitch }: SessionsPanelProps
                 </div>
                 {!isSearchMode && (
                   <button
-                    onClick={handleCreateSession}
+                    onClick={() => setIsNewSessionDialogOpen(true)}
                     className="text-sm text-accent-primary hover:text-accent-primary/80 transition-colors flex items-center gap-1"
                   >
                     <Plus className="w-4 h-4" />
@@ -321,6 +334,13 @@ export function SessionsPanel({ className, onSessionSwitch }: SessionsPanelProps
         onClose={handleCloseDialog}
         onLoadSession={handleLoadSession}
         onDeleteSession={handleDeleteSession}
+      />
+
+      {/* New Session Confirmation Dialog */}
+      <NewSessionConfirmationDialog
+        isOpen={isNewSessionDialogOpen}
+        onClose={handleCloseNewSessionDialog}
+        onStartSession={handleStartNewSession}
       />
     </div>
   );
