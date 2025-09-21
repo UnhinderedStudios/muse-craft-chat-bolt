@@ -71,7 +71,7 @@ Deno.serve(async (req: Request) => {
 
     // Use Gemini 2.5 Flash for analysis and Flash Image for generation
     const analysisModel = "gemini-2.5-flash";
-    const generationModel = "gemini-2.5-flash-image";
+    const generationModel = "gemini-2.5-flash-image-preview";
     
     let finalPrompt = prompt;
 
