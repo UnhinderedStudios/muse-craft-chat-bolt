@@ -101,7 +101,9 @@ export function SessionsPanel({ className, onSessionSwitch }: SessionsPanelProps
     const sessionId = createSession();
     const newSession = sessions.find(s => s.id === sessionId);
     if (newSession) {
-      toast.success(`Created new session: "${newSession.title}"`);
+      switchToSession(sessionId);
+      onSessionSwitch?.(sessionId);
+      toast.success(`Created and switched to new session: "${newSession.title}"`);
     }
   };
 
