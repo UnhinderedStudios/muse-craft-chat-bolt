@@ -2,6 +2,8 @@
 // Edge function for generating artist images using Gemini 2.5 Flash
 // deno-lint-ignore-file no-explicit-any
 
+import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
+
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-api-version",
@@ -45,15 +47,9 @@ Deno.serve(async (req: Request) => {
 
         const arrayBuffer = await imageFile.arrayBuffer();
         
-        // Convert to base64 using chunked processing to avoid stack overflow
+        // Convert to base64 using Deno's built-in encoding to avoid stack overflow
         const uint8Array = new Uint8Array(arrayBuffer);
-        let base64 = "";
-        const chunkSize = 8192; // Process in 8KB chunks
-        
-        for (let i = 0; i < uint8Array.length; i += chunkSize) {
-          const chunk = uint8Array.slice(i, i + chunkSize);
-          base64 += btoa(String.fromCharCode.apply(null, Array.from(chunk)));
-        }
+        const base64 = encodeBase64(uint8Array);
         
         const mimeType = imageFile.type || "image/jpeg";
         imageData = `data:${mimeType};base64,${base64}`;
@@ -73,48 +69,91 @@ Deno.serve(async (req: Request) => {
     console.log("  📝 Prompt:", prompt);
     console.log("  🖼️ Has image:", !!imageData);
 
-    // Build Gemini request
-    const model = "gemini-2.0-flash-exp";
-    const parts = [];
+    // Use Gemini 2.5 Flash for both analysis and generation
+    const model = "gemini-2.5-flash";
+    
+    let finalPrompt = prompt;
 
-    // Add image if provided
+    // If image is provided, first analyze it to enhance the prompt
     if (imageData) {
       const [mimeTypePart, base64Data] = imageData.split(",");
       const mimeType = mimeTypePart.replace("data:", "").replace(";base64", "");
       
-      parts.push({
-        inline_data: {
-          mime_type: mimeType,
-          data: base64Data
+      const analysisParts = [
+        {
+          inline_data: {
+            mime_type: mimeType,
+            data: base64Data
+          }
+        },
+        {
+          text: `Analyze this reference image and create an enhanced prompt for generating a professional artist portrait. Use the visual style, lighting, composition, and mood from this image as inspiration. Original request: "${prompt}". Respond with just the enhanced prompt text for image generation, focusing on artistic style, lighting, pose, and atmosphere.`
         }
-      });
-      
-      // Enhanced prompt for image analysis + generation
-      parts.push({
-        text: `Analyze this image and create a professional artist portrait based on the visual style, lighting, and composition you see. ${prompt}. Generate a high-quality, artistic portrait suitable for a musician or artist.`
-      });
-    } else {
-      // Text-only prompt
-      parts.push({
-        text: `Generate a professional artist portrait image. ${prompt}. Make it cinematic, high-quality, and suitable for a musician or artist.`
-      });
+      ];
+
+      const analysisRequestBody = {
+        contents: [{
+          parts: analysisParts
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 1024,
+        }
+      };
+
+      console.log("  🔍 Analyzing reference image with Gemini 2.5 Flash");
+
+      const analysisRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": key,
+          },
+          body: JSON.stringify(analysisRequestBody)
+        }
+      );
+
+      const analysisJson = await analysisRes.json().catch(() => ({} as any));
+
+      if (!analysisRes.ok) {
+        console.error("❌ Gemini analysis error:", analysisJson);
+        // Fallback to original prompt if analysis fails
+        console.log("  ⚠️ Using original prompt as fallback");
+      } else {
+        const analysisText = analysisJson?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (analysisText) {
+          finalPrompt = analysisText;
+          console.log("  ✅ Enhanced prompt from analysis:", finalPrompt);
+        }
+      }
     }
 
-    const requestBody = {
+    // Now generate image using Gemini 2.5 Flash
+    const generationParts = [
+      {
+        text: `Generate a high-quality professional artist portrait image. ${finalPrompt}. Style: cinematic, artistic, professional photography, studio lighting.`
+      }
+    ];
+
+    const generationRequestBody = {
       contents: [{
-        parts: parts
+        parts: generationParts
       }],
       generationConfig: {
-        temperature: 0.7,
+        temperature: 0.8,
         topK: 40,
         topP: 0.95,
         maxOutputTokens: 8192,
       }
     };
 
-    console.log("  📡 Sending to Gemini 2.5 Flash");
+    console.log("  🎨 Generating image with Gemini 2.5 Flash");
 
-    const geminiRes = await fetch(
+    const generationRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
       {
         method: "POST",
@@ -122,84 +161,58 @@ Deno.serve(async (req: Request) => {
           "Content-Type": "application/json",
           "x-goog-api-key": key,
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(generationRequestBody)
       }
     );
 
-    const geminiJson = await geminiRes.json().catch(() => ({} as any));
+    const generationJson = await generationRes.json().catch(() => ({} as any));
 
-    if (!geminiRes.ok) {
-      console.error("❌ Gemini error:", geminiJson);
+    if (!generationRes.ok) {
+      console.error("❌ Gemini generation error:", generationJson);
       return new Response(
-        JSON.stringify({ error: geminiJson?.error?.message || "Gemini API error", raw: geminiJson }),
-        { status: geminiRes.status, headers: CORS }
+        JSON.stringify({ error: generationJson?.error?.message || "Gemini generation error", raw: generationJson }),
+        { status: generationRes.status, headers: CORS }
       );
     }
 
-    // Extract generated text for image generation prompt
-    const generatedText = geminiJson?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!generatedText) {
+    // Extract generated images from Gemini 2.5 Flash response
+    const candidate = generationJson?.candidates?.[0];
+    if (!candidate) {
       return new Response(
-        JSON.stringify({ error: "No text generated from Gemini", raw: geminiJson }),
+        JSON.stringify({ error: "No content generated from Gemini", raw: generationJson }),
         { status: 502, headers: CORS }
       );
     }
 
-    console.log("  🤖 Gemini generated prompt:", generatedText);
-
-    // Now use the generated prompt with Imagen for actual image generation
-    const imagenModel = "imagen-4.0-generate-001";
-    const imagenRequestBody = {
-      instances: [{ prompt: generatedText }],
-      parameters: { sampleCount: 1, aspectRatio: "1:1" }
-    };
-
-    console.log("  🎨 Generating image with Imagen");
-
-    const imagenRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${imagenModel}:predict`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": key,
-        },
-        body: JSON.stringify(imagenRequestBody)
-      }
-    );
-
-    const imagenJson = await imagenRes.json().catch(() => ({} as any));
-
-    if (!imagenRes.ok) {
-      console.error("❌ Imagen error:", imagenJson);
-      return new Response(
-        JSON.stringify({ error: imagenJson?.error?.message || "Imagen error", raw: imagenJson }),
-        { status: imagenRes.status, headers: CORS }
-      );
-    }
-
-    const images: string[] = (imagenJson?.predictions || [])
-      .map((p: any) => p?.bytesBase64Encoded)
-      .filter(Boolean)
-      .map((b64: string) => `data:image/png;base64,${b64}`);
+    // Look for inline_data parts containing images
+    const imageParts = candidate?.content?.parts?.filter((part: any) => part?.inline_data) || [];
+    
+    const images: string[] = imageParts
+      .map((part: any) => {
+        const mimeType = part.inline_data?.mime_type || "image/png";
+        const base64Data = part.inline_data?.data;
+        return base64Data ? `data:${mimeType};base64,${base64Data}` : null;
+      })
+      .filter(Boolean);
 
     if (!images.length) {
       return new Response(
-        JSON.stringify({ error: "No images generated", raw: imagenJson }),
+        JSON.stringify({ error: "No images generated by Gemini 2.5 Flash", raw: generationJson }),
         { status: 502, headers: CORS }
       );
     }
 
-    console.log("  ✅ Success! Generated", images.length, "artist image(s)");
+    console.log("  ✅ Success! Generated", images.length, "artist image(s) with Gemini 2.5 Flash");
     
     return new Response(JSON.stringify({ 
       images,
-      enhancedPrompt: generatedText,
+      enhancedPrompt: finalPrompt,
       debug: {
         originalPrompt: prompt,
         hasReferenceImage: !!imageData,
-        enhancedPrompt: generatedText,
-        imageCount: images.length
+        enhancedPrompt: finalPrompt,
+        imageCount: images.length,
+        model: model
       }
     }), { headers: CORS });
 
