@@ -9,6 +9,75 @@ function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
+// Function to modify prompt using ChatGPT when Gemini blocks content
+async function modifyPromptWithChatGPT(originalPrompt: string, attempt: number, openaiKey: string, requestId: string): Promise<string> {
+  if (!openaiKey) {
+    console.log(`⚠️ [${requestId}] No OpenAI key available for prompt modification`);
+    return originalPrompt;
+  }
+
+  const conservativeness = ["moderately", "significantly", "extremely"][Math.min(attempt - 1, 2)];
+  
+  const systemPrompt = `You are a prompt safety assistant. Your job is to rephrase image generation prompts to make them more appropriate while preserving the core artistic vision. 
+
+TASK: Rephrase the user's prompt to be ${conservativeness} more family-friendly and safe while keeping the creative essence intact.
+
+GUIDELINES:
+- Remove any potentially problematic terms
+- Use more neutral, artistic language
+- Keep the core visual concept (pose, style, mood)
+- Make it sound more professional/artistic
+- Focus on artistic elements like lighting, composition, style
+- Avoid specific subcultures that might trigger content filters
+- Use terms like "artist", "performer", "creative professional" instead of specific styles
+
+EXAMPLE:
+Input: "emo goth girl holding up peace sign tattoos"
+Output: "artistic performer making peace gesture, alternative fashion style, creative lighting"
+
+Respond with ONLY the rephrased prompt, nothing else.`;
+
+  try {
+    console.log(`🔄 [${requestId}] Modifying prompt with ChatGPT (attempt ${attempt}, ${conservativeness} safer)`);
+    
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: originalPrompt }
+        ],
+        max_tokens: 100,
+        temperature: 0.3
+      }),
+    });
+
+    if (!response.ok) {
+      console.error(`❌ [${requestId}] ChatGPT API failed:`, await response.text());
+      return originalPrompt;
+    }
+
+    const data = await response.json();
+    const modifiedPrompt = data.choices?.[0]?.message?.content?.trim();
+    
+    if (modifiedPrompt) {
+      console.log(`✅ [${requestId}] ChatGPT modified prompt: "${modifiedPrompt}"`);
+      return modifiedPrompt;
+    } else {
+      console.error(`❌ [${requestId}] No modified prompt returned from ChatGPT`);
+      return originalPrompt;
+    }
+  } catch (error) {
+    console.error(`❌ [${requestId}] ChatGPT prompt modification failed:`, error);
+    return originalPrompt;
+  }
+}
+
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-api-version",
@@ -28,8 +97,10 @@ Deno.serve(async (req: Request) => {
   try {
     console.log(`🆔 [${requestId}] Artist Generator request started`);
     
-    const key = Deno.env.get("GEMINI_API_KEY");
-    if (!key) {
+    const geminiKey = Deno.env.get("GEMINI_API_KEY");
+    const openaiKey = Deno.env.get("OPENAI_API_KEY");
+    
+    if (!geminiKey) {
       console.error(`❌ [${requestId}] Missing GEMINI_API_KEY`);
       return new Response(
         JSON.stringify({ error: "Missing GEMINI_API_KEY", requestId }),
@@ -162,7 +233,7 @@ Deno.serve(async (req: Request) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-goog-api-key": key,
+            "x-goog-api-key": geminiKey,
           },
           body: JSON.stringify(analysisRequestBody)
         }
@@ -215,18 +286,28 @@ IMPORTANT: You must generate and return an actual image, not text. Create a visu
       text: explicitPrompt
     });
 
-    // Retry logic for image generation
+    // Enhanced retry logic with ChatGPT prompt modification fallback
     let generationAttempts = 0;
     const maxGenerationAttempts = 3;
     let generationJson: any;
     let images: string[] = [];
+    let currentPrompt = finalPrompt;
+    let promptModificationAttempts = 0;
 
     while (generationAttempts < maxGenerationAttempts && images.length === 0) {
       generationAttempts++;
 
+      // Update generation parts with current prompt
+      const currentGenerationParts = [...generationParts];
+      currentGenerationParts[currentGenerationParts.length - 1] = {
+        text: `GENERATE AN IMAGE: ${currentPrompt}
+
+IMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`
+      };
+
       const generationRequestBody = {
         contents: [{
-          parts: generationParts
+          parts: currentGenerationParts
         }],
         generationConfig: {
           temperature: 0.85,
@@ -237,6 +318,7 @@ IMPORTANT: You must generate and return an actual image, not text. Create a visu
       };
 
       console.log(`  🎨 [${requestId}] Generation attempt ${generationAttempts}/${maxGenerationAttempts} with Gemini 2.5 Flash Image Preview`);
+      console.log(`  📝 [${requestId}] Using prompt: "${currentPrompt.substring(0, 100)}..."`);
 
       const generationRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${generationModel}:generateContent`,
@@ -244,7 +326,7 @@ IMPORTANT: You must generate and return an actual image, not text. Create a visu
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-goog-api-key": key,
+            "x-goog-api-key": geminiKey,
           },
           body: JSON.stringify(generationRequestBody)
         }
@@ -254,12 +336,32 @@ IMPORTANT: You must generate and return an actual image, not text. Create a visu
 
       if (!generationRes.ok) {
         console.error(`❌ [${requestId}] Gemini generation attempt ${generationAttempts} FAILED:`, generationJson);
+        
+        // Check if it's a content policy violation and we have ChatGPT available
+        const isContentBlock = generationJson?.error?.message?.includes?.("PROHIBITED_CONTENT") || 
+                              generationJson?.error?.message?.includes?.("content policy") ||
+                              generationRes.status === 400;
+        
+        if (isContentBlock && openaiKey && promptModificationAttempts < 3) {
+          promptModificationAttempts++;
+          console.log(`🤖 [${requestId}] Content policy violation detected, attempting ChatGPT prompt modification (${promptModificationAttempts}/3)`);
+          
+          const modifiedPrompt = await modifyPromptWithChatGPT(prompt, promptModificationAttempts, openaiKey, requestId);
+          if (modifiedPrompt !== currentPrompt) {
+            currentPrompt = modifiedPrompt;
+            console.log(`🔄 [${requestId}] Retrying with modified prompt: "${currentPrompt.substring(0, 100)}..."`);
+            generationAttempts--; // Don't count this as a failed generation attempt
+            continue;
+          }
+        }
+        
         if (generationAttempts === maxGenerationAttempts) {
           return new Response(
             JSON.stringify({ 
               error: generationJson?.error?.message || "Gemini generation error", 
               raw: generationJson,
-              requestId 
+              requestId,
+              promptModificationAttempts
             }),
             { status: generationRes.status, headers: CORS }
           );
@@ -313,16 +415,18 @@ IMPORTANT: You must generate and return an actual image, not text. Create a visu
     
     return new Response(JSON.stringify({ 
       images,
-      enhancedPrompt: finalPrompt,
+      enhancedPrompt: currentPrompt,
       debug: {
         requestId,
         originalPrompt: prompt,
         hasReferenceImage: !!imageData,
         enhancedPrompt: finalPrompt,
+        finalPrompt: currentPrompt,
         imageCount: images.length,
         analysisModel: analysisModel,
         generationModel: generationModel,
         analysisSuccessful,
+        promptModificationAttempts,
         timestamp: new Date().toISOString(),
         guaranteedGemini: true // Confirm no fallback to other services
       }
