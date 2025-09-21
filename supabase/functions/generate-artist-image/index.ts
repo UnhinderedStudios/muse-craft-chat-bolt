@@ -226,7 +226,7 @@ Deno.serve(async (req: Request) => {
         parts: generationParts
       }],
       generationConfig: {
-        temperature: 1.0,
+        temperature: 0.80,
         topK: 40,
         topP: 0.95,
         maxOutputTokens: 8192,
