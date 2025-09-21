@@ -1,11 +1,13 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { X, Download, User, Sparkles, RotateCw } from "lucide-react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import React, { useEffect, useMemo, useState } from "react";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { useSessionManager } from "@/hooks/use-session-manager";
+import { Spinner } from "@/components/ui/spinner";
+import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
 import { TrackItem } from "@/types";
-import { toast } from "sonner";
+import { ChevronUp, ChevronDown, X, User, Wand2, Repeat, ArrowRight, Download } from "lucide-react";
+import { useSessionManager } from "@/hooks/use-session-manager";
 
 interface ArtistGeneratorProps {
   isOpen: boolean;
@@ -13,280 +15,387 @@ interface ArtistGeneratorProps {
   track: TrackItem | null;
 }
 
-export function ArtistGenerator({ isOpen, onClose, track }: ArtistGeneratorProps) {
+export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClose, track }) => {
+  const { toast } = useToast();
+  const { currentSession, updateSession } = useSessionManager();
+
   const [images, setImages] = useState<string[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [scrollOffset, setScrollOffset] = useState(0);
+  const [offset, setOffset] = useState(0); // thumbnail scroll offset
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
-  
-  const { updateSession, currentSessionId, currentSession } = useSessionManager();
 
-  // Load any existing artist images when modal opens
+  const VISIBLE_COUNT = 5;
+
   useEffect(() => {
+    console.log("🎯 ArtistGenerator opened:", { isOpen, track: track?.title, trackId: track?.id });
     if (isOpen && track) {
-      const existingImages: string[] = [];
+      // Load all previously generated artist images for this track (newest first)
+      const existingCovers = track.generatedCovers || [];
+      const initial: string[] = [...existingCovers];
       
-      // Add current cover image as placeholder artist image
-      if (track.coverUrl) {
-        existingImages.push(track.coverUrl);
+      // Add current cover as placeholder if it exists and not already in generated covers
+      if (track.coverUrl && !initial.includes(track.coverUrl)) {
+        initial.push(track.coverUrl);
       }
       
-      setImages(existingImages);
+      console.log("🎨 Setting up initial artist images:", initial);
+      setImages(initial);
       setSelectedIndex(0);
-      setScrollOffset(0);
+      setOffset(0);
       setPrompt("");
     }
   }, [isOpen, track]);
 
-  const displayThumbs = useMemo(() => {
-    return images;
-  }, [images]);
+  const canScrollUp = offset > 0;
+  const totalThumbs = loading ? images.length + 1 : images.length;
+  const canScrollDown = totalThumbs > offset + VISIBLE_COUNT;
+
+  const displayThumbs = useMemo<(string | null)[]>(() => {
+    const list: (string | null)[] = loading ? [null, ...images] : [...images];
+    return list.slice(offset, offset + VISIBLE_COUNT);
+  }, [loading, images, offset]);
 
   const handleGenerate = async () => {
+    console.log("🚀 Generate artist button clicked, prompt:", prompt.trim());
     if (!prompt.trim()) {
-      toast.error("Please enter a prompt to generate artist images");
+      console.log("❌ Empty prompt, showing toast");
+      toast({ title: "Enter a prompt", description: "Type what you want to see for the artist portrait." });
       return;
     }
-
-    setLoading(true);
     try {
-      // TODO: Replace with actual AI image generation API call
-      console.log("Generating artist image with prompt:", prompt);
+      setLoading(true);
+      console.log("🎨 Starting artist generation with prompt:", prompt.trim());
       
-      // Simulated generation - in real implementation, call your AI service
-      const mockGeneratedImages = [
-        "/placeholder.svg", // Replace with actual generated image URLs
-      ];
+      // TODO: Replace with actual artist image generation API call
+      // For now, simulate with album cover generation
+      const newImages = await api.generateAlbumCoversByPrompt(prompt.trim(), 1);
+      console.log("🖼️ Artist generation response:", newImages);
       
-      const newImages = [...images, ...mockGeneratedImages];
-      setImages(newImages);
-      setSelectedIndex(newImages.length - 1);
+      if (!newImages || newImages.length === 0) {
+        console.error("❌ No images returned from API");
+        toast({ title: "No images returned", description: "Try a different prompt.", variant: "destructive" });
+        return;
+      }
       
-      toast.success("Artist image generated successfully!");
-    } catch (error) {
-      console.error("Error generating artist image:", error);
-      toast.error("Failed to generate artist image");
+      console.log("✅ Generated", newImages.length, "artist images, updating state");
+      
+      // Add new images to the front (newest first)
+      const updatedImages = [...newImages, ...images];
+      setImages(updatedImages);
+      
+      // Update track's generated covers in session (reusing same field for artist images)
+      if (track && currentSession) {
+        const updatedTracks = (currentSession.tracks || []).map(t =>
+          t.id === track.id ? { 
+            ...t, 
+            generatedCovers: updatedImages
+          } : t
+        );
+        updateSession(currentSession.id, { tracks: updatedTracks });
+      }
+      
+      setSelectedIndex(0); // Select the newest generated image
+      toast({ title: "Generated", description: `${newImages.length} artist image${newImages.length > 1 ? 's' : ''} added` });
+    } catch (e: any) {
+      console.error("[ArtistImages] Generate error", e);
+      toast({ title: "Generation failed", description: e?.message || "Please try again.", variant: "destructive" });
     } finally {
+      console.log("🔄 Setting loading to false");
       setLoading(false);
     }
   };
 
   const handleRetry = async () => {
     if (!track) return;
-    
-    const retryPrompt = `Create a portrait of an AI music artist for the song "${track.title || 'Untitled'}"${track.params?.length ? ` in ${track.params.join(', ')} style` : ''}. Professional, artistic, and engaging.`;
-    setPrompt(retryPrompt);
-    
-    setLoading(true);
     try {
-      // TODO: Replace with actual AI image generation API call
-      console.log("Retrying artist generation with prompt:", retryPrompt);
+      setLoading(true);
       
-      // Simulated generation
-      const mockRetryImages = ["/placeholder.svg"];
-      const newImages = [...images, ...mockRetryImages];
-      setImages(newImages);
-      setSelectedIndex(newImages.length - 1);
+      // Generate the same prompt that would be sent to ChatGPT for this track but for artist
+      let chatInstruction = "";
       
-      toast.success("Artist image regenerated!");
-    } catch (error) {
-      console.error("Error regenerating artist image:", error);
-      toast.error("Failed to regenerate artist image");
+      if (track.title?.trim()) {
+        chatInstruction = `Create a simple 1 sentence prompt for an image generation tool for an artist portrait based on this song title. Keep it cinematic and realistic, show a professional artist/musician portrait. Do not use any parameter instructions such as AR16:9.\n\nSong Title: ${track.title.trim()}`;
+      } else if (Array.isArray(track.params) && track.params.length > 0) {
+        const style = track.params.join(", ");
+        chatInstruction = `Create a simple 1 sentence prompt for an image generation tool for an artist portrait based on this music style. Keep it cinematic and realistic, show a professional artist/musician portrait. Do not use any parameter instructions such as AR16:9.\n\nMusic Style: ${style}`;
+      }
+      
+      // Get the artist portrait prompt from ChatGPT to show in input field
+      if (chatInstruction) {
+        const promptResponse = await api.chat([{
+          role: "user",
+          content: chatInstruction
+        }]);
+        setPrompt(promptResponse.content);
+      }
+      
+      const details = {
+        title: track.title || undefined,
+        style: Array.isArray(track.params) ? track.params.join(", ") : undefined,
+      };
+      // TODO: Replace with actual artist generation API call
+      const result = await api.generateAlbumCovers(details);
+      const covers: string[] = [];
+      if (result.cover1) covers.push(result.cover1);
+      if (covers.length === 0) {
+        toast({ title: "No artist images returned", description: "Try again in a moment.", variant: "destructive" });
+        return;
+      }
+      
+      // Add new covers to the front (newest first)
+      const updatedImages = [...covers, ...images];
+      setImages(updatedImages);
+      
+      // Update track's generated covers in session
+      if (track && currentSession) {
+        const updatedTracks = (currentSession.tracks || []).map(t =>
+          t.id === track.id ? { 
+            ...t, 
+            generatedCovers: updatedImages
+          } : t
+        );
+        updateSession(currentSession.id, { tracks: updatedTracks });
+      }
+      
+      setSelectedIndex(0); // Select the newest generated image
+      toast({ title: "Regenerated", description: "1 new artist image added" });
+    } catch (e: any) {
+      console.error("[ArtistImages] Retry error", e);
+      toast({ title: "Retry failed", description: e?.message || "Please try again.", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
   const handleApply = () => {
-    if (!track || !images[selectedIndex] || !currentSession) return;
-    
-    const selectedImage = images[selectedIndex];
-    // Update the track by adding the artist image to generatedCovers array
-    const updatedTracks = currentSession.tracks.map(t => 
-      t.id === track.id 
-        ? { ...t, generatedCovers: [selectedImage, ...(t.generatedCovers || [])] }
-        : t
+    if (!track || !currentSession) return;
+    const selected = images[selectedIndex];
+    if (!selected) {
+      toast({ title: "Select an image", description: "Pick a thumbnail to apply as artist image.", variant: "destructive" });
+      return;
+    }
+
+    const updatedTracks = (currentSession.tracks || []).map(t =>
+      t.id === track.id ? { 
+        ...t, 
+        coverUrl: selected, // For now, just use coverUrl for artist image too
+        // Update the generated covers array to put the selected cover first
+        generatedCovers: selected ? [selected, ...(t.generatedCovers || []).filter(c => c !== selected)] : t.generatedCovers
+      } : t
     );
-    
     updateSession(currentSession.id, { tracks: updatedTracks });
-    toast.success("Artist image applied successfully!");
+    toast({ title: "Artist image applied", description: `Updated artist image for "${track.title || 'Song'}"` });
     onClose();
   };
 
   const handleDownload = () => {
-    if (!images[selectedIndex]) return;
-    
-    try {
-      const link = document.createElement('a');
-      link.href = images[selectedIndex];
-      link.download = `artist-${track?.title || 'untitled'}-${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      toast.success("Artist image downloaded!");
-    } catch (error) {
-      console.error("Error downloading image:", error);
-      toast.error("Failed to download image");
+    if (!images[selectedIndex]) {
+      toast({ title: "No image to download", description: "Select an image first.", variant: "destructive" });
+      return;
     }
+    
+    const link = document.createElement('a');
+    link.href = images[selectedIndex];
+    link.download = `artist-image-${track?.title || 'untitled'}.jpg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({ title: "Downloaded", description: "Artist image saved to your device" });
   };
 
-  if (!isOpen || !track) return null;
-
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] lg:w-[80vw] xl:w-[1200px] max-w-[1400px] h-[90vh] max-h-[900px] bg-black/90 border border-white/20 text-white flex flex-col gap-0 p-0">
+    <Dialog open={isOpen} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-none w-full h-full bg-black/10 backdrop-blur border-0 p-0 flex flex-col">
+        {/* Accessible title/description for Radix Dialog */}
         <DialogTitle className="sr-only">Artist Generator</DialogTitle>
-        
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              <User className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold">Artist Generator</h2>
-              <p className="text-sm text-white/60">Generate artist portraits for "{track.title || 'Untitled'}"</p>
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
+        <DialogDescription className="sr-only">Generate and select artist portraits for the current track.</DialogDescription>
+        <div className="relative w-full h-full flex flex-col">
+          {/* Close Button */}
+          <button
             onClick={onClose}
-            className="text-white/60 hover:text-white hover:bg-white/10"
+            className="absolute top-4 right-4 z-50 text-white/60 hover:text-white transition-colors"
           >
-            <X className="w-5 h-5" />
-          </Button>
-        </div>
+            <X className="w-6 h-6" />
+          </button>
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col lg:flex-row min-h-0">
-          {/* Left Panel - Preview */}
-          <div className="flex-1 flex flex-col bg-gradient-to-br from-purple-900/20 to-pink-900/20 p-6">
-            <div className="flex-1 flex items-center justify-center">
-              <div className="w-full max-w-md aspect-square rounded-2xl overflow-hidden bg-white/5 border border-white/10 shadow-2xl">
-                {images.length > 0 ? (
-                  <img
-                    src={images[selectedIndex]}
-                    alt="Generated artist"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = "/placeholder.svg";
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-white/40">
-                    <User className="w-16 h-16 mb-4" />
-                    <p className="text-lg font-medium">No artist image yet</p>
-                    <p className="text-sm">Generate one to get started</p>
+          {/* Content */}
+          <div className="flex-1 min-h-0 px-6 pb-6 flex items-center justify-center">
+            <div className="h-full w-full max-w-6xl grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 items-center">
+              {/* Left: Preview + Thumbnails (side-by-side) */}
+              <div className="flex items-start justify-end gap-6">
+                {/* Thumbnails column (left) */}
+                <div className="flex flex-col items-center gap-2 w-20">
+                  {/* Top arrow */}
+                  <button
+                    className={cn(
+                      "w-8 h-8 flex items-center justify-center rounded-full transition-opacity",
+                      canScrollUp ? "opacity-100 hover:bg-white/10" : "opacity-30 pointer-events-none"
+                    )}
+                    onClick={() => canScrollUp && setOffset(o => Math.max(0, o - 1))}
+                    aria-label="Scroll thumbnails up"
+                  >
+                    <ChevronUp className="w-5 h-5 text-white" />
+                  </button>
+
+                  {/* Thumbs */}
+                  <div className="flex flex-col items-center gap-2">
+                    {Array.from({ length: VISIBLE_COUNT }).map((_, i) => {
+                      const img = displayThumbs[i];
+                      const idx = offset + i; // position within display list
+                      const imageIndexInImages = loading ? idx - 1 : idx;
+                      const isPlaceholder = img == null;
+                      const isActive = !isPlaceholder && imageIndexInImages === selectedIndex;
+                      return (
+                        <button
+                          key={idx}
+                          className={cn(
+                            "w-20 h-20 rounded-lg overflow-hidden border transition-all relative",
+                            isActive ? "border-accent-primary ring-2 ring-accent-primary/40" : "border-white/10 hover:border-white/20"
+                          )}
+                          onClick={() => {
+                            if (!isPlaceholder && imageIndexInImages >= 0) setSelectedIndex(imageIndexInImages);
+                          }}
+                          aria-label={`Thumbnail ${idx + 1}`}
+                        >
+                          {img ? (
+                            <img src={img} alt={`Thumbnail ${idx + 1}`} className="block w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-white/5" />
+                          )}
+                          {/* Loading scan only on first placeholder */}
+                          {loading && idx === 0 && isPlaceholder && (
+                            <div className="absolute inset-0 overflow-hidden rounded-lg">
+                              <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
-                )}
-              </div>
-            </div>
 
-            {/* Thumbnail Carousel */}
-            {displayThumbs.length > 1 && (
-              <div className="mt-6">
-                <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-                  {displayThumbs.map((image, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedIndex(index)}
-                      className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all shrink-0 ${
-                        selectedIndex === index
-                          ? "border-purple-400 shadow-lg shadow-purple-400/25"
-                          : "border-white/20 hover:border-white/40"
-                      }`}
-                    >
-                      <img
-                        src={image}
-                        alt={`Artist ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "/placeholder.svg";
-                        }}
-                      />
-                    </button>
-                  ))}
+                  {/* Bottom arrow */}
+                  <button
+                    className={cn(
+                      "w-8 h-8 flex items-center justify-center rounded-full transition-opacity",
+                      canScrollDown ? "opacity-100 hover:bg-white/10" : "opacity-30 pointer-events-none"
+                    )}
+                    onClick={() => canScrollDown && setOffset(o => o + 1)}
+                    aria-label="Scroll thumbnails down"
+                  >
+                    <ChevronDown className="w-5 h-5 text-white" />
+                  </button>
+                </div>
+
+                {/* Large Preview (right) */}
+                <div
+                  className="rounded-xl overflow-hidden border border-white/10 flex items-center justify-center relative"
+                  style={{ width: "min(520px, 60vh)", height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
+                >
+                  {!loading && images[selectedIndex] ? (
+                    <img
+                      src={images[selectedIndex]}
+                      alt={`Selected artist image ${selectedIndex + 1}`}
+                      className="block w-full h-full object-cover"
+                      loading="eager"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-white/40">
+                      {loading ? (
+                        <div className="loader overlay-loader">
+                          <div className="bar"></div>
+                          <div className="bar"></div>
+                          <div className="bar"></div>
+                        </div>
+                      ) : (
+                        <>
+                          <User className="w-10 h-10 mb-2" />
+                          <span>No image selected</span>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {/* Loading animation on main preview when generating */}
+                  {loading && (
+                    <div className="absolute inset-0 overflow-hidden rounded-xl">
+                      <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning" />
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
-          </div>
 
-          {/* Right Panel - Controls */}
-          <div className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l border-white/10 bg-black/40 flex flex-col">
-            {/* Prompt Input */}
-            <div className="p-6 border-b border-white/10">
-              <label className="block text-sm font-medium mb-3 text-white/80">
-                Describe the artist portrait you want:
-              </label>
-              <Textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="e.g., A futuristic cyberpunk musician with neon accents, professional studio portrait..."
-                className="w-full h-32 bg-white/5 border-white/20 text-white placeholder:text-white/40 resize-none focus-visible:ring-1 focus-visible:ring-purple-400 focus-visible:border-purple-400"
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex-1 p-6 flex flex-col gap-4">
-              <Button
-                onClick={handleGenerate}
-                disabled={loading || !prompt.trim()}
-                className="w-full h-12 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              {/* Right: Prompt Controls */}
+              <aside 
+                className="flex flex-col rounded-xl border border-white/10 p-4"
+                style={{ height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
               >
-                {loading ? (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <div className="relative">
-                      <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                      <div className="absolute inset-0 w-5 h-5 border-2 border-transparent border-t-white/60 rounded-full animate-spin" style={{animationDuration: '1.5s'}}></div>
+                <header className="mb-4">
+                  <h3 className="text-white font-medium">Artist Generator</h3>
+                  <p className="text-white/50 text-sm">Describe your artist. We'll generate portraits using Gemini.</p>
+                </header>
+
+                <div className="flex-1 mb-4 relative">
+                  {loading ? (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className="relative">
+                        <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                        <div className="absolute inset-0 w-8 h-8 border-2 border-transparent border-t-white/60 rounded-full animate-spin" style={{animationDuration: '1.5s'}}></div>
+                        <div className="absolute inset-0 w-8 h-8 rounded-full bg-white/10 animate-pulse"></div>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
+                  ) : (
+                    <textarea
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
+                      className="w-full h-full resize-none rounded-lg bg-black/40 border border-white/10 text-white placeholder:text-white/40 p-3 focus:outline-none focus:ring-1 focus:ring-white/20"
+                    />
+                  )}
+                </div>
+
+                <div className="grid grid-cols-4 gap-1">
+                  <Button
+                    variant="secondary"
+                    onClick={handleGenerate}
+                    disabled={loading}
+                    className="col-span-1 text-xs px-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 border-0 flex items-center justify-center leading-none"
+                  >
+                    <Wand2 className="w-3 h-3 mr-0.25" />
                     Generate
-                  </>
-                )}
-              </Button>
-
-              <Button
-                onClick={handleRetry}
-                disabled={loading}
-                variant="outline"
-                className="w-full h-10 border-white/20 text-white hover:bg-white/5"
-              >
-                <RotateCw className="w-4 h-4 mr-2" />
-                Retry
-              </Button>
-
-              {images.length > 0 && (
-                <>
-                  <div className="border-t border-white/10 pt-4 mt-2">
-                    <Button
-                      onClick={handleDownload}
-                      variant="outline"
-                      className="w-full h-10 border-white/20 text-white hover:bg-white/5 mb-2"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Download
-                    </Button>
-                    
-                    <Button
-                      onClick={handleApply}
-                      className="w-full h-12 bg-green-600 hover:bg-green-700 text-white font-medium"
-                    >
-                      Apply as Artist Image
-                    </Button>
-                  </div>
-                </>
-              )}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={handleRetry}
+                    disabled={loading}
+                    className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center leading-none"
+                  >
+                    <Repeat className="w-3 h-3 mr-0.25" />
+                    Retry
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={handleDownload}
+                    disabled={loading}
+                    className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center leading-none"
+                  >
+                    <Download className="w-3 h-3 mr-0.25" />
+                    Download
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={handleApply}
+                    disabled={loading}
+                    className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center leading-none"
+                  >
+                    <ArrowRight className="w-3 h-3 mr-0.25" />
+                    Apply
+                  </Button>
+                </div>
+              </aside>
             </div>
           </div>
         </div>
       </DialogContent>
     </Dialog>
   );
-}
+};
