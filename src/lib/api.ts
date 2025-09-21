@@ -353,53 +353,54 @@ export const api = {
     return [];
   },
 
-  // Generate artist images using Gemini 2.5 Flash with optional image analysis
-  async generateArtistImages(prompt: string, referenceImage?: File): Promise<{ images: string[]; enhancedPrompt?: string; debug?: any }> {
+  // Generate artist images using Gemini 2.5 Flash with fixed reference image
+  async generateArtistImages(prompt: string): Promise<{ images: string[]; enhancedPrompt?: string; debug?: any }> {
     // Generate client-side request ID for tracking
     const clientRequestId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    console.log(`🎨 [${clientRequestId}] Calling artist generator with prompt:`, prompt);
-    console.log(`🖼️ [${clientRequestId}] Reference image provided:`, !!referenceImage);
-    console.log(`🔄 [${clientRequestId}] Request independent - clearing any cached data`);
+    // Add automatic prompt prefix for artist generation
+    const promptPrefix = "Keep composition, structure, lighting and character position identical, character must be entirely different to the reference image, in other words not a single thing must resemble from the character in the image, this should be erased, pose must be entirely different but very cool to the current image, it should be clear that the person is a music artist. No objects such as guitars, mics, chairs or anything else at all can be present in the image. Character must be entirely replaced with: ";
+    const fullPrompt = promptPrefix + prompt;
     
-    if (referenceImage) {
-      // Validate reference image before sending
-      if (!referenceImage.type.startsWith('image/')) {
-        throw new Error("Invalid file type - must be an image");
+    console.log(`🎨 [${clientRequestId}] Calling artist generator with enhanced prompt:`, fullPrompt);
+    console.log(`🔄 [${clientRequestId}] Using fixed reference image from /reference-frame.png`);
+    
+    try {
+      // Load the fixed reference image
+      const response = await fetch('/reference-frame.png');
+      if (!response.ok) {
+        throw new Error('Failed to load reference image');
       }
-      if (referenceImage.size > 10 * 1024 * 1024) {
-        throw new Error("Image too large - must be under 10MB");
-      }
+      const blob = await response.blob();
+      const referenceFile = new File([blob], 'reference-frame.png', { type: blob.type });
       
-      console.log(`📤 [${clientRequestId}] Sending FormData with image:`, {
-        type: referenceImage.type,
-        size: referenceImage.size,
-        name: referenceImage.name
+      console.log(`📤 [${clientRequestId}] Sending FormData with fixed reference image:`, {
+        type: referenceFile.type,
+        size: referenceFile.size,
+        name: referenceFile.name
       });
       
-      // Use FormData for image upload with additional tracking
+      // Use FormData for image upload
       const formData = new FormData();
-      formData.append('prompt', prompt);
-      formData.append('image', referenceImage);
-      // Don't send clientRequestId to avoid edge function parsing issues
+      formData.append('prompt', fullPrompt);
+      formData.append('image', referenceFile);
       
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-artist-image`, {
+      const apiResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-artist-image`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
           'apikey': SUPABASE_PUBLISHABLE_KEY,
-          // Don't set Content-Type for FormData - let browser set it with boundary
         },
         body: formData
       });
       
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+      if (!apiResponse.ok) {
+        const errorData = await apiResponse.json().catch(() => ({}));
         console.error(`❌ [${clientRequestId}] Artist generation failed:`, errorData);
         throw new Error(errorData.error || "Failed to generate artist images");
       }
       
-      const data = await response.json();
+      const data = await apiResponse.json();
       console.log(`✅ [${clientRequestId}] Artist generation successful:`, data);
       
       return {
@@ -407,29 +408,9 @@ export const api = {
         enhancedPrompt: data.enhancedPrompt,
         debug: data.debug
       };
-    } else {
-      console.log(`📤 [${clientRequestId}] Sending JSON request (no image)`);
-      
-      // Use regular JSON for text-only with consistent structure
-      const { data, error } = await supabase.functions.invoke('generate-artist-image', {
-        body: { 
-          prompt
-          // Don't send clientRequestId to avoid edge function parsing issues
-        }
-      });
-      
-      if (error) {
-        console.error(`❌ [${clientRequestId}] Artist generator error:`, error);
-        throw new Error(error.message || "Failed to generate artist images");
-      }
-      
-      console.log(`✅ [${clientRequestId}] Artist generator response:`, data);
-      
-      return {
-        images: data?.images || [],
-        enhancedPrompt: data?.enhancedPrompt,
-        debug: data?.debug
-      };
+    } catch (error) {
+      console.error(`❌ [${clientRequestId}] Error loading reference image or generating:`, error);
+      throw error;
     }
   },
 };
