@@ -461,6 +461,27 @@ IMPORTANT: You must generate and return an actual image, not text. Create a visu
         if (textParts.length > 0) {
           console.log(`⚠️ [${requestId}] Attempt ${generationAttempts} returned text instead of image, retrying...`);
         }
+        
+        // Check if empty results might be due to content blocking - trigger ChatGPT fallback
+        if (openaiKey && promptModificationAttempts < 3) {
+          promptModificationAttempts++;
+          console.log(`🚫 [${requestId}] Empty results detected (potential content block), attempting ChatGPT prompt modification (${promptModificationAttempts}/3)`);
+          
+          const modifiedPrompt = await modifyPromptWithChatGPT(
+            currentPrompt, // Pass the full enhanced prompt 
+            prompt,        // Pass the original user prompt
+            prefix,        // Pass the extracted prefix
+            promptModificationAttempts, 
+            openaiKey, 
+            requestId
+          );
+          if (modifiedPrompt !== currentPrompt) {
+            currentPrompt = modifiedPrompt;
+            console.log(`🔄 [${requestId}] Retrying with modified prompt after empty results: "${currentPrompt.substring(0, 100)}..."`);
+            generationAttempts--; // Don't count this as a failed generation attempt
+            continue;
+          }
+        }
       }
     }
 
