@@ -99,15 +99,10 @@ export function SessionsPanel({ className, onSessionSwitch }: SessionsPanelProps
   // Handle new session confirmation
   const handleStartNewSession = () => {
     const sessionId = createSession();
-    // Use setTimeout to ensure the session has been added to the state before switching
-    setTimeout(() => {
-      const newSession = sessions.find(s => s.id === sessionId);
-      if (newSession) {
-        switchToSession(sessionId);
-        onSessionSwitch?.(sessionId);
-        toast.success(`Created and switched to new session: "${newSession.title}"`);
-      }
-    }, 50);
+    // Switch immediately to avoid race conditions
+    switchToSession(sessionId);
+    onSessionSwitch?.(sessionId);
+    toast.success(`Created and switched to new session`);
   };
 
   // Handle session menu actions

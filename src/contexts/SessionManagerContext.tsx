@@ -308,6 +308,8 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
       activeGenerations: [],
     };
     setSessions((prev) => [...prev, newSession]);
+    // Immediately switch to the newly created session
+    setCurrentSessionId(newSession.id);
     return newSession.id;
   }, [sessions]);
 
