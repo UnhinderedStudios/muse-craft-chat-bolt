@@ -281,6 +281,9 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
       allActiveGenerations.push(...session.activeGenerations);
     }
 
+    // Sort active generations by startTime (newest first) for consistent ordering
+    allActiveGenerations.sort((a, b) => (b.startTime || 0) - (a.startTime || 0));
+
     return { ...global, tracks: allTracks, activeGenerations: allActiveGenerations };
   }, [sessions]);
 
@@ -486,6 +489,9 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
         allActiveGenerations.push(...session.activeGenerations);
         aggregatedTracks.push(...session.tracks);
       }
+
+      // Sort active generations by startTime (newest first) for consistent ordering
+      allActiveGenerations.sort((a, b) => (b.startTime || 0) - (a.startTime || 0));
 
       // Hide jobs that are too old or that have produced their expected 2 tracks
       const filtered = allActiveGenerations.filter((g) => {
