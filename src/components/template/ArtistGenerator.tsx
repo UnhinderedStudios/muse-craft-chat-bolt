@@ -267,7 +267,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={onClose}
         onOpenAutoFocus={(e) => e.preventDefault()}
-      >
+        onFocusOutside={(e) => e.preventDefault()}
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+       >
         {/* Accessible title/description for Radix Dialog */}
         <DialogTitle className="sr-only">Artist Generator</DialogTitle>
         <DialogDescription className="sr-only">Generate and select artist portraits for the current track.</DialogDescription>
