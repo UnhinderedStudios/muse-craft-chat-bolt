@@ -116,8 +116,8 @@ Deno.serve(async (req: Request) => {
     console.log(`  🖼️ [${requestId}] Has reference image: ${!!imageData}`);
     console.log(`  🔄 [${requestId}] Request independent - no state persistence`);
 
-    // ALWAYS use Gemini 2.5 Flash for analysis and Flash Image for generation - NO FALLBACKS
-    const analysisModel = "gemini-2.5-flash";
+    // ALWAYS use Gemini 2.5 Flash Image Preview for BOTH analysis and generation - matching Nano Banana UI
+    const analysisModel = "gemini-2.5-flash-image-preview";
     const generationModel = "gemini-2.5-flash-image-preview";
     
     console.log(`🔧 [${requestId}] Using models: analysis=${analysisModel}, generation=${generationModel}`);
@@ -138,7 +138,7 @@ Deno.serve(async (req: Request) => {
           }
         },
         {
-          text: `Analyze this reference image and create an enhanced prompt for generating a professional artist portrait. Use the visual style, lighting, composition, and mood from this image as inspiration. Original request: "${prompt}". Respond with just the enhanced prompt text for image generation, focusing on artistic style, lighting, pose, and atmosphere.`
+          text: `CRITICAL: Keep composition, lighting, background and structure of this image identical. Only change the character/subject as requested: "${prompt}". Preserve the exact same pose, camera angle, lighting setup, background elements, and overall visual structure. The character should fit naturally into the existing scene without altering any other visual elements. Respond with an enhanced prompt that emphasizes preserving the original image's composition while only modifying the subject.`
         }
       ];
 
@@ -147,14 +147,14 @@ Deno.serve(async (req: Request) => {
           parts: analysisParts
         }],
         generationConfig: {
-          temperature: 0.7,
+          temperature: 1.0,
           topK: 40,
           topP: 0.95,
           maxOutputTokens: 1024,
         }
       };
 
-      console.log(`  🔍 [${requestId}] Analyzing reference image with Gemini 2.5 Flash`);
+      console.log(`  🔍 [${requestId}] Analyzing reference image with Gemini 2.5 Flash Image Preview`);
 
       const analysisRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${analysisModel}:generateContent`,
@@ -200,26 +200,40 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Now generate image using Gemini 2.5 Flash
-    const generationParts = [
-      {
-        text: `Generate a high-quality professional artist portrait image. ${finalPrompt}. Style: cinematic, artistic, professional photography, studio lighting.`
-      }
-    ];
+    // Now generate image using Gemini 2.5 Flash Image Preview with reference image if available
+    const generationParts = [];
+    
+    // Add reference image to generation if available (for better composition preservation)
+    if (imageData) {
+      const [mimeTypePart, base64Data] = imageData.split(",");
+      const mimeType = mimeTypePart.replace("data:", "").replace(";base64", "");
+      
+      generationParts.push({
+        inline_data: {
+          mime_type: mimeType,
+          data: base64Data
+        }
+      });
+    }
+    
+    // Add the enhanced prompt without generic style overrides
+    generationParts.push({
+      text: finalPrompt
+    });
 
     const generationRequestBody = {
       contents: [{
         parts: generationParts
       }],
       generationConfig: {
-        temperature: 0.8,
+        temperature: 1.0,
         topK: 40,
         topP: 0.95,
         maxOutputTokens: 8192,
       }
     };
 
-    console.log(`  🎨 [${requestId}] Generating image with Gemini 2.5 Flash Image Preview (NO OTHER MODEL)`);
+    console.log(`  🎨 [${requestId}] Generating image with Gemini 2.5 Flash Image Preview using reference image and enhanced prompt`);
 
     const generationRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${generationModel}:generateContent`,
