@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { X, Search, Filter, MoreVertical, Play, Pause, Clock, User, Trash2, RotateCw } from "lucide-react";
+import { ArtistGenerator } from "./ArtistGenerator";
 import { SessionPlaylist, useSessionPlaylists } from "@/hooks/use-session-playlists";
 import { TrackItem } from "@/types";
 import { cn } from "@/lib/utils";
@@ -36,6 +37,8 @@ type SortOption = "newest" | "oldest" | "title" | "artist";
 export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, currentlyPlayingTrackId, isPlaying, onAlbumCoverClick }: PlaylistOverlayProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [showArtistGenerator, setShowArtistGenerator] = useState(false);
+  const [selectedTrackForArtist, setSelectedTrackForArtist] = useState<TrackItem | null>(null);
   
   // Access session playlists for removing tracks and getting current playlist state
   const { removeTrackFromPlaylist, playlists, snapshotToTrack } = useSessionPlaylists();
@@ -69,6 +72,8 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
     if (!isOpen) {
       setSearchQuery("");
       setSortBy("newest");
+      setShowArtistGenerator(false);
+      setSelectedTrackForArtist(null);
     }
   }, [isOpen]);
 
@@ -295,8 +300,18 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
                             </div>
                           </div>
                           <div className="flex items-center gap-2 text-white/60 text-sm lg:hidden">
-                            <div className="w-12 h-12 rounded bg-white/10 flex items-center justify-center shrink-0">
+                            <div className="w-12 h-12 rounded bg-white/10 flex items-center justify-center shrink-0 relative group/artist cursor-pointer">
                               <User className="w-5 h-5 text-white/40" />
+                              <div 
+                                className="absolute inset-0 rounded bg-black/50 backdrop-blur-sm opacity-0 group-hover/artist:opacity-100 transition-opacity duration-200 flex items-center justify-center"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedTrackForArtist(snapshotToTrack(song));
+                                  setShowArtistGenerator(true);
+                                }}
+                              >
+                                <RotateCw className="w-3 h-3 text-white group-hover/artist:animate-[spin_0.36s_ease-in-out] transition-transform" />
+                              </div>
                             </div>
                             <span className="truncate">Generated Song</span>
                           </div>
@@ -304,8 +319,18 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
                         
                         {/* Artist - Desktop */}
                         <div className="hidden lg:flex lg:items-center gap-2 text-white/60 truncate">
-                          <div className="w-12 h-12 rounded bg-white/10 flex items-center justify-center shrink-0">
+                          <div className="w-12 h-12 rounded bg-white/10 flex items-center justify-center shrink-0 relative group/artist cursor-pointer">
                             <User className="w-5 h-5 text-white/40" />
+                            <div 
+                              className="absolute inset-0 rounded bg-black/50 backdrop-blur-sm opacity-0 group-hover/artist:opacity-100 transition-opacity duration-200 flex items-center justify-center"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedTrackForArtist(snapshotToTrack(song));
+                                setShowArtistGenerator(true);
+                              }}
+                            >
+                              <RotateCw className="w-3 h-3 text-white group-hover/artist:animate-[spin_0.36s_ease-in-out] transition-transform" />
+                            </div>
                           </div>
                           <span>Generated Song</span>
                         </div>
@@ -433,6 +458,16 @@ export function PlaylistOverlay({ playlist, isOpen, onClose, onPlayTrack, curren
           )}
         </div>
       </div>
+
+      {/* Artist Generator Modal */}
+      <ArtistGenerator
+        isOpen={showArtistGenerator}
+        onClose={() => {
+          setShowArtistGenerator(false);
+          setSelectedTrackForArtist(null);
+        }}
+        track={selectedTrackForArtist}
+      />
     </div>
   );
 }
