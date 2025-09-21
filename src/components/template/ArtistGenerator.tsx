@@ -261,7 +261,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
   return (
     <Dialog open={isOpen} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-none w-full h-full bg-black/10 backdrop-blur border-0 p-0 flex flex-col">
+      <DialogContent 
+        className="max-w-none w-full h-full bg-black/10 backdrop-blur border-0 p-0 flex flex-col"
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={onClose}
+      >
         {/* Accessible title/description for Radix Dialog */}
         <DialogTitle className="sr-only">Artist Generator</DialogTitle>
         <DialogDescription className="sr-only">Generate and select artist portraits for the current track.</DialogDescription>
