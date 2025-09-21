@@ -154,82 +154,9 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   };
 
   const handleRetry = async () => {
-    if (!track) return;
-    
-    const retryReqId = `retry_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-    console.log(`🔄 [${retryReqId}] Retry requested for track: "${track.title}"`);
-    
-    try {
-      setLoading(true);
-      
-      // Generate a fresh prompt based on track details
-      let chatInstruction = "";
-      
-      if (track.title?.trim()) {
-        chatInstruction = `Create a simple 1 sentence prompt for an image generation tool for an artist portrait based on this song title. Keep it cinematic and realistic, show a professional artist/musician portrait. Do not use any parameter instructions such as AR16:9.\n\nSong Title: ${track.title.trim()}`;
-      } else if (Array.isArray(track.params) && track.params.length > 0) {
-        const style = track.params.join(", ");
-        chatInstruction = `Create a simple 1 sentence prompt for an image generation tool for an artist portrait based on this music style. Keep it cinematic and realistic, show a professional artist/musician portrait. Do not use any parameter instructions such as AR16:9.\n\nMusic Style: ${style}`;
-      }
-      
-      console.log(`🤖 [${retryReqId}] Getting fresh prompt from ChatGPT`);
-      
-      // Get a fresh artist portrait prompt from ChatGPT
-      if (chatInstruction) {
-        const promptResponse = await api.chat([{
-          role: "user",
-          content: chatInstruction
-        }]);
-        const newPrompt = promptResponse.content;
-        setPrompt(newPrompt);
-        
-        console.log(`📝 [${retryReqId}] Generated fresh prompt: "${newPrompt}"`);
-        
-        // Use the proper artist generation API (not album covers)
-        const result = await api.generateArtistImages(newPrompt.trim());
-        
-        console.log(`🖼️ [${retryReqId}] Artist generation response:`, {
-          imageCount: result.images?.length || 0,
-          hasEnhancedPrompt: !!result.enhancedPrompt
-        });
-        
-        if (!result.images || result.images.length === 0) {
-          console.error(`❌ [${retryReqId}] No images returned from artist generation`);
-          toast({ title: "No artist images returned", description: "Try again in a moment.", variant: "destructive" });
-          return;
-        }
-        
-        // Add new images to the front (newest first)
-        const updatedImages = [...result.images, ...images];
-        setImages(updatedImages);
-        
-        // Update track's generated covers in session
-        if (track && currentSession) {
-          const updatedTracks = (currentSession.tracks || []).map(t =>
-            t.id === track.id ? { 
-              ...t, 
-              generatedCovers: updatedImages
-            } : t
-          );
-          updateSession(currentSession.id, { tracks: updatedTracks });
-          console.log(`💾 [${retryReqId}] Updated session with retry images`);
-        }
-        
-        setSelectedIndex(0); // Select the newest generated image
-        toast({ 
-          title: "Regenerated", 
-          description: `${result.images.length} new artist image${result.images.length > 1 ? 's' : ''} added` 
-        });
-      } else {
-        console.error(`❌ [${retryReqId}] No track details available for retry`);
-        toast({ title: "Cannot retry", description: "No track details available.", variant: "destructive" });
-      }
-    } catch (e: any) {
-      console.error(`❌ [${retryReqId}] Retry error:`, e);
-      toast({ title: "Retry failed", description: e?.message || "Please try again.", variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
+    // Retry button operation disabled - button remains visible but non-functional
+    console.log(`🔄 Retry button clicked but operation is disabled`);
+    return;
   };
 
   const handleApply = () => {

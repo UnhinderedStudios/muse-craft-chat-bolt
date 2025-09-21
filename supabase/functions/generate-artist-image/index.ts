@@ -4,9 +4,35 @@
 
 import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 
+// Analysis cache to reuse results for same prompt+image combinations
+const analysisCache = new Map<string, { analysisText: string, timestamp: number }>();
+const CACHE_EXPIRY_MS = 60 * 60 * 1000; // 1 hour
+
 // Generate unique request ID for tracking
 function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+// Create cache key from prompt and image data
+function createCacheKey(prompt: string, imageData: string): string {
+  const content = prompt + (imageData || '');
+  let hash = 0;
+  for (let i = 0; i < content.length; i++) {
+    const char = content.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash).toString(36);
+}
+
+// Clean expired cache entries
+function cleanExpiredCache() {
+  const now = Date.now();
+  for (const [key, value] of analysisCache.entries()) {
+    if (now - value.timestamp > CACHE_EXPIRY_MS) {
+      analysisCache.delete(key);
+    }
+  }
 }
 
 const CORS = {
@@ -154,48 +180,76 @@ Deno.serve(async (req: Request) => {
         }
       };
 
-      console.log(`  🔍 [${requestId}] Analyzing reference image with Gemini 2.5 Flash Image Preview`);
-
-      const analysisRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${analysisModel}:generateContent`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": key,
-          },
-          body: JSON.stringify(analysisRequestBody)
-        }
-      );
-
-      const analysisJson = await analysisRes.json().catch(() => ({} as any));
-
-      if (!analysisRes.ok) {
-        console.error(`❌ [${requestId}] Gemini analysis FAILED:`, analysisJson);
-        // NO SILENT FALLBACKS - return error instead
-        return new Response(
-          JSON.stringify({ 
-            error: "Reference image analysis failed", 
-            details: analysisJson?.error?.message || "Analysis API error",
-            requestId 
-          }),
-          { status: 502, headers: CORS }
-        );
+      // Clean expired cache entries
+      cleanExpiredCache();
+      
+      // Check if we have cached analysis for this prompt+image combination
+      const cacheKey = createCacheKey(prompt, imageData);
+      const cachedAnalysis = analysisCache.get(cacheKey);
+      
+      if (cachedAnalysis && (Date.now() - cachedAnalysis.timestamp) < CACHE_EXPIRY_MS) {
+        console.log(`  💾 [${requestId}] Using cached analysis for prompt+image combination`);
+        finalPrompt = cachedAnalysis.analysisText;
+        analysisSuccessful = true;
       } else {
-        const analysisText = analysisJson?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (analysisText) {
-          finalPrompt = analysisText;
-          analysisSuccessful = true;
-          console.log(`  ✅ [${requestId}] Enhanced prompt from analysis: "${finalPrompt.substring(0, 100)}..."`);
+        console.log(`  🔍 [${requestId}] Analyzing reference image with Gemini 2.5 Flash Image Preview`);
+
+        const analysisRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${analysisModel}:generateContent`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": key,
+            },
+            body: JSON.stringify(analysisRequestBody)
+          }
+        );
+
+        const analysisJson = await analysisRes.json().catch(() => ({} as any));
+
+        if (!analysisRes.ok) {
+          console.error(`❌ [${requestId}] Gemini analysis FAILED:`, analysisJson);
+          
+          // Fallback to cached analysis if available, even if expired
+          if (cachedAnalysis) {
+            console.log(`  🔄 [${requestId}] Using expired cached analysis as fallback`);
+            finalPrompt = cachedAnalysis.analysisText;
+            analysisSuccessful = true;
+          } else {
+            // Fallback to original prompt if no cache available
+            console.log(`  🔄 [${requestId}] Using original prompt as fallback`);
+            finalPrompt = prompt;
+            analysisSuccessful = false;
+          }
         } else {
-          console.error(`❌ [${requestId}] No analysis text returned`);
-          return new Response(
-            JSON.stringify({ 
-              error: "No enhancement received from analysis", 
-              requestId 
-            }),
-            { status: 502, headers: CORS }
-          );
+          const analysisText = analysisJson?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (analysisText) {
+            finalPrompt = analysisText;
+            analysisSuccessful = true;
+            
+            // Cache the successful analysis
+            analysisCache.set(cacheKey, {
+              analysisText: analysisText,
+              timestamp: Date.now()
+            });
+            
+            console.log(`  ✅ [${requestId}] Enhanced prompt from analysis (cached): "${finalPrompt.substring(0, 100)}..."`);
+          } else {
+            console.error(`❌ [${requestId}] No analysis text returned`);
+            
+            // Fallback to cached analysis if available
+            if (cachedAnalysis) {
+              console.log(`  🔄 [${requestId}] Using cached analysis as fallback for empty response`);
+              finalPrompt = cachedAnalysis.analysisText;
+              analysisSuccessful = true;
+            } else {
+              // Fallback to original prompt
+              console.log(`  🔄 [${requestId}] Using original prompt as fallback for empty response`);
+              finalPrompt = prompt;
+              analysisSuccessful = false;
+            }
+          }
         }
       }
     }
