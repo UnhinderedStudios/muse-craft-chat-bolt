@@ -270,86 +270,104 @@ Deno.serve(async (req: Request) => {
       });
     }
     
-    // Add the enhanced prompt without generic style overrides
+    // Add the enhanced prompt with explicit image generation instruction
+    const explicitPrompt = `GENERATE AN IMAGE: ${finalPrompt}
+
+IMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
+    
     generationParts.push({
-      text: finalPrompt
+      text: explicitPrompt
     });
 
-    const generationRequestBody = {
-      contents: [{
-        parts: generationParts
-      }],
-      generationConfig: {
-        temperature: 0.80,
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 8192,
-      }
-    };
+    // Retry logic for image generation
+    let generationAttempts = 0;
+    const maxGenerationAttempts = 3;
+    let generationJson: any;
+    let images: string[] = [];
 
-    console.log(`  🎨 [${requestId}] Generating image with Gemini 2.5 Flash Image Preview using reference image and enhanced prompt`);
+    while (generationAttempts < maxGenerationAttempts && images.length === 0) {
+      generationAttempts++;
 
-    const generationRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${generationModel}:generateContent`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": key,
-        },
-        body: JSON.stringify(generationRequestBody)
-      }
-    );
+      const generationRequestBody = {
+        contents: [{
+          parts: generationParts
+        }],
+        generationConfig: {
+          temperature: 0.85,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 8192,
+        }
+      };
 
-    const generationJson = await generationRes.json().catch(() => ({} as any));
+      console.log(`  🎨 [${requestId}] Generation attempt ${generationAttempts}/${maxGenerationAttempts} with Gemini 2.5 Flash Image Preview`);
 
-    if (!generationRes.ok) {
-      console.error(`❌ [${requestId}] Gemini generation FAILED:`, generationJson);
-      return new Response(
-        JSON.stringify({ 
-          error: generationJson?.error?.message || "Gemini generation error", 
-          raw: generationJson,
-          requestId 
-        }),
-        { status: generationRes.status, headers: CORS }
+      const generationRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${generationModel}:generateContent`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": key,
+          },
+          body: JSON.stringify(generationRequestBody)
+        }
       );
-    }
 
-    // Extract generated images from Gemini 2.5 Flash response ONLY
-    const candidate = generationJson?.candidates?.[0];
-    if (!candidate) {
-      console.error(`❌ [${requestId}] No candidate returned from Gemini`);
-      return new Response(
-        JSON.stringify({ 
-          error: "No content generated from Gemini", 
-          raw: generationJson,
-          requestId 
-        }),
-        { status: 502, headers: CORS }
-      );
-    }
+      generationJson = await generationRes.json().catch(() => ({} as any));
 
-    // Look for inline_data or inlineData parts containing images (API variants)
-    const parts = candidate?.content?.parts ?? [];
-    const imageParts = parts.filter((part: any) => part?.inline_data || part?.inlineData);
-    
-    console.log(`  🔍 [${requestId}] Found ${imageParts.length} image parts in response`);
-    
-    const images: string[] = imageParts
-      .map((part: any) => {
-        const mimeType = part.inline_data?.mime_type || part.inlineData?.mimeType || "image/png";
-        const base64Data = part.inline_data?.data || part.inlineData?.data;
-        return base64Data ? `data:${mimeType};base64,${base64Data}` : null;
-      })
-      .filter(Boolean);
+      if (!generationRes.ok) {
+        console.error(`❌ [${requestId}] Gemini generation attempt ${generationAttempts} FAILED:`, generationJson);
+        if (generationAttempts === maxGenerationAttempts) {
+          return new Response(
+            JSON.stringify({ 
+              error: generationJson?.error?.message || "Gemini generation error", 
+              raw: generationJson,
+              requestId 
+            }),
+            { status: generationRes.status, headers: CORS }
+          );
+        }
+        continue;
+      }
+
+      // Extract generated images from Gemini 2.5 Flash response
+      const candidate = generationJson?.candidates?.[0];
+      if (!candidate) {
+        console.log(`⚠️ [${requestId}] No candidate returned from Gemini on attempt ${generationAttempts}`);
+        continue;
+      }
+
+      // Look for inline_data or inlineData parts containing images (API variants)
+      const parts = candidate?.content?.parts ?? [];
+      const imageParts = parts.filter((part: any) => part?.inline_data || part?.inlineData);
+      
+      console.log(`  🔍 [${requestId}] Found ${imageParts.length} image parts in attempt ${generationAttempts}`);
+      
+      images = imageParts
+        .map((part: any) => {
+          const mimeType = part.inline_data?.mime_type || part.inlineData?.mimeType || "image/png";
+          const base64Data = part.inline_data?.data || part.inlineData?.data;
+          return base64Data ? `data:${mimeType};base64,${base64Data}` : null;
+        })
+        .filter(Boolean);
+
+      if (images.length === 0) {
+        const textParts = parts.filter((part: any) => part.text);
+        if (textParts.length > 0) {
+          console.log(`⚠️ [${requestId}] Attempt ${generationAttempts} returned text instead of image, retrying...`);
+        }
+      }
+    }
 
     if (!images.length) {
-      console.error(`❌ [${requestId}] No images extracted from Gemini response`);
+      console.error(`❌ [${requestId}] No images extracted from Gemini response after ${maxGenerationAttempts} attempts`);
       return new Response(
         JSON.stringify({ 
-          error: "No images generated by Gemini 2.5 Flash Image Preview", 
+          error: "No images generated by Gemini 2.5 Flash Image Preview after multiple attempts",
           raw: generationJson,
-          requestId 
+          requestId,
+          attempts: generationAttempts
         }),
         { status: 502, headers: CORS }
       );
