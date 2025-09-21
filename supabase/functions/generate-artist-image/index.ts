@@ -10,35 +10,66 @@ function generateRequestId(): string {
 }
 
 // Function to modify prompt using ChatGPT when Gemini blocks content
-async function modifyPromptWithChatGPT(originalPrompt: string, attempt: number, openaiKey: string, requestId: string): Promise<string> {
+async function modifyPromptWithChatGPT(
+  fullEnhancedPrompt: string, 
+  originalUserPrompt: string, 
+  prefix: string, 
+  attempt: number, 
+  openaiKey: string, 
+  requestId: string
+): Promise<string> {
   if (!openaiKey) {
     console.log(`⚠️ [${requestId}] No OpenAI key available for prompt modification`);
-    return originalPrompt;
+    return fullEnhancedPrompt;
   }
+
+  // Calculate character limit based on original user prompt (excluding prefix)
+  const originalCharacterDescription = originalUserPrompt.replace(prefix, "").trim();
+  const maxCharacterLength = originalCharacterDescription.length;
+  
+  console.log(`📏 [${requestId}] Character limit: ${maxCharacterLength} chars (original: "${originalCharacterDescription}")`);
 
   const conservativeness = ["moderately", "significantly", "extremely"][Math.min(attempt - 1, 2)];
   
-  const systemPrompt = `You are a prompt safety assistant. Your job is to rephrase image generation prompts to make them more appropriate while preserving the core artistic vision. 
+  // Extract composition preservation instructions from the enhanced prompt
+  const compositionInstructions = fullEnhancedPrompt.match(/CRITICAL:.*?(?=Character must be|$)/s)?.[0] || "";
+  
+  // Extract the character description part that needs modification
+  const characterMatch = fullEnhancedPrompt.match(/Character must be entirely replaced with: (.+?)(?:\n|$)/s);
+  const characterDescription = characterMatch?.[1] || originalCharacterDescription;
+  
+  const systemPrompt = `You are a prompt safety assistant. Your job is to rephrase ONLY the character description part of image generation prompts to make them more appropriate while preserving the core artistic vision.
 
-TASK: Rephrase the user's prompt to be ${conservativeness} more family-friendly and safe while keeping the creative essence intact.
+CONTEXT: 
+- Original prefix: "${prefix}"
+- Full composition requirements: "${compositionInstructions}"
+
+TASK: Rephrase ONLY the character description to be ${conservativeness} more family-friendly and safe while keeping the creative essence intact.
+
+CRITICAL CONSTRAINTS:
+- CHARACTER LIMIT: Your response MUST NOT exceed ${maxCharacterLength} characters
+- PRESERVE PREFIX INTENT: Respect the artistic direction indicated by the prefix
+- ONLY MODIFY: The character description, not composition/lighting instructions
+- KEEP CORE CONCEPT: Maintain the essential visual elements and pose
 
 GUIDELINES:
 - Remove any potentially problematic terms
-- Use more neutral, artistic language
+- Use more neutral, artistic language  
 - Keep the core visual concept (pose, style, mood)
 - Make it sound more professional/artistic
-- Focus on artistic elements like lighting, composition, style
-- Avoid specific subcultures that might trigger content filters
-- Use terms like "artist", "performer", "creative professional" instead of specific styles
+- Focus on artistic elements like style, expression, fashion
+- Use terms like "artist", "performer", "creative professional"
+- Respect the prefix's artistic direction
 
 EXAMPLE:
-Input: "emo goth girl holding up peace sign tattoos"
-Output: "artistic performer making peace gesture, alternative fashion style, creative lighting"
+Input: "gothic punk artist with peace sign pose"
+Output: "alternative style musician making peace gesture" 
 
-Respond with ONLY the rephrased prompt, nothing else.`;
+Respond with ONLY the rephrased character description (max ${maxCharacterLength} chars), nothing else.`;
 
   try {
-    console.log(`🔄 [${requestId}] Modifying prompt with ChatGPT (attempt ${attempt}, ${conservativeness} safer)`);
+    console.log(`🔄 [${requestId}] Modifying character description with ChatGPT (attempt ${attempt}, ${conservativeness} safer)`);
+    console.log(`📝 [${requestId}] Character to modify: "${characterDescription}"`);
     
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -50,31 +81,54 @@ Respond with ONLY the rephrased prompt, nothing else.`;
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: originalPrompt }
+          { role: 'user', content: characterDescription }
         ],
-        max_tokens: 100,
+        max_tokens: Math.min(100, Math.ceil(maxCharacterLength * 1.2)), // Allow some buffer
         temperature: 0.3
       }),
     });
 
     if (!response.ok) {
       console.error(`❌ [${requestId}] ChatGPT API failed:`, await response.text());
-      return originalPrompt;
+      return fullEnhancedPrompt;
     }
 
     const data = await response.json();
-    const modifiedPrompt = data.choices?.[0]?.message?.content?.trim();
+    const modifiedCharacterDescription = data.choices?.[0]?.message?.content?.trim();
     
-    if (modifiedPrompt) {
-      console.log(`✅ [${requestId}] ChatGPT modified prompt: "${modifiedPrompt}"`);
-      return modifiedPrompt;
+    if (modifiedCharacterDescription) {
+      console.log(`🔍 [${requestId}] Modified character: "${modifiedCharacterDescription}" (${modifiedCharacterDescription.length}/${maxCharacterLength} chars)`);
+      
+      // Validate character limit
+      if (modifiedCharacterDescription.length > maxCharacterLength) {
+        console.warn(`⚠️ [${requestId}] Modified prompt exceeds character limit, truncating`);
+        const truncated = modifiedCharacterDescription.substring(0, maxCharacterLength);
+        console.log(`✂️ [${requestId}] Truncated to: "${truncated}"`);
+        
+        // Reconstruct the full prompt with the truncated character description
+        const modifiedFullPrompt = fullEnhancedPrompt.replace(
+          /Character must be entirely replaced with: .+?(?=\n|$)/s,
+          `Character must be entirely replaced with: ${truncated}`
+        );
+        
+        return modifiedFullPrompt;
+      }
+      
+      // Reconstruct the full prompt with the modified character description
+      const modifiedFullPrompt = fullEnhancedPrompt.replace(
+        /Character must be entirely replaced with: .+?(?=\n|$)/s,
+        `Character must be entirely replaced with: ${modifiedCharacterDescription}`
+      );
+      
+      console.log(`✅ [${requestId}] ChatGPT modified character within limits: "${modifiedCharacterDescription}"`);
+      return modifiedFullPrompt;
     } else {
-      console.error(`❌ [${requestId}] No modified prompt returned from ChatGPT`);
-      return originalPrompt;
+      console.error(`❌ [${requestId}] No modified character description returned from ChatGPT`);
+      return fullEnhancedPrompt;
     }
   } catch (error) {
     console.error(`❌ [${requestId}] ChatGPT prompt modification failed:`, error);
-    return originalPrompt;
+    return fullEnhancedPrompt;
   }
 }
 
@@ -182,8 +236,13 @@ Deno.serve(async (req: Request) => {
       prompt = "Professional musician portrait, studio lighting, artistic and cinematic";
     }
 
+    // Extract prefix from prompt for context preservation
+    const prefixMatch = prompt.match(/^(.*?Character must be entirely replaced with:)/s);
+    const prefix = prefixMatch?.[1] || "";
+    
     console.log(`🎯 [${requestId}] Artist Generator Debug:`);
     console.log(`  📝 [${requestId}] Prompt: "${prompt}"`);
+    console.log(`  🎨 [${requestId}] Extracted prefix: "${prefix}"`);
     console.log(`  🖼️ [${requestId}] Has reference image: ${!!imageData}`);
     console.log(`  🔄 [${requestId}] Request independent - no state persistence`);
 
@@ -346,7 +405,14 @@ IMPORTANT: You must generate and return an actual image, not text. Create a visu
           promptModificationAttempts++;
           console.log(`🤖 [${requestId}] Content policy violation detected, attempting ChatGPT prompt modification (${promptModificationAttempts}/3)`);
           
-          const modifiedPrompt = await modifyPromptWithChatGPT(prompt, promptModificationAttempts, openaiKey, requestId);
+          const modifiedPrompt = await modifyPromptWithChatGPT(
+            currentPrompt, // Pass the full enhanced prompt 
+            prompt,        // Pass the original user prompt
+            prefix,        // Pass the extracted prefix
+            promptModificationAttempts, 
+            openaiKey, 
+            requestId
+          );
           if (modifiedPrompt !== currentPrompt) {
             currentPrompt = modifiedPrompt;
             console.log(`🔄 [${requestId}] Retrying with modified prompt: "${currentPrompt.substring(0, 100)}..."`);
