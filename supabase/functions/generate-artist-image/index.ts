@@ -45,33 +45,66 @@ Deno.serve(async (req: Request) => {
 
     // Handle multipart form data for image uploads
     if (contentType.includes("multipart/form-data")) {
-      const formData = await req.formData();
-      prompt = (formData.get("prompt") as string) || "";
-      const imageFile = formData.get("image") as File;
-      
-      if (imageFile) {
-        // Check file size (limit to 10MB)
-        if (imageFile.size > 10 * 1024 * 1024) {
-          return new Response(
-            JSON.stringify({ error: "Image file too large. Maximum size is 10MB." }),
-            { status: 400, headers: CORS }
-          );
-        }
+      console.log(`📤 [${requestId}] Processing multipart form data`);
+      try {
+        const formData = await req.formData();
+        prompt = (formData.get("prompt") as string) || "";
+        const imageFile = formData.get("image") as File;
+        
+        console.log(`📝 [${requestId}] Form data - prompt: "${prompt}", hasImage: ${!!imageFile}`);
+        
+        if (imageFile) {
+          console.log(`🖼️ [${requestId}] Image file - name: ${imageFile.name}, size: ${imageFile.size}, type: ${imageFile.type}`);
+          
+          // Check file size (limit to 10MB)
+          if (imageFile.size > 10 * 1024 * 1024) {
+            console.error(`❌ [${requestId}] File too large: ${imageFile.size} bytes`);
+            return new Response(
+              JSON.stringify({ error: "Image file too large. Maximum size is 10MB.", requestId }),
+              { status: 400, headers: CORS }
+            );
+          }
 
-        const arrayBuffer = await imageFile.arrayBuffer();
-        
-        // Convert to base64 using Deno's built-in encoding to avoid stack overflow
-        const uint8Array = new Uint8Array(arrayBuffer);
-        const base64 = encodeBase64(uint8Array);
-        
-        const mimeType = imageFile.type || "image/jpeg";
-        imageData = `data:${mimeType};base64,${base64}`;
+          const arrayBuffer = await imageFile.arrayBuffer();
+          
+          // Convert to base64 using Deno's built-in encoding to avoid stack overflow
+          const uint8Array = new Uint8Array(arrayBuffer);
+          const base64 = encodeBase64(uint8Array);
+          
+          const mimeType = imageFile.type || "image/jpeg";
+          imageData = `data:${mimeType};base64,${base64}`;
+          console.log(`✅ [${requestId}] Image converted to base64, length: ${base64.length}`);
+        }
+      } catch (formError: any) {
+        console.error(`❌ [${requestId}] FormData parsing error:`, formError);
+        return new Response(
+          JSON.stringify({ 
+            error: "Failed to parse form data", 
+            details: formError.message,
+            requestId 
+          }),
+          { status: 400, headers: CORS }
+        );
       }
     } else {
-      // Handle JSON body for text-only prompts
-      const body = await req.json().catch(() => ({}));
-      prompt = body?.prompt?.toString?.() || "";
-      imageData = body?.imageData?.toString?.() || "";
+      console.log(`📤 [${requestId}] Processing JSON body`);
+      try {
+        // Handle JSON body for text-only prompts
+        const body = await req.json().catch(() => ({}));
+        prompt = body?.prompt?.toString?.() || "";
+        imageData = body?.imageData?.toString?.() || "";
+        console.log(`📝 [${requestId}] JSON body - prompt: "${prompt}", hasImageData: ${!!imageData}`);
+      } catch (jsonError: any) {
+        console.error(`❌ [${requestId}] JSON parsing error:`, jsonError);
+        return new Response(
+          JSON.stringify({ 
+            error: "Failed to parse JSON body", 
+            details: jsonError.message,
+            requestId 
+          }),
+          { status: 400, headers: CORS }
+        );
+      }
     }
 
     if (!prompt.trim()) {

@@ -381,7 +381,7 @@ export const api = {
       const formData = new FormData();
       formData.append('prompt', prompt);
       formData.append('image', referenceImage);
-      formData.append('clientRequestId', clientRequestId); // Add client tracking
+      // Don't send clientRequestId to avoid edge function parsing issues
       
       const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-artist-image`, {
         method: 'POST',
@@ -413,8 +413,8 @@ export const api = {
       // Use regular JSON for text-only with consistent structure
       const { data, error } = await supabase.functions.invoke('generate-artist-image', {
         body: { 
-          prompt,
-          clientRequestId // Add client tracking
+          prompt
+          // Don't send clientRequestId to avoid edge function parsing issues
         }
       });
       
