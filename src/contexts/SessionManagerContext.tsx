@@ -313,7 +313,8 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
 
   const switchToSession = useCallback((sessionId: string) => {
     const session = sessions.find((s) => s.id === sessionId) || null;
-    if (session) setCurrentSessionId(sessionId);
+    // Set target session ID immediately to avoid race conditions with createSession
+    setCurrentSessionId(sessionId);
     return session;
   }, [sessions]);
 
