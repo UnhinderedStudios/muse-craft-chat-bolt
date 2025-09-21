@@ -187,7 +187,7 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
         {hasContent && currentVersion?.words?.length > 0 && (
           <button
             onClick={onFullscreenKaraoke}
-            className="karaoke-mode-button w-full h-9 text-white font-medium px-4 rounded-xl flex items-center justify-center gap-2 mt-4"
+            className="karaoke-mode-button w-full h-9 text-white text-sm font-medium px-4 rounded-xl flex items-center justify-center gap-2 mt-4"
           >
             <Mic className="w-4 h-4" />
             Karaoke Mode
