@@ -35,8 +35,26 @@ Deno.serve(async (req: Request) => {
       const imageFile = formData.get("image") as File;
       
       if (imageFile) {
+        // Check file size (limit to 10MB)
+        if (imageFile.size > 10 * 1024 * 1024) {
+          return new Response(
+            JSON.stringify({ error: "Image file too large. Maximum size is 10MB." }),
+            { status: 400, headers: CORS }
+          );
+        }
+
         const arrayBuffer = await imageFile.arrayBuffer();
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        
+        // Convert to base64 using chunked processing to avoid stack overflow
+        const uint8Array = new Uint8Array(arrayBuffer);
+        let base64 = "";
+        const chunkSize = 8192; // Process in 8KB chunks
+        
+        for (let i = 0; i < uint8Array.length; i += chunkSize) {
+          const chunk = uint8Array.slice(i, i + chunkSize);
+          base64 += btoa(String.fromCharCode.apply(null, Array.from(chunk)));
+        }
+        
         const mimeType = imageFile.type || "image/jpeg";
         imageData = `data:${mimeType};base64,${base64}`;
       }
