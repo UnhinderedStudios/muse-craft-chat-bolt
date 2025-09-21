@@ -69,8 +69,9 @@ Deno.serve(async (req: Request) => {
     console.log("  📝 Prompt:", prompt);
     console.log("  🖼️ Has image:", !!imageData);
 
-    // Use Gemini 2.5 Flash for both analysis and generation
-    const model = "gemini-2.5-flash";
+    // Use Gemini 2.5 Flash for analysis and Flash Image for generation
+    const analysisModel = "gemini-2.5-flash";
+    const generationModel = "gemini-2.5-flash-image";
     
     let finalPrompt = prompt;
 
@@ -106,7 +107,7 @@ Deno.serve(async (req: Request) => {
       console.log("  🔍 Analyzing reference image with Gemini 2.5 Flash");
 
       const analysisRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        `https://generativelanguage.googleapis.com/v1beta/models/${analysisModel}:generateContent`,
         {
           method: "POST",
           headers: {
@@ -151,10 +152,10 @@ Deno.serve(async (req: Request) => {
       }
     };
 
-    console.log("  🎨 Generating image with Gemini 2.5 Flash");
+    console.log("  🎨 Generating image with Gemini 2.5 Flash Image");
 
     const generationRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${generationModel}:generateContent`,
       {
         method: "POST",
         headers: {
@@ -212,7 +213,8 @@ Deno.serve(async (req: Request) => {
         hasReferenceImage: !!imageData,
         enhancedPrompt: finalPrompt,
         imageCount: images.length,
-        model: model
+        analysisModel: analysisModel,
+        generationModel: generationModel
       }
     }), { headers: CORS });
 
