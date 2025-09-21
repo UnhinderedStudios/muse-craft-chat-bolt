@@ -4,6 +4,11 @@
 
 import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 
+// Generate unique request ID for tracking
+function generateRequestId(): string {
+  return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-api-version",
@@ -12,16 +17,22 @@ const CORS = {
 };
 
 Deno.serve(async (req: Request) => {
+  // Generate unique request ID for tracking
+  const requestId = generateRequestId();
+  
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: CORS });
   }
 
   try {
+    console.log(`🆔 [${requestId}] Artist Generator request started`);
+    
     const key = Deno.env.get("GEMINI_API_KEY");
     if (!key) {
+      console.error(`❌ [${requestId}] Missing GEMINI_API_KEY`);
       return new Response(
-        JSON.stringify({ error: "Missing GEMINI_API_KEY" }),
+        JSON.stringify({ error: "Missing GEMINI_API_KEY", requestId }),
         { status: 500, headers: CORS }
       );
     }
@@ -29,6 +40,8 @@ Deno.serve(async (req: Request) => {
     const contentType = req.headers.get("content-type") || "";
     let prompt = "";
     let imageData = "";
+    
+    console.log(`📥 [${requestId}] Content-Type: ${contentType}`);
 
     // Handle multipart form data for image uploads
     if (contentType.includes("multipart/form-data")) {
@@ -65,15 +78,19 @@ Deno.serve(async (req: Request) => {
       prompt = "Professional musician portrait, studio lighting, artistic and cinematic";
     }
 
-    console.log("🎯 Artist Generator Debug:");
-    console.log("  📝 Prompt:", prompt);
-    console.log("  🖼️ Has image:", !!imageData);
+    console.log(`🎯 [${requestId}] Artist Generator Debug:`);
+    console.log(`  📝 [${requestId}] Prompt: "${prompt}"`);
+    console.log(`  🖼️ [${requestId}] Has reference image: ${!!imageData}`);
+    console.log(`  🔄 [${requestId}] Request independent - no state persistence`);
 
-    // Use Gemini 2.5 Flash for analysis and Flash Image for generation
+    // ALWAYS use Gemini 2.5 Flash for analysis and Flash Image for generation - NO FALLBACKS
     const analysisModel = "gemini-2.5-flash";
     const generationModel = "gemini-2.5-flash-image-preview";
     
+    console.log(`🔧 [${requestId}] Using models: analysis=${analysisModel}, generation=${generationModel}`);
+    
     let finalPrompt = prompt;
+    let analysisSuccessful = false;
 
     // If image is provided, first analyze it to enhance the prompt
     if (imageData) {
@@ -104,7 +121,7 @@ Deno.serve(async (req: Request) => {
         }
       };
 
-      console.log("  🔍 Analyzing reference image with Gemini 2.5 Flash");
+      console.log(`  🔍 [${requestId}] Analyzing reference image with Gemini 2.5 Flash`);
 
       const analysisRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${analysisModel}:generateContent`,
@@ -121,14 +138,31 @@ Deno.serve(async (req: Request) => {
       const analysisJson = await analysisRes.json().catch(() => ({} as any));
 
       if (!analysisRes.ok) {
-        console.error("❌ Gemini analysis error:", analysisJson);
-        // Fallback to original prompt if analysis fails
-        console.log("  ⚠️ Using original prompt as fallback");
+        console.error(`❌ [${requestId}] Gemini analysis FAILED:`, analysisJson);
+        // NO SILENT FALLBACKS - return error instead
+        return new Response(
+          JSON.stringify({ 
+            error: "Reference image analysis failed", 
+            details: analysisJson?.error?.message || "Analysis API error",
+            requestId 
+          }),
+          { status: 502, headers: CORS }
+        );
       } else {
         const analysisText = analysisJson?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (analysisText) {
           finalPrompt = analysisText;
-          console.log("  ✅ Enhanced prompt from analysis:", finalPrompt);
+          analysisSuccessful = true;
+          console.log(`  ✅ [${requestId}] Enhanced prompt from analysis: "${finalPrompt.substring(0, 100)}..."`);
+        } else {
+          console.error(`❌ [${requestId}] No analysis text returned`);
+          return new Response(
+            JSON.stringify({ 
+              error: "No enhancement received from analysis", 
+              requestId 
+            }),
+            { status: 502, headers: CORS }
+          );
         }
       }
     }
@@ -152,7 +186,7 @@ Deno.serve(async (req: Request) => {
       }
     };
 
-    console.log("  🎨 Generating image with Gemini 2.5 Flash Image");
+    console.log(`  🎨 [${requestId}] Generating image with Gemini 2.5 Flash Image Preview (NO OTHER MODEL)`);
 
     const generationRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${generationModel}:generateContent`,
@@ -169,18 +203,27 @@ Deno.serve(async (req: Request) => {
     const generationJson = await generationRes.json().catch(() => ({} as any));
 
     if (!generationRes.ok) {
-      console.error("❌ Gemini generation error:", generationJson);
+      console.error(`❌ [${requestId}] Gemini generation FAILED:`, generationJson);
       return new Response(
-        JSON.stringify({ error: generationJson?.error?.message || "Gemini generation error", raw: generationJson }),
+        JSON.stringify({ 
+          error: generationJson?.error?.message || "Gemini generation error", 
+          raw: generationJson,
+          requestId 
+        }),
         { status: generationRes.status, headers: CORS }
       );
     }
 
-    // Extract generated images from Gemini 2.5 Flash response
+    // Extract generated images from Gemini 2.5 Flash response ONLY
     const candidate = generationJson?.candidates?.[0];
     if (!candidate) {
+      console.error(`❌ [${requestId}] No candidate returned from Gemini`);
       return new Response(
-        JSON.stringify({ error: "No content generated from Gemini", raw: generationJson }),
+        JSON.stringify({ 
+          error: "No content generated from Gemini", 
+          raw: generationJson,
+          requestId 
+        }),
         { status: 502, headers: CORS }
       );
     }
@@ -188,6 +231,8 @@ Deno.serve(async (req: Request) => {
     // Look for inline_data or inlineData parts containing images (API variants)
     const parts = candidate?.content?.parts ?? [];
     const imageParts = parts.filter((part: any) => part?.inline_data || part?.inlineData);
+    
+    console.log(`  🔍 [${requestId}] Found ${imageParts.length} image parts in response`);
     
     const images: string[] = imageParts
       .map((part: any) => {
@@ -198,31 +243,44 @@ Deno.serve(async (req: Request) => {
       .filter(Boolean);
 
     if (!images.length) {
+      console.error(`❌ [${requestId}] No images extracted from Gemini response`);
       return new Response(
-        JSON.stringify({ error: "No images generated by Gemini 2.5 Flash", raw: generationJson }),
+        JSON.stringify({ 
+          error: "No images generated by Gemini 2.5 Flash Image Preview", 
+          raw: generationJson,
+          requestId 
+        }),
         { status: 502, headers: CORS }
       );
     }
 
-    console.log("  ✅ Success! Generated", images.length, "artist image(s) with Gemini 2.5 Flash");
+    console.log(`  ✅ [${requestId}] SUCCESS! Generated ${images.length} artist image(s) with Gemini 2.5 Flash Image Preview`);
     
     return new Response(JSON.stringify({ 
       images,
       enhancedPrompt: finalPrompt,
       debug: {
+        requestId,
         originalPrompt: prompt,
         hasReferenceImage: !!imageData,
         enhancedPrompt: finalPrompt,
         imageCount: images.length,
         analysisModel: analysisModel,
-        generationModel: generationModel
+        generationModel: generationModel,
+        analysisSuccessful,
+        timestamp: new Date().toISOString(),
+        guaranteedGemini: true // Confirm no fallback to other services
       }
     }), { headers: CORS });
 
   } catch (err: any) {
-    console.error("❌ Artist generator error:", err);
+    const requestId = generateRequestId(); // Generate ID even for errors
+    console.error(`❌ [${requestId}] Artist generator unhandled error:`, err);
     return new Response(
-      JSON.stringify({ error: err?.message || "Unhandled error" }),
+      JSON.stringify({ 
+        error: err?.message || "Unhandled error",
+        requestId 
+      }),
       { status: 500, headers: CORS }
     );
   }

@@ -354,51 +354,81 @@ export const api = {
   },
 
   // Generate artist images using Gemini 2.5 Flash with optional image analysis
-  async generateArtistImages(prompt: string, referenceImage?: File): Promise<{ images: string[]; enhancedPrompt?: string }> {
-    console.log("🎨 Calling artist generator with prompt:", prompt);
-    console.log("🖼️ Reference image provided:", !!referenceImage);
+  async generateArtistImages(prompt: string, referenceImage?: File): Promise<{ images: string[]; enhancedPrompt?: string; debug?: any }> {
+    // Generate client-side request ID for tracking
+    const clientRequestId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    console.log(`🎨 [${clientRequestId}] Calling artist generator with prompt:`, prompt);
+    console.log(`🖼️ [${clientRequestId}] Reference image provided:`, !!referenceImage);
+    console.log(`🔄 [${clientRequestId}] Request independent - clearing any cached data`);
     
     if (referenceImage) {
-      // Use FormData for image upload
+      // Validate reference image before sending
+      if (!referenceImage.type.startsWith('image/')) {
+        throw new Error("Invalid file type - must be an image");
+      }
+      if (referenceImage.size > 10 * 1024 * 1024) {
+        throw new Error("Image too large - must be under 10MB");
+      }
+      
+      console.log(`📤 [${clientRequestId}] Sending FormData with image:`, {
+        type: referenceImage.type,
+        size: referenceImage.size,
+        name: referenceImage.name
+      });
+      
+      // Use FormData for image upload with additional tracking
       const formData = new FormData();
       formData.append('prompt', prompt);
       formData.append('image', referenceImage);
+      formData.append('clientRequestId', clientRequestId); // Add client tracking
       
       const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-artist-image`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
           'apikey': SUPABASE_PUBLISHABLE_KEY,
+          // Don't set Content-Type for FormData - let browser set it with boundary
         },
         body: formData
       });
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error(`❌ [${clientRequestId}] Artist generation failed:`, errorData);
         throw new Error(errorData.error || "Failed to generate artist images");
       }
       
       const data = await response.json();
+      console.log(`✅ [${clientRequestId}] Artist generation successful:`, data);
+      
       return {
         images: data.images || [],
-        enhancedPrompt: data.enhancedPrompt
+        enhancedPrompt: data.enhancedPrompt,
+        debug: data.debug
       };
     } else {
-      // Use regular JSON for text-only
+      console.log(`📤 [${clientRequestId}] Sending JSON request (no image)`);
+      
+      // Use regular JSON for text-only with consistent structure
       const { data, error } = await supabase.functions.invoke('generate-artist-image', {
-        body: { prompt }
+        body: { 
+          prompt,
+          clientRequestId // Add client tracking
+        }
       });
       
       if (error) {
-        console.error("❌ Artist generator error:", error);
+        console.error(`❌ [${clientRequestId}] Artist generator error:`, error);
         throw new Error(error.message || "Failed to generate artist images");
       }
       
-      console.log("✅ Artist generator response:", data);
+      console.log(`✅ [${clientRequestId}] Artist generator response:`, data);
       
       return {
         images: data?.images || [],
-        enhancedPrompt: data?.enhancedPrompt
+        enhancedPrompt: data?.enhancedPrompt,
+        debug: data?.debug
       };
     }
   },

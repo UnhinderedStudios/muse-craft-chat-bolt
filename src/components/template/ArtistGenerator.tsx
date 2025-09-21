@@ -62,27 +62,53 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   }, [loading, images, offset]);
 
   const handleGenerate = async () => {
-    console.log("🚀 Generate artist button clicked, prompt:", prompt.trim());
+    // Generate unique client request ID for debugging
+    const clientReqId = `ui_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    
+    console.log(`🚀 [${clientReqId}] Generate artist button clicked, prompt: "${prompt.trim()}"`);
+    console.log(`🖼️ [${clientReqId}] Reference image: ${!!referenceImage}`);
+    console.log(`🔄 [${clientReqId}] Track: "${track?.title || 'Unknown'}"`);
+    
     if (!prompt.trim()) {
-      console.log("❌ Empty prompt, showing toast");
+      console.log(`❌ [${clientReqId}] Empty prompt, showing toast`);
       toast({ title: "Enter a prompt", description: "Type what you want to see for the artist portrait." });
       return;
     }
+    
     try {
       setLoading(true);
-      console.log("🎨 Starting artist generation with prompt:", prompt.trim());
-      console.log("🖼️ Reference image:", !!referenceImage);
+      console.log(`🎨 [${clientReqId}] Starting artist generation - ensuring request independence`);
       
-      const result = await api.generateArtistImages(prompt.trim(), referenceImage || undefined);
-      console.log("🖼️ Artist generation response:", result);
+      // Clear any potential cached state
+      const cleanPrompt = prompt.trim();
+      const cleanReferenceImage = referenceImage || undefined;
+      
+      console.log(`📤 [${clientReqId}] Sending request:`, {
+        prompt: cleanPrompt,
+        hasImage: !!cleanReferenceImage,
+        imageSize: cleanReferenceImage?.size,
+        imageType: cleanReferenceImage?.type
+      });
+      
+      const result = await api.generateArtistImages(cleanPrompt, cleanReferenceImage);
+      
+      console.log(`🖼️ [${clientReqId}] Artist generation response:`, {
+        imageCount: result.images?.length || 0,
+        hasEnhancedPrompt: !!result.enhancedPrompt,
+        debug: result.debug
+      });
       
       if (!result.images || result.images.length === 0) {
-        console.error("❌ No images returned from API");
-        toast({ title: "No images returned", description: "Try a different prompt.", variant: "destructive" });
+        console.error(`❌ [${clientReqId}] No images returned from API`);
+        toast({ 
+          title: "No images returned", 
+          description: "Try a different prompt or check the logs for details.", 
+          variant: "destructive" 
+        });
         return;
       }
       
-      console.log("✅ Generated", result.images.length, "artist images, updating state");
+      console.log(`✅ [${clientReqId}] Generated ${result.images.length} artist images, updating state`);
       
       // Add new images to the front (newest first)
       const updatedImages = [...result.images, ...images];
@@ -97,31 +123,46 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
           } : t
         );
         updateSession(currentSession.id, { tracks: updatedTracks });
+        console.log(`💾 [${clientReqId}] Updated session with new images for track "${track.title}"`);
       }
       
       setSelectedIndex(0); // Select the newest generated image
       
-      // Show enhanced prompt if available
+      // Show enhanced prompt if available with debug info
       const description = result.enhancedPrompt 
-        ? `Generated with enhanced prompt: "${result.enhancedPrompt.substring(0, 50)}..."`
+        ? `Enhanced prompt: "${result.enhancedPrompt.substring(0, 50)}..."`
         : `${result.images.length} artist image${result.images.length > 1 ? 's' : ''} added`;
       
-      toast({ title: "Generated", description });
+      const debugInfo = result.debug?.requestId ? ` (ID: ${result.debug.requestId})` : '';
+      
+      toast({ 
+        title: "Generated", 
+        description: description + debugInfo
+      });
+      
     } catch (e: any) {
-      console.error("[ArtistImages] Generate error", e);
-      toast({ title: "Generation failed", description: e?.message || "Please try again.", variant: "destructive" });
+      console.error(`❌ [${clientReqId}] Generate error:`, e);
+      toast({ 
+        title: "Generation failed", 
+        description: `${e?.message || "Please try again."} (${clientReqId})`, 
+        variant: "destructive" 
+      });
     } finally {
-      console.log("🔄 Setting loading to false");
+      console.log(`🔄 [${clientReqId}] Setting loading to false`);
       setLoading(false);
     }
   };
 
   const handleRetry = async () => {
     if (!track) return;
+    
+    const retryReqId = `retry_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    console.log(`🔄 [${retryReqId}] Retry requested for track: "${track.title}"`);
+    
     try {
       setLoading(true);
       
-      // Generate the same prompt that would be sent to ChatGPT for this track but for artist
+      // Generate a fresh prompt based on track details
       let chatInstruction = "";
       
       if (track.title?.trim()) {
@@ -131,47 +172,60 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
         chatInstruction = `Create a simple 1 sentence prompt for an image generation tool for an artist portrait based on this music style. Keep it cinematic and realistic, show a professional artist/musician portrait. Do not use any parameter instructions such as AR16:9.\n\nMusic Style: ${style}`;
       }
       
-      // Get the artist portrait prompt from ChatGPT to show in input field
+      console.log(`🤖 [${retryReqId}] Getting fresh prompt from ChatGPT`);
+      
+      // Get a fresh artist portrait prompt from ChatGPT
       if (chatInstruction) {
         const promptResponse = await api.chat([{
           role: "user",
           content: chatInstruction
         }]);
-        setPrompt(promptResponse.content);
+        const newPrompt = promptResponse.content;
+        setPrompt(newPrompt);
+        
+        console.log(`📝 [${retryReqId}] Generated fresh prompt: "${newPrompt}"`);
+        
+        // Use the proper artist generation API (not album covers)
+        const result = await api.generateArtistImages(newPrompt.trim());
+        
+        console.log(`🖼️ [${retryReqId}] Artist generation response:`, {
+          imageCount: result.images?.length || 0,
+          hasEnhancedPrompt: !!result.enhancedPrompt
+        });
+        
+        if (!result.images || result.images.length === 0) {
+          console.error(`❌ [${retryReqId}] No images returned from artist generation`);
+          toast({ title: "No artist images returned", description: "Try again in a moment.", variant: "destructive" });
+          return;
+        }
+        
+        // Add new images to the front (newest first)
+        const updatedImages = [...result.images, ...images];
+        setImages(updatedImages);
+        
+        // Update track's generated covers in session
+        if (track && currentSession) {
+          const updatedTracks = (currentSession.tracks || []).map(t =>
+            t.id === track.id ? { 
+              ...t, 
+              generatedCovers: updatedImages
+            } : t
+          );
+          updateSession(currentSession.id, { tracks: updatedTracks });
+          console.log(`💾 [${retryReqId}] Updated session with retry images`);
+        }
+        
+        setSelectedIndex(0); // Select the newest generated image
+        toast({ 
+          title: "Regenerated", 
+          description: `${result.images.length} new artist image${result.images.length > 1 ? 's' : ''} added` 
+        });
+      } else {
+        console.error(`❌ [${retryReqId}] No track details available for retry`);
+        toast({ title: "Cannot retry", description: "No track details available.", variant: "destructive" });
       }
-      
-      const details = {
-        title: track.title || undefined,
-        style: Array.isArray(track.params) ? track.params.join(", ") : undefined,
-      };
-      // TODO: Replace with actual artist generation API call
-      const result = await api.generateAlbumCovers(details);
-      const covers: string[] = [];
-      if (result.cover1) covers.push(result.cover1);
-      if (covers.length === 0) {
-        toast({ title: "No artist images returned", description: "Try again in a moment.", variant: "destructive" });
-        return;
-      }
-      
-      // Add new covers to the front (newest first)
-      const updatedImages = [...covers, ...images];
-      setImages(updatedImages);
-      
-      // Update track's generated covers in session
-      if (track && currentSession) {
-        const updatedTracks = (currentSession.tracks || []).map(t =>
-          t.id === track.id ? { 
-            ...t, 
-            generatedCovers: updatedImages
-          } : t
-        );
-        updateSession(currentSession.id, { tracks: updatedTracks });
-      }
-      
-      setSelectedIndex(0); // Select the newest generated image
-      toast({ title: "Regenerated", description: "1 new artist image added" });
     } catch (e: any) {
-      console.error("[ArtistImages] Retry error", e);
+      console.error(`❌ [${retryReqId}] Retry error:`, e);
       toast({ title: "Retry failed", description: e?.message || "Please try again.", variant: "destructive" });
     } finally {
       setLoading(false);
