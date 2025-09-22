@@ -25,13 +25,17 @@ function getAnalysisInstruction(finalPrompt: string, prefix: string, requestId: 
 }
 
 // Helper function to get generation prompt with object constraints
-function getGenerationPrompt(finalPrompt: string, hasObjectConstraints: boolean, requestId: string): string {
+function getGenerationPrompt(finalPrompt: string, hasObjectConstraints: boolean, requestId: string, backgroundHex?: string): string {
   const preservation = `\nPRESERVE COMPOSITION & BACKGROUND:\n- Keep camera angle, lighting setup, background elements, and overall structure IDENTICAL to the reference image\n- DO NOT change the environment, backdrop, or scene in any way`; 
+  
+  // Add background color instruction if provided
+  const backgroundInstruction = backgroundHex ? `\n- BACKGROUND COLOR: Change background color to ${backgroundHex}` : '';
+  
   if (hasObjectConstraints) {
     console.log(`🚫 [${requestId}] Adding object removal + preservation instructions to generation prompt`);
-    return `GENERATE AN IMAGE: ${finalPrompt}${preservation}\n\nHARD RULES FOR GENERATION:\n- NO OBJECTS/PROPS: Absolutely no lamp posts, microphones, guitars, chairs, stands, instruments, tools, furniture, or any physical objects\n- EMPTY HANDS: Character's hands must be completely empty\n- CLEAN BACKGROUND: If reference contains props, erase them in-painting to seamlessly match the existing background\n- FOCUS: Only the character/person, their pose, expression, and clothing\n\nNEGATIVE PROMPT: different background, new environment, alternate scene, outdoors, landscape, room switch, lamp post, microphone, guitar, chair, stand, instrument, tool, furniture, object, prop, holding, carrying, gripping\n\nIMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
+    return `GENERATE AN IMAGE: ${finalPrompt}${preservation}${backgroundInstruction}\n\nHARD RULES FOR GENERATION:\n- NO OBJECTS/PROPS: Absolutely no lamp posts, microphones, guitars, chairs, stands, instruments, tools, furniture, or any physical objects\n- EMPTY HANDS: Character's hands must be completely empty\n- CLEAN BACKGROUND: If reference contains props, erase them in-painting to seamlessly match the existing background\n- FOCUS: Only the character/person, their pose, expression, and clothing\n\nNEGATIVE PROMPT: different background, new environment, alternate scene, outdoors, landscape, room switch, lamp post, microphone, guitar, chair, stand, instrument, tool, furniture, object, prop, holding, carrying, gripping\n\nIMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
   } else {
-    return `GENERATE AN IMAGE: ${finalPrompt}${preservation}\n\nNEGATIVE PROMPT: different background, new environment, alternate scene, outdoors, landscape, room switch\n\nIMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
+    return `GENERATE AN IMAGE: ${finalPrompt}${preservation}${backgroundInstruction}\n\nNEGATIVE PROMPT: different background, new environment, alternate scene, outdoors, landscape, room switch\n\nIMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
   }
 }
 
@@ -119,10 +123,8 @@ function validateAndRestoreKeywords(sanitized: string, originalKeywords: string[
 function processBackgroundColor(prompt: string, backgroundHex?: string): string {
   let processedPrompt = prompt;
   
-  // If a background hex color is provided, add it to the prompt
-  if (backgroundHex) {
-    processedPrompt = `Change background color to ${backgroundHex}. ${processedPrompt}`;
-  }
+  // Don't prepend background hex to prompt - handle it separately in generation
+  // This prevents corrupting the character description during sanitization
   
   // Remove non-color background elements (preserve color-based backgrounds)
   // Remove patterns like "background forest", "background city", "volcano background" etc
@@ -771,7 +773,7 @@ Deno.serve(async (req: Request) => {
     }
     
     generationParts.push({
-      text: getGenerationPrompt(FINAL_GENERATION_PROMPT, hasObjectConstraints, requestId)
+      text: getGenerationPrompt(FINAL_GENERATION_PROMPT, hasObjectConstraints, requestId, backgroundHex)
     });
 
     console.log(`🎨 [${requestId}] Generating with Gemini...`);
@@ -862,7 +864,7 @@ Deno.serve(async (req: Request) => {
         // Update prompt for this attempt
         const retryPrompt = `${FULL_PREFIX} ${finalCharacter}`;
         generationParts[generationParts.length - 1] = {
-          text: getGenerationPrompt(retryPrompt, hasObjectConstraints, requestId)
+          text: getGenerationPrompt(retryPrompt, hasObjectConstraints, requestId, backgroundHex)
         };
         
         // Generate different seed for each retry attempt
