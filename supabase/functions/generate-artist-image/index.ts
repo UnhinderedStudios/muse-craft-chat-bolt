@@ -351,6 +351,8 @@ Deno.serve(async (req: Request) => {
     CURRENT_CHARACTER = CHARACTER;
     
     // STEP 1: Quick GPT fix (no image analysis)
+    console.log(`📝 [${requestId}] ORIGINAL INPUT: "${CHARACTER}"`);
+    
     if (CURRENT_CHARACTER && openaiKey) {
       console.log(`⚡ [${requestId}] Quick GPT fix: "${CURRENT_CHARACTER}"`);
       
@@ -362,14 +364,30 @@ Deno.serve(async (req: Request) => {
       
       if (sanitizedCharacter !== CURRENT_CHARACTER) {
         CURRENT_CHARACTER = sanitizedCharacter;
-        console.log(`✅ [${requestId}] Fixed: "${CURRENT_CHARACTER}"`);
+        console.log(`✅ [${requestId}] GPT SANITIZED: "${CURRENT_CHARACTER}"`);
       }
     }
 
-    // STEP 2: Send to Gemini - DONE
+    // STEP 2: Final sanitization checkpoint before Gemini
     const hasObjectConstraints = FULL_PREFIX.toLowerCase().includes('no objects');
+    
+    // CRITICAL: Only use sanitized character, never original input
     FINAL_GENERATION_PROMPT = `${FULL_PREFIX} ${CURRENT_CHARACTER}`;
-    console.log(`🎯 [${requestId}] Sending to Gemini: "${FINAL_GENERATION_PROMPT.substring(0, 100)}..."`);
+    
+    // Final safety check - ensure no prohibited content reaches Gemini
+    const prohibitedPatterns = ['penis', 'vagina', 'sex', 'nude', 'naked', 'explicit'];
+    const hasProhibited = prohibitedPatterns.some(pattern => 
+      FINAL_GENERATION_PROMPT.toLowerCase().includes(pattern)
+    );
+    
+    if (hasProhibited) {
+      console.log(`🚨 [${requestId}] BLOCKED: Prohibited content detected in final prompt`);
+      CURRENT_CHARACTER = "Professional music performer with clean, artistic styling";
+      FINAL_GENERATION_PROMPT = `${FULL_PREFIX} ${CURRENT_CHARACTER}`;
+      console.log(`🔒 [${requestId}] SAFETY OVERRIDE: Using safe default character`);
+    }
+    
+    console.log(`🎯 [${requestId}] FINAL TO GEMINI: "${FINAL_GENERATION_PROMPT.substring(0, 100)}..."`);
     
     let generationParts = [];
     if (imageData) {
