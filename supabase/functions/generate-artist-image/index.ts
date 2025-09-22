@@ -647,10 +647,78 @@ Deno.serve(async (req: Request) => {
     
     // Check if this is Imagen-only mode
     if (mode === "imagen_only") {
-      console.log(`🎨 [${requestId}] IMAGEN ONLY MODE - Skipping Gemini, using Imagen 4 directly`);
-      console.log(`🎯 [${requestId}] Imagen 4 prompt: "A music artist or performer: ${CURRENT_CHARACTER}. Professional portrait style, high quality, artistic lighting."`);
+      console.log(`🎨 [${requestId}] IMAGEN ONLY MODE - Using Gemini for image analysis, then Imagen 4 for generation`);
+      
+      let enhancedPrompt = CURRENT_CHARACTER;
+      
+      // If there's a reference image, use Gemini to analyze it first
+      if (imageData) {
+        console.log(`🔍 [${requestId}] Using Gemini to analyze reference image for Imagen 4`);
+        
+        let analysisParts = [];
+        const [mimeTypePart, base64Data] = imageData.split(",");
+        const mimeType = mimeTypePart.replace("data:", "").replace(";base64", "");
+        analysisParts.push({
+          inline_data: {
+            mime_type: mimeType,
+            data: base64Data
+          }
+        });
+        
+        analysisParts.push({
+          text: getGenerationPrompt(FINAL_GENERATION_PROMPT, hasObjectConstraints, requestId)
+        });
+
+        try {
+          const analysisRes = await withTimeout(
+            fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/${generationModel}:generateContent`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "x-goog-api-key": geminiKey,
+                },
+                body: JSON.stringify({
+                  contents: [{
+                    parts: analysisParts
+                  }],
+                  generationConfig: {
+                    temperature: 0.85,
+                    topK: 40,
+                    topP: 0.95,
+                    maxOutputTokens: 8192,
+                    seed: Math.floor(Math.random() * 1000000)
+                  }
+                })
+              }
+            ),
+            20000,
+            "Gemini analysis for Imagen 4"
+          );
+
+          const analysisJson = await analysisRes.json().catch(() => ({}));
+          
+          if (analysisRes.ok) {
+            const candidate = analysisJson?.candidates?.[0];
+            if (candidate) {
+              const textParts = candidate?.content?.parts?.filter((part: any) => part.text) || [];
+              if (textParts.length > 0) {
+                enhancedPrompt = textParts[0].text;
+                console.log(`✅ [${requestId}] Gemini analysis complete, enhanced prompt generated`);
+              }
+            }
+          } else {
+            console.log(`⚠️ [${requestId}] Gemini analysis failed, using original prompt for Imagen 4`);
+          }
+        } catch (analysisError: any) {
+          console.log(`⚠️ [${requestId}] Gemini analysis error: ${analysisError.message}, using original prompt`);
+        }
+      }
+      
+      console.log(`🎯 [${requestId}] Imagen 4 prompt: "A music artist or performer: ${enhancedPrompt}. Professional portrait style, high quality, artistic lighting."`);
       try {
-        images = await generateWithImagen4(CURRENT_CHARACTER, geminiKey!, requestId);
+        images = await generateWithImagen4(enhancedPrompt, requestId);
         console.log(`✅ [${requestId}] Imagen 4 success in imagen_only mode: ${images.length} images`);
       } catch (imagen4Error: any) {
         console.error(`❌ [${requestId}] Imagen 4 failed in imagen_only mode: ${imagen4Error.message}`);
