@@ -183,7 +183,7 @@ OUTPUT: Respectful performer description preserving ALL user intent and visual d
   }
 }
 
-// Smart GPT failure analysis and fix
+// PRESERVATION-FIRST GPT failure analysis and fix - maintains all visual details
 async function analyzeAndFixFailure(
   failureReason: string,
   originalCharacter: string,
@@ -195,20 +195,38 @@ async function analyzeAndFixFailure(
     return originalCharacter;
   }
 
-  const systemPrompt = `Analyze Gemini generation failure and fix the character description. 
-Failure: "${failureReason}"
-Original: "${originalCharacter}"
+  const systemPrompt = `PRESERVE ALL USER DETAILS. Rewrite safely and respectfully without removing or generalizing details.
 
-Fix by:
-1. Removing problematic elements (objects, inappropriate content)
-2. Making description more generic/safe
-3. Focusing on basic visual traits
-4. Ensuring music artist theme
+PRESERVE EVERYTHING:
+- Age & ethnicity: Use respectful terms (Black, Asian, Latino, White, etc.) - NEVER remove
+- Physical traits: scars, missing eyes, unique hair, body type, height, build  
+- Creative themes: food themes → clothing/costume patterns (bacon theme → bacon-patterned outfit)
+- Style descriptors: punk, goth, cyberpunk, vintage, futuristic themes
+- Colors, textures, accessories as clothing elements
+- Unique characteristics that make the person distinctive
 
-Return ONLY the fixed character description, ~100-150 chars max.`;
+ONLY REMOVE:
+- Objects in hands → convert to "performer style" phrasing
+- Explicit nudity/sexual content → "artistic performer style"
+- Violence → "dramatic artistic pose"
+- Copyrighted characters → "inspired performer style"
+
+TRANSFORMATION EXAMPLES:
+- "black dude" → "Black male performer"
+- "bacon themed costume" → "performer in bacon-patterned costume design"
+- "scar on face" → "performer with facial scar"
+- "one eye missing" → "performer with distinctive one-eyed look"
+- "pointy spiky hair" → "performer with spiky pointed hairstyle"
+- "Asian woman with purple hair" → "Asian female performer with vibrant purple hair"
+- "holding microphone" → "vocalist performer style"
+- "cyberpunk outfit" → "performer in cyberpunk-styled costume"
+
+CRITICAL: If you remove a word, replace with a synonym that preserves meaning. Do NOT shorten by dropping details.
+
+Return ONLY the rewritten description (100-150 chars). Preserve ALL visual details from original.`;
 
   try {
-    console.log(`🔍 [${requestId}] Analyzing failure: "${failureReason}"`);
+    console.log(`🔍 [${requestId}] Preservation-first analysis: "${originalCharacter}"`);
     
     const response = await Promise.race([
       fetch('https://api.openai.com/v1/chat/completions', {
@@ -221,9 +239,9 @@ Return ONLY the fixed character description, ~100-150 chars max.`;
           model: 'gpt-4o-mini',
           messages: [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: `Fix this character description based on the failure.` }
+            { role: 'user', content: `Rewrite this preserving ALL visual details: "${originalCharacter}"` }
           ],
-          max_tokens: 60,
+          max_tokens: 80,
           temperature: 0.2
         }),
       }),
@@ -241,14 +259,49 @@ Return ONLY the fixed character description, ~100-150 chars max.`;
     const fixed = data.choices?.[0]?.message?.content?.trim();
     
     if (fixed) {
-      console.log(`✅ [${requestId}] Fixed character: "${fixed}"`);
-      return fixed;
+      // Re-inject any lost keywords from original
+      const keywordsToPreserve = extractKeywords(originalCharacter);
+      const fixedValidated = validateAndRestoreKeywords(fixed, keywordsToPreserve, requestId);
+      console.log(`✅ [${requestId}] Preservation-first fixed: "${fixedValidated}"`);
+      return fixedValidated;
     }
     return originalCharacter;
   } catch (error) {
     console.error(`❌ [${requestId}] Failure analysis error:`, error);
     return originalCharacter;
   }
+}
+
+// Validate that all critical detail categories are present before sending to Gemini
+function validateCriticalCategories(description: string, originalKeywords: string[], requestId: string): string {
+  let validated = description;
+  
+  // Check for required categories that should be preserved
+  const ethnicityKeywords = originalKeywords.filter(k => k.match(/\b(black|white|asian|latino|latina|hispanic|african|european|indian|middle eastern|arab|native|indigenous)\b/i));
+  const physicalKeywords = originalKeywords.filter(k => k.match(/\b(scar|scars|tattoo|piercing|eye patch|missing eye|bald|beard|mustache)\b/i));
+  const themeKeywords = originalKeywords.filter(k => k.match(/\b(\w+[-]?themed?|\w+punk|goth|vintage|retro|futuristic|cyberpunk|steampunk)\b/i));
+  const colorKeywords = originalKeywords.filter(k => k.match(/\b(red|blue|green|yellow|purple|pink|orange|black|white|gray|grey|silver|gold|blonde|brunette|brown)\b/i));
+  
+  // Re-inject missing critical categories
+  const missingEthnicity = ethnicityKeywords.filter(k => !validated.toLowerCase().includes(k.toLowerCase()));
+  const missingPhysical = physicalKeywords.filter(k => !validated.toLowerCase().includes(k.toLowerCase()));
+  const missingTheme = themeKeywords.filter(k => !validated.toLowerCase().includes(k.toLowerCase()));
+  const missingColors = colorKeywords.filter(k => !validated.toLowerCase().includes(k.toLowerCase()));
+  
+  if (missingEthnicity.length > 0) {
+    validated = `${missingEthnicity[0]} ${validated}`.trim();
+    console.log(`🔧 [${requestId}] Re-injected ethnicity: ${missingEthnicity[0]}`);
+  }
+  
+  if (missingPhysical.length > 0 || missingTheme.length > 0 || missingColors.length > 0) {
+    const traits = [...missingPhysical, ...missingTheme, ...missingColors.slice(0, 2)].slice(0, 3);
+    if (traits.length > 0) {
+      validated = `${validated} with ${traits.join(' and ')}`.trim();
+      console.log(`🔧 [${requestId}] Re-injected traits: ${traits.join(', ')}`);
+    }
+  }
+  
+  return validated;
 }
 
 const CORS = {
@@ -591,27 +644,50 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Only retry if failed AND we have OpenAI for fixing
+    // Multi-attempt retry loop with preservation-first approach (3 attempts total)
     if (images.length === 0 && openaiKey) {
-      console.log(`🔄 [${requestId}] Failed, trying GPT fix + retry...`);
-      
       const failureReason = generationJson?.error?.message || "No images returned";
-      const fixedCharacter = await analyzeAndFixFailure(
-        failureReason,
-        CURRENT_CHARACTER,
-        openaiKey,
-        requestId
-      );
+      const originalKeywords = extractKeywords(CURRENT_CHARACTER);
+      const retryAttempts = [];
       
-      if (fixedCharacter !== CURRENT_CHARACTER) {
-        console.log(`🎯 [${requestId}] Retrying with: "${fixedCharacter}"`);
+      console.log(`🔄 [${requestId}] Starting multi-attempt retry (max 3 attempts)...`);
+      
+      for (let attempt = 1; attempt <= 3 && images.length === 0; attempt++) {
+        console.log(`🎯 [${requestId}] Retry attempt ${attempt}/3`);
         
-        // Update prompt and retry once
-        const retryPrompt = `${FULL_PREFIX} ${fixedCharacter}`;
+        // Get preservation-first fix
+        const fixedCharacter = await analyzeAndFixFailure(
+          failureReason,
+          CURRENT_CHARACTER,
+          openaiKey,
+          requestId
+        );
+        
+        // Validate and restore critical categories
+        const validatedCharacter = validateCriticalCategories(fixedCharacter, originalKeywords, requestId);
+        
+        // Final keyword restoration check
+        const finalCharacter = validateAndRestoreKeywords(validatedCharacter, originalKeywords, requestId);
+        
+        console.log(`🎭 [${requestId}] Attempt ${attempt} character: "${finalCharacter}"`);
+        
+        // Track this attempt
+        retryAttempts.push({
+          attempt,
+          textSentToGemini: finalCharacter,
+          lostKeywords: originalKeywords.filter(k => !finalCharacter.toLowerCase().includes(k.toLowerCase())),
+          restoredKeywords: originalKeywords.filter(k => finalCharacter.toLowerCase().includes(k.toLowerCase()) && !fixedCharacter.toLowerCase().includes(k.toLowerCase()))
+        });
+        
+        // Update prompt for this attempt
+        const retryPrompt = `${FULL_PREFIX} ${finalCharacter}`;
         generationParts[generationParts.length - 1] = {
           text: getGenerationPrompt(retryPrompt, hasObjectConstraints, requestId)
         };
         
+        console.log(`🚀 [${requestId}] Sending attempt ${attempt} to Gemini: "${retryPrompt.substring(0, 100)}..."`);
+        
+        // Send to Gemini
         const retryRes = await withTimeout(
           fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/${generationModel}:generateContent`,
@@ -635,7 +711,7 @@ Deno.serve(async (req: Request) => {
             }
           ),
           20000,
-          "Gemini retry"
+          `Gemini retry attempt ${attempt}`
         );
 
         const retryJson = await retryRes.json().catch(() => ({}));
@@ -654,9 +730,29 @@ Deno.serve(async (req: Request) => {
               })
               .filter(Boolean);
             
-            console.log(`✅ [${requestId}] Retry generated ${images.length} images`);
+            console.log(`✅ [${requestId}] Attempt ${attempt} generated ${images.length} images`);
+            
+            if (images.length > 0) {
+              console.log(`🎉 [${requestId}] SUCCESS on attempt ${attempt}!`);
+              break;
+            }
           }
+        } else {
+          console.log(`❌ [${requestId}] Attempt ${attempt} failed: ${retryJson?.error?.message || 'Unknown error'}`);
         }
+      }
+      
+      // If all attempts failed, log detailed debug info
+      if (images.length === 0) {
+        console.error(`❌ [${requestId}] All 3 retry attempts failed`);
+        console.error(`🔍 [${requestId}] Debug info:`);
+        console.error(`  📝 Original: "${CURRENT_CHARACTER}"`);
+        console.error(`  🎯 Original keywords: [${originalKeywords.join(', ')}]`);
+        retryAttempts.forEach((attempt, i) => {
+          console.error(`  🔄 Attempt ${i + 1}: "${attempt.textSentToGemini}"`);
+          console.error(`    Lost: [${attempt.lostKeywords.join(', ')}]`);
+          console.error(`    Restored: [${attempt.restoredKeywords.join(', ')}]`);
+        });
       }
     }
 
