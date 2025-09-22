@@ -47,19 +47,3 @@
   }
 }
 
-/* Minimal ChromePicker overrides - hide labels, inputs and controls */
-.rcp-minimal .chrome-picker .controls,
-.rcp-minimal .chrome-picker .fields,
-.rcp-minimal .chrome-picker .color,
-.rcp-minimal .chrome-picker .active-color,
-.rcp-minimal .chrome-picker .toggles,
-.rcp-minimal .chrome-picker label,
-.rcp-minimal .chrome-picker input {
-  display: none !important;
-}
-
-.rcp-minimal .chrome-picker {
-  background: hsl(var(--background) / 0.8) !important;
-  box-shadow: none !important;
-  overflow: hidden;
-}

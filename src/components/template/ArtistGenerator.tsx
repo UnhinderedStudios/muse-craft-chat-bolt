@@ -9,7 +9,7 @@ import { TrackItem } from "@/types";
 import { ChevronUp, ChevronDown, X, User, Wand2, Repeat, ArrowRight, Download, Palette, RotateCcw } from "lucide-react";
 import { useSessionManager } from "@/hooks/use-session-manager";
 import { AnimatedPromptInput } from "@/components/ui/animated-prompt-input";
-import { ChromePicker } from 'react-color';
+import { HexColorPicker } from "react-colorful";
 
 interface ArtistGeneratorProps {
   isOpen: boolean;
@@ -397,31 +397,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   <div className="space-y-2">
                     <label className="text-white/80 text-sm font-medium">Background Color</label>
                     
-                    <div className="rcp-minimal flex flex-col items-center">
-                      <ChromePicker
+                    <div className="flex flex-col items-center">
+                      <HexColorPicker
                         color={selectedColor || "#ffffff"}
-                        onChange={(color) => setSelectedColor(color.hex)}
-                        disableAlpha
-                        styles={{
-                          default: {
-                            picker: {
-                              backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                              border: '1px solid rgba(255, 255, 255, 0.1)',
-                              borderRadius: '8px',
-                              width: '150px',
-                            },
-                            // Hide everything below the wheel/slider
-                            activeColor: { display: 'none' },
-                            color: { display: 'none' },
-                            controls: { display: 'none' },
-                            toggles: { display: 'none' },
-                            fields: {
-                              wrap: { display: 'none' },
-                              input: { display: 'none' },
-                              label: { display: 'none' },
-                            },
-                          }
-                        }}
+                        onChange={setSelectedColor}
+                        className="w-40"
                       />
                       <div className="mt-2 text-center text-xs text-white/80 select-all">
                         {selectedColor || "#ffffff"}
