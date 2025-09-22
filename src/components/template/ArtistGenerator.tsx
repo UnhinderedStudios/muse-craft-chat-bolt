@@ -33,7 +33,6 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   // Color wheel state
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [isColorApplied, setIsColorApplied] = useState(false);
-  const [showColorPicker, setShowColorPicker] = useState(false);
 
   const VISIBLE_COUNT = 5;
 
@@ -230,14 +229,12 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
   const handleColorApply = () => {
     setIsColorApplied(true);
-    setShowColorPicker(false);
     toast({ title: "Color applied", description: `Background color set to ${selectedColor}` });
   };
 
   const handleColorReset = () => {
     setSelectedColor("");
     setIsColorApplied(false);
-    setShowColorPicker(false);
     toast({ title: "Color reset", description: "Background color reset to default" });
   };
 
@@ -397,71 +394,57 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   </div>
 
                   {/* Color Wheel Section */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-white/80 text-sm font-medium">Background Color</label>
+                  <div className="space-y-3">
+                    <label className="text-white/80 text-sm font-medium">Background Color</label>
+                    
+                    <div className="flex justify-center">
+                      <ChromePicker
+                        color={selectedColor || "#ffffff"}
+                        onChange={(color) => setSelectedColor(color.hex)}
+                        disableAlpha
+                        styles={{
+                          default: {
+                            picker: {
+                              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              borderRadius: '8px',
+                              width: '150px',
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                    
+                    <div className="flex gap-2 justify-center">
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        onClick={() => setShowColorPicker(!showColorPicker)}
-                        className="text-white/60 hover:text-white p-1 h-auto"
+                        onClick={handleColorApply}
+                        disabled={!selectedColor}
+                        className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs px-3 py-1"
                       >
-                        <Palette className="w-4 h-4" />
+                        Apply
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleColorReset}
+                        className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs px-3 py-1"
+                      >
+                        <RotateCcw className="w-3 h-3 mr-1" />
+                        Reset
                       </Button>
                     </div>
                     
-                    {showColorPicker && (
-                      <div className="space-y-3">
-                        <div className="flex justify-center">
-                          <ChromePicker
-                            color={selectedColor || "#ffffff"}
-                            onChange={(color) => setSelectedColor(color.hex)}
-                            disableAlpha
-                            styles={{
-                              default: {
-                                picker: {
-                                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                                  borderRadius: '8px',
-                                  width: '200px',
-                                }
-                              }
-                            }}
+                    {isColorApplied && selectedColor && (
+                      <div className="text-center">
+                        <div className="inline-flex items-center gap-2 bg-white/10 text-white/80 text-xs px-2 py-1 rounded">
+                          <div 
+                            className="w-3 h-3 rounded-full border border-white/20" 
+                            style={{ backgroundColor: selectedColor }}
                           />
+                          Color Applied: {selectedColor}
                         </div>
-                        
-                        <div className="flex gap-2 justify-center">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleColorApply}
-                            disabled={!selectedColor}
-                            className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs px-3 py-1"
-                          >
-                            Apply
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleColorReset}
-                            className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs px-3 py-1"
-                          >
-                            <RotateCcw className="w-3 h-3 mr-1" />
-                            Reset
-                          </Button>
-                        </div>
-                        
-                        {isColorApplied && selectedColor && (
-                          <div className="text-center">
-                            <div className="inline-flex items-center gap-2 bg-white/10 text-white/80 text-xs px-2 py-1 rounded">
-                              <div 
-                                className="w-3 h-3 rounded-full border border-white/20" 
-                                style={{ backgroundColor: selectedColor }}
-                              />
-                              Color Applied: {selectedColor}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     )}
                   </div>
