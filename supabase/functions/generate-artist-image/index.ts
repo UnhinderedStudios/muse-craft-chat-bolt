@@ -26,23 +26,12 @@ function getAnalysisInstruction(finalPrompt: string, prefix: string, requestId: 
 
 // Helper function to get generation prompt with object constraints
 function getGenerationPrompt(finalPrompt: string, hasObjectConstraints: boolean, requestId: string): string {
+  const preservation = `\nPRESERVE COMPOSITION & BACKGROUND:\n- Keep camera angle, lighting setup, background elements, and overall structure IDENTICAL to the reference image\n- DO NOT change the environment, backdrop, or scene in any way`; 
   if (hasObjectConstraints) {
-    console.log(`🚫 [${requestId}] Adding object removal instructions to generation prompt`);
-    return `GENERATE AN IMAGE: ${finalPrompt}
-
-HARD RULES FOR GENERATION:
-- NO OBJECTS/PROPS: Absolutely no lamp posts, microphones, guitars, chairs, stands, instruments, tools, furniture, or any physical objects
-- EMPTY HANDS: Character's hands must be completely empty
-- CLEAN BACKGROUND: If reference contains props, erase them and fill with clean, neutral background
-- FOCUS: Only the character/person, their pose, expression, and clothing
-
-NEGATIVE PROMPT: lamp post, microphone, guitar, chair, stand, instrument, tool, furniture, object, prop, holding, carrying, gripping
-
-IMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
+    console.log(`🚫 [${requestId}] Adding object removal + preservation instructions to generation prompt`);
+    return `GENERATE AN IMAGE: ${finalPrompt}${preservation}\n\nHARD RULES FOR GENERATION:\n- NO OBJECTS/PROPS: Absolutely no lamp posts, microphones, guitars, chairs, stands, instruments, tools, furniture, or any physical objects\n- EMPTY HANDS: Character's hands must be completely empty\n- CLEAN BACKGROUND: If reference contains props, erase them in-painting to seamlessly match the existing background\n- FOCUS: Only the character/person, their pose, expression, and clothing\n\nNEGATIVE PROMPT: different background, new environment, alternate scene, outdoors, landscape, room switch, lamp post, microphone, guitar, chair, stand, instrument, tool, furniture, object, prop, holding, carrying, gripping\n\nIMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
   } else {
-    return `GENERATE AN IMAGE: ${finalPrompt}
-
-IMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
+    return `GENERATE AN IMAGE: ${finalPrompt}${preservation}\n\nNEGATIVE PROMPT: different background, new environment, alternate scene, outdoors, landscape, room switch\n\nIMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
   }
 }
 
@@ -589,22 +578,7 @@ Deno.serve(async (req: Request) => {
       // Update generation parts with current prompt
       let currentGenerationParts = [];
       
-      // For attempt 2 with object constraints, skip reference image to avoid prop conflicts
-      const useReferenceImage = imageData && !(hasObjectConstraints && generationAttempts === 2);
-      if (useReferenceImage) {
-        const [mimeTypePart, base64Data] = imageData.split(",");
-        const mimeType = mimeTypePart.replace("data:", "").replace(";base64", "");
-        
-        currentGenerationParts.push({
-          inline_data: {
-            mime_type: mimeType,
-            data: base64Data
-          }
-        });
-        console.log(`🖼️ [${requestId}] Using reference image for generation attempt ${generationAttempts}`);
-      } else if (hasObjectConstraints && generationAttempts === 2) {
-        console.log(`🚫 [${requestId}] Skipping reference image for attempt ${generationAttempts} due to object constraints`);
-      }
+      // Always use the reference image on every attempt to preserve background\n      const useReferenceImage = !!imageData;\n      if (useReferenceImage) {\n        const [mimeTypePart, base64Data] = imageData.split(",");\n        const mimeType = mimeTypePart.replace("data:", "").replace(";base64", "");\n        currentGenerationParts.push({\n          inline_data: {\n            mime_type: mimeType,\n            data: base64Data\n          }\n        });\n        console.log(`🖼️ [${requestId}] Using reference image for generation attempt ${generationAttempts}`);\n      }
       
       currentGenerationParts.push({
         text: getGenerationPrompt(currentPrompt, hasObjectConstraints, requestId)
