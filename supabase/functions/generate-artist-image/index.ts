@@ -35,7 +35,7 @@ function getGenerationPrompt(finalPrompt: string, hasObjectConstraints: boolean,
   }
 }
 
-// Quick GPT sanitization for initial character cleanup
+// Strengthened GPT sanitization with aggressive safety rules
 async function quickSanitizeCharacter(
   characterDescription: string, 
   openaiKey: string, 
@@ -46,21 +46,24 @@ async function quickSanitizeCharacter(
     return characterDescription;
   }
 
-  const systemPrompt = `Clean music artist description. Fix inappropriate content while preserving gender and theme.
+  const systemPrompt = `AGGRESSIVE SANITIZATION for music artist portrait. Transform ANY potentially problematic content into safe performer descriptions.
 
-RULES:
-1. Keep gender (male/female/their)
-2. Convert items to clothing themes  
-3. Remove objects from hands
-4. Make performer-focused
-5. Keep it visual and safe
+CRITICAL RULES:
+1. Remove ALL objects/props - convert to clothing/style themes
+2. Make descriptions generic and performer-focused
+3. Convert ANY food/objects to abstract styling
+4. Remove specific names, brands, explicit content
+5. Focus on basic visual traits: gender, clothing style, pose attitude
+6. Use safe, commercial-friendly language only
 
-Examples:
-- "holding cheese" → "cheese-themed outfit"
-- "with pizza" → "pizza-pattern shirt" 
-- crude → "confident attitude"
+TRANSFORMATION EXAMPLES:
+- "holding guitar" → "rock musician style"
+- "with microphone" → "vocal performer look"
+- "eating pizza" → "casual street style outfit"
+- "Taylor Swift style" → "pop singer aesthetic"
+- Any inappropriate content → "professional performer style"
 
-Max 100 chars. Safe visual description only.`;
+OUTPUT: Clean, safe, generic music performer description. MAX 80 chars.`;
 
   try {
     console.log(`⚡ [${requestId}] Quick sanitizing: "${characterDescription}"`);
@@ -350,11 +353,12 @@ Deno.serve(async (req: Request) => {
     // Initialize CURRENT_CHARACTER from extracted CHARACTER
     CURRENT_CHARACTER = CHARACTER;
     
-    // STEP 1: Quick GPT fix (no image analysis)
+    // STEP 1: Multi-stage sanitization process
     console.log(`📝 [${requestId}] ORIGINAL INPUT: "${CHARACTER}"`);
     
+    // Stage 1: Quick GPT sanitization
     if (CURRENT_CHARACTER && openaiKey) {
-      console.log(`⚡ [${requestId}] Quick GPT fix: "${CURRENT_CHARACTER}"`);
+      console.log(`⚡ [${requestId}] Stage 1 - Quick GPT sanitization: "${CURRENT_CHARACTER}"`);
       
       const sanitizedCharacter = await quickSanitizeCharacter(
         CURRENT_CHARACTER,
@@ -364,28 +368,86 @@ Deno.serve(async (req: Request) => {
       
       if (sanitizedCharacter !== CURRENT_CHARACTER) {
         CURRENT_CHARACTER = sanitizedCharacter;
-        console.log(`✅ [${requestId}] GPT SANITIZED: "${CURRENT_CHARACTER}"`);
+        console.log(`✅ [${requestId}] Stage 1 COMPLETE: "${CURRENT_CHARACTER}"`);
+      } else {
+        console.log(`ℹ️ [${requestId}] Stage 1 - No changes needed`);
       }
     }
 
-    // STEP 2: Final sanitization checkpoint before Gemini
-    const hasObjectConstraints = FULL_PREFIX.toLowerCase().includes('no objects');
+    // Stage 2: Aggressive pattern removal
+    console.log(`🔧 [${requestId}] Stage 2 - Pattern removal on: "${CURRENT_CHARACTER}"`);
+    let stageTwo = CURRENT_CHARACTER;
     
-    // CRITICAL: Only use sanitized character, never original input
-    FINAL_GENERATION_PROMPT = `${FULL_PREFIX} ${CURRENT_CHARACTER}`;
+    // Remove object references
+    const objectPatterns = [
+      /\b(holding|with|carrying|playing|using)\s+\w+/gi,
+      /\b(guitar|microphone|mic|instrument|piano|drums|bass)\b/gi,
+      /\b(chair|stool|stage|platform|booth|studio)\b/gi,
+      /\b(food|pizza|burger|beer|drink|cigarette)\b/gi
+    ];
     
-    // Final safety check - ensure no prohibited content reaches Gemini
-    const prohibitedPatterns = ['penis', 'vagina', 'sex', 'nude', 'naked', 'explicit'];
+    objectPatterns.forEach((pattern, idx) => {
+      const before = stageTwo;
+      stageTwo = stageTwo.replace(pattern, '');
+      if (before !== stageTwo) {
+        console.log(`🗑️ [${requestId}] Pattern ${idx + 1} removed objects`);
+      }
+    });
+    
+    // Stage 3: Artist name removal with improved detection
+    const artistPatterns = [
+      /\b(taylor swift|ed sheeran|adele|drake|beyonce|kanye|rihanna|ariana|justin bieber)\b/gi,
+      /\b(like|style of|similar to|inspired by|as)\s+[A-Z][a-z]+(\s+[A-Z][a-z]+)*/gi,
+      /\b[A-Z][a-z]+\s+style\b/gi
+    ];
+    
+    artistPatterns.forEach((pattern, idx) => {
+      const before = stageTwo;
+      stageTwo = stageTwo.replace(pattern, '');
+      if (before !== stageTwo) {
+        console.log(`🎭 [${requestId}] Artist pattern ${idx + 1} removed`);
+      }
+    });
+
+    // Stage 4: Clean up and normalize
+    stageTwo = stageTwo
+      .replace(/\s{2,}/g, ' ')
+      .replace(/[,\s]+$/g, '')
+      .replace(/^[,\s]+/g, '')
+      .trim();
+      
+    if (stageTwo !== CURRENT_CHARACTER) {
+      CURRENT_CHARACTER = stageTwo;
+      console.log(`✅ [${requestId}] Stage 2-4 COMPLETE: "${CURRENT_CHARACTER}"`);
+    }
+
+    // Stage 5: Final safety checkpoint
+    const prohibitedPatterns = [
+      'penis', 'vagina', 'sex', 'nude', 'naked', 'explicit', 'nsfw',
+      'kill', 'death', 'blood', 'violence', 'weapon', 'gun', 'knife'
+    ];
+    
     const hasProhibited = prohibitedPatterns.some(pattern => 
-      FINAL_GENERATION_PROMPT.toLowerCase().includes(pattern)
+      CURRENT_CHARACTER.toLowerCase().includes(pattern)
     );
     
     if (hasProhibited) {
-      console.log(`🚨 [${requestId}] BLOCKED: Prohibited content detected in final prompt`);
-      CURRENT_CHARACTER = "Professional music performer with clean, artistic styling";
-      FINAL_GENERATION_PROMPT = `${FULL_PREFIX} ${CURRENT_CHARACTER}`;
-      console.log(`🔒 [${requestId}] SAFETY OVERRIDE: Using safe default character`);
+      console.log(`🚨 [${requestId}] BLOCKED: Prohibited content in final check`);
+      CURRENT_CHARACTER = "Professional music performer with clean artistic styling";
+      console.log(`🔒 [${requestId}] SAFETY OVERRIDE applied`);
     }
+    
+    // If character becomes too short, use fallback
+    if (CURRENT_CHARACTER.length < 5) {
+      CURRENT_CHARACTER = "Professional musician portrait with studio lighting";
+      console.log(`📏 [${requestId}] SHORT DESCRIPTION FALLBACK applied`);
+    }
+
+    const hasObjectConstraints = FULL_PREFIX.toLowerCase().includes('no objects');
+    FINAL_GENERATION_PROMPT = `${FULL_PREFIX} ${CURRENT_CHARACTER}`;
+    
+    console.log(`🎯 [${requestId}] SANITIZATION COMPLETE - Stages passed, sending to Gemini`);
+    console.log(`📋 [${requestId}] FINAL SANITIZED CHARACTER: "${CURRENT_CHARACTER}"`)
     
     console.log(`🎯 [${requestId}] FINAL TO GEMINI: "${FINAL_GENERATION_PROMPT.substring(0, 100)}..."`);
     

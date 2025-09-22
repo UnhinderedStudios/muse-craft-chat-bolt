@@ -77,11 +77,12 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       setLoading(true);
       setOriginalPrompt(prompt);
       
-      // Start visual animation immediately with a fake sanitized prompt
-      setSanitizedPrompt("Professional music artist portrait, safe and clean visual description");
+      // Start visual animation immediately - will persist until first image arrives
+      const mockSanitized = "Professional music artist portrait, clean visual styling, performer aesthetic";
+      setSanitizedPrompt(mockSanitized);
       setIsAnimating(true);
       
-      console.log(`🎨 [${clientReqId}] Starting artist generation with fixed reference image`);
+      console.log(`🎨 [${clientReqId}] Animation started, processing artist generation...`);
       
       const cleanPrompt = prompt.trim();
       
@@ -99,15 +100,24 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       
       if (!result.images || result.images.length === 0) {
         console.error(`❌ [${clientReqId}] No images returned from API`);
+        
+        // Stop animation on error
+        setIsAnimating(false);
+        setSanitizedPrompt("");
+        
         toast({ 
           title: "No images returned", 
-          description: "Try a different prompt or check the logs for details.", 
+          description: "The prompt may have been filtered. Try a simpler description.", 
           variant: "destructive" 
         });
         return;
       }
       
       console.log(`✅ [${clientReqId}] Generated ${result.images.length} artist images, updating state`);
+      
+      // Stop animation when first image arrives
+      setIsAnimating(false);
+      setSanitizedPrompt("");
       
       // Add new images to the front (newest first)
       const updatedImages = [...result.images, ...images];
@@ -141,9 +151,14 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       
     } catch (e: any) {
       console.error(`❌ [${clientReqId}] Generate error:`, e);
+      
+      // Stop animation on error
+      setIsAnimating(false);
+      setSanitizedPrompt("");
+      
       toast({ 
         title: "Generation failed", 
-        description: `${e?.message || "Please try again."} (${clientReqId})`, 
+        description: `${e?.message || "Try a simpler prompt."} (${clientReqId})`, 
         variant: "destructive" 
       });
     } finally {
