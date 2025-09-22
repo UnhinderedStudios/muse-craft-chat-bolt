@@ -85,22 +85,29 @@ Return ONLY the sanitized character description that will work with the prefix c
     console.log(`🔄 [${requestId}] Sanitizing character description with ChatGPT (attempt ${attempt}, ${conservativeness} safer)`);
     console.log(`📝 [${requestId}] Character to sanitize: "${characterDescription}"`);
     
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: characterDescription }
-        ],
-        max_tokens: 100,
-        temperature: 0.3
-      }),
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error(`ChatGPT sanitization timeout after 20s`)), 20000);
     });
+    
+    const response = await Promise.race([
+      fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: characterDescription }
+          ],
+          max_tokens: 100,
+          temperature: 0.3
+        }),
+      }),
+      timeoutPromise
+    ]);
 
     if (!response.ok) {
       console.error(`❌ [${requestId}] ChatGPT API failed:`, await response.text());
@@ -131,17 +138,41 @@ const CORS = {
 };
 
 Deno.serve(async (req: Request) => {
-  // Generate unique request ID for tracking
-  const requestId = generateRequestId();
+  // Generate unique request ID for tracking outside try-catch for global access
+  let requestId: string;
+  let FINAL_GENERATION_PROMPT: string | undefined;
+  let CURRENT_CHARACTER: string | undefined;
   
-  // Handle CORS preflight
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: CORS });
-  }
-
   try {
-    console.log(`🆔 [${requestId}] Artist Generator request started`);
+    requestId = generateRequestId();
+    console.log(`🆔 [${requestId}] Artist Generator request started - Function entry`);
     
+    // Handle CORS preflight
+    if (req.method === "OPTIONS") {
+      console.log(`✅ [${requestId}] CORS preflight handled`);
+      return new Response(null, { headers: CORS });
+    }
+
+    // Early validation
+    if (!req) {
+      console.error(`❌ [${requestId}] No request object received`);
+      return new Response(
+        JSON.stringify({ error: "Invalid request", requestId }),
+        { status: 400, headers: CORS }
+      );
+    }
+
+    console.log(`✅ [${requestId}] Initial request validation passed`);
+    
+    // Timeout wrapper for critical operations
+    const withTimeout = async <T>(promise: Promise<T>, timeoutMs: number, operation: string): Promise<T> => {
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error(`${operation} timeout after ${timeoutMs}ms`)), timeoutMs);
+      });
+      return Promise.race([promise, timeoutPromise]);
+    };
+
+    console.log(`🔍 [${requestId}] Validating environment variables`);
     const geminiKey = Deno.env.get("GEMINI_API_KEY");
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
     
@@ -152,6 +183,8 @@ Deno.serve(async (req: Request) => {
         { status: 500, headers: CORS }
       );
     }
+    
+    console.log(`✅ [${requestId}] Environment validation passed, keys available: GEMINI=${!!geminiKey}, OPENAI=${!!openaiKey}`);
 
     const contentType = req.headers.get("content-type") || "";
     let prompt = "";
@@ -163,7 +196,7 @@ Deno.serve(async (req: Request) => {
     if (contentType.includes("multipart/form-data")) {
       console.log(`📤 [${requestId}] Processing multipart form data`);
       try {
-        const formData = await req.formData();
+        const formData = await withTimeout(req.formData(), 10000, "FormData parsing");
         prompt = (formData.get("prompt") as string) || "";
         const imageFile = formData.get("image") as File;
         
@@ -172,11 +205,21 @@ Deno.serve(async (req: Request) => {
         if (imageFile) {
           console.log(`🖼️ [${requestId}] Image file - name: ${imageFile.name}, size: ${imageFile.size}, type: ${imageFile.type}`);
           
-          // Check file size (limit to 10MB)
-          if (imageFile.size > 10 * 1024 * 1024) {
-            console.error(`❌ [${requestId}] File too large: ${imageFile.size} bytes`);
+          // Check file size (limit to 5MB to prevent memory issues)
+          if (imageFile.size > 5 * 1024 * 1024) {
+            console.error(`❌ [${requestId}] File too large: ${imageFile.size} bytes (max 5MB)`);
             return new Response(
-              JSON.stringify({ error: "Image file too large. Maximum size is 10MB.", requestId }),
+              JSON.stringify({ error: "Image file too large. Maximum size is 5MB for optimal processing.", requestId }),
+              { status: 400, headers: CORS }
+            );
+          }
+          
+          // Memory check - ensure we have enough memory for processing
+          const memoryEstimate = imageFile.size * 2; // Rough estimate for base64 conversion
+          if (memoryEstimate > 15 * 1024 * 1024) {
+            console.error(`❌ [${requestId}] Estimated memory usage too high: ${memoryEstimate} bytes`);
+            return new Response(
+              JSON.stringify({ error: "Image too large for processing. Please use a smaller image.", requestId }),
               { status: 400, headers: CORS }
             );
           }
@@ -206,7 +249,7 @@ Deno.serve(async (req: Request) => {
       console.log(`📤 [${requestId}] Processing JSON body`);
       try {
         // Handle JSON body for text-only prompts
-        const body = await req.json().catch(() => ({}));
+        const body = await withTimeout(req.json(), 5000, "JSON parsing").catch(() => ({}));
         prompt = body?.prompt?.toString?.() || "";
         imageData = body?.imageData?.toString?.() || "";
         console.log(`📝 [${requestId}] JSON body - prompt: "${prompt}", hasImageData: ${!!imageData}`);
@@ -261,9 +304,11 @@ Deno.serve(async (req: Request) => {
     console.log(`🔧 [${requestId}] Using models: analysis=${analysisModel}, generation=${generationModel}`);
     
     // Initialize working character - FULL_PREFIX stays immutable 
-    let CURRENT_CHARACTER = CHARACTER;
+    CURRENT_CHARACTER = CHARACTER;
     let analysisSuccessful = false;
     let promptModificationAttempts = 0;
+    
+    console.log(`🔧 [${requestId}] Character initialization - INPUT: "${CHARACTER}", WORKING: "${CURRENT_CHARACTER}"`);
 
     // Pre-sanitize character description to prevent content policy violations during analysis
     if (CURRENT_CHARACTER && openaiKey) {
@@ -315,16 +360,20 @@ Deno.serve(async (req: Request) => {
 
       console.log(`  🔍 [${requestId}] Analyzing reference image with Gemini 2.5 Flash Image Preview`);
 
-      const analysisRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${analysisModel}:generateContent`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": geminiKey,
-          },
-          body: JSON.stringify(analysisRequestBody)
-        }
+      const analysisRes = await withTimeout(
+        fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${analysisModel}:generateContent`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": geminiKey,
+            },
+            body: JSON.stringify(analysisRequestBody)
+          }
+        ),
+        30000,
+        "Gemini analysis API call"
       );
 
       const analysisJson = await analysisRes.json().catch(() => ({} as any));
@@ -422,7 +471,7 @@ Deno.serve(async (req: Request) => {
     console.log(`🎯 [${requestId}] hasObjectConstraints: ${hasObjectConstraints} (from immutable prefix)`);
     
     // 🔒 IMMUTABLE FINAL PROMPT ASSEMBLY: Always use FULL_PREFIX + CURRENT_CHARACTER
-    const FINAL_GENERATION_PROMPT = `${FULL_PREFIX} ${CURRENT_CHARACTER}`;
+    FINAL_GENERATION_PROMPT = `${FULL_PREFIX} ${CURRENT_CHARACTER}`;
     console.log(`🔒 [${requestId}] Final immutable prompt: "${FINAL_GENERATION_PROMPT}"`);
     console.log(`🔒 [${requestId}] Prefix intact: ${FINAL_GENERATION_PROMPT.includes(FULL_PREFIX)}`);
     console.log(`🔒 [${requestId}] System guarantee: PREFIX is immutable, only CHARACTER can be modified`);
@@ -475,19 +524,27 @@ Deno.serve(async (req: Request) => {
 
       console.log(`  🎨 [${requestId}] Generation attempt ${generationAttempts}/${maxGenerationAttempts} with Gemini 2.5 Flash Image Preview`);
 
-      const generationRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${generationModel}:generateContent`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": geminiKey,
-          },
-          body: JSON.stringify(generationRequestBody)
-        }
+      const generationRes = await withTimeout(
+        fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${generationModel}:generateContent`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": geminiKey,
+            },
+            body: JSON.stringify(generationRequestBody)
+          }
+        ),
+        45000,
+        `Gemini generation attempt ${generationAttempts}`
       );
 
-      generationJson = await generationRes.json().catch(() => ({} as any));
+      generationJson = await withTimeout(
+        generationRes.json().catch(() => ({} as any)),
+        5000,
+        "Generation response parsing"
+      );
 
       if (!generationRes.ok) {
         console.error(`❌ [${requestId}] Gemini generation attempt ${generationAttempts} FAILED:`, generationJson);
@@ -599,47 +656,104 @@ Deno.serve(async (req: Request) => {
     console.log(`✅ [${requestId}] Successful generation - returning ${images.length} images`);
     console.log(`🔍 [${requestId}] Final response validation - prompt: ${!!safeFinalPrompt}, character: ${!!safeCurrentCharacter}`);
     
-    return new Response(JSON.stringify({ 
-      images,
-      enhancedPrompt: safeFinalPrompt,
-      debug: {
-        requestId,
-        originalPrompt: prompt || 'undefined',
-        hasReferenceImage: !!imageData,
-        finalPrompt: safeFinalPrompt,
-        character: safeCurrentCharacter,
-        imageCount: images.length,
-        analysisModel: analysisModel || 'undefined',
-        generationModel: generationModel || 'undefined',
-        analysisSuccessful: analysisSuccessful ?? false,
-        promptModificationAttempts: promptModificationAttempts || 0,
-        timestamp: new Date().toISOString(),
-        guaranteedGemini: true // Confirm no fallback to other services
-      }
-    }), { headers: CORS });
+    // Final validation before response construction
+    if (!images || images.length === 0) {
+      console.error(`❌ [${requestId}] No images generated despite success flag`);
+      return new Response(
+        JSON.stringify({ 
+          error: "No images were generated", 
+          requestId,
+          debug: {
+            finalPrompt: safeFinalPrompt,
+            character: safeCurrentCharacter,
+            errorPhase: "validation"
+          }
+        }),
+        { status: 500, headers: CORS }
+      );
+    }
+    
+    // Construct response with additional validation
+    try {
+      const responseData = { 
+        images,
+        enhancedPrompt: safeFinalPrompt,
+        debug: {
+          requestId,
+          originalPrompt: prompt || 'undefined',
+          hasReferenceImage: !!imageData,
+          finalPrompt: safeFinalPrompt,
+          character: safeCurrentCharacter,
+          imageCount: images.length,
+          analysisModel: analysisModel || 'undefined',
+          generationModel: generationModel || 'undefined',
+          analysisSuccessful: analysisSuccessful ?? false,
+          promptModificationAttempts: promptModificationAttempts || 0,
+          timestamp: new Date().toISOString(),
+          guaranteedGemini: true // Confirm no fallback to other services
+        }
+      };
+      
+      const responseJson = JSON.stringify(responseData);
+      console.log(`📦 [${requestId}] Response size: ${responseJson.length} characters`);
+      
+      return new Response(responseJson, { headers: CORS });
+    } catch (responseError: any) {
+      console.error(`❌ [${requestId}] Response construction failed:`, responseError);
+      return new Response(
+        JSON.stringify({ 
+          error: "Response construction failed", 
+          requestId,
+          details: responseError.message 
+        }),
+        { status: 500, headers: CORS }
+      );
+    }
 
   } catch (err: any) {
-    // Use existing requestId if available, otherwise generate new one
-    const errorRequestId = typeof requestId !== 'undefined' ? requestId : generateRequestId();
-    console.error(`❌ [${errorRequestId}] Artist generator unhandled error:`, err);
-    console.error(`❌ [${errorRequestId}] Error stack:`, err?.stack);
+    // Defensive error handling to prevent 502
+    let errorRequestId: string;
+    let safeFinalPrompt: string;
+    let safeCurrentCharacter: string;
     
-    // Provide safe fallback values for response construction
-    const safeFinalPrompt = typeof FINAL_GENERATION_PROMPT !== 'undefined' ? FINAL_GENERATION_PROMPT : 'undefined';
-    const safeCurrentCharacter = typeof CURRENT_CHARACTER !== 'undefined' ? CURRENT_CHARACTER : 'undefined';
+    try {
+      errorRequestId = typeof requestId !== 'undefined' ? requestId : generateRequestId();
+      safeFinalPrompt = typeof FINAL_GENERATION_PROMPT !== 'undefined' ? FINAL_GENERATION_PROMPT : 'undefined';
+      safeCurrentCharacter = typeof CURRENT_CHARACTER !== 'undefined' ? CURRENT_CHARACTER : 'undefined';
+      
+      console.error(`❌ [${errorRequestId}] Artist generator unhandled error:`, err?.message || 'unknown error');
+      if (err?.stack) {
+        console.error(`❌ [${errorRequestId}] Error stack:`, err.stack);
+      }
+    } catch (loggingError) {
+      // Even logging failed, use absolute fallbacks
+      errorRequestId = 'error_' + Date.now();
+      safeFinalPrompt = 'undefined';
+      safeCurrentCharacter = 'undefined';
+      console.error(`❌ [${errorRequestId}] Critical error in error handling:`, loggingError);
+    }
     
-    return new Response(
-      JSON.stringify({ 
-        error: err?.message || "Unhandled error",
+    try {
+      const errorResponse = {
+        error: (err?.message || "Unhandled error").toString(),
         requestId: errorRequestId,
         debug: {
           finalPrompt: safeFinalPrompt,
           character: safeCurrentCharacter,
           errorPhase: "execution",
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          errorType: err?.name || 'UnknownError'
         }
-      }),
-      { status: 500, headers: CORS }
-    );
+      };
+      
+      return new Response(JSON.stringify(errorResponse), { status: 500, headers: CORS });
+    } catch (responseError) {
+      // Last resort fallback
+      console.error(`❌ Critical: Cannot construct error response:`, responseError);
+      return new Response(
+        JSON.stringify({ error: "Critical system error", requestId: errorRequestId || 'unknown' }),
+        { status: 500, headers: CORS }
+      );
+    }
   }
 });
