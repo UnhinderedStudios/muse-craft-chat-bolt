@@ -395,11 +395,12 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   {/* Color Wheel Section */}
                    <div className="space-y-2">
                       <div className="flex flex-col items-center">
-                        <HexColorPicker
-                          color={selectedColor || "#ffffff"}
-                          onChange={setSelectedColor}
-                          className="w-20"
-                        />
+                        <div className="scale-50 origin-center">
+                          <HexColorPicker
+                            color={selectedColor || "#ffffff"}
+                            onChange={setSelectedColor}
+                          />
+                        </div>
                         <div className="mt-1 flex items-center gap-1">
                           <div className="text-xs text-white/80 select-all">
                             {selectedColor || "#ffffff"}
@@ -409,17 +410,17 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                             size="sm"
                             onClick={handleColorApply}
                             disabled={!selectedColor}
-                            className="bg-white/10 border-white/20 text-white hover:bg-white/20 w-6 h-6 p-0"
+                            className="bg-white/10 border-white/20 text-white hover:bg-white/20 w-4 h-4 p-0"
                           >
-                            <Check className="w-3 h-3" />
+                            <Check className="w-2 h-2" />
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={handleColorReset}
-                            className="bg-white/10 border-white/20 text-white hover:bg-white/20 w-6 h-6 p-0"
+                            className="bg-white/10 border-white/20 text-white hover:bg-white/20 w-4 h-4 p-0"
                           >
-                            <RotateCcw className="w-3 h-3" />
+                            <RotateCcw className="w-2 h-2" />
                           </Button>
                         </div>
                       </div>
