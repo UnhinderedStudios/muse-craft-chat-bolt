@@ -256,8 +256,6 @@ Deno.serve(async (req: Request) => {
       
       const sanitizedCharacter = await modifyPromptWithChatGPT(
         CURRENT_CHARACTER,  // Only modify the character part
-        CURRENT_CHARACTER,  // Pass the same as original user prompt
-        FULL_PREFIX,        // Pass the immutable prefix so ChatGPT knows the constraints
         1,                  // First attempt at sanitization
         openaiKey, 
         requestId
@@ -333,8 +331,6 @@ Deno.serve(async (req: Request) => {
           
           const modifiedCharacter = await modifyPromptWithChatGPT(
             CURRENT_CHARACTER,  // Only modify the character part
-            CURRENT_CHARACTER,  // Pass the same as original user prompt
-            FULL_PREFIX,        // Pass immutable prefix to maintain object constraints
             promptModificationAttempts, 
             openaiKey, 
             requestId
@@ -588,7 +584,6 @@ Deno.serve(async (req: Request) => {
         requestId,
         originalPrompt: prompt,
         hasReferenceImage: !!imageData,
-        enhancedPrompt: finalPrompt,
         finalPrompt: currentPrompt,
         imageCount: images.length,
         analysisModel: analysisModel,
