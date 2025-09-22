@@ -642,6 +642,9 @@ Deno.serve(async (req: Request) => {
     
     console.log(`🎯 [${requestId}] FINAL TO GEMINI: "${FINAL_GENERATION_PROMPT.substring(0, 100)}..."`);
     
+    // Declare images variable at function level to avoid scoping issues
+    let images: string[] = [];
+    
     // Check if this is Imagen-only mode
     if (mode === "imagen_only") {
       console.log(`🎨 [${requestId}] IMAGEN ONLY MODE - Skipping Gemini, using Imagen 4 directly`);
@@ -702,7 +705,6 @@ Deno.serve(async (req: Request) => {
     );
 
     const generationJson = await generationRes.json().catch(() => ({}));
-    let images: string[] = [];
 
     if (generationRes.ok) {
       const candidate = generationJson?.candidates?.[0];
