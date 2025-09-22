@@ -216,42 +216,6 @@ Be precise - if boxing gloves were requested, they should still be recognizable 
   }
 }
 
-// Background color processing function
-function processBackgroundColor(prompt: string, backgroundHex?: string): string {
-  let processedPrompt = prompt;
-  
-  // If a background hex color is provided, add it to the prompt
-  if (backgroundHex) {
-    processedPrompt = `Change background color to ${backgroundHex}. ${processedPrompt}`;
-  }
-  
-  // Remove non-color background elements (preserve color-based backgrounds)
-  // Remove patterns like "background forest", "background city", "volcano background" etc
-  // But preserve "red background", "blue background", "green background" etc
-  const colorKeywords = ['red', 'blue', 'green', 'yellow', 'purple', 'pink', 'orange', 'black', 'white', 'gray', 'grey', 'brown', 'cyan', 'magenta', 'violet', 'turquoise', 'gold', 'silver'];
-  const colorPattern = colorKeywords.join('|');
-  
-  // Remove non-color background requests
-  processedPrompt = processedPrompt.replace(
-    new RegExp(`(?<!(?:${colorPattern})\\s)background\\s+(?!(?:${colorPattern}))\\w+(?:\\s+\\w+)*(?=\\s|,|\\.|$)`, 'gi'),
-    ''
-  );
-  
-  // Remove trailing background patterns like "volcano background", "explosion background" unless they're colors
-  processedPrompt = processedPrompt.replace(
-    new RegExp(`(?<!(?:${colorPattern})\\s)\\w+(?:\\s+\\w+)*\\s+background(?!\\s+(?:${colorPattern}))`, 'gi'),
-    ''
-  );
-  
-  // Clean up multiple spaces and commas
-  processedPrompt = processedPrompt.replace(/\s{2,}/g, ' ')
-                                 .replace(/\s*,\s*/g, ', ')
-                                 .replace(/,\s*,/g, ', ')
-                                 .replace(/^,|,$/g, '')
-                                 .trim();
-  
-  return processedPrompt;
-}
 
 // Strengthened GPT sanitization with preservation-first approach
 async function quickSanitizeCharacter(
