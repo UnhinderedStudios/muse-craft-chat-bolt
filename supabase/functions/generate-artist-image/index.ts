@@ -579,12 +579,13 @@ Deno.serve(async (req: Request) => {
     
     return new Response(JSON.stringify({ 
       images,
-      enhancedPrompt: currentPrompt,
+      enhancedPrompt: FINAL_GENERATION_PROMPT,
       debug: {
         requestId,
         originalPrompt: prompt,
         hasReferenceImage: !!imageData,
-        finalPrompt: currentPrompt,
+        finalPrompt: FINAL_GENERATION_PROMPT,
+        character: CURRENT_CHARACTER,
         imageCount: images.length,
         analysisModel: analysisModel,
         generationModel: generationModel,
