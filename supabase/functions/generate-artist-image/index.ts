@@ -548,8 +548,6 @@ Deno.serve(async (req: Request) => {
           imageCount: images.length,
           analysisModel: analysisModel || 'undefined',
           generationModel: generationModel || 'undefined',
-          analysisSuccessful: analysisSuccessful ?? false,
-          promptModificationAttempts: promptModificationAttempts || 0,
           timestamp: new Date().toISOString(),
           guaranteedGemini: true // Confirm no fallback to other services
         }
