@@ -336,22 +336,28 @@ Deno.serve(async (req: Request) => {
     // Standard prefix template with object removal constraints
     const STANDARD_PREFIX = "Keep composition, structure, lighting and character position identical, character must be entirely different to the reference image, in other words not a single thing must resemble from the character in the image, this should be erased, pose must be entirely different but very cool to the current image, it should be clear that the person is a music artist. No objects such as guitars, mics, chairs or anything else at all can be present in the image. Character must be entirely replaced with:";
 
-    // Auto-prepend standard prefix if user hasn't provided it
-    if (!prompt.includes("Character must be entirely replaced with:")) {
-      const originalUserPrompt = prompt;
-      prompt = `${STANDARD_PREFIX} ${originalUserPrompt}`;
-      console.log(`🔧 [${requestId}] Auto-prepended standard prefix to user input: "${originalUserPrompt}"`);
-      console.log(`📝 [${requestId}] Final prompt with prefix: "${prompt}"`);
-    }
-
-    // Extract prefix from prompt for context preservation
-    const prefixMatch = prompt.match(/^(.*?Character must be entirely replaced with:)/s);
-    const prefix = prefixMatch?.[1] || "";
+    // Extract or establish the immutable prefix and character parts
+    let FULL_PREFIX = "";
+    let CHARACTER = "";
     
-    console.log(`🎯 [${requestId}] Artist Generator Debug:`);
-    console.log(`  📝 [${requestId}] Prompt: "${prompt}"`);
-    console.log(`  🎨 [${requestId}] Extracted prefix: "${prefix}"`);
+    if (prompt.includes("Character must be entirely replaced with:")) {
+      // User provided full prompt with prefix
+      const prefixMatch = prompt.match(/^(.*?Character must be entirely replaced with:)\s*(.*)$/s);
+      FULL_PREFIX = prefixMatch?.[1] || STANDARD_PREFIX;
+      CHARACTER = prefixMatch?.[2]?.trim() || "";
+      console.log(`✅ [${requestId}] User provided full prompt - prefix extracted`);
+    } else {
+      // User provided only character description - auto-prepend standard prefix
+      FULL_PREFIX = STANDARD_PREFIX;
+      CHARACTER = prompt.trim();
+      console.log(`🔧 [${requestId}] Auto-prepending standard prefix to user input: "${CHARACTER}"`);
+    }
+    
+    console.log(`🎯 [${requestId}] Immutable Prefix System Debug:`);
+    console.log(`  🔒 [${requestId}] FULL_PREFIX: "${FULL_PREFIX}"`);
+    console.log(`  🎭 [${requestId}] CHARACTER: "${CHARACTER}"`);
     console.log(`  🖼️ [${requestId}] Has reference image: ${!!imageData}`);
+    console.log(`  🛡️ [${requestId}] Prefix protection: ENABLED - prefix will never be modified`);
     console.log(`  🔄 [${requestId}] Request independent - no state persistence`);
 
     // ALWAYS use Gemini 2.5 Flash Image Preview for BOTH analysis and generation - matching Nano Banana UI
@@ -360,33 +366,27 @@ Deno.serve(async (req: Request) => {
     
     console.log(`🔧 [${requestId}] Using models: analysis=${analysisModel}, generation=${generationModel}`);
     
-    let finalPrompt = prompt;
+    // Initialize working character - FULL_PREFIX stays immutable 
+    let CURRENT_CHARACTER = CHARACTER;
     let analysisSuccessful = false;
     let promptModificationAttempts = 0;
 
-    // Pre-sanitize character description if it exists to prevent content policy violations during analysis
-    const characterMatch = prompt.match(/Character must be entirely replaced with:\s*(.+)$/);
-    if (characterMatch && openaiKey) {
-      const originalCharacter = characterMatch[1];
-      console.log(`🧹 [${requestId}] Pre-sanitizing character description: "${originalCharacter}"`);
-      
-      // Extract prefix from original prompt to pass constraints to ChatGPT
-      const prefixMatch = prompt.match(/^(.*?)(?=Character must be entirely replaced with:)/);
-      const extractedPrefix = prefixMatch ? prefixMatch[1].trim() : "";
+    // Pre-sanitize character description to prevent content policy violations during analysis
+    if (CURRENT_CHARACTER && openaiKey) {
+      console.log(`🧹 [${requestId}] Pre-sanitizing character description: "${CURRENT_CHARACTER}"`);
       
       const sanitizedCharacter = await modifyPromptWithChatGPT(
-        originalCharacter,  // Only modify the character part
-        originalCharacter,  // Pass the same as original user prompt
-        extractedPrefix,    // Pass the extracted prefix so ChatGPT knows the constraints
+        CURRENT_CHARACTER,  // Only modify the character part
+        CURRENT_CHARACTER,  // Pass the same as original user prompt
+        FULL_PREFIX,        // Pass the immutable prefix so ChatGPT knows the constraints
         1,                  // First attempt at sanitization
         openaiKey, 
         requestId
       );
       
-      if (sanitizedCharacter !== originalCharacter) {
-        // Reconstruct the full prompt with the sanitized character
-        finalPrompt = prompt.replace(originalCharacter, sanitizedCharacter);
-        console.log(`✅ [${requestId}] Pre-sanitized character: "${sanitizedCharacter}"`);
+      if (sanitizedCharacter !== CURRENT_CHARACTER) {
+        CURRENT_CHARACTER = sanitizedCharacter;
+        console.log(`✅ [${requestId}] Pre-sanitized character: "${CURRENT_CHARACTER}"`);
       } else {
         console.log(`⚠️ [${requestId}] Character sanitization unchanged, proceeding with original`);
       }
@@ -405,7 +405,7 @@ Deno.serve(async (req: Request) => {
           }
         },
         {
-          text: getAnalysisInstruction(finalPrompt, prefix, requestId)
+          text: getAnalysisInstruction(`${FULL_PREFIX} ${CURRENT_CHARACTER}`, FULL_PREFIX, requestId)
         }
       ];
 
@@ -449,36 +449,31 @@ Deno.serve(async (req: Request) => {
           promptModificationAttempts++;
           console.log(`🚫 [${requestId}] Content policy violation during analysis, attempting ChatGPT character modification (${promptModificationAttempts}/3)`);
           
-          // Extract just the character description from the original prompt
-          const characterMatch = prompt.match(/Character must be entirely replaced with:\s*(.+)$/);
-          const originalCharacter = characterMatch?.[1] || prompt.split(": ").pop() || prompt;
-          
-          console.log(`📝 [${requestId}] Character to modify: "${originalCharacter}"`);
-          console.log(`📏 [${requestId}] Character limit: ${originalCharacter.length} chars (original: "${originalCharacter}")`);
+          console.log(`📝 [${requestId}] Character to modify: "${CURRENT_CHARACTER}"`);
+          console.log(`📏 [${requestId}] Character limit: ${CURRENT_CHARACTER.length} chars (original: "${CURRENT_CHARACTER}")`);
           
           const modifiedCharacter = await modifyPromptWithChatGPT(
-            originalCharacter,  // Only modify the character part
-            originalCharacter,  // Pass the same as original user prompt
-            prefix,             // Pass prefix to maintain object constraints
+            CURRENT_CHARACTER,  // Only modify the character part
+            CURRENT_CHARACTER,  // Pass the same as original user prompt
+            FULL_PREFIX,        // Pass immutable prefix to maintain object constraints
             promptModificationAttempts, 
             openaiKey, 
             requestId
           );
           
-          if (modifiedCharacter !== originalCharacter) {
-            // Reconstruct the full prompt with the modified character
-            finalPrompt = prompt.replace(originalCharacter, modifiedCharacter);
+          if (modifiedCharacter !== CURRENT_CHARACTER) {
+            // Update only the character part - FULL_PREFIX remains immutable
+            CURRENT_CHARACTER = modifiedCharacter;
             analysisSuccessful = false; // Mark as unsuccessful so we use original prompt structure
-            console.log(`✅ [${requestId}] ChatGPT modified character within limits: "${modifiedCharacter}"`);
-            console.log(`🔍 [${requestId}] Modified character: "${modifiedCharacter}" (${modifiedCharacter.length}/${originalCharacter.length} chars)`);
+            console.log(`✅ [${requestId}] ChatGPT modified character within limits: "${CURRENT_CHARACTER}"`);
+            console.log(`🔍 [${requestId}] Modified character: "${CURRENT_CHARACTER}" (${CURRENT_CHARACTER.length} chars)`);
           } else {
-            console.log(`  🔄 [${requestId}] Using original prompt as fallback`);
-            finalPrompt = prompt;
+            console.log(`  🔄 [${requestId}] Character modification unchanged, proceeding with current`);
             analysisSuccessful = false;
           }
         } else {
-          console.log(`  🔄 [${requestId}] Using original prompt as fallback`);
-          finalPrompt = prompt;
+          console.log(`  🔄 [${requestId}] Using current character as fallback`);
+          analysisSuccessful = false;
           analysisSuccessful = false;
         }
       } else {
@@ -494,94 +489,88 @@ Deno.serve(async (req: Request) => {
             promptModificationAttempts++;
             console.log(`🚫 [${requestId}] Analysis returned refusal, attempting ChatGPT character modification (${promptModificationAttempts}/3)`);
             
-            // Extract just the character description from the original prompt
-            const characterMatch = prompt.match(/Character must be entirely replaced with:\s*(.+)$/);
-            const originalCharacter = characterMatch?.[1] || prompt.split(": ").pop() || prompt;
-            
-            console.log(`📝 [${requestId}] Character to modify: "${originalCharacter}"`);
-            console.log(`📏 [${requestId}] Character limit: ${originalCharacter.length} chars (original: "${originalCharacter}")`);
+            console.log(`📝 [${requestId}] Character to modify: "${CURRENT_CHARACTER}"`);
+            console.log(`📏 [${requestId}] Character limit: ${CURRENT_CHARACTER.length} chars (original: "${CURRENT_CHARACTER}")`);
             
             const modifiedCharacter = await modifyPromptWithChatGPT(
-              originalCharacter,  // Only modify the character part
-              originalCharacter,  // Pass the same as original user prompt
-              prefix,             // Pass prefix to maintain object constraints
+              CURRENT_CHARACTER,  // Only modify the character part
+              CURRENT_CHARACTER,  // Pass the same as original user prompt
+              FULL_PREFIX,        // Pass immutable prefix to maintain object constraints
               promptModificationAttempts, 
               openaiKey, 
               requestId
             );
             
-            if (modifiedCharacter !== originalCharacter) {
-              // Reconstruct the full prompt with the modified character
-              finalPrompt = prompt.replace(originalCharacter, modifiedCharacter);
-              analysisSuccessful = false; // Use original prompt structure
-              console.log(`✅ [${requestId}] ChatGPT modified character within limits: "${modifiedCharacter}"`);
-              console.log(`🔍 [${requestId}] Modified character: "${modifiedCharacter}" (${modifiedCharacter.length}/${originalCharacter.length} chars)`);
+            if (modifiedCharacter !== CURRENT_CHARACTER) {
+              // Update only the character part - FULL_PREFIX remains immutable
+              CURRENT_CHARACTER = modifiedCharacter;
+              analysisSuccessful = false; // Use immutable prefix system
+              console.log(`✅ [${requestId}] ChatGPT modified character within limits: "${CURRENT_CHARACTER}"`);
+              console.log(`🔍 [${requestId}] Modified character: "${CURRENT_CHARACTER}" (${CURRENT_CHARACTER.length} chars)`);
             } else {
-              finalPrompt = prompt;
               analysisSuccessful = false;
             }
           } else {
-            finalPrompt = analysisText;
-            analysisSuccessful = true;
-            console.log(`  ✅ [${requestId}] Enhanced prompt from analysis: "${finalPrompt.substring(0, 100)}..."`);
+            // 🚨 CRITICAL: Analysis is for diagnostics only - never use as final prompt
+            // Always use immutable prefix system for generation
+            analysisSuccessful = false; // Force use of immutable prefix system
+            console.log(`  ✅ [${requestId}] Analysis complete (diagnostics only): "${analysisText.substring(0, 100)}..."`);
+            console.log(`  🔒 [${requestId}] Using immutable prefix system for generation`);
           }
         } else {
           console.error(`❌ [${requestId}] No analysis text returned`);
-          console.log(`  🔄 [${requestId}] Using original prompt as fallback for empty response`);
-          finalPrompt = prompt;
+          console.log(`  🔄 [${requestId}] Using immutable prefix system as fallback`);
           analysisSuccessful = false;
         }
       }
     }
 
-    // Extract object constraints for generation
-    const hasObjectConstraints = prefix.toLowerCase().includes('no objects') || 
-                                 prefix.toLowerCase().includes('cannot be present') ||
-                                 prefix.toLowerCase().includes('no props') ||
-                                 prefix.toLowerCase().includes('no items');
+    // Extract object constraints for generation using immutable prefix
+    const hasObjectConstraints = FULL_PREFIX.toLowerCase().includes('no objects') || 
+                                 FULL_PREFIX.toLowerCase().includes('cannot be present') ||
+                                 FULL_PREFIX.toLowerCase().includes('no props') ||
+                                 FULL_PREFIX.toLowerCase().includes('no items');
     
-    console.log(`🎯 [${requestId}] hasObjectConstraints: ${hasObjectConstraints}`);
+    console.log(`🎯 [${requestId}] hasObjectConstraints: ${hasObjectConstraints} (from immutable prefix)`);
     
-    // Now generate image using Gemini 2.5 Flash Image Preview with reference image if available
-    const generationParts = [];
+    // 🔒 IMMUTABLE FINAL PROMPT ASSEMBLY: Always use FULL_PREFIX + CURRENT_CHARACTER
+    const FINAL_GENERATION_PROMPT = `${FULL_PREFIX} ${CURRENT_CHARACTER}`;
+    console.log(`🔒 [${requestId}] Final immutable prompt: "${FINAL_GENERATION_PROMPT}"`);
+    console.log(`🔒 [${requestId}] Prefix intact: ${FINAL_GENERATION_PROMPT.includes(FULL_PREFIX)}`);
+    console.log(`🔒 [${requestId}] System guarantee: PREFIX is immutable, only CHARACTER can be modified`);
     
-    // Add reference image to generation if available (for better composition preservation)
-    if (imageData) {
-      const [mimeTypePart, base64Data] = imageData.split(",");
-      const mimeType = mimeTypePart.replace("data:", "").replace(";base64", "");
-      
-      generationParts.push({
-        inline_data: {
-          mime_type: mimeType,
-          data: base64Data
-        }
-      });
-    }
-    
-    // Add the enhanced prompt with explicit image generation instruction
-    const explicitPrompt = getGenerationPrompt(finalPrompt, hasObjectConstraints, requestId);
-    
-    generationParts.push({
-      text: explicitPrompt
-    });
-
     // Enhanced retry logic with ChatGPT prompt modification fallback
     let generationAttempts = 0;
     const maxGenerationAttempts = 3;
     let generationJson: any;
     let images: string[] = [];
-    let currentPrompt = finalPrompt;
 
     while (generationAttempts < maxGenerationAttempts && images.length === 0) {
       generationAttempts++;
 
-      // Update generation parts with current prompt
+      // Update generation parts with current prompt using immutable prefix system
       let currentGenerationParts = [];
       
-      // Always use the reference image on every attempt to preserve background\n      const useReferenceImage = !!imageData;\n      if (useReferenceImage) {\n        const [mimeTypePart, base64Data] = imageData.split(",");\n        const mimeType = mimeTypePart.replace("data:", "").replace(";base64", "");\n        currentGenerationParts.push({\n          inline_data: {\n            mime_type: mimeType,\n            data: base64Data\n          }\n        });\n        console.log(`🖼️ [${requestId}] Using reference image for generation attempt ${generationAttempts}`);\n      }
+      // Always use the reference image on every attempt to preserve background
+      const useReferenceImage = !!imageData;
+      if (useReferenceImage) {
+        const [mimeTypePart, base64Data] = imageData.split(",");
+        const mimeType = mimeTypePart.replace("data:", "").replace(";base64", "");
+        currentGenerationParts.push({
+          inline_data: {
+            mime_type: mimeType,
+            data: base64Data
+          }
+        });
+        console.log(`🖼️ [${requestId}] Using reference image for generation attempt ${generationAttempts}`);
+      }
+      
+      // 🔒 CRITICAL: Always reassemble from immutable components before each generation
+      const currentGenerationPrompt = `${FULL_PREFIX} ${CURRENT_CHARACTER}`;
+      console.log(`🔒 [${requestId}] Generation attempt ${generationAttempts} using: "${currentGenerationPrompt.substring(0, 100)}..."`);
       
       currentGenerationParts.push({
-        text: getGenerationPrompt(currentPrompt, hasObjectConstraints, requestId)
+        text: getGenerationPrompt(currentGenerationPrompt, hasObjectConstraints, requestId)
       });
 
       const generationRequestBody = {
@@ -597,7 +586,6 @@ Deno.serve(async (req: Request) => {
       };
 
       console.log(`  🎨 [${requestId}] Generation attempt ${generationAttempts}/${maxGenerationAttempts} with Gemini 2.5 Flash Image Preview`);
-      console.log(`  📝 [${requestId}] Using prompt: "${currentPrompt.substring(0, 100)}..."`);
 
       const generationRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${generationModel}:generateContent`,
@@ -623,19 +611,19 @@ Deno.serve(async (req: Request) => {
         
         if (isContentBlock && openaiKey && promptModificationAttempts < 3) {
           promptModificationAttempts++;
-          console.log(`🤖 [${requestId}] Content policy violation detected, attempting ChatGPT prompt modification (${promptModificationAttempts}/3)`);
+          console.log(`🤖 [${requestId}] Content policy violation detected, attempting ChatGPT character modification (${promptModificationAttempts}/3)`);
           
-          const modifiedPrompt = await modifyPromptWithChatGPT(
-            currentPrompt, // Pass the full enhanced prompt 
-            prompt,        // Pass the original user prompt
-            prefix,        // Pass the extracted prefix
+          const modifiedCharacter = await modifyPromptWithChatGPT(
+            CURRENT_CHARACTER, // Only modify the character part
+            CHARACTER,         // Pass the original character
+            FULL_PREFIX,       // Pass the immutable prefix
             promptModificationAttempts, 
             openaiKey, 
             requestId
           );
-          if (modifiedPrompt !== currentPrompt) {
-            currentPrompt = modifiedPrompt;
-            console.log(`🔄 [${requestId}] Retrying with modified prompt: "${currentPrompt.substring(0, 100)}..."`);
+          if (modifiedCharacter !== CURRENT_CHARACTER) {
+            CURRENT_CHARACTER = modifiedCharacter; // Update character while keeping prefix immutable
+            console.log(`🔄 [${requestId}] Retrying with modified character: "${CURRENT_CHARACTER}"`);
             generationAttempts--; // Don't count this as a failed generation attempt
             continue;
           }
