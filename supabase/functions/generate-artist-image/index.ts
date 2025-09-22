@@ -35,59 +35,26 @@ function getGenerationPrompt(finalPrompt: string, hasObjectConstraints: boolean,
   }
 }
 
-// Comprehensive GPT sanitization function that respects all prefix constraints
-async function modifyPromptWithChatGPT(
+// Quick GPT sanitization for initial character cleanup
+async function quickSanitizeCharacter(
   characterDescription: string, 
-  attempt: number, 
   openaiKey: string, 
   requestId: string
 ): Promise<string> {
   if (!openaiKey) {
-    console.log(`⚠️ [${requestId}] No OpenAI key available for prompt modification`);
+    console.log(`⚠️ [${requestId}] No OpenAI key available for quick sanitization`);
     return characterDescription;
   }
 
-  const conservativeness = ["moderately", "significantly", "extremely"][Math.min(attempt - 1, 2)];
-  
-  const systemPrompt = `You are an intelligent character description sanitizer for AI image generation with CRITICAL PREFIX CONSTRAINTS. The final prompt will be: "Keep composition, structure, lighting and character position identical, character must be entirely different to the reference image, in other words not a single thing must resemble from the character in the image, this should be erased, pose must be entirely different but very cool to the current image, it should be clear that the person is a music artist. No objects such as guitars, mics, chairs or anything else at all can be present in the image. Character must be entirely replaced with: [YOUR OUTPUT]"
-
-CRITICAL RULES (${conservativeness} enforcement):
-1. ABSOLUTELY NO OBJECTS: Remove ALL objects, props, instruments, furniture, tools, accessories that characters hold or interact with
-2. MUSIC ARTIST THEME: Character must clearly be a music artist through pose, expression, style, or attire
-3. CONVERT OBJECTS TO APPEARANCE: Transform object references into visual traits or poses
-4. CONTENT SAFETY: Remove all rudeness, offensive language, inappropriate content
-5. SINGLE WORD EXPANSION: Expand single words into fuller character descriptions
-6. BIZARRE RATIONALIZATION: Convert bizarre concepts into realistic visual descriptions
-
-OBJECT → APPEARANCE CONVERSION EXAMPLES:
-"Woman holding a lamp post" → "Woman with tall, statuesque posture and confident stance"
-"Person wearing cheese costume" → "Person with warm golden-yellow color palette and textured clothing"
-"Man with guitar" → "Man in confident performer stance with expressive hands"
-"Girl holding microphone" → "Girl in expressive vocal pose with dynamic hand gestures"
-
-CONTENT SAFETY EXAMPLES:
-"Stupid idiot whore woman" → "Normal female character"
-"Crazy psycho man" → "Energetic male performer"
-"Ugly fat person" → "Character with unique features"
-
-SINGLE WORD EXPANSION EXAMPLES:
-"Cheese" → "Person with warm golden appearance and cheerful expression"
-"Rock" → "Rock musician with edgy style and confident attitude"
-"Jazz" → "Jazz artist with sophisticated style and smooth expression"
-
-BIZARRE RATIONALIZATION EXAMPLES:
-"Cheesy person who's super cheesy" → "Person with bright, cheerful expression and warm golden tones"
-"Flying rainbow unicorn person" → "Performer with colorful, fantastical stage makeup and dynamic pose"
-
-Return ONLY the sanitized character description that will work with the prefix constraints. Focus on visual appearance, pose, expression, clothing style, and artistic elements. NO OBJECTS WHATSOEVER.`;
+  const systemPrompt = `Quick character sanitizer for music artist image generation. Convert input to clean, safe, visual description. Rules:
+1. NO OBJECTS: Remove instruments, mics, props, tools
+2. MUSIC ARTIST: Make it clear they're a performer
+3. VISUAL ONLY: Appearance, pose, style, expression
+4. SAFE CONTENT: Remove inappropriate language
+Max ~150 chars. Example: "Rock guitarist" → "Rock musician with edgy style and confident stage presence"`;
 
   try {
-    console.log(`🔄 [${requestId}] Sanitizing character description with ChatGPT (attempt ${attempt}, ${conservativeness} safer)`);
-    console.log(`📝 [${requestId}] Character to sanitize: "${characterDescription}"`);
-    
-    const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error(`ChatGPT sanitization timeout after 20s`)), 20000);
-    });
+    console.log(`⚡ [${requestId}] Quick sanitizing: "${characterDescription}"`);
     
     const response = await Promise.race([
       fetch('https://api.openai.com/v1/chat/completions', {
@@ -102,31 +69,99 @@ Return ONLY the sanitized character description that will work with the prefix c
             { role: 'system', content: systemPrompt },
             { role: 'user', content: characterDescription }
           ],
-          max_tokens: 100,
+          max_tokens: 50,
           temperature: 0.3
         }),
       }),
-      timeoutPromise
+          new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error(`Quick sanitization timeout`)), 10000);
+      })
     ]);
 
     if (!response.ok) {
-      console.error(`❌ [${requestId}] ChatGPT API failed:`, await response.text());
+      console.error(`❌ [${requestId}] Quick sanitization failed:`, await response.text());
       return characterDescription;
     }
 
     const data = await response.json();
-    const sanitizedDescription = data.choices?.[0]?.message?.content?.trim();
+    const sanitized = data.choices?.[0]?.message?.content?.trim();
     
-    if (sanitizedDescription) {
-      console.log(`✅ [${requestId}] Sanitized character: "${sanitizedDescription}"`);
-      return sanitizedDescription;
-    } else {
-      console.error(`❌ [${requestId}] No sanitized description returned from ChatGPT`);
-      return characterDescription;
+    if (sanitized) {
+      console.log(`✅ [${requestId}] Quick sanitized: "${sanitized}"`);
+      return sanitized;
     }
-  } catch (error) {
-    console.error(`❌ [${requestId}] ChatGPT sanitization failed:`, error);
     return characterDescription;
+  } catch (error) {
+    console.error(`❌ [${requestId}] Quick sanitization failed:`, error);
+    return characterDescription;
+  }
+}
+
+// Smart GPT failure analysis and fix
+async function analyzeAndFixFailure(
+  failureReason: string,
+  originalCharacter: string,
+  openaiKey: string,
+  requestId: string
+): Promise<string> {
+  if (!openaiKey) {
+    console.log(`⚠️ [${requestId}] No OpenAI key for failure analysis`);
+    return originalCharacter;
+  }
+
+  const systemPrompt = `Analyze Gemini generation failure and fix the character description. 
+Failure: "${failureReason}"
+Original: "${originalCharacter}"
+
+Fix by:
+1. Removing problematic elements (objects, inappropriate content)
+2. Making description more generic/safe
+3. Focusing on basic visual traits
+4. Ensuring music artist theme
+
+Return ONLY the fixed character description, ~100-150 chars max.`;
+
+  try {
+    console.log(`🔍 [${requestId}] Analyzing failure: "${failureReason}"`);
+    
+    const response = await Promise.race([
+      fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `Fix this character description based on the failure.` }
+          ],
+          max_tokens: 60,
+          temperature: 0.2
+        }),
+      }),
+      new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error(`Failure analysis timeout`)), 15000);
+      })
+    ]);
+
+    if (!response.ok) {
+      console.error(`❌ [${requestId}] Failure analysis failed:`, await response.text());
+      return originalCharacter;
+    }
+
+    const data = await response.json();
+    const fixed = data.choices?.[0]?.message?.content?.trim();
+    
+    if (fixed) {
+      console.log(`✅ [${requestId}] Fixed character: "${fixed}"`);
+      return fixed;
+    }
+    return originalCharacter;
+  } catch (error) {
+    console.error(`❌ [${requestId}] Failure analysis error:`, error);
+    return originalCharacter;
   }
 }
 
@@ -305,160 +340,77 @@ Deno.serve(async (req: Request) => {
     
     // Initialize working character - FULL_PREFIX stays immutable 
     CURRENT_CHARACTER = CHARACTER;
-    let analysisSuccessful = false;
-    let promptModificationAttempts = 0;
     
     console.log(`🔧 [${requestId}] Character initialization - INPUT: "${CHARACTER}", WORKING: "${CURRENT_CHARACTER}"`);
 
-    // Pre-sanitize character description to prevent content policy violations during analysis
+    // Quick pre-sanitization to prevent obvious content policy violations
     if (CURRENT_CHARACTER && openaiKey) {
-      console.log(`🧹 [${requestId}] Pre-sanitizing character description: "${CURRENT_CHARACTER}"`);
+      console.log(`⚡ [${requestId}] Quick sanitizing character: "${CURRENT_CHARACTER}"`);
       
-      const sanitizedCharacter = await modifyPromptWithChatGPT(
-        CURRENT_CHARACTER,  // Only modify the character part
-        1,                  // First attempt at sanitization
+      const sanitizedCharacter = await quickSanitizeCharacter(
+        CURRENT_CHARACTER,
         openaiKey, 
         requestId
       );
       
       if (sanitizedCharacter !== CURRENT_CHARACTER) {
         CURRENT_CHARACTER = sanitizedCharacter;
-        console.log(`✅ [${requestId}] Pre-sanitized character: "${CURRENT_CHARACTER}"`);
-      } else {
-        console.log(`⚠️ [${requestId}] Character sanitization unchanged, proceeding with original`);
+        console.log(`✅ [${requestId}] Quick sanitized: "${CURRENT_CHARACTER}"`);
       }
     }
 
-    // If image is provided, first analyze it to enhance the prompt
+    // Optional analysis step - skip if image analysis fails quickly
     if (imageData) {
       const [mimeTypePart, base64Data] = imageData.split(",");
       const mimeType = mimeTypePart.replace("data:", "").replace(";base64", "");
       
-      const analysisParts = [
-        {
-          inline_data: {
-            mime_type: mimeType,
-            data: base64Data
-          }
-        },
-        {
-          text: getAnalysisInstruction(`${FULL_PREFIX} ${CURRENT_CHARACTER}`, FULL_PREFIX, requestId)
-        }
-      ];
-
-      const analysisRequestBody = {
-        contents: [{
-          parts: analysisParts
-        }],
-        generationConfig: {
-          temperature: 1.0,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 1024,
-        }
-      };
-
-      console.log(`  🔍 [${requestId}] Analyzing reference image with Gemini 2.5 Flash Image Preview`);
-
-      const analysisRes = await withTimeout(
-        fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${analysisModel}:generateContent`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-goog-api-key": geminiKey,
-            },
-            body: JSON.stringify(analysisRequestBody)
-          }
-        ),
-        30000,
-        "Gemini analysis API call"
-      );
-
-      const analysisJson = await analysisRes.json().catch(() => ({} as any));
-
-      if (!analysisRes.ok) {
-        console.error(`❌ [${requestId}] Gemini analysis FAILED:`, analysisJson);
-        
-        // Check if this is a content policy violation during analysis
-        const isContentBlock = analysisJson?.error?.message?.includes?.("PROHIBITED_CONTENT") || 
-                               analysisJson?.error?.message?.includes?.("content policy") ||
-                               analysisRes.status === 400;
-        
-        if (isContentBlock && openaiKey && promptModificationAttempts < 3) {
-          promptModificationAttempts++;
-          console.log(`🚫 [${requestId}] Content policy violation during analysis, attempting ChatGPT character modification (${promptModificationAttempts}/3)`);
-          
-          console.log(`📝 [${requestId}] Character to modify: "${CURRENT_CHARACTER}"`);
-          console.log(`📏 [${requestId}] Character limit: ${CURRENT_CHARACTER.length} chars (original: "${CURRENT_CHARACTER}")`);
-          
-          const modifiedCharacter = await modifyPromptWithChatGPT(
-            CURRENT_CHARACTER,  // Only modify the character part
-            promptModificationAttempts, 
-            openaiKey, 
-            requestId
-          );
-          
-          if (modifiedCharacter !== CURRENT_CHARACTER) {
-            // Update only the character part - FULL_PREFIX remains immutable
-            CURRENT_CHARACTER = modifiedCharacter;
-            analysisSuccessful = false; // Mark as unsuccessful so we use original prompt structure
-            console.log(`✅ [${requestId}] ChatGPT modified character within limits: "${CURRENT_CHARACTER}"`);
-            console.log(`🔍 [${requestId}] Modified character: "${CURRENT_CHARACTER}" (${CURRENT_CHARACTER.length} chars)`);
-          } else {
-            console.log(`  🔄 [${requestId}] Character modification unchanged, proceeding with current`);
-            analysisSuccessful = false;
-          }
-        } else {
-          console.log(`  🔄 [${requestId}] Using current character as fallback`);
-          analysisSuccessful = false;
-          analysisSuccessful = false;
-        }
-      } else {
-        const analysisText = analysisJson?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (analysisText) {
-          // Check if the analysis returned a refusal message instead of actual analysis
-          const isRefusal = analysisText.includes("I cannot") || 
-                           analysisText.includes("harmful") || 
-                           analysisText.includes("inappropriate") ||
-                           analysisText.includes("content policy");
-          
-          if (isRefusal && openaiKey && promptModificationAttempts < 3) {
-            promptModificationAttempts++;
-            console.log(`🚫 [${requestId}] Analysis returned refusal, attempting ChatGPT character modification (${promptModificationAttempts}/3)`);
-            
-            console.log(`📝 [${requestId}] Character to modify: "${CURRENT_CHARACTER}"`);
-            console.log(`📏 [${requestId}] Character limit: ${CURRENT_CHARACTER.length} chars (original: "${CURRENT_CHARACTER}")`);
-            
-            const modifiedCharacter = await modifyPromptWithChatGPT(
-              CURRENT_CHARACTER,  // Only modify the character part
-              promptModificationAttempts, 
-              openaiKey, 
-              requestId
-            );
-            
-            if (modifiedCharacter !== CURRENT_CHARACTER) {
-              // Update only the character part - FULL_PREFIX remains immutable
-              CURRENT_CHARACTER = modifiedCharacter;
-              analysisSuccessful = false; // Use immutable prefix system
-              console.log(`✅ [${requestId}] ChatGPT modified character within limits: "${CURRENT_CHARACTER}"`);
-              console.log(`🔍 [${requestId}] Modified character: "${CURRENT_CHARACTER}" (${CURRENT_CHARACTER.length} chars)`);
-            } else {
-              analysisSuccessful = false;
+      console.log(`🔍 [${requestId}] Attempting optional image analysis`);
+      
+      try {
+        const analysisRes = await withTimeout(
+          fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${analysisModel}:generateContent`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-goog-api-key": geminiKey,
+              },
+              body: JSON.stringify({
+                contents: [{
+                  parts: [
+                    {
+                      inline_data: {
+                        mime_type: mimeType,
+                        data: base64Data
+                      }
+                    },
+                    {
+                      text: getAnalysisInstruction(`${FULL_PREFIX} ${CURRENT_CHARACTER}`, FULL_PREFIX, requestId)
+                    }
+                  ]
+                }],
+                generationConfig: {
+                  temperature: 1.0,
+                  topK: 40,
+                  topP: 0.95,
+                  maxOutputTokens: 512,
+                }
+              })
             }
-          } else {
-            // 🚨 CRITICAL: Analysis is for diagnostics only - never use as final prompt
-            // Always use immutable prefix system for generation
-            analysisSuccessful = false; // Force use of immutable prefix system
-            console.log(`  ✅ [${requestId}] Analysis complete (diagnostics only): "${analysisText.substring(0, 100)}..."`);
-            console.log(`  🔒 [${requestId}] Using immutable prefix system for generation`);
-          }
+          ),
+          20000,
+          "Optional Gemini analysis"
+        );
+
+        const analysisJson = await analysisRes.json().catch(() => null);
+        if (analysisRes.ok && analysisJson?.candidates?.[0]?.content?.parts?.[0]?.text) {
+          console.log(`✅ [${requestId}] Optional analysis successful`);
         } else {
-          console.error(`❌ [${requestId}] No analysis text returned`);
-          console.log(`  🔄 [${requestId}] Using immutable prefix system as fallback`);
-          analysisSuccessful = false;
+          console.log(`⚠️ [${requestId}] Optional analysis failed, proceeding without it`);
         }
+      } catch (error) {
+        console.log(`⚠️ [${requestId}] Analysis timeout/error, proceeding without it:`, error);
       }
     }
 
@@ -470,165 +422,146 @@ Deno.serve(async (req: Request) => {
     
     console.log(`🎯 [${requestId}] hasObjectConstraints: ${hasObjectConstraints} (from immutable prefix)`);
     
-    // 🔒 IMMUTABLE FINAL PROMPT ASSEMBLY: Always use FULL_PREFIX + CURRENT_CHARACTER
+    // 🔒 STREAMLINED GENERATION: Quick attempt with smart failure handling
     FINAL_GENERATION_PROMPT = `${FULL_PREFIX} ${CURRENT_CHARACTER}`;
-    console.log(`🔒 [${requestId}] Final immutable prompt: "${FINAL_GENERATION_PROMPT}"`);
-    console.log(`🔒 [${requestId}] Prefix intact: ${FINAL_GENERATION_PROMPT.includes(FULL_PREFIX)}`);
-    console.log(`🔒 [${requestId}] System guarantee: PREFIX is immutable, only CHARACTER can be modified`);
+    console.log(`🔒 [${requestId}] Final prompt: "${FINAL_GENERATION_PROMPT}"`);
     
-    // Enhanced retry logic with ChatGPT prompt modification fallback
-    let generationAttempts = 0;
-    const maxGenerationAttempts = 3;
-    let generationJson: any;
     let images: string[] = [];
-
-    while (generationAttempts < maxGenerationAttempts && images.length === 0) {
-      generationAttempts++;
-
-      // Update generation parts with current prompt using immutable prefix system
-      let currentGenerationParts = [];
-      
-      // Always use the reference image on every attempt to preserve background
-      const useReferenceImage = !!imageData;
-      if (useReferenceImage) {
-        const [mimeTypePart, base64Data] = imageData.split(",");
-        const mimeType = mimeTypePart.replace("data:", "").replace(";base64", "");
-        currentGenerationParts.push({
-          inline_data: {
-            mime_type: mimeType,
-            data: base64Data
-          }
-        });
-        console.log(`🖼️ [${requestId}] Using reference image for generation attempt ${generationAttempts}`);
-      }
-      
-      // 🔒 CRITICAL: Always reassemble from immutable components before each generation
-      const currentGenerationPrompt = `${FULL_PREFIX} ${CURRENT_CHARACTER}`;
-      console.log(`🔒 [${requestId}] Generation attempt ${generationAttempts} using: "${currentGenerationPrompt.substring(0, 100)}..."`);
-      
-      currentGenerationParts.push({
-        text: getGenerationPrompt(currentGenerationPrompt, hasObjectConstraints, requestId)
+    let generationJson: any;
+    
+    // Prepare generation parts
+    let generationParts = [];
+    if (imageData) {
+      const [mimeTypePart, base64Data] = imageData.split(",");
+      const mimeType = mimeTypePart.replace("data:", "").replace(";base64", "");
+      generationParts.push({
+        inline_data: {
+          mime_type: mimeType,
+          data: base64Data
+        }
       });
+      console.log(`🖼️ [${requestId}] Using reference image for generation`);
+    }
+    
+    generationParts.push({
+      text: getGenerationPrompt(FINAL_GENERATION_PROMPT, hasObjectConstraints, requestId)
+    });
 
-      const generationRequestBody = {
-        contents: [{
-          parts: currentGenerationParts
-        }],
-        generationConfig: {
-          temperature: 0.85,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 8192,
+    // First generation attempt
+    console.log(`🎨 [${requestId}] Attempting Gemini generation`);
+    
+    const generationRes = await withTimeout(
+      fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${generationModel}:generateContent`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": geminiKey,
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: generationParts
+            }],
+            generationConfig: {
+              temperature: 0.85,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 8192,
+            }
+          })
         }
-      };
+      ),
+      20000,
+      "Gemini generation"
+    );
 
-      console.log(`  🎨 [${requestId}] Generation attempt ${generationAttempts}/${maxGenerationAttempts} with Gemini 2.5 Flash Image Preview`);
+    generationJson = await generationRes.json().catch(() => ({}));
 
-      const generationRes = await withTimeout(
-        fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${generationModel}:generateContent`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-goog-api-key": geminiKey,
-            },
-            body: JSON.stringify(generationRequestBody)
-          }
-        ),
-        45000,
-        `Gemini generation attempt ${generationAttempts}`
-      );
-
-      generationJson = await withTimeout(
-        generationRes.json().catch(() => ({} as any)),
-        5000,
-        "Generation response parsing"
-      );
-
-      if (!generationRes.ok) {
-        console.error(`❌ [${requestId}] Gemini generation attempt ${generationAttempts} FAILED:`, generationJson);
-        
-        // Check if it's a content policy violation and we have ChatGPT available
-        const isContentBlock = generationJson?.error?.message?.includes?.("PROHIBITED_CONTENT") || 
-                              generationJson?.error?.message?.includes?.("content policy") ||
-                              generationRes.status === 400;
-        
-        if (isContentBlock && openaiKey && promptModificationAttempts < 3) {
-          promptModificationAttempts++;
-          console.log(`🤖 [${requestId}] Content policy violation detected, attempting ChatGPT character modification (${promptModificationAttempts}/3)`);
-          
-          const modifiedCharacter = await modifyPromptWithChatGPT(
-            CURRENT_CHARACTER, // Only modify the character part
-            promptModificationAttempts, 
-            openaiKey, 
-            requestId
-          );
-          if (modifiedCharacter !== CURRENT_CHARACTER) {
-            CURRENT_CHARACTER = modifiedCharacter; // Update character while keeping prefix immutable
-            console.log(`🔄 [${requestId}] Retrying with modified character: "${CURRENT_CHARACTER}"`);
-            generationAttempts--; // Don't count this as a failed generation attempt
-            continue;
-          }
-        }
-        
-        if (generationAttempts === maxGenerationAttempts) {
-          return new Response(
-            JSON.stringify({ 
-              error: generationJson?.error?.message || "Gemini generation error", 
-              raw: generationJson,
-              requestId,
-              promptModificationAttempts
-            }),
-            { status: generationRes.status, headers: CORS }
-          );
-        }
-        continue;
-      }
-
-      // Extract generated images from Gemini 2.5 Flash response
+    if (generationRes.ok) {
       const candidate = generationJson?.candidates?.[0];
-      if (!candidate) {
-        console.log(`⚠️ [${requestId}] No candidate returned from Gemini on attempt ${generationAttempts}`);
-        continue;
-      }
-
-      // Look for inline_data or inlineData parts containing images (API variants)
-      const parts = candidate?.content?.parts ?? [];
-      const imageParts = parts.filter((part: any) => part?.inline_data || part?.inlineData);
-      
-      console.log(`  🔍 [${requestId}] Found ${imageParts.length} image parts in attempt ${generationAttempts}`);
-      
-      images = imageParts
-        .map((part: any) => {
-          const mimeType = part.inline_data?.mime_type || part.inlineData?.mimeType || "image/png";
-          const base64Data = part.inline_data?.data || part.inlineData?.data;
-          return base64Data ? `data:${mimeType};base64,${base64Data}` : null;
-        })
-        .filter(Boolean);
-
-      if (images.length === 0) {
-        const textParts = parts.filter((part: any) => part.text);
-        if (textParts.length > 0) {
-          console.log(`⚠️ [${requestId}] Attempt ${generationAttempts} returned text instead of image, retrying...`);
-        }
+      if (candidate) {
+        const parts = candidate?.content?.parts ?? [];
+        const imageParts = parts.filter((part: any) => part?.inline_data || part?.inlineData);
         
-        // Check if empty results might be due to content blocking - trigger ChatGPT fallback
-        if (openaiKey && promptModificationAttempts < 3) {
-          promptModificationAttempts++;
-          console.log(`🚫 [${requestId}] Empty results detected (potential content block), attempting ChatGPT prompt modification (${promptModificationAttempts}/3)`);
-          
-          const modifiedCharacter = await modifyPromptWithChatGPT(
-            CURRENT_CHARACTER, // Only sanitize the character part
-            promptModificationAttempts, 
-            openaiKey, 
-            requestId
-          );
-          if (modifiedCharacter !== CURRENT_CHARACTER) {
-            CURRENT_CHARACTER = modifiedCharacter;
-            console.log(`🔄 [${requestId}] Retrying with sanitized character after empty results: "${CURRENT_CHARACTER}"`);
-            generationAttempts--; // Don't count this as a failed generation attempt
-            continue;
+        images = imageParts
+          .map((part: any) => {
+            const mimeType = part.inline_data?.mime_type || part.inlineData?.mimeType || "image/png";
+            const base64Data = part.inline_data?.data || part.inlineData?.data;
+            return base64Data ? `data:${mimeType};base64,${base64Data}` : null;
+          })
+          .filter(Boolean);
+        
+        console.log(`✅ [${requestId}] Generated ${images.length} images on first attempt`);
+      }
+    }
+
+    // If failed, try smart GPT fix + one more Gemini attempt
+    if (images.length === 0 && openaiKey) {
+      console.log(`🔄 [${requestId}] First attempt failed, analyzing with GPT...`);
+      
+      const failureReason = generationJson?.error?.message || "No images returned";
+      const fixedCharacter = await analyzeAndFixFailure(
+        failureReason,
+        CURRENT_CHARACTER,
+        openaiKey,
+        requestId
+      );
+      
+      if (fixedCharacter !== CURRENT_CHARACTER) {
+        console.log(`🎯 [${requestId}] Retrying with fixed character`);
+        CURRENT_CHARACTER = fixedCharacter;
+        
+        // Update generation parts with fixed character
+        const fixedPrompt = `${FULL_PREFIX} ${CURRENT_CHARACTER}`;
+        generationParts[generationParts.length - 1] = {
+          text: getGenerationPrompt(fixedPrompt, hasObjectConstraints, requestId)
+        };
+        
+        // Second attempt with fixed character
+        const retryRes = await withTimeout(
+          fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${generationModel}:generateContent`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "x-goog-api-key": geminiKey,
+              },
+              body: JSON.stringify({
+                contents: [{
+                  parts: generationParts
+                }],
+                generationConfig: {
+                  temperature: 0.85,
+                  topK: 40,
+                  topP: 0.95,
+                  maxOutputTokens: 8192,
+                }
+              })
+            }
+          ),
+          20000,
+          "Gemini retry"
+        );
+
+        const retryJson = await retryRes.json().catch(() => ({}));
+        
+        if (retryRes.ok) {
+          const candidate = retryJson?.candidates?.[0];
+          if (candidate) {
+            const parts = candidate?.content?.parts ?? [];
+            const imageParts = parts.filter((part: any) => part?.inline_data || part?.inlineData);
+            
+            images = imageParts
+              .map((part: any) => {
+                const mimeType = part.inline_data?.mime_type || part.inlineData?.mimeType || "image/png";
+                const base64Data = part.inline_data?.data || part.inlineData?.data;
+                return base64Data ? `data:${mimeType};base64,${base64Data}` : null;
+              })
+              .filter(Boolean);
+            
+            console.log(`✅ [${requestId}] Generated ${images.length} images on retry`);
           }
         }
       }
