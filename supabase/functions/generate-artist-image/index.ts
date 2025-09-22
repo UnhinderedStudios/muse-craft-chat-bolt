@@ -102,22 +102,36 @@ TASK: Rephrase ONLY the character description to be ${conservativeness} more fam
 
 CRITICAL CONSTRAINTS:
 - CHARACTER LIMIT: Your response MUST NOT exceed ${maxCharacterLength} characters
+- PRESERVE GENDER: Always maintain gender specifications (man, woman, boy, girl, male, female, etc.) as core visual elements
 - PRESERVE PREFIX INTENT: Respect the artistic direction indicated by the prefix
 - ONLY MODIFY: The character description, not composition/lighting instructions
 - KEEP CORE CONCEPT: Maintain the essential visual elements and pose${objectRemovalInstructions}
 
+ESSENTIAL GENDER PRESERVATION:
+- Gender terms are NOT problematic and must be kept intact
+- "Man" stays "man", "woman" stays "woman", "boy" stays "boy", "girl" stays "girl"
+- Gender is a fundamental visual characteristic that must survive sanitization
+- Never generalize gender to "person" or "individual" unless the original was already gender-neutral
+
 GUIDELINES:
-- Remove any potentially problematic terms
-- Use more neutral, artistic language  
-- Keep the core visual concept (pose, style, mood)
+- Remove any potentially problematic terms (NOT including gender)
+- Use more neutral, artistic language for tone/professionalism
+- Keep the core visual concept (pose, style, mood, GENDER)
 - Make it sound more professional/artistic
 - Focus on artistic elements like style, expression, fashion
-- Use terms like "artist", "performer", "creative professional"
+- Use terms like "artist", "performer", "creative professional" but KEEP the gender
 - Respect the prefix's artistic direction
+- "Neutral language" refers to tone/professionalism, NOT gender removal
 
-EXAMPLE:
-Input: "gothic punk artist with peace sign pose"
-Output: "alternative style musician making peace gesture" 
+EXAMPLES:
+Input: "crazy man jumping around like an idiot"
+Output: "energetic man in dynamic motion with expressive pose"
+
+Input: "gothic punk woman with peace sign pose"
+Output: "alternative style female musician making peace gesture"
+
+Input: "stupid boy with messy hair"
+Output: "young man with tousled hair in playful pose"
 
 Respond with ONLY the rephrased character description (max ${maxCharacterLength} chars), nothing else.`;
 
