@@ -302,15 +302,92 @@ Deno.serve(async (req: Request) => {
 
       if (!analysisRes.ok) {
         console.error(`❌ [${requestId}] Gemini analysis FAILED:`, analysisJson);
-        console.log(`  🔄 [${requestId}] Using original prompt as fallback`);
-        finalPrompt = prompt;
-        analysisSuccessful = false;
+        
+        // Check if this is a content policy violation during analysis
+        const isContentBlock = analysisJson?.error?.message?.includes?.("PROHIBITED_CONTENT") || 
+                               analysisJson?.error?.message?.includes?.("content policy") ||
+                               analysisRes.status === 400;
+        
+        if (isContentBlock && openaiKey && promptModificationAttempts < 3) {
+          promptModificationAttempts++;
+          console.log(`🚫 [${requestId}] Content policy violation during analysis, attempting ChatGPT character modification (${promptModificationAttempts}/3)`);
+          
+          // Extract just the character description from the original prompt
+          const characterMatch = prompt.match(/Character must be entirely replaced with:\s*(.+)$/);
+          const originalCharacter = characterMatch?.[1] || prompt.split(": ").pop() || prompt;
+          
+          console.log(`📝 [${requestId}] Character to modify: "${originalCharacter}"`);
+          console.log(`📏 [${requestId}] Character limit: ${originalCharacter.length} chars (original: "${originalCharacter}")`);
+          
+          const modifiedCharacter = await modifyPromptWithChatGPT(
+            originalCharacter,  // Only modify the character part
+            originalCharacter,  // Pass the same as original user prompt
+            "",                 // No prefix for character-only modification
+            promptModificationAttempts, 
+            openaiKey, 
+            requestId
+          );
+          
+          if (modifiedCharacter !== originalCharacter) {
+            // Reconstruct the full prompt with the modified character
+            finalPrompt = prompt.replace(originalCharacter, modifiedCharacter);
+            analysisSuccessful = false; // Mark as unsuccessful so we use original prompt structure
+            console.log(`✅ [${requestId}] ChatGPT modified character within limits: "${modifiedCharacter}"`);
+            console.log(`🔍 [${requestId}] Modified character: "${modifiedCharacter}" (${modifiedCharacter.length}/${originalCharacter.length} chars)`);
+          } else {
+            console.log(`  🔄 [${requestId}] Using original prompt as fallback`);
+            finalPrompt = prompt;
+            analysisSuccessful = false;
+          }
+        } else {
+          console.log(`  🔄 [${requestId}] Using original prompt as fallback`);
+          finalPrompt = prompt;
+          analysisSuccessful = false;
+        }
       } else {
         const analysisText = analysisJson?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (analysisText) {
-          finalPrompt = analysisText;
-          analysisSuccessful = true;
-          console.log(`  ✅ [${requestId}] Enhanced prompt from analysis: "${finalPrompt.substring(0, 100)}..."`);
+          // Check if the analysis returned a refusal message instead of actual analysis
+          const isRefusal = analysisText.includes("I cannot") || 
+                           analysisText.includes("harmful") || 
+                           analysisText.includes("inappropriate") ||
+                           analysisText.includes("content policy");
+          
+          if (isRefusal && openaiKey && promptModificationAttempts < 3) {
+            promptModificationAttempts++;
+            console.log(`🚫 [${requestId}] Analysis returned refusal, attempting ChatGPT character modification (${promptModificationAttempts}/3)`);
+            
+            // Extract just the character description from the original prompt
+            const characterMatch = prompt.match(/Character must be entirely replaced with:\s*(.+)$/);
+            const originalCharacter = characterMatch?.[1] || prompt.split(": ").pop() || prompt;
+            
+            console.log(`📝 [${requestId}] Character to modify: "${originalCharacter}"`);
+            console.log(`📏 [${requestId}] Character limit: ${originalCharacter.length} chars (original: "${originalCharacter}")`);
+            
+            const modifiedCharacter = await modifyPromptWithChatGPT(
+              originalCharacter,  // Only modify the character part
+              originalCharacter,  // Pass the same as original user prompt
+              "",                 // No prefix for character-only modification
+              promptModificationAttempts, 
+              openaiKey, 
+              requestId
+            );
+            
+            if (modifiedCharacter !== originalCharacter) {
+              // Reconstruct the full prompt with the modified character
+              finalPrompt = prompt.replace(originalCharacter, modifiedCharacter);
+              analysisSuccessful = false; // Use original prompt structure
+              console.log(`✅ [${requestId}] ChatGPT modified character within limits: "${modifiedCharacter}"`);
+              console.log(`🔍 [${requestId}] Modified character: "${modifiedCharacter}" (${modifiedCharacter.length}/${originalCharacter.length} chars)`);
+            } else {
+              finalPrompt = prompt;
+              analysisSuccessful = false;
+            }
+          } else {
+            finalPrompt = analysisText;
+            analysisSuccessful = true;
+            console.log(`  ✅ [${requestId}] Enhanced prompt from analysis: "${finalPrompt.substring(0, 100)}..."`);
+          }
         } else {
           console.error(`❌ [${requestId}] No analysis text returned`);
           console.log(`  🔄 [${requestId}] Using original prompt as fallback for empty response`);
