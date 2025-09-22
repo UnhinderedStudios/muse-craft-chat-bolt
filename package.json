@@ -55,7 +55,6 @@
     "pdfjs-dist": "^5.4.54",
     "react": "^18.3.1",
     "react-color": "^2.19.3",
-    "react-color-wheel": "^0.0.3",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.61.1",
