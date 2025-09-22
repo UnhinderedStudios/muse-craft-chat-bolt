@@ -592,32 +592,52 @@ Deno.serve(async (req: Request) => {
 
     console.log(`  ✅ [${requestId}] SUCCESS! Generated ${images.length} artist image(s) with Gemini 2.5 Flash Image Preview`);
     
+    // Validate critical variables before response construction
+    const safeFinalPrompt = FINAL_GENERATION_PROMPT || 'generation_prompt_undefined';
+    const safeCurrentCharacter = CURRENT_CHARACTER || 'character_undefined';
+    
+    console.log(`✅ [${requestId}] Successful generation - returning ${images.length} images`);
+    console.log(`🔍 [${requestId}] Final response validation - prompt: ${!!safeFinalPrompt}, character: ${!!safeCurrentCharacter}`);
+    
     return new Response(JSON.stringify({ 
       images,
-      enhancedPrompt: FINAL_GENERATION_PROMPT,
+      enhancedPrompt: safeFinalPrompt,
       debug: {
         requestId,
-        originalPrompt: prompt,
+        originalPrompt: prompt || 'undefined',
         hasReferenceImage: !!imageData,
-        finalPrompt: FINAL_GENERATION_PROMPT,
-        character: CURRENT_CHARACTER,
+        finalPrompt: safeFinalPrompt,
+        character: safeCurrentCharacter,
         imageCount: images.length,
-        analysisModel: analysisModel,
-        generationModel: generationModel,
-        analysisSuccessful,
-        promptModificationAttempts,
+        analysisModel: analysisModel || 'undefined',
+        generationModel: generationModel || 'undefined',
+        analysisSuccessful: analysisSuccessful ?? false,
+        promptModificationAttempts: promptModificationAttempts || 0,
         timestamp: new Date().toISOString(),
         guaranteedGemini: true // Confirm no fallback to other services
       }
     }), { headers: CORS });
 
   } catch (err: any) {
-    const requestId = generateRequestId(); // Generate ID even for errors
-    console.error(`❌ [${requestId}] Artist generator unhandled error:`, err);
+    // Use existing requestId if available, otherwise generate new one
+    const errorRequestId = typeof requestId !== 'undefined' ? requestId : generateRequestId();
+    console.error(`❌ [${errorRequestId}] Artist generator unhandled error:`, err);
+    console.error(`❌ [${errorRequestId}] Error stack:`, err?.stack);
+    
+    // Provide safe fallback values for response construction
+    const safeFinalPrompt = typeof FINAL_GENERATION_PROMPT !== 'undefined' ? FINAL_GENERATION_PROMPT : 'undefined';
+    const safeCurrentCharacter = typeof CURRENT_CHARACTER !== 'undefined' ? CURRENT_CHARACTER : 'undefined';
+    
     return new Response(
       JSON.stringify({ 
         error: err?.message || "Unhandled error",
-        requestId 
+        requestId: errorRequestId,
+        debug: {
+          finalPrompt: safeFinalPrompt,
+          character: safeCurrentCharacter,
+          errorPhase: "execution",
+          timestamp: new Date().toISOString()
+        }
       }),
       { status: 500, headers: CORS }
     );
