@@ -8,6 +8,7 @@ import { api } from "@/lib/api";
 import { TrackItem } from "@/types";
 import { ChevronUp, ChevronDown, X, User, Wand2, Repeat, ArrowRight, Download } from "lucide-react";
 import { useSessionManager } from "@/hooks/use-session-manager";
+import { AnimatedPromptInput } from "@/components/ui/animated-prompt-input";
 
 interface ArtistGeneratorProps {
   isOpen: boolean;
@@ -24,6 +25,9 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   const [offset, setOffset] = useState(0); // thumbnail scroll offset
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [sanitizedPrompt, setSanitizedPrompt] = useState("");
+  const [originalPrompt, setOriginalPrompt] = useState("");
 
   const VISIBLE_COUNT = 5;
 
@@ -71,6 +75,8 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
     
     try {
       setLoading(true);
+      setOriginalPrompt(prompt);
+      
       console.log(`🎨 [${clientReqId}] Starting artist generation with fixed reference image`);
       
       const cleanPrompt = prompt.trim();
@@ -86,6 +92,12 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
         hasEnhancedPrompt: !!result.enhancedPrompt,
         debug: result.debug
       });
+
+      // Extract sanitized prompt from debug logs if available and start animation
+      if (result.debug?.character && !isAnimating) {
+        setSanitizedPrompt(result.debug.character);
+        setIsAnimating(true);
+      }
       
       if (!result.images || result.images.length === 0) {
         console.error(`❌ [${clientReqId}] No images returned from API`);
@@ -140,6 +152,12 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       console.log(`🔄 [${clientReqId}] Setting loading to false`);
       setLoading(false);
     }
+  };
+
+  const handleAnimationComplete = () => {
+    setIsAnimating(false);
+    setSanitizedPrompt("");
+    setPrompt(originalPrompt);
   };
 
   const handleRetry = async () => {
@@ -326,7 +344,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                 </header>
 
                 <div className="flex-1 mb-4 relative">
-                  {loading ? (
+                  {loading && !isAnimating ? (
                     <div className="w-full h-full flex items-center justify-center">
                       <div className="relative">
                         <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
@@ -335,11 +353,14 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                       </div>
                     </div>
                   ) : (
-                    <textarea
+                    <AnimatedPromptInput
                       value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
+                      onChange={setPrompt}
                       placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
-                      className="w-full h-full resize-none rounded-lg bg-black/40 border border-white/10 text-white placeholder:text-white/40 p-3 focus:outline-none focus:ring-1 focus:ring-white/20"
+                      disabled={loading}
+                      animatedText={sanitizedPrompt}
+                      isAnimating={isAnimating}
+                      onAnimationComplete={handleAnimationComplete}
                     />
                   )}
                 </div>
