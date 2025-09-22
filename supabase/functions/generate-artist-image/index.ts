@@ -262,10 +262,14 @@ Deno.serve(async (req: Request) => {
       const originalCharacter = characterMatch[1];
       console.log(`🧹 [${requestId}] Pre-sanitizing character description: "${originalCharacter}"`);
       
+      // Extract prefix from original prompt to pass constraints to ChatGPT
+      const prefixMatch = prompt.match(/^(.*?)(?=Character must be entirely replaced with:)/);
+      const extractedPrefix = prefixMatch ? prefixMatch[1].trim() : "";
+      
       const sanitizedCharacter = await modifyPromptWithChatGPT(
         originalCharacter,  // Only modify the character part
         originalCharacter,  // Pass the same as original user prompt
-        "",                 // No prefix for character-only modification
+        extractedPrefix,    // Pass the extracted prefix so ChatGPT knows the constraints
         1,                  // First attempt at sanitization
         openaiKey, 
         requestId
