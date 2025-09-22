@@ -424,6 +424,7 @@ Deno.serve(async (req: Request) => {
     const contentType = req.headers.get("content-type") || "";
     let prompt = "";
     let imageData = "";
+    let mode = "normal";
     
     console.log(`📥 [${requestId}] Content-Type: ${contentType}`);
 
@@ -433,9 +434,10 @@ Deno.serve(async (req: Request) => {
       try {
         const formData = await withTimeout(req.formData(), 10000, "FormData parsing");
         prompt = (formData.get("prompt") as string) || "";
+        mode = (formData.get("mode") as string) || "normal";
         const imageFile = formData.get("image") as File;
         
-        console.log(`📝 [${requestId}] Form data - prompt: "${prompt}", hasImage: ${!!imageFile}`);
+        console.log(`📝 [${requestId}] Form data - prompt: "${prompt}", mode: "${mode}", hasImage: ${!!imageFile}`);
         
         if (imageFile) {
           console.log(`🖼️ [${requestId}] Image file - name: ${imageFile.name}, size: ${imageFile.size}, type: ${imageFile.type}`);
@@ -639,6 +641,20 @@ Deno.serve(async (req: Request) => {
     console.log(`📋 [${requestId}] FINAL SANITIZED CHARACTER: "${CURRENT_CHARACTER}"`)
     
     console.log(`🎯 [${requestId}] FINAL TO GEMINI: "${FINAL_GENERATION_PROMPT.substring(0, 100)}..."`);
+    
+    // Check if this is Imagen-only mode
+    if (mode === "imagen_only") {
+      console.log(`🎨 [${requestId}] IMAGEN ONLY MODE - Skipping Gemini, using Imagen 4 directly`);
+      console.log(`🎯 [${requestId}] Imagen 4 prompt: "A music artist or performer: ${CURRENT_CHARACTER}. Professional portrait style, high quality, artistic lighting."`);
+      try {
+        images = await generateWithImagen4(CURRENT_CHARACTER, geminiKey!, requestId);
+        console.log(`✅ [${requestId}] Imagen 4 success in imagen_only mode: ${images.length} images`);
+      } catch (imagen4Error: any) {
+        console.error(`❌ [${requestId}] Imagen 4 failed in imagen_only mode: ${imagen4Error.message}`);
+        throw new Error(`Imagen 4 failed: ${imagen4Error.message}`);
+      }
+    } else {
+      // Normal mode: Gemini generation with potential Imagen 4 fallback
     
     let generationParts = [];
     if (imageData) {
@@ -859,6 +875,7 @@ Deno.serve(async (req: Request) => {
         { status: 502, headers: CORS }
       );
     }
+  } // End of normal mode else block
 
     console.log(`  ✅ [${requestId}] SUCCESS! Generated ${images.length} artist image(s) with Gemini 2.5 Flash Image Preview`);
     

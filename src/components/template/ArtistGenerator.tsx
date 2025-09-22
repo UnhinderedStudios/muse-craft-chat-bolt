@@ -173,10 +173,103 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
     setPrompt(originalPrompt);
   };
 
-  const handleRetry = async () => {
-    // Retry button operation disabled - button remains visible but non-functional
-    console.log(`🔄 Retry button clicked but operation is disabled`);
-    return;
+  const handleGenerate2 = async () => {
+    // Generate-2 button for testing Imagen 4 exclusively
+    const clientReqId = `ui_imagen_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    
+    console.log(`🎨 [${clientReqId}] Generate-2 (Imagen 4 only) button clicked, prompt: "${prompt.trim()}"`);
+    console.log(`🔄 [${clientReqId}] Track: "${track?.title || 'Unknown'}"`);
+    
+    if (!prompt.trim()) {
+      console.log(`❌ [${clientReqId}] Empty prompt, showing toast`);
+      toast({ title: "Enter a prompt", description: "Type what you want to see for the artist portrait." });
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      setOriginalPrompt(prompt);
+      
+      // Start visual animation immediately
+      const mockSanitized = "Testing Imagen 4 exclusively with full pipeline";
+      setSanitizedPrompt(mockSanitized);
+      setIsAnimating(true);
+      
+      console.log(`🎨 [${clientReqId}] Animation started, processing Imagen 4 generation...`);
+      
+      const cleanPrompt = prompt.trim();
+      
+      console.log(`📤 [${clientReqId}] Sending Imagen-only request:`, {
+        prompt: cleanPrompt,
+        mode: "imagen_only"
+      });
+      
+      // Call API with imagen_only mode
+      const result = await api.generateArtistImagesImagenOnly(cleanPrompt);
+      
+      console.log(`🖼️ [${clientReqId}] Imagen 4 generation response:`, {
+        imageCount: result.images?.length || 0,
+        hasEnhancedPrompt: !!result.enhancedPrompt,
+        debug: result.debug
+      });
+      
+      if (!result.images || result.images.length === 0) {
+        console.error(`❌ [${clientReqId}] No images returned from Imagen 4`);
+        
+        setIsAnimating(false);
+        setSanitizedPrompt("");
+        
+        toast({ 
+          title: "Imagen 4 failed", 
+          description: "No images generated. Check logs for details.", 
+          variant: "destructive" 
+        });
+        return;
+      }
+      
+      console.log(`✅ [${clientReqId}] Generated ${result.images.length} images via Imagen 4, updating state`);
+      
+      setIsAnimating(false);
+      setSanitizedPrompt("");
+      
+      // Add new images to the front
+      const updatedImages = [...result.images, ...images];
+      setImages(updatedImages);
+      
+      // Update session
+      if (track && currentSession) {
+        const updatedTracks = (currentSession.tracks || []).map(t =>
+          t.id === track.id ? { 
+            ...t, 
+            generatedCovers: updatedImages
+          } : t
+        );
+        updateSession(currentSession.id, { tracks: updatedTracks });
+        console.log(`💾 [${clientReqId}] Updated session with Imagen 4 images for track "${track.title}"`);
+      }
+      
+      setSelectedIndex(0);
+      
+      toast({ 
+        title: "Imagen 4 Success", 
+        description: `Generated ${result.images.length} image(s) via Imagen 4 only`
+      });
+      
+    } catch (e: any) {
+      console.error(`❌ [${clientReqId}] Generate-2 error:`, e);
+      
+      setIsAnimating(false);
+      setSanitizedPrompt("");
+      
+      toast({ 
+        title: "Imagen 4 failed", 
+        description: `${e?.message || "Check logs for details."} (${clientReqId})`, 
+        variant: "destructive" 
+      });
+    } finally {
+      console.log(`🔄 [${clientReqId}] Setting loading to false`);
+      setLoading(false);
+    }
   };
 
   const handleApply = () => {
@@ -381,12 +474,12 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   </Button>
                   <Button
                     variant="secondary"
-                    onClick={handleRetry}
+                    onClick={handleGenerate2}
                     disabled={loading}
-                    className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center leading-none"
+                    className="col-span-1 text-xs px-2 bg-blue-600 text-white hover:bg-blue-700 border-0 flex items-center justify-center leading-none"
                   >
                     <Repeat className="w-3 h-3 mr-0.25" />
-                    Retry
+                    Gen-2
                   </Button>
                   <Button
                     variant="secondary"
