@@ -35,7 +35,7 @@ function getGenerationPrompt(finalPrompt: string, hasObjectConstraints: boolean,
   }
 }
 
-// Simplified function to sanitize character description using ChatGPT
+// Comprehensive GPT sanitization function that respects all prefix constraints
 async function modifyPromptWithChatGPT(
   characterDescription: string, 
   attempt: number, 
@@ -49,22 +49,37 @@ async function modifyPromptWithChatGPT(
 
   const conservativeness = ["moderately", "significantly", "extremely"][Math.min(attempt - 1, 2)];
   
-  const systemPrompt = `You are a content safety assistant. Rephrase the character description to be ${conservativeness} more family-friendly and appropriate while keeping the core visual concept intact.
+  const systemPrompt = `You are an intelligent character description sanitizer for AI image generation with CRITICAL PREFIX CONSTRAINTS. The final prompt will be: "Keep composition, structure, lighting and character position identical, character must be entirely different to the reference image, in other words not a single thing must resemble from the character in the image, this should be erased, pose must be entirely different but very cool to the current image, it should be clear that the person is a music artist. No objects such as guitars, mics, chairs or anything else at all can be present in the image. Character must be entirely replaced with: [YOUR OUTPUT]"
 
-RULES:
-- Remove problematic words but keep the essential visual elements
-- Preserve gender (man/woman/boy/girl) exactly as specified
-- Keep clothing styles, poses, expressions, and artistic elements
-- Make it sound more professional/artistic
-- Focus on style, expression, and artistic elements
-- Replace offensive terms with neutral equivalents
+CRITICAL RULES (${conservativeness} enforcement):
+1. ABSOLUTELY NO OBJECTS: Remove ALL objects, props, instruments, furniture, tools, accessories that characters hold or interact with
+2. MUSIC ARTIST THEME: Character must clearly be a music artist through pose, expression, style, or attire
+3. CONVERT OBJECTS TO APPEARANCE: Transform object references into visual traits or poses
+4. CONTENT SAFETY: Remove all rudeness, offensive language, inappropriate content
+5. SINGLE WORD EXPANSION: Expand single words into fuller character descriptions
+6. BIZARRE RATIONALIZATION: Convert bizarre concepts into realistic visual descriptions
 
-EXAMPLES:
-"Idiot wearing cheese hat" → "Person wearing cheese hat"
-"Crazy man jumping" → "Energetic man in dynamic pose"
-"Stupid gothic woman" → "Alternative style woman"
+OBJECT → APPEARANCE CONVERSION EXAMPLES:
+"Woman holding a lamp post" → "Woman with tall, statuesque posture and confident stance"
+"Person wearing cheese costume" → "Person with warm golden-yellow color palette and textured clothing"
+"Man with guitar" → "Man in confident performer stance with expressive hands"
+"Girl holding microphone" → "Girl in expressive vocal pose with dynamic hand gestures"
 
-Return ONLY the cleaned character description, nothing else.`;
+CONTENT SAFETY EXAMPLES:
+"Stupid idiot whore woman" → "Normal female character"
+"Crazy psycho man" → "Energetic male performer"
+"Ugly fat person" → "Character with unique features"
+
+SINGLE WORD EXPANSION EXAMPLES:
+"Cheese" → "Person with warm golden appearance and cheerful expression"
+"Rock" → "Rock musician with edgy style and confident attitude"
+"Jazz" → "Jazz artist with sophisticated style and smooth expression"
+
+BIZARRE RATIONALIZATION EXAMPLES:
+"Cheesy person who's super cheesy" → "Person with bright, cheerful expression and warm golden tones"
+"Flying rainbow unicorn person" → "Performer with colorful, fantastical stage makeup and dynamic pose"
+
+Return ONLY the sanitized character description that will work with the prefix constraints. Focus on visual appearance, pose, expression, clothing style, and artistic elements. NO OBJECTS WHATSOEVER.`;
 
   try {
     console.log(`🔄 [${requestId}] Sanitizing character description with ChatGPT (attempt ${attempt}, ${conservativeness} safer)`);
