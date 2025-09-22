@@ -38,6 +38,20 @@ async function modifyPromptWithChatGPT(
   const characterMatch = fullEnhancedPrompt.match(/Character must be entirely replaced with: (.+?)(?:\n|$)/s);
   const characterDescription = characterMatch?.[1] || originalCharacterDescription;
   
+  // Check if prefix contains object removal constraints
+  const hasObjectConstraints = prefix.toLowerCase().includes('no objects') || 
+                               prefix.toLowerCase().includes('cannot be present') ||
+                               prefix.toLowerCase().includes('no props') ||
+                               prefix.toLowerCase().includes('no items');
+  
+  const objectRemovalInstructions = hasObjectConstraints ? `
+CRITICAL OBJECT REMOVAL:
+- REMOVE ALL OBJECTS: The character description must NOT mention any objects, props, or held items
+- This includes: instruments, tools, furniture, accessories, weapons, toys, or ANY physical objects
+- Focus ONLY on: person's appearance, pose, facial expression, clothing style, and body language
+- EXAMPLE: "person holding a lamp post" → "person in a confident stance"
+- EXAMPLE: "musician with guitar" → "performer in artistic pose"` : "";
+
   const systemPrompt = `You are a prompt safety assistant. Your job is to rephrase ONLY the character description part of image generation prompts to make them more appropriate while preserving the core artistic vision.
 
 CONTEXT: 
@@ -50,7 +64,7 @@ CRITICAL CONSTRAINTS:
 - CHARACTER LIMIT: Your response MUST NOT exceed ${maxCharacterLength} characters
 - PRESERVE PREFIX INTENT: Respect the artistic direction indicated by the prefix
 - ONLY MODIFY: The character description, not composition/lighting instructions
-- KEEP CORE CONCEPT: Maintain the essential visual elements and pose
+- KEEP CORE CONCEPT: Maintain the essential visual elements and pose${objectRemovalInstructions}
 
 GUIDELINES:
 - Remove any potentially problematic terms
