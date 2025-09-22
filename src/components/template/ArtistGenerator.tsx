@@ -397,7 +397,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   <div className="space-y-2">
                     <label className="text-white/80 text-sm font-medium">Background Color</label>
                     
-                    <div className="flex flex-col items-center">
+                    <div className="rcp-minimal flex flex-col items-center">
                       <ChromePicker
                         color={selectedColor || "#ffffff"}
                         onChange={(color) => setSelectedColor(color.hex)}
