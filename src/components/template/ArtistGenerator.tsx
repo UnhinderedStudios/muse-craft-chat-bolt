@@ -373,10 +373,6 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                 className="flex flex-col rounded-xl border border-white/10 p-4 overflow-hidden min-h-0"
                 style={{ height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
               >
-                <header className="mb-3">
-                  <h3 className="text-white font-medium">Artist Generator</h3>
-                  <p className="text-white/50 text-sm">Describe your artist character. A reference composition is automatically used to ensure consistent lighting and pose structure.</p>
-                </header>
 
                 <div className="flex-1 min-h-0 mb-3 space-y-2 overflow-auto pr-1">
                   {/* Prompt Input - Reduced height */}
