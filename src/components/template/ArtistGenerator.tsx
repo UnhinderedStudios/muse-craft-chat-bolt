@@ -6,10 +6,10 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { TrackItem } from "@/types";
-import { ChevronUp, ChevronDown, X, User, Wand2, Repeat, ArrowRight, Download, Palette, RotateCcw } from "lucide-react";
+import { ChevronUp, ChevronDown, X, User, Wand2, Repeat, ArrowRight, Download } from "lucide-react";
 import { useSessionManager } from "@/hooks/use-session-manager";
 import { AnimatedPromptInput } from "@/components/ui/animated-prompt-input";
-import { ChromePicker } from 'react-color';
+import { Input } from "@/components/ui/input";
 
 interface ArtistGeneratorProps {
   isOpen: boolean;
@@ -30,10 +30,15 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   const [sanitizedPrompt, setSanitizedPrompt] = useState("");
   const [originalPrompt, setOriginalPrompt] = useState("");
   
-  // Color wheel state
-  const [selectedColor, setSelectedColor] = useState<string>("");
+  // Color state
+  const [selectedColor, setSelectedColor] = useState<string>("#ffffff");
   const [isColorApplied, setIsColorApplied] = useState(false);
-  const [showColorPicker, setShowColorPicker] = useState(false);
+  
+  // Predefined color palette
+  const predefinedColors = [
+    "#ffffff", "#000000", "#ff0000", "#0000ff", 
+    "#00ff00", "#800080", "#ffa500", "#ffff00", "#ff69b4"
+  ];
 
   const VISIBLE_COUNT = 5;
 
@@ -228,17 +233,19 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
     toast({ title: "Downloaded", description: "Artist image saved to your device" });
   };
 
-  const handleColorApply = () => {
+  const handleColorSelect = (color: string) => {
+    setSelectedColor(color);
     setIsColorApplied(true);
-    setShowColorPicker(false);
-    toast({ title: "Color applied", description: `Background color set to ${selectedColor}` });
   };
 
-  const handleColorReset = () => {
-    setSelectedColor("");
-    setIsColorApplied(false);
-    setShowColorPicker(false);
-    toast({ title: "Color reset", description: "Background color reset to default" });
+  const handleHexInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value.startsWith("#") && value.length <= 7) {
+      setSelectedColor(value);
+      if (value.length === 7) {
+        setIsColorApplied(true);
+      }
+    }
   };
 
   return (
@@ -398,71 +405,36 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
                   {/* Color Wheel Section */}
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-white/80 text-sm font-medium">Background Color</label>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowColorPicker(!showColorPicker)}
-                        className="text-white/60 hover:text-white p-1 h-auto"
-                      >
-                        <Palette className="w-4 h-4" />
-                      </Button>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {/* Color circles */}
+                      <div className="flex gap-1 flex-wrap">
+                        {predefinedColors.map((color) => (
+                          <button
+                            key={color}
+                            onClick={() => handleColorSelect(color)}
+                            className={cn(
+                              "w-6 h-6 rounded-full border-2 transition-all hover:scale-110",
+                              selectedColor === color 
+                                ? "border-white ring-2 ring-accent-primary/50" 
+                                : "border-white/20 hover:border-white/40"
+                            )}
+                            style={{ backgroundColor: color }}
+                            aria-label={`Select color ${color}`}
+                          />
+                        ))}
+                      </div>
+                      
+                      {/* Hex input */}
+                      <Input
+                        value={selectedColor}
+                        onChange={handleHexInput}
+                        placeholder="#ffffff"
+                        className="w-20 h-6 text-xs bg-black/20 border-white/20 text-white placeholder:text-white/40"
+                      />
                     </div>
                     
-                    {showColorPicker && (
-                      <div className="space-y-3">
-                        <div className="flex justify-center">
-                          <ChromePicker
-                            color={selectedColor || "#ffffff"}
-                            onChange={(color) => setSelectedColor(color.hex)}
-                            disableAlpha
-                            styles={{
-                              default: {
-                                picker: {
-                                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                                  borderRadius: '8px',
-                                  width: '200px',
-                                }
-                              }
-                            }}
-                          />
-                        </div>
-                        
-                        <div className="flex gap-2 justify-center">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleColorApply}
-                            disabled={!selectedColor}
-                            className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs px-3 py-1"
-                          >
-                            Apply
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleColorReset}
-                            className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs px-3 py-1"
-                          >
-                            <RotateCcw className="w-3 h-3 mr-1" />
-                            Reset
-                          </Button>
-                        </div>
-                        
-                        {isColorApplied && selectedColor && (
-                          <div className="text-center">
-                            <div className="inline-flex items-center gap-2 bg-white/10 text-white/80 text-xs px-2 py-1 rounded">
-                              <div 
-                                className="w-3 h-3 rounded-full border border-white/20" 
-                                style={{ backgroundColor: selectedColor }}
-                              />
-                              Color Applied: {selectedColor}
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                    {isColorApplied && (
+                      <p className="text-xs text-accent-primary">Background color will be applied to generated images</p>
                     )}
                   </div>
                 </div>
