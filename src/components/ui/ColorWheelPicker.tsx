@@ -40,92 +40,61 @@ export const ColorWheelPicker: React.FC<ColorWheelPickerProps> = ({
   };
 
   return (
-    <div className={cn("space-y-4", className)}>
-      {/* Modern Color Wheel Container */}
-      <div className="relative">
-        <div className="bg-gradient-to-br from-card-alt/80 to-card/80 backdrop-blur-sm border border-border-main rounded-2xl p-6 shadow-[var(--shadow-card)]">
-          <div className="flex justify-center">
-            <div className="relative">
-              <ChromePicker
-                color={color || "#ffffff"}
-                onChange={handleColorChange}
-                disableAlpha
-                styles={{
-                  default: {
-                    picker: {
-                      backgroundColor: 'transparent',
-                      border: 'none',
-                      borderRadius: '16px',
-                      width: '240px',
-                      boxShadow: 'none',
-                      fontFamily: 'inherit'
-                    },
-                    saturation: {
-                      borderRadius: '12px',
-                      border: '1px solid hsl(var(--border-main) / 0.2)'
-                    },
-                    hue: {
-                      borderRadius: '8px',
-                      border: '1px solid hsl(var(--border-main) / 0.2)',
-                      height: '12px'
-                    },
-                    alpha: {
-                      display: 'none' // Hide alpha since we disabled it
-                    },
-                    input: {
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border-main))',
-                      borderRadius: '6px',
-                      color: 'hsl(var(--foreground))',
-                      fontSize: '12px',
-                      padding: '4px 6px'
-                    },
-                    label: {
-                      color: 'hsl(var(--foreground))',
-                      fontSize: '11px',
-                      fontWeight: '500'
-                    },
-                    swatch: {
-                      borderRadius: '8px',
-                      border: '2px solid hsl(var(--border-main))'
-                    }
-                  }
-                }}
-              />
-              
-              {/* Hex display - only hex format */}
-              <div className="mt-3 text-center">
-                <div className="inline-flex items-center gap-2 bg-card/60 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-border-main">
-                  <div 
-                    className="w-4 h-4 rounded-full border-2 border-border-main" 
-                    style={{ backgroundColor: color || '#ffffff' }}
-                  />
-                  <span className="text-xs font-mono text-foreground/80 uppercase">
-                    {color || '#ffffff'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className={cn("space-y-3", className)}>
+      {/* Compact Color Picker */}
+      <div className="flex justify-center">
+        <ChromePicker
+          color={color || "#ffffff"}
+          onChange={handleColorChange}
+          disableAlpha
+          styles={{
+            default: {
+              picker: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                width: '180px',
+                boxShadow: 'none',
+                fontFamily: 'inherit'
+              },
+              saturation: {
+                borderRadius: '6px',
+                height: '80px'
+              },
+              hue: {
+                borderRadius: '4px',
+                height: '10px'
+              },
+              input: {
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '4px',
+                color: '#fff',
+                fontSize: '11px',
+                padding: '2px 4px'
+              },
+              label: {
+                color: 'rgba(255, 255, 255, 0.7)',
+                fontSize: '10px'
+              }
+            }
+          }}
+        />
       </div>
 
       {/* Recent Colors Memory */}
       {recentColors.length > 0 && (
-        <div className="space-y-2">
-          <h4 className="text-xs font-medium text-foreground/60 uppercase tracking-wide">
-            Recent Colors
-          </h4>
-          <div className="flex flex-wrap gap-2">
-            {recentColors.map((memoryColor, index) => (
+        <div className="space-y-1">
+          <div className="flex flex-wrap gap-1 justify-center">
+            {recentColors.slice(0, 8).map((memoryColor, index) => (
               <button
                 key={`${memoryColor}-${index}`}
                 onClick={() => handleMemoryColorClick(memoryColor)}
                 className={cn(
-                  "w-8 h-8 rounded-full border-2 transition-all hover:scale-110 hover:shadow-lg",
+                  "w-5 h-5 rounded-full border transition-all hover:scale-110",
                   color === memoryColor 
-                    ? "border-accent-primary ring-2 ring-accent-primary/40" 
-                    : "border-border-main hover:border-border-main/60"
+                    ? "border-white ring-1 ring-white/40" 
+                    : "border-white/30 hover:border-white/60"
                 )}
                 style={{ backgroundColor: memoryColor }}
                 title={memoryColor}
@@ -142,15 +111,15 @@ export const ColorWheelPicker: React.FC<ColorWheelPickerProps> = ({
           size="sm"
           onClick={handleApply}
           disabled={!color}
-          className="bg-gradient-to-r from-accent-primary to-accent-secondary text-white border-0 hover:shadow-lg transition-all"
+          className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs px-3 py-1"
         >
-          Apply Color
+          Apply
         </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={onReset}
-          className="bg-card border-border-main text-foreground hover:bg-card-alt"
+          className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs px-3 py-1"
         >
           <RotateCcw className="w-3 h-3 mr-1" />
           Reset
@@ -160,12 +129,12 @@ export const ColorWheelPicker: React.FC<ColorWheelPickerProps> = ({
       {/* Applied Status */}
       {isApplied && color && (
         <div className="text-center">
-          <div className="inline-flex items-center gap-2 bg-accent-primary/10 text-accent-primary text-xs px-3 py-1.5 rounded-lg border border-accent-primary/20">
+          <div className="inline-flex items-center gap-2 bg-white/10 text-white/80 text-xs px-2 py-1 rounded">
             <div 
-              className="w-3 h-3 rounded-full border border-accent-primary/40" 
+              className="w-3 h-3 rounded-full border border-white/20" 
               style={{ backgroundColor: color }}
             />
-            Background Color Applied
+            {color.toUpperCase()}
           </div>
         </div>
       )}
