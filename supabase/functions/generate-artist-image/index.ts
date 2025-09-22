@@ -338,14 +338,9 @@ Deno.serve(async (req: Request) => {
     
     console.log(`🔧 [${requestId}] Using models: analysis=${analysisModel}, generation=${generationModel}`);
     
-    // Initialize working character - FULL_PREFIX stays immutable 
-    CURRENT_CHARACTER = CHARACTER;
-    
-    console.log(`🔧 [${requestId}] Character initialization - INPUT: "${CHARACTER}", WORKING: "${CURRENT_CHARACTER}"`);
-
-    // Quick pre-sanitization to prevent obvious content policy violations
+    // STEP 1: Quick GPT fix (no image analysis)
     if (CURRENT_CHARACTER && openaiKey) {
-      console.log(`⚡ [${requestId}] Quick sanitizing character: "${CURRENT_CHARACTER}"`);
+      console.log(`⚡ [${requestId}] Quick GPT fix: "${CURRENT_CHARACTER}"`);
       
       const sanitizedCharacter = await quickSanitizeCharacter(
         CURRENT_CHARACTER,
@@ -355,81 +350,15 @@ Deno.serve(async (req: Request) => {
       
       if (sanitizedCharacter !== CURRENT_CHARACTER) {
         CURRENT_CHARACTER = sanitizedCharacter;
-        console.log(`✅ [${requestId}] Quick sanitized: "${CURRENT_CHARACTER}"`);
+        console.log(`✅ [${requestId}] Fixed: "${CURRENT_CHARACTER}"`);
       }
     }
 
-    // Optional analysis step - skip if image analysis fails quickly
-    if (imageData) {
-      const [mimeTypePart, base64Data] = imageData.split(",");
-      const mimeType = mimeTypePart.replace("data:", "").replace(";base64", "");
-      
-      console.log(`🔍 [${requestId}] Attempting optional image analysis`);
-      
-      try {
-        const analysisRes = await withTimeout(
-          fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${analysisModel}:generateContent`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-goog-api-key": geminiKey,
-              },
-              body: JSON.stringify({
-                contents: [{
-                  parts: [
-                    {
-                      inline_data: {
-                        mime_type: mimeType,
-                        data: base64Data
-                      }
-                    },
-                    {
-                      text: getAnalysisInstruction(`${FULL_PREFIX} ${CURRENT_CHARACTER}`, FULL_PREFIX, requestId)
-                    }
-                  ]
-                }],
-                generationConfig: {
-                  temperature: 1.0,
-                  topK: 40,
-                  topP: 0.95,
-                  maxOutputTokens: 512,
-                }
-              })
-            }
-          ),
-          20000,
-          "Optional Gemini analysis"
-        );
-
-        const analysisJson = await analysisRes.json().catch(() => null);
-        if (analysisRes.ok && analysisJson?.candidates?.[0]?.content?.parts?.[0]?.text) {
-          console.log(`✅ [${requestId}] Optional analysis successful`);
-        } else {
-          console.log(`⚠️ [${requestId}] Optional analysis failed, proceeding without it`);
-        }
-      } catch (error) {
-        console.log(`⚠️ [${requestId}] Analysis timeout/error, proceeding without it:`, error);
-      }
-    }
-
-    // Extract object constraints for generation using immutable prefix
-    const hasObjectConstraints = FULL_PREFIX.toLowerCase().includes('no objects') || 
-                                 FULL_PREFIX.toLowerCase().includes('cannot be present') ||
-                                 FULL_PREFIX.toLowerCase().includes('no props') ||
-                                 FULL_PREFIX.toLowerCase().includes('no items');
-    
-    console.log(`🎯 [${requestId}] hasObjectConstraints: ${hasObjectConstraints} (from immutable prefix)`);
-    
-    // 🔒 STREAMLINED GENERATION: Quick attempt with smart failure handling
+    // STEP 2: Send to Gemini - DONE
+    const hasObjectConstraints = FULL_PREFIX.toLowerCase().includes('no objects');
     FINAL_GENERATION_PROMPT = `${FULL_PREFIX} ${CURRENT_CHARACTER}`;
-    console.log(`🔒 [${requestId}] Final prompt: "${FINAL_GENERATION_PROMPT}"`);
+    console.log(`🎯 [${requestId}] Sending to Gemini: "${FINAL_GENERATION_PROMPT.substring(0, 100)}..."`);
     
-    let images: string[] = [];
-    let generationJson: any;
-    
-    // Prepare generation parts
     let generationParts = [];
     if (imageData) {
       const [mimeTypePart, base64Data] = imageData.split(",");
@@ -440,15 +369,13 @@ Deno.serve(async (req: Request) => {
           data: base64Data
         }
       });
-      console.log(`🖼️ [${requestId}] Using reference image for generation`);
     }
     
     generationParts.push({
       text: getGenerationPrompt(FINAL_GENERATION_PROMPT, hasObjectConstraints, requestId)
     });
 
-    // First generation attempt
-    console.log(`🎨 [${requestId}] Attempting Gemini generation`);
+    console.log(`🎨 [${requestId}] Generating with Gemini...`);
     
     const generationRes = await withTimeout(
       fetch(
@@ -476,7 +403,8 @@ Deno.serve(async (req: Request) => {
       "Gemini generation"
     );
 
-    generationJson = await generationRes.json().catch(() => ({}));
+    const generationJson = await generationRes.json().catch(() => ({}));
+    let images: string[] = [];
 
     if (generationRes.ok) {
       const candidate = generationJson?.candidates?.[0];
@@ -492,13 +420,13 @@ Deno.serve(async (req: Request) => {
           })
           .filter(Boolean);
         
-        console.log(`✅ [${requestId}] Generated ${images.length} images on first attempt`);
+        console.log(`✅ [${requestId}] Generated ${images.length} images`);
       }
     }
 
-    // If failed, try smart GPT fix + one more Gemini attempt
+    // Only retry if failed AND we have OpenAI for fixing
     if (images.length === 0 && openaiKey) {
-      console.log(`🔄 [${requestId}] First attempt failed, analyzing with GPT...`);
+      console.log(`🔄 [${requestId}] Failed, trying GPT fix + retry...`);
       
       const failureReason = generationJson?.error?.message || "No images returned";
       const fixedCharacter = await analyzeAndFixFailure(
@@ -509,16 +437,14 @@ Deno.serve(async (req: Request) => {
       );
       
       if (fixedCharacter !== CURRENT_CHARACTER) {
-        console.log(`🎯 [${requestId}] Retrying with fixed character`);
-        CURRENT_CHARACTER = fixedCharacter;
+        console.log(`🎯 [${requestId}] Retrying with: "${fixedCharacter}"`);
         
-        // Update generation parts with fixed character
-        const fixedPrompt = `${FULL_PREFIX} ${CURRENT_CHARACTER}`;
+        // Update prompt and retry once
+        const retryPrompt = `${FULL_PREFIX} ${fixedCharacter}`;
         generationParts[generationParts.length - 1] = {
-          text: getGenerationPrompt(fixedPrompt, hasObjectConstraints, requestId)
+          text: getGenerationPrompt(retryPrompt, hasObjectConstraints, requestId)
         };
         
-        // Second attempt with fixed character
         const retryRes = await withTimeout(
           fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/${generationModel}:generateContent`,
@@ -561,7 +487,7 @@ Deno.serve(async (req: Request) => {
               })
               .filter(Boolean);
             
-            console.log(`✅ [${requestId}] Generated ${images.length} images on retry`);
+            console.log(`✅ [${requestId}] Retry generated ${images.length} images`);
           }
         }
       }
