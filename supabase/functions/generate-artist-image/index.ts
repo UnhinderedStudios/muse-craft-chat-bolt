@@ -9,6 +9,43 @@ function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
 
+// Helper function to get analysis instruction based on object constraints
+function getAnalysisInstruction(finalPrompt: string, prefix: string, requestId: string): string {
+  const hasObjectConstraints = prefix.toLowerCase().includes('no objects') || 
+                               prefix.toLowerCase().includes('cannot be present') ||
+                               prefix.toLowerCase().includes('no props') ||
+                               prefix.toLowerCase().includes('no items');
+  
+  if (hasObjectConstraints) {
+    console.log(`🚫 [${requestId}] Object constraints detected - using object-removal analysis`);
+    return `CRITICAL: Keep camera angle and lighting style identical, BUT remove all objects/props from the scene. Replace any objects with clean, neutral background where props were located. Hands should be empty. Only change the character/subject as requested: "${finalPrompt}". Preserve the pose style and overall composition but eliminate all objects, instruments, tools, furniture, or props. The character should fit naturally into a clean scene. Respond with an enhanced prompt that emphasizes preserving composition while removing all objects and only modifying the subject.`;
+  } else {
+    return `CRITICAL: Keep composition, lighting, background and structure of this image identical. Only change the character/subject as requested: "${finalPrompt}". Preserve the exact same pose, camera angle, lighting setup, background elements, and overall visual structure. The character should fit naturally into the existing scene without altering any other visual elements. Respond with an enhanced prompt that emphasizes preserving the original image's composition while only modifying the subject.`;
+  }
+}
+
+// Helper function to get generation prompt with object constraints
+function getGenerationPrompt(finalPrompt: string, hasObjectConstraints: boolean, requestId: string): string {
+  if (hasObjectConstraints) {
+    console.log(`🚫 [${requestId}] Adding object removal instructions to generation prompt`);
+    return `GENERATE AN IMAGE: ${finalPrompt}
+
+HARD RULES FOR GENERATION:
+- NO OBJECTS/PROPS: Absolutely no lamp posts, microphones, guitars, chairs, stands, instruments, tools, furniture, or any physical objects
+- EMPTY HANDS: Character's hands must be completely empty
+- CLEAN BACKGROUND: If reference contains props, erase them and fill with clean, neutral background
+- FOCUS: Only the character/person, their pose, expression, and clothing
+
+NEGATIVE PROMPT: lamp post, microphone, guitar, chair, stand, instrument, tool, furniture, object, prop, holding, carrying, gripping
+
+IMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
+  } else {
+    return `GENERATE AN IMAGE: ${finalPrompt}
+
+IMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
+  }
+}
+
 // Function to modify prompt using ChatGPT when Gemini blocks content
 async function modifyPromptWithChatGPT(
   fullEnhancedPrompt: string, 
@@ -23,6 +60,9 @@ async function modifyPromptWithChatGPT(
     return fullEnhancedPrompt;
   }
 
+  // Determine if we're working with a character-only string or full prompt
+  const isCharacterOnly = !fullEnhancedPrompt.includes("Character must be entirely replaced with:");
+  
   // Calculate character limit based on original user prompt (excluding prefix)
   const originalCharacterDescription = originalUserPrompt.replace(prefix, "").trim();
   const maxCharacterLength = originalCharacterDescription.length;
@@ -36,7 +76,7 @@ async function modifyPromptWithChatGPT(
   
   // Extract the character description part that needs modification
   const characterMatch = fullEnhancedPrompt.match(/Character must be entirely replaced with: (.+?)(?:\n|$)/s);
-  const characterDescription = characterMatch?.[1] || originalCharacterDescription;
+  const characterDescription = isCharacterOnly ? fullEnhancedPrompt : (characterMatch?.[1] || originalCharacterDescription);
   
   // Check if prefix contains object removal constraints
   const hasObjectConstraints = prefix.toLowerCase().includes('no objects') || 
@@ -113,11 +153,46 @@ Respond with ONLY the rephrased character description (max ${maxCharacterLength}
     if (modifiedCharacterDescription) {
       console.log(`🔍 [${requestId}] Modified character: "${modifiedCharacterDescription}" (${modifiedCharacterDescription.length}/${maxCharacterLength} chars)`);
       
+      // Programmatic prop scrub - remove common object phrases after ChatGPT sanitization
+      let scrubbedDescription = modifiedCharacterDescription;
+      if (hasObjectConstraints) {
+        const propPatterns = [
+          /\bholding\s+[^,\n.]*/gi,
+          /\bcarrying\s+[^,\n.]*/gi,
+          /\bgripping\s+[^,\n.]*/gi,
+          /\bclutching\s+[^,\n.]*/gi,
+          /\busing\s+[^,\n.]*/gi,
+          /\bleaning\s+(?:on|against)\s+[^,\n.]*/gi,
+          /\bwith\s+(?:a|an|the)\s+[^,\n.]*/gi,
+        ];
+        
+        propPatterns.forEach(pattern => {
+          scrubbedDescription = scrubbedDescription.replace(pattern, '').trim();
+        });
+        
+        // Clean up whitespace and commas
+        scrubbedDescription = scrubbedDescription
+          .replace(/\s{2,}/g, " ")
+          .replace(/\s*,\s*/g, ", ")
+          .replace(/,\s*,/g, ", ")
+          .replace(/^,|,$/g, "")
+          .trim();
+          
+        if (scrubbedDescription !== modifiedCharacterDescription) {
+          console.log(`🧽 [${requestId}] Prop scrubbed: "${scrubbedDescription}"`);
+          modifiedCharacterDescription = scrubbedDescription;
+        }
+      }
+      
       // Validate character limit
       if (modifiedCharacterDescription.length > maxCharacterLength) {
         console.warn(`⚠️ [${requestId}] Modified prompt exceeds character limit, truncating`);
         const truncated = modifiedCharacterDescription.substring(0, maxCharacterLength);
         console.log(`✂️ [${requestId}] Truncated to: "${truncated}"`);
+        
+        if (isCharacterOnly) {
+          return truncated;
+        }
         
         // Reconstruct the full prompt with the truncated character description
         const modifiedFullPrompt = fullEnhancedPrompt.replace(
@@ -126,6 +201,11 @@ Respond with ONLY the rephrased character description (max ${maxCharacterLength}
         );
         
         return modifiedFullPrompt;
+      }
+      
+      if (isCharacterOnly) {
+        console.log(`✅ [${requestId}] ChatGPT modified character-only: "${modifiedCharacterDescription}"`);
+        return modifiedCharacterDescription;
       }
       
       // Reconstruct the full prompt with the modified character description
@@ -311,7 +391,7 @@ Deno.serve(async (req: Request) => {
           }
         },
         {
-          text: `CRITICAL: Keep composition, lighting, background and structure of this image identical. Only change the character/subject as requested: "${finalPrompt}". Preserve the exact same pose, camera angle, lighting setup, background elements, and overall visual structure. The character should fit naturally into the existing scene without altering any other visual elements. Respond with an enhanced prompt that emphasizes preserving the original image's composition while only modifying the subject.`
+          text: getAnalysisInstruction(finalPrompt, prefix, requestId)
         }
       ];
 
@@ -365,7 +445,7 @@ Deno.serve(async (req: Request) => {
           const modifiedCharacter = await modifyPromptWithChatGPT(
             originalCharacter,  // Only modify the character part
             originalCharacter,  // Pass the same as original user prompt
-            "",                 // No prefix for character-only modification
+            prefix,             // Pass prefix to maintain object constraints
             promptModificationAttempts, 
             openaiKey, 
             requestId
@@ -410,7 +490,7 @@ Deno.serve(async (req: Request) => {
             const modifiedCharacter = await modifyPromptWithChatGPT(
               originalCharacter,  // Only modify the character part
               originalCharacter,  // Pass the same as original user prompt
-              "",                 // No prefix for character-only modification
+              prefix,             // Pass prefix to maintain object constraints
               promptModificationAttempts, 
               openaiKey, 
               requestId
@@ -440,6 +520,14 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    // Extract object constraints for generation
+    const hasObjectConstraints = prefix.toLowerCase().includes('no objects') || 
+                                 prefix.toLowerCase().includes('cannot be present') ||
+                                 prefix.toLowerCase().includes('no props') ||
+                                 prefix.toLowerCase().includes('no items');
+    
+    console.log(`🎯 [${requestId}] hasObjectConstraints: ${hasObjectConstraints}`);
+    
     // Now generate image using Gemini 2.5 Flash Image Preview with reference image if available
     const generationParts = [];
     
@@ -457,9 +545,7 @@ Deno.serve(async (req: Request) => {
     }
     
     // Add the enhanced prompt with explicit image generation instruction
-    const explicitPrompt = `GENERATE AN IMAGE: ${finalPrompt}
-
-IMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
+    const explicitPrompt = getGenerationPrompt(finalPrompt, hasObjectConstraints, requestId);
     
     generationParts.push({
       text: explicitPrompt
@@ -476,12 +562,28 @@ IMPORTANT: You must generate and return an actual image, not text. Create a visu
       generationAttempts++;
 
       // Update generation parts with current prompt
-      const currentGenerationParts = [...generationParts];
-      currentGenerationParts[currentGenerationParts.length - 1] = {
-        text: `GENERATE AN IMAGE: ${currentPrompt}
-
-IMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`
-      };
+      let currentGenerationParts = [];
+      
+      // For attempt 2 with object constraints, skip reference image to avoid prop conflicts
+      const useReferenceImage = imageData && !(hasObjectConstraints && generationAttempts === 2);
+      if (useReferenceImage) {
+        const [mimeTypePart, base64Data] = imageData.split(",");
+        const mimeType = mimeTypePart.replace("data:", "").replace(";base64", "");
+        
+        currentGenerationParts.push({
+          inline_data: {
+            mime_type: mimeType,
+            data: base64Data
+          }
+        });
+        console.log(`🖼️ [${requestId}] Using reference image for generation attempt ${generationAttempts}`);
+      } else if (hasObjectConstraints && generationAttempts === 2) {
+        console.log(`🚫 [${requestId}] Skipping reference image for attempt ${generationAttempts} due to object constraints`);
+      }
+      
+      currentGenerationParts.push({
+        text: getGenerationPrompt(currentPrompt, hasObjectConstraints, requestId)
+      });
 
       const generationRequestBody = {
         contents: [{
