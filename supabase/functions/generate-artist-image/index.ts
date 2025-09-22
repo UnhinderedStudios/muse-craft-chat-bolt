@@ -35,7 +35,69 @@ function getGenerationPrompt(finalPrompt: string, hasObjectConstraints: boolean,
   }
 }
 
-// Strengthened GPT sanitization with aggressive safety rules
+// Helper function to extract key visual descriptors that should be preserved
+function extractKeywords(input: string): string[] {
+  const keywords: string[] = [];
+  
+  // Ethnicity/race descriptors
+  const ethnicityMatches = input.match(/\b(black|white|asian|latino|latina|hispanic|african|european|indian|middle eastern|arab|native|indigenous)\b/gi);
+  if (ethnicityMatches) keywords.push(...ethnicityMatches);
+  
+  // Physical traits
+  const physicalMatches = input.match(/\b(scar|scars|tattoo|piercing|eye patch|missing eye|bald|beard|mustache|long hair|short hair|curly|straight|spiky|pointy)\b/gi);
+  if (physicalMatches) keywords.push(...physicalMatches);
+  
+  // Themes and styles
+  const themeMatches = input.match(/\b(\w+[-]?themed?|\w+punk|goth|vintage|retro|futuristic|cyberpunk|steampunk)\b/gi);
+  if (themeMatches) keywords.push(...themeMatches);
+  
+  // Color descriptors
+  const colorMatches = input.match(/\b(red|blue|green|yellow|purple|pink|orange|black|white|gray|grey|silver|gold|blonde|brunette|brown)\b/gi);
+  if (colorMatches) keywords.push(...colorMatches);
+  
+  return [...new Set(keywords.map(k => k.toLowerCase()))];
+}
+
+// Helper function to validate and restore lost keywords
+function validateAndRestoreKeywords(sanitized: string, originalKeywords: string[], requestId: string): string {
+  const lostKeywords: string[] = [];
+  
+  for (const keyword of originalKeywords) {
+    if (!sanitized.toLowerCase().includes(keyword.toLowerCase())) {
+      lostKeywords.push(keyword);
+    }
+  }
+  
+  if (lostKeywords.length > 0) {
+    console.log(`🔍 [${requestId}] Lost keywords detected: ${lostKeywords.join(', ')}`);
+    
+    // Re-inject critical keywords in a natural way
+    let restoredResult = sanitized;
+    
+    // Add lost ethnicity/physical traits
+    const ethnicityLost = lostKeywords.filter(k => k.match(/\b(black|white|asian|latino|latina|hispanic|african|european|indian|middle eastern|arab|native|indigenous)\b/i));
+    const physicalLost = lostKeywords.filter(k => k.match(/\b(scar|scars|tattoo|piercing|eye patch|missing eye|bald|beard|mustache|themed?)\b/i));
+    const themeLost = lostKeywords.filter(k => k.match(/\b(\w+[-]?themed?|\w+punk|goth|vintage|retro|futuristic|cyberpunk|steampunk)\b/i));
+    
+    if (ethnicityLost.length > 0) {
+      restoredResult = `${ethnicityLost[0]} ${restoredResult}`.trim();
+    }
+    
+    if (physicalLost.length > 0 || themeLost.length > 0) {
+      const traits = [...physicalLost, ...themeLost].slice(0, 2); // Limit to avoid overflow
+      if (traits.length > 0) {
+        restoredResult = `${restoredResult} with ${traits.join(' and ')}`.trim();
+      }
+    }
+    
+    console.log(`🔧 [${requestId}] Restored result: "${restoredResult}"`);
+    return restoredResult;
+  }
+  
+  return sanitized;
+}
+
+// Strengthened GPT sanitization with preservation-first approach
 async function quickSanitizeCharacter(
   characterDescription: string, 
   openaiKey: string, 
@@ -46,27 +108,33 @@ async function quickSanitizeCharacter(
     return characterDescription;
   }
 
-  const systemPrompt = `PRESERVE PHYSICAL TRAITS while sanitizing music artist portrait. Transform problematic content into safe performer descriptions while keeping ethnicity, skin color, and nationality.
+  const systemPrompt = `PRESERVE USER INTENT - Transform to safe, respectful language while keeping ALL visual characteristics, themes, and physical traits intact.
 
-CRITICAL RULES:
-1. PRESERVE: ethnicity, skin color, nationality, body type, gender
-2. Remove objects/props - convert to clothing/style themes  
-3. Keep physical descriptors but make performer-focused
-4. Convert food/objects to abstract styling
-5. Remove specific names, brands, explicit content
-6. Use respectful, inclusive language for all ethnicities
+PRESERVE EVERYTHING:
+- Physical traits: scars, missing eyes, unique hair, body type, height, build
+- Ethnicity/race: Use respectful terms (Black, Asian, Latino, White, etc.)
+- Creative themes: food themes → clothing/costume patterns (bacon theme → bacon-patterned outfit)
+- Style descriptors: punk, goth, cyberpunk, vintage, futuristic themes
+- Colors, textures, accessories as clothing elements
+- Unique characteristics that make the person distinctive
+
+ONLY REMOVE:
+- Objects in hands → convert to clothing style
+- Explicit nudity/sexual content → "artistic performer style"
+- Violence → "dramatic artistic pose"
+- Copyrighted characters → "inspired performer style"
 
 TRANSFORMATION EXAMPLES:
-- "holding guitar" → "rock musician style"
-- "with microphone" → "vocal performer look"  
-- "eating pizza" → "casual street style outfit"
 - "black dude" → "Black male performer"
-- "Asian woman" → "Asian female vocalist"
-- "Latino man" → "Latino male artist"
-- "Taylor Swift style" → "pop singer aesthetic"
-- Any inappropriate content → "professional performer style"
+- "bacon themed costume" → "performer in bacon-patterned costume design"
+- "scar on face" → "performer with facial scar"
+- "one eye missing" → "performer with distinctive one-eyed look"
+- "pointy spiky hair" → "performer with spiky pointed hairstyle"
+- "Asian woman with purple hair" → "Asian female performer with vibrant purple hair"
+- "holding microphone" → "vocalist performer style"
+- "cyberpunk outfit" → "performer in cyberpunk-styled costume"
 
-OUTPUT: Clean, safe performer description preserving physical traits. MAX 80 chars.`;
+OUTPUT: Respectful performer description preserving ALL user intent and visual details. MAX 120 characters.`;
 
   try {
     console.log(`⚡ [${requestId}] Quick sanitizing: "${characterDescription}"`);
@@ -82,10 +150,10 @@ OUTPUT: Clean, safe performer description preserving physical traits. MAX 80 cha
           model: 'gpt-4o-mini',
           messages: [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: characterDescription }
+            { role: 'user', content: `Transform this to safe performer description while preserving ALL visual details and themes: "${characterDescription}"` }
           ],
-          max_tokens: 50,
-          temperature: 0.3
+          max_tokens: 80,
+          temperature: 0.2
         }),
       }),
           new Promise<never>((_, reject) => {
@@ -102,8 +170,11 @@ OUTPUT: Clean, safe performer description preserving physical traits. MAX 80 cha
     const sanitized = data.choices?.[0]?.message?.content?.trim();
     
     if (sanitized) {
-      console.log(`✅ [${requestId}] Quick sanitized: "${sanitized}"`);
-      return sanitized;
+      // Validation: Re-inject important keywords if they were lost
+      const keywordsToPreserve = extractKeywords(characterDescription);
+      const validatedResult = validateAndRestoreKeywords(sanitized, keywordsToPreserve, requestId);
+      console.log(`✅ [${requestId}] Quick sanitized: "${validatedResult}"`);
+      return validatedResult;
     }
     return characterDescription;
   } catch (error) {
@@ -377,16 +448,17 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Stage 2: Aggressive pattern removal
-    console.log(`🔧 [${requestId}] Stage 2 - Pattern removal on: "${CURRENT_CHARACTER}"`);
+    // Stage 2: Selective object removal (preserve themes)
+    console.log(`🔧 [${requestId}] Stage 2 - Selective pattern removal on: "${CURRENT_CHARACTER}"`);
     let stageTwo = CURRENT_CHARACTER;
     
-    // Remove object references
+    // Remove ONLY objects in hands/being used (preserve clothing themes)
     const objectPatterns = [
-      /\b(holding|with|carrying|playing|using)\s+\w+/gi,
-      /\b(guitar|microphone|mic|instrument|piano|drums|bass)\b/gi,
-      /\b(chair|stool|stage|platform|booth|studio)\b/gi,
-      /\b(food|pizza|burger|beer|drink|cigarette)\b/gi
+      /\b(holding|carrying|playing|using)\s+(a\s+|an\s+|the\s+)?(?:guitar|microphone|mic|instrument|piano|drums|bass|phone|cup|bottle)\b/gi,
+      /\b(sitting on|standing on)\s+(a\s+|an\s+|the\s+)?(chair|stool|stage|platform|booth)\b/gi,
+      /\b(eating|drinking|smoking)\s+\w+/gi,
+      // Remove standalone instruments when clearly objects (not themes)
+      /\b(with\s+)?(a\s+|an\s+|the\s+)(guitar|microphone|mic|instrument|piano|drums|bass)\b(?!\s*(design|pattern|theme|style|costume|outfit))/gi
     ];
     
     objectPatterns.forEach((pattern, idx) => {
@@ -608,6 +680,12 @@ Deno.serve(async (req: Request) => {
     
     console.log(`✅ [${requestId}] Successful generation - returning ${images.length} images`);
     console.log(`🔍 [${requestId}] Final response validation - prompt: ${!!safeFinalPrompt}, character: ${!!safeCurrentCharacter}`);
+    
+    // Debug: Show transformation process
+    console.log(`🔍 [${requestId}] TRANSFORMATION DEBUG:`);
+    console.log(`  📝 Original input: "${CHARACTER}"`);
+    console.log(`  🔧 After sanitization: "${safeCurrentCharacter}"`);
+    console.log(`  🎯 Final to Gemini: "${safeFinalPrompt?.substring(0, 150)}..."`);
     
     // Final validation before response construction
     if (!images || images.length === 0) {
