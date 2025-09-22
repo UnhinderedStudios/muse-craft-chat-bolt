@@ -410,9 +410,15 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                               borderRadius: '8px',
                               width: '150px',
                             },
+                            activeColor: { display: 'none' },
                             color: { display: 'none' },
                             controls: { display: 'none' },
-                            fields: { display: 'none' }
+                            fields: { display: 'none' },
+                            field: { display: 'none' },
+                            label: { display: 'none' },
+                            input: { display: 'none' },
+                            toggles: { display: 'none' },
+                            wrap: { padding: 0, margin: 0 }
                           }
                         }}
                       />
@@ -442,17 +448,6 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                       </Button>
                     </div>
                     
-                    {isColorApplied && selectedColor && (
-                      <div className="text-center">
-                        <div className="inline-flex items-center gap-2 bg-white/10 text-white/80 text-xs px-2 py-1 rounded">
-                          <div 
-                            className="w-3 h-3 rounded-full border border-white/20" 
-                            style={{ backgroundColor: selectedColor }}
-                          />
-                          Color Applied: {selectedColor}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
 
