@@ -615,6 +615,7 @@ Deno.serve(async (req: Request) => {
               topK: 40,
               topP: 0.95,
               maxOutputTokens: 8192,
+              seed: Math.floor(Math.random() * 1000000)
             }
           })
         }
@@ -685,7 +686,9 @@ Deno.serve(async (req: Request) => {
           text: getGenerationPrompt(retryPrompt, hasObjectConstraints, requestId)
         };
         
-        console.log(`🚀 [${requestId}] Sending attempt ${attempt} to Gemini: "${retryPrompt.substring(0, 100)}..."`);
+        // Generate different seed for each retry attempt
+        const retrySeed = Math.floor(Math.random() * 1000000);
+        console.log(`🚀 [${requestId}] Sending attempt ${attempt} to Gemini (seed: ${retrySeed}): "${retryPrompt.substring(0, 100)}..."`);
         
         // Send to Gemini
         const retryRes = await withTimeout(
@@ -706,6 +709,7 @@ Deno.serve(async (req: Request) => {
                   topK: 40,
                   topP: 0.95,
                   maxOutputTokens: 8192,
+                  seed: retrySeed
                 }
               })
             }
