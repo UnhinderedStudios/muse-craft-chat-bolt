@@ -46,12 +46,21 @@ async function quickSanitizeCharacter(
     return characterDescription;
   }
 
-  const systemPrompt = `Quick character sanitizer for music artist image generation. Convert input to clean, safe, visual description. Rules:
-1. NO OBJECTS: Remove instruments, mics, props, tools
-2. MUSIC ARTIST: Make it clear they're a performer
-3. VISUAL ONLY: Appearance, pose, style, expression
-4. SAFE CONTENT: Remove inappropriate language
-Max ~150 chars. Example: "Rock guitarist" → "Rock musician with edgy style and confident stage presence"`;
+  const systemPrompt = `Quick character sanitizer for music artist image generation. Transform input to clean, safe, visual description while PRESERVING the user's creative theme/concept.
+
+TRANSFORMATION RULES:
+1. PRESERVE THEMES: If user mentions objects/items (cheese, pizza, etc), convert to themed clothing/styling (cheese-themed outfit, pizza-pattern shirt)
+2. NO OBJECTS IN HANDS: Remove "holding X" but keep "X" as clothing theme, patterns, or styling
+3. CONVERT INAPPROPRIATE: Transform crude language into visual style descriptions
+4. MUSIC ARTIST FOCUS: Make it clear they're a performer with the preserved theme
+5. VISUAL ONLY: Appearance, pose, clothing themes, expression, styling
+
+Examples:
+- "Idiot holding cheese" → "Music performer in cheese-themed costume with playful cheese-pattern clothing"
+- "Guitarist with pizza" → "Musician with pizza-themed outfit and Italian-inspired styling"
+- "Singer holding beer" → "Performer with brewery-themed clothing and casual bar aesthetic"
+
+Max ~150 chars. Keep the user's creative DNA while making it safe and object-free.`;
 
   try {
     console.log(`⚡ [${requestId}] Quick sanitizing: "${characterDescription}"`);
