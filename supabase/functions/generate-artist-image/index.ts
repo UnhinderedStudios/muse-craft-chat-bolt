@@ -46,24 +46,27 @@ async function quickSanitizeCharacter(
     return characterDescription;
   }
 
-  const systemPrompt = `AGGRESSIVE SANITIZATION for music artist portrait. Transform ANY potentially problematic content into safe performer descriptions.
+  const systemPrompt = `PRESERVE PHYSICAL TRAITS while sanitizing music artist portrait. Transform problematic content into safe performer descriptions while keeping ethnicity, skin color, and nationality.
 
 CRITICAL RULES:
-1. Remove ALL objects/props - convert to clothing/style themes
-2. Make descriptions generic and performer-focused
-3. Convert ANY food/objects to abstract styling
-4. Remove specific names, brands, explicit content
-5. Focus on basic visual traits: gender, clothing style, pose attitude
-6. Use safe, commercial-friendly language only
+1. PRESERVE: ethnicity, skin color, nationality, body type, gender
+2. Remove objects/props - convert to clothing/style themes  
+3. Keep physical descriptors but make performer-focused
+4. Convert food/objects to abstract styling
+5. Remove specific names, brands, explicit content
+6. Use respectful, inclusive language for all ethnicities
 
 TRANSFORMATION EXAMPLES:
 - "holding guitar" → "rock musician style"
-- "with microphone" → "vocal performer look"
+- "with microphone" → "vocal performer look"  
 - "eating pizza" → "casual street style outfit"
+- "black dude" → "Black male performer"
+- "Asian woman" → "Asian female vocalist"
+- "Latino man" → "Latino male artist"
 - "Taylor Swift style" → "pop singer aesthetic"
 - Any inappropriate content → "professional performer style"
 
-OUTPUT: Clean, safe, generic music performer description. MAX 80 chars.`;
+OUTPUT: Clean, safe performer description preserving physical traits. MAX 80 chars.`;
 
   try {
     console.log(`⚡ [${requestId}] Quick sanitizing: "${characterDescription}"`);
@@ -317,8 +320,8 @@ Deno.serve(async (req: Request) => {
       prompt = "Professional musician portrait, studio lighting, artistic and cinematic";
     }
 
-    // Standard prefix template with object removal constraints
-    const STANDARD_PREFIX = "Keep composition, structure, lighting and character position identical, character must be entirely different to the reference image, in other words not a single thing must resemble from the character in the image, this should be erased, pose must be entirely different but very cool to the current image, it should be clear that the person is a music artist. No objects such as guitars, mics, chairs or anything else at all can be present in the image. Character must be entirely replaced with:";
+    // Standard prefix template with object removal constraints - using Gemini-friendly language
+    const STANDARD_PREFIX = "Keep composition, structure, lighting and character position identical, character must be completely transformed to the reference image, in other words not a single thing must resemble from the character in the image, this should be changed, pose must be completely different but very cool to the current image, it should be clear that the person is a music artist. No objects such as guitars, mics, chairs or anything else at all can be present in the image. Character must be completely transformed with:";
 
     // Extract or establish the immutable prefix and character parts
     let FULL_PREFIX = "";
