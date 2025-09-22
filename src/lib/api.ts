@@ -384,6 +384,9 @@ export const api = {
       const formData = new FormData();
       formData.append('prompt', fullPrompt);
       formData.append('image', referenceFile);
+      if (backgroundHex) {
+        formData.append('backgroundHex', backgroundHex);
+      }
       
       const apiResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-artist-image`, {
         method: 'POST',
