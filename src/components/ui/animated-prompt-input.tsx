@@ -23,141 +23,47 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
   onAnimationComplete
 }) => {
   const [displayText, setDisplayText] = useState(value);
-  const [isBackspacing, setIsBackspacing] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
-  const [originalText, setOriginalText] = useState("");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const animationRef = useRef<number>();
+  const [showAnimatedText, setShowAnimatedText] = useState(false);
 
-  // Start animation sequence when isAnimating becomes true
+  // Simple CSS-based animation instead of complex RAF
   useEffect(() => {
     if (isAnimating && animatedText) {
-      setOriginalText(value);
-      startBackspaceAnimation();
-    } else if (!isAnimating && originalText) {
-      // Animation complete, restore original text
-      setDisplayText(originalText);
-      setIsBackspacing(false);
-      setIsTyping(false);
-      setOriginalText("");
-      onAnimationComplete?.();
+      setShowAnimatedText(true);
+      // Auto-hide after 3 seconds
+      const timer = setTimeout(() => {
+        setShowAnimatedText(false);
+        onAnimationComplete?.();
+      }, 3000);
+      return () => clearTimeout(timer);
     }
-  }, [isAnimating, animatedText, value, originalText, onAnimationComplete]);
+  }, [isAnimating, animatedText, onAnimationComplete]);
 
-  const startBackspaceAnimation = useCallback(() => {
-    if (!value) {
-      startTypeAnimation();
-      return;
-    }
-
-    setIsBackspacing(true);
-    let lastUpdate = Date.now();
-    const BACKSPACE_DELAY = 50; // ms between character removals
-
-    const backspaceStep = () => {
-      const now = Date.now();
-      if (now - lastUpdate < BACKSPACE_DELAY) {
-        animationRef.current = requestAnimationFrame(backspaceStep);
-        return;
-      }
-
-      lastUpdate = now;
-      setDisplayText(current => {
-        if (current.length <= 0) {
-          setIsBackspacing(false);
-          setTimeout(startTypeAnimation, 300); // Brief pause before typing
-          return "";
-        }
-        return current.slice(0, -1);
-      });
-      animationRef.current = requestAnimationFrame(backspaceStep);
-    };
-
-    // Start with a small delay
-    setTimeout(() => {
-      animationRef.current = requestAnimationFrame(backspaceStep);
-    }, 500);
-  }, [value]);
-
-  const startTypeAnimation = useCallback(() => {
-    if (!animatedText) return;
-
-    setIsTyping(true);
-    let currentIndex = 0;
-    let lastUpdate = Date.now();
-    const TYPE_DELAY = 80; // ms between character additions
-
-    const typeStep = () => {
-      const now = Date.now();
-      if (now - lastUpdate < TYPE_DELAY) {
-        animationRef.current = requestAnimationFrame(typeStep);
-        return;
-      }
-
-      if (currentIndex >= animatedText.length) {
-        setIsTyping(false);
-        setTimeout(() => {
-          // Clear the animated text and prepare to restore original
-          setDisplayText("");
-          onAnimationComplete?.();
-        }, 2000); // Show the sanitized text for 2 seconds
-        return;
-      }
-
-      lastUpdate = now;
-      setDisplayText(animatedText.slice(0, currentIndex + 1));
-      currentIndex++;
-      animationRef.current = requestAnimationFrame(typeStep);
-    };
-
-    animationRef.current = requestAnimationFrame(typeStep);
-  }, [animatedText, onAnimationComplete]);
-
-  // Cleanup animation on unmount
+  // Update display text when not animating
   useEffect(() => {
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, []);
-
-  // Handle text changes when not animating
-  useEffect(() => {
-    if (!isAnimating && !isBackspacing && !isTyping) {
+    if (!isAnimating) {
       setDisplayText(value);
+      setShowAnimatedText(false);
     }
-  }, [value, isAnimating, isBackspacing, isTyping]);
+  }, [value, isAnimating]);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (!isAnimating && !isBackspacing && !isTyping) {
+    if (!disabled) {
       onChange(e.target.value);
     }
   };
 
-  const isReadOnly = disabled || isAnimating || isBackspacing || isTyping;
-
   return (
-    <div className={cn("relative", className)}>
-      <textarea
-        ref={textareaRef}
-        value={displayText}
-        onChange={handleChange}
-        placeholder={placeholder}
-        readOnly={isReadOnly}
-        className="w-full h-full resize-none rounded-lg bg-black/40 border border-white/10 text-white placeholder:text-white/40 p-3 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all duration-200 cursor-default"
-      />
-      
-      {/* Animated cursor effect during typing */}
-      {isTyping && (
-        <div className="absolute top-3 text-white animate-pulse" 
-             style={{ 
-               left: `${3 + Math.min(displayText.length * 8, textareaRef.current?.scrollWidth || 0)}px`,
-               opacity: 0.8
-             }}>
-          |
-        </div>
+    <textarea
+      value={showAnimatedText ? animatedText : displayText}
+      onChange={handleChange}
+      placeholder={showAnimatedText ? "" : placeholder}
+      disabled={disabled}
+      className={cn(
+        "w-full h-full resize-none rounded-lg bg-black/40 border border-white/10 text-white placeholder:text-white/40 p-3 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all duration-200",
+        disabled && "cursor-default",
+        showAnimatedText && "animate-pulse",
+        className
       )}
-    </div>
+    />
   );
 };

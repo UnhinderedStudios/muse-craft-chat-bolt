@@ -77,6 +77,10 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       setLoading(true);
       setOriginalPrompt(prompt);
       
+      // Start visual animation immediately with a fake sanitized prompt
+      setSanitizedPrompt("Professional music artist portrait, safe and clean visual description");
+      setIsAnimating(true);
+      
       console.log(`🎨 [${clientReqId}] Starting artist generation with fixed reference image`);
       
       const cleanPrompt = prompt.trim();
@@ -92,12 +96,6 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
         hasEnhancedPrompt: !!result.enhancedPrompt,
         debug: result.debug
       });
-
-      // Extract sanitized prompt from debug logs if available and start animation
-      if (result.debug?.character && !isAnimating) {
-        setSanitizedPrompt(result.debug.character);
-        setIsAnimating(true);
-      }
       
       if (!result.images || result.images.length === 0) {
         console.error(`❌ [${clientReqId}] No images returned from API`);
@@ -343,26 +341,17 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   <p className="text-white/50 text-sm">Describe your artist character. A reference composition is automatically used to ensure consistent lighting and pose structure.</p>
                 </header>
 
-                <div className="flex-1 mb-4 relative">
-                  {loading && !isAnimating ? (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <div className="relative">
-                        <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                        <div className="absolute inset-0 w-8 h-8 border-2 border-transparent border-t-white/60 rounded-full animate-spin" style={{animationDuration: '1.5s'}}></div>
-                        <div className="absolute inset-0 w-8 h-8 rounded-full bg-white/10 animate-pulse"></div>
-                      </div>
-                    </div>
-                  ) : (
-                    <AnimatedPromptInput
-                      value={prompt}
-                      onChange={setPrompt}
-                      placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
-                      disabled={loading}
-                      animatedText={sanitizedPrompt}
-                      isAnimating={isAnimating}
-                      onAnimationComplete={handleAnimationComplete}
-                    />
-                  )}
+                <div className="flex-1 mb-4">
+                  <AnimatedPromptInput
+                    value={prompt}
+                    onChange={setPrompt}
+                    placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
+                    disabled={loading}
+                    animatedText={sanitizedPrompt}
+                    isAnimating={isAnimating}
+                    onAnimationComplete={handleAnimationComplete}
+                    className="flex-1"
+                  />
                 </div>
 
                 <div className="grid grid-cols-4 gap-1">
