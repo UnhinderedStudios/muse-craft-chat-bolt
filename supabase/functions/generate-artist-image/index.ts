@@ -35,98 +35,40 @@ function getGenerationPrompt(finalPrompt: string, hasObjectConstraints: boolean,
   }
 }
 
-// Function to modify prompt using ChatGPT when Gemini blocks content
+// Simplified function to sanitize character description using ChatGPT
 async function modifyPromptWithChatGPT(
-  fullEnhancedPrompt: string, 
-  originalUserPrompt: string, 
-  prefix: string, 
+  characterDescription: string, 
   attempt: number, 
   openaiKey: string, 
   requestId: string
 ): Promise<string> {
   if (!openaiKey) {
     console.log(`⚠️ [${requestId}] No OpenAI key available for prompt modification`);
-    return fullEnhancedPrompt;
+    return characterDescription;
   }
-
-  // Determine if we're working with a character-only string or full prompt
-  const isCharacterOnly = !fullEnhancedPrompt.includes("Character must be entirely replaced with:");
-  
-  // Calculate character limit based on original user prompt (excluding prefix)
-  const originalCharacterDescription = originalUserPrompt.replace(prefix, "").trim();
-  const maxCharacterLength = originalCharacterDescription.length;
-  
-  console.log(`📏 [${requestId}] Character limit: ${maxCharacterLength} chars (original: "${originalCharacterDescription}")`);
 
   const conservativeness = ["moderately", "significantly", "extremely"][Math.min(attempt - 1, 2)];
   
-  // Extract composition preservation instructions from the enhanced prompt
-  const compositionInstructions = fullEnhancedPrompt.match(/CRITICAL:.*?(?=Character must be|$)/s)?.[0] || "";
-  
-  // Extract the character description part that needs modification
-  const characterMatch = fullEnhancedPrompt.match(/Character must be entirely replaced with: (.+?)(?:\n|$)/s);
-  const characterDescription = isCharacterOnly ? fullEnhancedPrompt : (characterMatch?.[1] || originalCharacterDescription);
-  
-  // Check if prefix contains object removal constraints
-  const hasObjectConstraints = prefix.toLowerCase().includes('no objects') || 
-                               prefix.toLowerCase().includes('cannot be present') ||
-                               prefix.toLowerCase().includes('no props') ||
-                               prefix.toLowerCase().includes('no items');
-  
-  const objectRemovalInstructions = hasObjectConstraints ? `
-CRITICAL OBJECT REMOVAL:
-- REMOVE ALL OBJECTS: The character description must NOT mention any objects, props, or held items
-- This includes: instruments, tools, furniture, accessories, weapons, toys, or ANY physical objects
-- Focus ONLY on: person's appearance, pose, facial expression, clothing style, and body language
-- EXAMPLE: "person holding a lamp post" → "person in a confident stance"
-- EXAMPLE: "musician with guitar" → "performer in artistic pose"` : "";
+  const systemPrompt = `You are a content safety assistant. Rephrase the character description to be ${conservativeness} more family-friendly and appropriate while keeping the core visual concept intact.
 
-  const systemPrompt = `You are a prompt safety assistant. Your job is to rephrase ONLY the character description part of image generation prompts to make them more appropriate while preserving the core artistic vision.
-
-CONTEXT: 
-- Original prefix: "${prefix}"
-- Full composition requirements: "${compositionInstructions}"
-
-TASK: Rephrase ONLY the character description to be ${conservativeness} more family-friendly and safe while keeping the creative essence intact.
-
-CRITICAL CONSTRAINTS:
-- CHARACTER LIMIT: Your response MUST NOT exceed ${maxCharacterLength} characters
-- PRESERVE GENDER: Always maintain gender specifications (man, woman, boy, girl, male, female, etc.) as core visual elements
-- PRESERVE PREFIX INTENT: Respect the artistic direction indicated by the prefix
-- ONLY MODIFY: The character description, not composition/lighting instructions
-- KEEP CORE CONCEPT: Maintain the essential visual elements and pose${objectRemovalInstructions}
-
-ESSENTIAL GENDER PRESERVATION:
-- Gender terms are NOT problematic and must be kept intact
-- "Man" stays "man", "woman" stays "woman", "boy" stays "boy", "girl" stays "girl"
-- Gender is a fundamental visual characteristic that must survive sanitization
-- Never generalize gender to "person" or "individual" unless the original was already gender-neutral
-
-GUIDELINES:
-- Remove any potentially problematic terms (NOT including gender)
-- Use more neutral, artistic language for tone/professionalism
-- Keep the core visual concept (pose, style, mood, GENDER)
+RULES:
+- Remove problematic words but keep the essential visual elements
+- Preserve gender (man/woman/boy/girl) exactly as specified
+- Keep clothing styles, poses, expressions, and artistic elements
 - Make it sound more professional/artistic
-- Focus on artistic elements like style, expression, fashion
-- Use terms like "artist", "performer", "creative professional" but KEEP the gender
-- Respect the prefix's artistic direction
-- "Neutral language" refers to tone/professionalism, NOT gender removal
+- Focus on style, expression, and artistic elements
+- Replace offensive terms with neutral equivalents
 
 EXAMPLES:
-Input: "crazy man jumping around like an idiot"
-Output: "energetic man in dynamic motion with expressive pose"
+"Idiot wearing cheese hat" → "Person wearing cheese hat"
+"Crazy man jumping" → "Energetic man in dynamic pose"
+"Stupid gothic woman" → "Alternative style woman"
 
-Input: "gothic punk woman with peace sign pose"
-Output: "alternative style female musician making peace gesture"
-
-Input: "stupid boy with messy hair"
-Output: "young man with tousled hair in playful pose"
-
-Respond with ONLY the rephrased character description (max ${maxCharacterLength} chars), nothing else.`;
+Return ONLY the cleaned character description, nothing else.`;
 
   try {
-    console.log(`🔄 [${requestId}] Modifying character description with ChatGPT (attempt ${attempt}, ${conservativeness} safer)`);
-    console.log(`📝 [${requestId}] Character to modify: "${characterDescription}"`);
+    console.log(`🔄 [${requestId}] Sanitizing character description with ChatGPT (attempt ${attempt}, ${conservativeness} safer)`);
+    console.log(`📝 [${requestId}] Character to sanitize: "${characterDescription}"`);
     
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -140,92 +82,29 @@ Respond with ONLY the rephrased character description (max ${maxCharacterLength}
           { role: 'system', content: systemPrompt },
           { role: 'user', content: characterDescription }
         ],
-        max_tokens: Math.min(100, Math.ceil(maxCharacterLength * 1.2)), // Allow some buffer
+        max_tokens: 100,
         temperature: 0.3
       }),
     });
 
     if (!response.ok) {
       console.error(`❌ [${requestId}] ChatGPT API failed:`, await response.text());
-      return fullEnhancedPrompt;
+      return characterDescription;
     }
 
     const data = await response.json();
-    const modifiedCharacterDescription = data.choices?.[0]?.message?.content?.trim();
+    const sanitizedDescription = data.choices?.[0]?.message?.content?.trim();
     
-    if (modifiedCharacterDescription) {
-      console.log(`🔍 [${requestId}] Modified character: "${modifiedCharacterDescription}" (${modifiedCharacterDescription.length}/${maxCharacterLength} chars)`);
-      
-      // Programmatic prop scrub - remove common object phrases after ChatGPT sanitization
-      let scrubbedDescription = modifiedCharacterDescription;
-      if (hasObjectConstraints) {
-        const propPatterns = [
-          /\bholding\s+[^,\n.]*/gi,
-          /\bcarrying\s+[^,\n.]*/gi,
-          /\bgripping\s+[^,\n.]*/gi,
-          /\bclutching\s+[^,\n.]*/gi,
-          /\busing\s+[^,\n.]*/gi,
-          /\bleaning\s+(?:on|against)\s+[^,\n.]*/gi,
-          /\bwith\s+(?:a|an|the)\s+[^,\n.]*/gi,
-        ];
-        
-        propPatterns.forEach(pattern => {
-          scrubbedDescription = scrubbedDescription.replace(pattern, '').trim();
-        });
-        
-        // Clean up whitespace and commas
-        scrubbedDescription = scrubbedDescription
-          .replace(/\s{2,}/g, " ")
-          .replace(/\s*,\s*/g, ", ")
-          .replace(/,\s*,/g, ", ")
-          .replace(/^,|,$/g, "")
-          .trim();
-          
-        if (scrubbedDescription !== modifiedCharacterDescription) {
-          console.log(`🧽 [${requestId}] Prop scrubbed: "${scrubbedDescription}"`);
-          modifiedCharacterDescription = scrubbedDescription;
-        }
-      }
-      
-      // Validate character limit
-      if (modifiedCharacterDescription.length > maxCharacterLength) {
-        console.warn(`⚠️ [${requestId}] Modified prompt exceeds character limit, truncating`);
-        const truncated = modifiedCharacterDescription.substring(0, maxCharacterLength);
-        console.log(`✂️ [${requestId}] Truncated to: "${truncated}"`);
-        
-        if (isCharacterOnly) {
-          return truncated;
-        }
-        
-        // Reconstruct the full prompt with the truncated character description
-        const modifiedFullPrompt = fullEnhancedPrompt.replace(
-          /Character must be entirely replaced with: .+?(?=\n|$)/s,
-          `Character must be entirely replaced with: ${truncated}`
-        );
-        
-        return modifiedFullPrompt;
-      }
-      
-      if (isCharacterOnly) {
-        console.log(`✅ [${requestId}] ChatGPT modified character-only: "${modifiedCharacterDescription}"`);
-        return modifiedCharacterDescription;
-      }
-      
-      // Reconstruct the full prompt with the modified character description
-      const modifiedFullPrompt = fullEnhancedPrompt.replace(
-        /Character must be entirely replaced with: .+?(?=\n|$)/s,
-        `Character must be entirely replaced with: ${modifiedCharacterDescription}`
-      );
-      
-      console.log(`✅ [${requestId}] ChatGPT modified character within limits: "${modifiedCharacterDescription}"`);
-      return modifiedFullPrompt;
+    if (sanitizedDescription) {
+      console.log(`✅ [${requestId}] Sanitized character: "${sanitizedDescription}"`);
+      return sanitizedDescription;
     } else {
-      console.error(`❌ [${requestId}] No modified character description returned from ChatGPT`);
-      return fullEnhancedPrompt;
+      console.error(`❌ [${requestId}] No sanitized description returned from ChatGPT`);
+      return characterDescription;
     }
   } catch (error) {
-    console.error(`❌ [${requestId}] ChatGPT prompt modification failed:`, error);
-    return fullEnhancedPrompt;
+    console.error(`❌ [${requestId}] ChatGPT sanitization failed:`, error);
+    return characterDescription;
   }
 }
 
@@ -494,8 +373,6 @@ Deno.serve(async (req: Request) => {
             
             const modifiedCharacter = await modifyPromptWithChatGPT(
               CURRENT_CHARACTER,  // Only modify the character part
-              CURRENT_CHARACTER,  // Pass the same as original user prompt
-              FULL_PREFIX,        // Pass immutable prefix to maintain object constraints
               promptModificationAttempts, 
               openaiKey, 
               requestId
@@ -615,8 +492,6 @@ Deno.serve(async (req: Request) => {
           
           const modifiedCharacter = await modifyPromptWithChatGPT(
             CURRENT_CHARACTER, // Only modify the character part
-            CHARACTER,         // Pass the original character
-            FULL_PREFIX,       // Pass the immutable prefix
             promptModificationAttempts, 
             openaiKey, 
             requestId
@@ -675,17 +550,15 @@ Deno.serve(async (req: Request) => {
           promptModificationAttempts++;
           console.log(`🚫 [${requestId}] Empty results detected (potential content block), attempting ChatGPT prompt modification (${promptModificationAttempts}/3)`);
           
-          const modifiedPrompt = await modifyPromptWithChatGPT(
-            currentPrompt, // Pass the full enhanced prompt 
-            prompt,        // Pass the original user prompt
-            prefix,        // Pass the extracted prefix
+          const modifiedCharacter = await modifyPromptWithChatGPT(
+            CURRENT_CHARACTER, // Only sanitize the character part
             promptModificationAttempts, 
             openaiKey, 
             requestId
           );
-          if (modifiedPrompt !== currentPrompt) {
-            currentPrompt = modifiedPrompt;
-            console.log(`🔄 [${requestId}] Retrying with modified prompt after empty results: "${currentPrompt.substring(0, 100)}..."`);
+          if (modifiedCharacter !== CURRENT_CHARACTER) {
+            CURRENT_CHARACTER = modifiedCharacter;
+            console.log(`🔄 [${requestId}] Retrying with sanitized character after empty results: "${CURRENT_CHARACTER}"`);
             generationAttempts--; // Don't count this as a failed generation attempt
             continue;
           }
