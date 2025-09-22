@@ -410,15 +410,16 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                               borderRadius: '8px',
                               width: '150px',
                             },
+                            // Hide everything below the wheel/slider
                             activeColor: { display: 'none' },
                             color: { display: 'none' },
                             controls: { display: 'none' },
-                            fields: { display: 'none' },
-                            field: { display: 'none' },
-                            label: { display: 'none' },
-                            input: { display: 'none' },
                             toggles: { display: 'none' },
-                            wrap: { padding: 0, margin: 0 }
+                            fields: {
+                              wrap: { display: 'none' },
+                              input: { display: 'none' },
+                              label: { display: 'none' },
+                            },
                           }
                         }}
                       />
