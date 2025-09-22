@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { TrackItem } from "@/types";
-import { ChevronUp, ChevronDown, X, User, Wand2, Repeat, ArrowRight, Download, Palette, RotateCcw } from "lucide-react";
+import { ChevronUp, ChevronDown, X, User, Wand2, Repeat, ArrowRight, Download, Palette, RotateCcw, Check } from "lucide-react";
 import { useSessionManager } from "@/hooks/use-session-manager";
 import { AnimatedPromptInput } from "@/components/ui/animated-prompt-input";
 import { HexColorPicker } from "react-colorful";
@@ -397,37 +397,35 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   <div className="space-y-2">
                     <label className="text-white/80 text-sm font-medium">Background Color</label>
                     
-                    <div className="flex flex-col items-center">
-                      <HexColorPicker
-                        color={selectedColor || "#ffffff"}
-                        onChange={setSelectedColor}
-                        className="w-40"
-                      />
-                      <div className="mt-2 text-center text-xs text-white/80 select-all">
-                        {selectedColor || "#ffffff"}
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-2 justify-center">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleColorApply}
-                        disabled={!selectedColor}
-                        className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs px-3 py-1"
-                      >
-                        Apply
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleColorReset}
-                        className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs px-3 py-1"
-                      >
-                        <RotateCcw className="w-3 h-3 mr-1" />
-                        Reset
-                      </Button>
-                    </div>
+                     <div className="flex flex-col items-center">
+                       <HexColorPicker
+                         color={selectedColor || "#ffffff"}
+                         onChange={setSelectedColor}
+                         className="w-40"
+                       />
+                       <div className="mt-2 flex items-center gap-2">
+                         <div className="text-xs text-white/80 select-all">
+                           {selectedColor || "#ffffff"}
+                         </div>
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={handleColorApply}
+                           disabled={!selectedColor}
+                           className="bg-white/10 border-white/20 text-white hover:bg-white/20 w-8 h-8 p-0"
+                         >
+                           <Check className="w-3 h-3" />
+                         </Button>
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={handleColorReset}
+                           className="bg-white/10 border-white/20 text-white hover:bg-white/20 w-8 h-8 p-0"
+                         >
+                           <RotateCcw className="w-3 h-3" />
+                         </Button>
+                       </div>
+                     </div>
                     
                   </div>
                 </div>
