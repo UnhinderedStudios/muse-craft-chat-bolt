@@ -138,19 +138,14 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
   const isReadOnly = disabled || isAnimating || isBackspacing || isTyping;
 
   return (
-    <div className="relative">
+    <div className={cn("relative", className)}>
       <textarea
         ref={textareaRef}
         value={displayText}
         onChange={handleChange}
         placeholder={placeholder}
         readOnly={isReadOnly}
-        className={cn(
-          "w-full h-full resize-none rounded-lg bg-black/40 border border-white/10 text-white placeholder:text-white/40 p-3 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all duration-200",
-          isReadOnly && "cursor-default",
-          (isBackspacing || isTyping) && "animate-pulse",
-          className
-        )}
+        className="w-full h-full resize-none rounded-lg bg-black/40 border border-white/10 text-white placeholder:text-white/40 p-3 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all duration-200 cursor-default"
       />
       
       {/* Animated cursor effect during typing */}
