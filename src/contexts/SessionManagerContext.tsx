@@ -96,6 +96,21 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     setCurrentSessionId(GLOBAL_SESSION_ID);
   }, []);
 
+  // Emergency localStorage cleanup function
+  const emergencyCleanup = useCallback(() => {
+    try {
+      console.log("[SessionManager] Emergency cleanup: localStorage quota exceeded");
+      // Remove all session data and reinitialize
+      localStorage.removeItem(STORAGE_KEY);
+      initialize();
+      console.log("[SessionManager] Emergency cleanup completed");
+    } catch (error) {
+      console.error("[SessionManager] Emergency cleanup failed:", error);
+      // If even cleanup fails, just initialize in memory
+      initialize();
+    }
+  }, [initialize]);
+
   // Load from localStorage and clear all tracks except mock ones
   useEffect(() => {
     try {
@@ -137,9 +152,17 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
       }
     } catch (e) {
       console.error("[SessionManager] Failed to load from storage", e);
+      // Check if it's a quota error
+      if (e instanceof Error && e.name === 'QuotaExceededError') {
+        emergencyCleanup();
+      } else {
+        initialize();
+      }
     }
-    initialize();
-  }, [initialize]);
+    if (!sessions || sessions.length === 0) {
+      initialize();
+    }
+  }, [initialize, emergencyCleanup]);
 
   // Persist to localStorage with pruning and quota guards
   useEffect(() => {
@@ -209,13 +232,19 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
           (err && String(err).includes("QuotaExceededError"));
         if (isQuota && level < 2) {
           level = (level + 1) as 0 | 1 | 2;
+          console.log(`[SessionManager] Quota exceeded, trying level ${level} pruning`);
           continue;
         }
         console.error("[SessionManager] Failed to persist sessions", err);
+        // If all pruning levels fail, try emergency cleanup
+        if (isQuota) {
+          console.log("[SessionManager] All pruning levels failed, attempting emergency cleanup");
+          emergencyCleanup();
+        }
         break;
       }
     }
-  }, [sessions, currentSessionId]);
+  }, [sessions, currentSessionId, emergencyCleanup]);
 
   // Auto-prune stale or replaced active generations (safety net)
   useEffect(() => {

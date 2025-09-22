@@ -39,6 +39,10 @@ function getGenerationPrompt(finalPrompt: string, hasObjectConstraints: boolean,
 function extractKeywords(input: string): string[] {
   const keywords: string[] = [];
   
+  // Gender descriptors (CRITICAL)
+  const genderMatches = input.match(/\b(man|woman|male|female|boy|girl|guy|lady|dude)\b/gi);
+  if (genderMatches) keywords.push(...genderMatches);
+  
   // Ethnicity/race descriptors
   const ethnicityMatches = input.match(/\b(black|white|asian|latino|latina|hispanic|african|european|indian|middle eastern|arab|native|indigenous)\b/gi);
   if (ethnicityMatches) keywords.push(...ethnicityMatches);
@@ -73,6 +77,20 @@ function validateAndRestoreKeywords(sanitized: string, originalKeywords: string[
     
     // Re-inject critical keywords in a natural way
     let restoredResult = sanitized;
+    
+    // CRITICAL: Add lost gender first (highest priority)
+    const genderLost = lostKeywords.filter(k => k.match(/\b(man|woman|male|female|boy|girl|guy|lady|dude)\b/i));
+    if (genderLost.length > 0) {
+      const genderTerm = genderLost[0].toLowerCase();
+      // Convert to appropriate performer term
+      const genderMap: Record<string, string> = {
+        'man': 'male', 'guy': 'male', 'dude': 'male', 'boy': 'male',
+        'woman': 'female', 'lady': 'female', 'girl': 'female'
+      };
+      const performerGender = genderMap[genderTerm] || genderTerm;
+      restoredResult = `${performerGender} ${restoredResult}`.trim();
+      console.log(`🚨 [${requestId}] CRITICAL: Restored gender "${genderTerm}" as "${performerGender}"`);
+    }
     
     // Add lost ethnicity/physical traits
     const ethnicityLost = lostKeywords.filter(k => k.match(/\b(black|white|asian|latino|latina|hispanic|african|european|indian|middle eastern|arab|native|indigenous)\b/i));
@@ -229,9 +247,18 @@ async function quickSanitizeCharacter(
     return processBackgroundColor(characterDescription, backgroundHex);
   }
 
-  const systemPrompt = `PRESERVE USER INTENT - Transform to safe, respectful language while keeping ALL visual characteristics, themes, and physical traits intact.
+  const systemPrompt = `CRITICAL: PRESERVE USER INTENT - Transform to safe, respectful language while keeping ALL visual characteristics, themes, and physical traits intact.
+
+🚨 GENDER PRESERVATION (MANDATORY):
+- "man" → "male performer"
+- "woman" → "female performer" 
+- "guy/dude" → "male performer"
+- "lady/girl" → "female performer"
+- NEVER remove or ignore gender specifications
+- Gender is the MOST IMPORTANT detail to preserve
 
 PRESERVE EVERYTHING:
+- Gender: ALWAYS preserve and convert to performer terms (man→male, woman→female)
 - Physical traits: scars, missing eyes, unique hair, body type, height, build
 - Ethnicity/race: Use respectful terms (Black, Asian, Latino, White, etc.)
 - Creative themes: food themes → clothing/costume patterns (bacon theme → bacon-patterned outfit)
@@ -249,19 +276,21 @@ ONLY REMOVE:
 - Copyrighted characters → "inspired performer style"
 - Non-color background elements (keep only color backgrounds)
 
-TRANSFORMATION EXAMPLES:
+CRITICAL TRANSFORMATION EXAMPLES:
+- "man standing still" → "male performer standing still"
+- "woman singing" → "female performer singing"
 - "black dude" → "Black male performer"
+- "asian woman with purple hair" → "Asian female performer with vibrant purple hair"
 - "bacon themed costume" → "performer in bacon-patterned costume design"
 - "scar on face" → "performer with facial scar"
 - "one eye missing" → "performer with distinctive one-eyed look"
 - "pointy spiky hair" → "performer with spiky pointed hairstyle"
-- "Asian woman with purple hair" → "Asian female performer with vibrant purple hair"
 - "holding microphone" → "vocalist performer style"
 - "cyberpunk outfit" → "performer in cyberpunk-styled costume"
 - "red background" → "red background" (preserve)
 - "volcano background" → "" (remove completely)
 
-OUTPUT: Respectful performer description preserving ALL user intent and visual details. MAX 120 characters.`;
+OUTPUT: Respectful performer description preserving ALL user intent and visual details, especially GENDER. MAX 120 characters.`;
 
   try {
     console.log(`⚡ [${requestId}] Quick sanitizing: "${characterDescription}"`);

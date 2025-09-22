@@ -399,8 +399,15 @@ export const api = {
       
       if (!apiResponse.ok) {
         const errorData = await apiResponse.json().catch(() => ({}));
-        console.error(`❌ [${clientRequestId}] Artist generation failed:`, errorData);
-        throw new Error(errorData.error || "Failed to generate artist images");
+        console.error(`❌ [${clientRequestId}] Artist generation failed:`, apiResponse.status, errorData);
+        
+        // Handle specific error cases with retry logic
+        if (apiResponse.status === 502 || apiResponse.status === 503) {
+          console.log(`🔄 [${clientRequestId}] Server error ${apiResponse.status}, will retry...`);
+          throw new Error(`Server temporarily unavailable (${apiResponse.status}). Please try again in a moment.`);
+        }
+        
+        throw new Error(errorData.error || `Failed to generate artist images (${apiResponse.status})`);
       }
       
       const data = await apiResponse.json();
