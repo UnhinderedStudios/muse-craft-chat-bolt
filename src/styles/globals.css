@@ -48,19 +48,43 @@
 }
 
 /* Color picker seam fix for Artist Generator */
+.color-picker-compact {
+  line-height: 0; /* eliminate stray baseline gaps */
+}
 .color-picker-compact .react-colorful {
   gap: 0 !important;
   overflow: hidden;
   border-radius: 8px;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 .color-picker-compact .react-colorful__saturation {
   margin-bottom: 0 !important;
   border-bottom-left-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  /* Offset vertical gradient slightly to avoid banding/seam */
+  background-size: 100% calc(100% + 1px), 100% 100% !important;
+  background-position: 0 -0.5px, 0 0 !important;
 }
 .color-picker-compact .react-colorful__hue,
 .color-picker-compact .react-colorful__alpha {
-  margin-top: -1px !important;
+  margin-top: -1px !important; /* overlap to kill sub-pixel seam */
   border-top-left-radius: 0 !important;
   border-top-right-radius: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+.color-picker-compact .react-colorful__interactive {
+  box-shadow: none !important;
+  outline: none !important;
+}
+.color-picker-compact .react-colorful,
+.color-picker-compact .react-colorful__saturation,
+.color-picker-compact .react-colorful__hue,
+.color-picker-compact .react-colorful__alpha {
+  will-change: transform;
 }
