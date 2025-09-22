@@ -493,6 +493,7 @@ Deno.serve(async (req: Request) => {
     const contentType = req.headers.get("content-type") || "";
     let prompt = "";
     let imageData = "";
+    let backgroundHex = "";
     
     console.log(`📥 [${requestId}] Content-Type: ${contentType}`);
 
@@ -502,7 +503,7 @@ Deno.serve(async (req: Request) => {
       try {
         const formData = await withTimeout(req.formData(), 10000, "FormData parsing");
         prompt = (formData.get("prompt") as string) || "";
-        const backgroundHex = (formData.get("backgroundHex") as string) || "";
+        backgroundHex = (formData.get("backgroundHex") as string) || "";
         const imageFile = formData.get("image") as File;
         
         console.log(`📝 [${requestId}] Form data - prompt: "${prompt}", backgroundHex: "${backgroundHex}", hasImage: ${!!imageFile}`);
@@ -556,7 +557,7 @@ Deno.serve(async (req: Request) => {
         // Handle JSON body for text-only prompts
         const body = await withTimeout(req.json(), 5000, "JSON parsing").catch(() => ({}));
         prompt = body?.prompt?.toString?.() || "";
-        const backgroundHex = body?.backgroundHex?.toString?.() || "";
+        backgroundHex = body?.backgroundHex?.toString?.() || "";
         imageData = body?.imageData?.toString?.() || "";
         console.log(`📝 [${requestId}] JSON body - prompt: "${prompt}", backgroundHex: "${backgroundHex}", hasImageData: ${!!imageData}`);
       } catch (jsonError: any) {
