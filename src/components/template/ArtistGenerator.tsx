@@ -438,7 +438,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   </div>
                 </div>
 
-                <div className="mt-auto grid grid-cols-4 gap-1">
+                <div className="mt-6 grid grid-cols-4 gap-1">
                   <Button
                     variant="secondary"
                     onClick={handleGenerate}
