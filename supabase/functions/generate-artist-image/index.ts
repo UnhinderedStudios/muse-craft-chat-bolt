@@ -254,6 +254,7 @@ Deno.serve(async (req: Request) => {
     
     let finalPrompt = prompt;
     let analysisSuccessful = false;
+    let promptModificationAttempts = 0;
 
     // If image is provided, first analyze it to enhance the prompt
     if (imageData) {
@@ -428,7 +429,6 @@ IMPORTANT: You must generate and return an actual image, not text. Create a visu
     let generationJson: any;
     let images: string[] = [];
     let currentPrompt = finalPrompt;
-    let promptModificationAttempts = 0;
 
     while (generationAttempts < maxGenerationAttempts && images.length === 0) {
       generationAttempts++;
