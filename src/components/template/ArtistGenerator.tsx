@@ -370,15 +370,15 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
               {/* Right: Prompt Controls */}
               <aside 
-                className="flex flex-col rounded-xl border border-white/10 p-4"
+                className="flex flex-col rounded-xl border border-white/10 p-4 overflow-hidden min-h-0"
                 style={{ height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
               >
-                <header className="mb-4">
+                <header className="mb-3">
                   <h3 className="text-white font-medium">Artist Generator</h3>
                   <p className="text-white/50 text-sm">Describe your artist character. A reference composition is automatically used to ensure consistent lighting and pose structure.</p>
                 </header>
 
-                <div className="flex-1 mb-4 space-y-3">
+                <div className="flex-1 min-h-0 mb-3 space-y-2 overflow-auto pr-1">
                   {/* Prompt Input - Reduced height */}
                   <div>
                     <AnimatedPromptInput
@@ -389,15 +389,15 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                       animatedText={sanitizedPrompt}
                       isAnimating={isAnimating}
                       onAnimationComplete={handleAnimationComplete}
-                      className="h-20"
+                      className="h-16"
                     />
                   </div>
 
                   {/* Color Wheel Section */}
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <label className="text-white/80 text-sm font-medium">Background Color</label>
                     
-                    <div className="flex justify-center">
+                    <div className="flex flex-col items-center">
                       <ChromePicker
                         color={selectedColor || "#ffffff"}
                         onChange={(color) => setSelectedColor(color.hex)}
@@ -409,10 +409,16 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                               border: '1px solid rgba(255, 255, 255, 0.1)',
                               borderRadius: '8px',
                               width: '150px',
-                            }
+                            },
+                            color: { display: 'none' },
+                            controls: { display: 'none' },
+                            fields: { display: 'none' }
                           }
                         }}
                       />
+                      <div className="mt-2 text-center text-xs text-white/80 select-all">
+                        {selectedColor || "#ffffff"}
+                      </div>
                     </div>
                     
                     <div className="flex gap-2 justify-center">
@@ -450,7 +456,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-1">
+                <div className="mt-auto grid grid-cols-4 gap-1">
                   <Button
                     variant="secondary"
                     onClick={handleGenerate}
