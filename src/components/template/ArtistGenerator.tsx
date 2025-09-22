@@ -392,44 +392,46 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                     />
                   </div>
 
-                  {/* Color Picker Container - matching input field styling */}
-                  <div className="w-full rounded-lg bg-black/40 border border-white/10 p-3">
-                    <div className="flex items-start gap-3">
-                      {/* Color Picker */}
-                      <div className="color-picker-compact">
-                        <div style={{ width: '130px', height: '130px' }}>
-                          <HexColorPicker
-                            color={selectedColor || "#ffffff"}
-                            onChange={setSelectedColor}
-                            style={{ width: '100%', height: '100%' }}
-                          />
-                        </div>
-                      </div>
-                      
-                      {/* Color Controls */}
-                      <div className="flex-1 flex flex-col justify-center space-y-2">
-                        <div className="text-xs text-white/60">Background Color</div>
-                        <div className="flex items-center gap-2">
-                          <div className="text-xs text-white/80 select-all font-mono">
-                            {selectedColor || "#ffffff"}
+                  {/* Background Color Section */}
+                  <div>
+                    <div className="text-xs text-white/60 mb-2">Background Color</div>
+                    <div className="w-full rounded-lg bg-black/40 border border-white/10 p-3">
+                      <div className="flex items-start gap-3">
+                        {/* Color Picker */}
+                        <div className="color-picker-compact">
+                          <div style={{ width: '130px', height: '130px' }}>
+                            <HexColorPicker
+                              color={selectedColor || "#ffffff"}
+                              onChange={setSelectedColor}
+                              style={{ width: '100%', height: '100%' }}
+                            />
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleColorApply}
-                            disabled={!selectedColor}
-                            className="bg-white/10 border-white/20 text-white hover:bg-white/20 w-6 h-6 p-0"
-                          >
-                            <Check className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleColorReset}
-                            className="bg-white/10 border-white/20 text-white hover:bg-white/20 w-6 h-6 p-0"
-                          >
-                            <RotateCcw className="w-3 h-3" />
-                          </Button>
+                        </div>
+                        
+                        {/* Color Controls */}
+                        <div className="flex-1 flex flex-col justify-center space-y-2">
+                          <div className="flex items-center gap-2">
+                            <div className="text-xs text-white/80 select-all font-mono">
+                              {selectedColor || "#ffffff"}
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleColorApply}
+                              disabled={!selectedColor}
+                              className="bg-white/10 border-white/20 text-white hover:bg-white/20 w-6 h-6 p-0"
+                            >
+                              <Check className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleColorReset}
+                              className="bg-white/10 border-white/20 text-white hover:bg-white/20 w-6 h-6 p-0"
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </div>
