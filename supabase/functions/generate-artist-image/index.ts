@@ -256,6 +256,30 @@ Deno.serve(async (req: Request) => {
     let analysisSuccessful = false;
     let promptModificationAttempts = 0;
 
+    // Pre-sanitize character description if it exists to prevent content policy violations during analysis
+    const characterMatch = prompt.match(/Character must be entirely replaced with:\s*(.+)$/);
+    if (characterMatch && openaiKey) {
+      const originalCharacter = characterMatch[1];
+      console.log(`🧹 [${requestId}] Pre-sanitizing character description: "${originalCharacter}"`);
+      
+      const sanitizedCharacter = await modifyPromptWithChatGPT(
+        originalCharacter,  // Only modify the character part
+        originalCharacter,  // Pass the same as original user prompt
+        "",                 // No prefix for character-only modification
+        1,                  // First attempt at sanitization
+        openaiKey, 
+        requestId
+      );
+      
+      if (sanitizedCharacter !== originalCharacter) {
+        // Reconstruct the full prompt with the sanitized character
+        finalPrompt = prompt.replace(originalCharacter, sanitizedCharacter);
+        console.log(`✅ [${requestId}] Pre-sanitized character: "${sanitizedCharacter}"`);
+      } else {
+        console.log(`⚠️ [${requestId}] Character sanitization unchanged, proceeding with original`);
+      }
+    }
+
     // If image is provided, first analyze it to enhance the prompt
     if (imageData) {
       const [mimeTypePart, base64Data] = imageData.split(",");
@@ -269,7 +293,7 @@ Deno.serve(async (req: Request) => {
           }
         },
         {
-          text: `CRITICAL: Keep composition, lighting, background and structure of this image identical. Only change the character/subject as requested: "${prompt}". Preserve the exact same pose, camera angle, lighting setup, background elements, and overall visual structure. The character should fit naturally into the existing scene without altering any other visual elements. Respond with an enhanced prompt that emphasizes preserving the original image's composition while only modifying the subject.`
+          text: `CRITICAL: Keep composition, lighting, background and structure of this image identical. Only change the character/subject as requested: "${finalPrompt}". Preserve the exact same pose, camera angle, lighting setup, background elements, and overall visual structure. The character should fit naturally into the existing scene without altering any other visual elements. Respond with an enhanced prompt that emphasizes preserving the original image's composition while only modifying the subject.`
         }
       ];
 
