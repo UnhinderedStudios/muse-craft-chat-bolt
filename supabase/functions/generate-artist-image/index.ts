@@ -97,6 +97,88 @@ function validateAndRestoreKeywords(sanitized: string, originalKeywords: string[
   return sanitized;
 }
 
+// New two-step validation function for user intent adherence
+async function validateSanitizedPrompt(
+  originalPrompt: string,
+  sanitizedPrompt: string,
+  openaiKey: string,
+  requestId: string
+): Promise<string> {
+  if (!openaiKey) {
+    console.log(`⚠️ [${requestId}] No OpenAI key available for prompt validation`);
+    return sanitizedPrompt;
+  }
+
+  const validationPrompt = `Compare the ORIGINAL user request with the SANITIZED version.
+
+ORIGINAL: "${originalPrompt}"
+SANITIZED: "${sanitizedPrompt}"
+
+Can you with 100% certainty say that the user's visual requests were properly adhered to? Check for:
+- All colors mentioned are preserved
+- All clothing/accessory items are preserved (even if rephrased)
+- All physical descriptions are maintained
+- All unique visual elements are kept
+- Creative combinations aren't oversimplified
+
+If YES (all visual elements preserved): Output "APPROVED: [sanitized prompt]"
+If NO (visual elements lost/oversimplified): Output "CORRECTED: [improved prompt that better preserves user's visual intent]"
+
+Be precise - if boxing gloves were requested, they should still be recognizable as boxing gloves, not just "accessories".`;
+
+  try {
+    console.log(`🔍 [${requestId}] Validating sanitized prompt against original intent...`);
+    
+    const response = await Promise.race([
+      fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            { role: 'user', content: validationPrompt }
+          ],
+          max_tokens: 150,
+          temperature: 0.1
+        }),
+      }),
+      new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error(`Validation timeout`)), 10000);
+      })
+    ]);
+
+    if (!response.ok) {
+      console.error(`❌ [${requestId}] Prompt validation failed:`, await response.text());
+      return sanitizedPrompt;
+    }
+
+    const data = await response.json();
+    const validationResult = data.choices?.[0]?.message?.content?.trim();
+    
+    if (validationResult) {
+      if (validationResult.startsWith('APPROVED:')) {
+        const approvedPrompt = validationResult.replace('APPROVED:', '').trim();
+        console.log(`✅ [${requestId}] Validation APPROVED - using sanitized prompt`);
+        return approvedPrompt;
+      } else if (validationResult.startsWith('CORRECTED:')) {
+        const correctedPrompt = validationResult.replace('CORRECTED:', '').trim();
+        console.log(`🔧 [${requestId}] Validation CORRECTED - using improved prompt`);
+        console.log(`📝 [${requestId}] Correction: "${correctedPrompt}"`);
+        return correctedPrompt;
+      }
+    }
+    
+    console.log(`⚠️ [${requestId}] Validation returned unexpected format, using sanitized prompt`);
+    return sanitizedPrompt;
+  } catch (error) {
+    console.error(`❌ [${requestId}] Prompt validation failed:`, error);
+    return sanitizedPrompt;
+  }
+}
+
 // Strengthened GPT sanitization with preservation-first approach
 async function quickSanitizeCharacter(
   characterDescription: string, 
@@ -498,6 +580,22 @@ Deno.serve(async (req: Request) => {
         console.log(`✅ [${requestId}] Stage 1 COMPLETE: "${CURRENT_CHARACTER}"`);
       } else {
         console.log(`ℹ️ [${requestId}] Stage 1 - No changes needed`);
+      }
+      
+      // Stage 1.5: Validate sanitized prompt against user intent
+      console.log(`🔍 [${requestId}] Stage 1.5 - Validating prompt adherence to user intent`);
+      const validatedCharacter = await validateSanitizedPrompt(
+        CHARACTER, // Original user prompt
+        CURRENT_CHARACTER, // Current sanitized prompt
+        openaiKey,
+        requestId
+      );
+      
+      if (validatedCharacter !== CURRENT_CHARACTER) {
+        CURRENT_CHARACTER = validatedCharacter;
+        console.log(`✅ [${requestId}] Stage 1.5 CORRECTED: "${CURRENT_CHARACTER}"`);
+      } else {
+        console.log(`✅ [${requestId}] Stage 1.5 APPROVED: No corrections needed`);
       }
     }
 
