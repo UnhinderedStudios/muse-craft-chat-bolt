@@ -395,10 +395,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   {/* Color Wheel Section */}
                    <div className="space-y-2">
                       <div className="flex flex-col items-center">
-                        <div className="scale-[0.65] origin-center">
+                        <div style={{ width: '130px', height: '130px' }}>
                           <HexColorPicker
                             color={selectedColor || "#ffffff"}
                             onChange={setSelectedColor}
+                            style={{ width: '100%', height: '100%' }}
                           />
                         </div>
                         <div className="mt-1 flex items-center gap-1">
