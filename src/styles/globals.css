@@ -47,3 +47,20 @@
   }
 }
 
+/* Color picker seam fix for Artist Generator */
+.color-picker-compact .react-colorful {
+  gap: 0 !important;
+  overflow: hidden;
+  border-radius: 8px;
+}
+.color-picker-compact .react-colorful__saturation {
+  margin-bottom: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+.color-picker-compact .react-colorful__hue,
+.color-picker-compact .react-colorful__alpha {
+  margin-top: -1px !important;
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+}

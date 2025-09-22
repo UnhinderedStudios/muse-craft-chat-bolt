@@ -394,7 +394,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
                   {/* Color Wheel Section */}
                    <div className="space-y-2">
-                      <div className="flex flex-col items-center">
+                      <div className="flex flex-col items-center color-picker-compact">
                         <div style={{ width: '130px', height: '130px' }}>
                           <HexColorPicker
                             color={selectedColor || "#ffffff"}
