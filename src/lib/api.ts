@@ -354,7 +354,7 @@ export const api = {
   },
 
   // Generate artist images using Gemini 2.5 Flash with fixed reference image
-  async generateArtistImages(prompt: string): Promise<{ images: string[]; enhancedPrompt?: string; debug?: any }> {
+  async generateArtistImages(prompt: string, backgroundHex?: string): Promise<{ images: string[]; enhancedPrompt?: string; debug?: any }> {
     // Generate client-side request ID for tracking
     const clientRequestId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     

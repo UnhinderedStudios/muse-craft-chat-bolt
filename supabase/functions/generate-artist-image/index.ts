@@ -97,6 +97,43 @@ function validateAndRestoreKeywords(sanitized: string, originalKeywords: string[
   return sanitized;
 }
 
+// Background color processing function
+function processBackgroundColor(prompt: string, backgroundHex?: string): string {
+  let processedPrompt = prompt;
+  
+  // If a background hex color is provided, add it to the prompt
+  if (backgroundHex) {
+    processedPrompt = `Change background color to ${backgroundHex}. ${processedPrompt}`;
+  }
+  
+  // Remove non-color background elements (preserve color-based backgrounds)
+  // Remove patterns like "background forest", "background city", "volcano background" etc
+  // But preserve "red background", "blue background", "green background" etc
+  const colorKeywords = ['red', 'blue', 'green', 'yellow', 'purple', 'pink', 'orange', 'black', 'white', 'gray', 'grey', 'brown', 'cyan', 'magenta', 'violet', 'turquoise', 'gold', 'silver'];
+  const colorPattern = colorKeywords.join('|');
+  
+  // Remove non-color background requests
+  processedPrompt = processedPrompt.replace(
+    new RegExp(`(?<!(?:${colorPattern})\\s)background\\s+(?!(?:${colorPattern}))\\w+(?:\\s+\\w+)*(?=\\s|,|\\.|$)`, 'gi'),
+    ''
+  );
+  
+  // Remove trailing background patterns like "volcano background", "explosion background" unless they're colors
+  processedPrompt = processedPrompt.replace(
+    new RegExp(`(?<!(?:${colorPattern})\\s)\\w+(?:\\s+\\w+)*\\s+background(?!\\s+(?:${colorPattern}))`, 'gi'),
+    ''
+  );
+  
+  // Clean up multiple spaces and commas
+  processedPrompt = processedPrompt.replace(/\s{2,}/g, ' ')
+                                 .replace(/\s*,\s*/g, ', ')
+                                 .replace(/,\s*,/g, ', ')
+                                 .replace(/^,|,$/g, '')
+                                 .trim();
+  
+  return processedPrompt;
+}
+
 // New two-step validation function for user intent adherence
 async function validateSanitizedPrompt(
   originalPrompt: string,
@@ -179,15 +216,53 @@ Be precise - if boxing gloves were requested, they should still be recognizable 
   }
 }
 
+// Background color processing function
+function processBackgroundColor(prompt: string, backgroundHex?: string): string {
+  let processedPrompt = prompt;
+  
+  // If a background hex color is provided, add it to the prompt
+  if (backgroundHex) {
+    processedPrompt = `Change background color to ${backgroundHex}. ${processedPrompt}`;
+  }
+  
+  // Remove non-color background elements (preserve color-based backgrounds)
+  // Remove patterns like "background forest", "background city", "volcano background" etc
+  // But preserve "red background", "blue background", "green background" etc
+  const colorKeywords = ['red', 'blue', 'green', 'yellow', 'purple', 'pink', 'orange', 'black', 'white', 'gray', 'grey', 'brown', 'cyan', 'magenta', 'violet', 'turquoise', 'gold', 'silver'];
+  const colorPattern = colorKeywords.join('|');
+  
+  // Remove non-color background requests
+  processedPrompt = processedPrompt.replace(
+    new RegExp(`(?<!(?:${colorPattern})\\s)background\\s+(?!(?:${colorPattern}))\\w+(?:\\s+\\w+)*(?=\\s|,|\\.|$)`, 'gi'),
+    ''
+  );
+  
+  // Remove trailing background patterns like "volcano background", "explosion background" unless they're colors
+  processedPrompt = processedPrompt.replace(
+    new RegExp(`(?<!(?:${colorPattern})\\s)\\w+(?:\\s+\\w+)*\\s+background(?!\\s+(?:${colorPattern}))`, 'gi'),
+    ''
+  );
+  
+  // Clean up multiple spaces and commas
+  processedPrompt = processedPrompt.replace(/\s{2,}/g, ' ')
+                                 .replace(/\s*,\s*/g, ', ')
+                                 .replace(/,\s*,/g, ', ')
+                                 .replace(/^,|,$/g, '')
+                                 .trim();
+  
+  return processedPrompt;
+}
+
 // Strengthened GPT sanitization with preservation-first approach
 async function quickSanitizeCharacter(
   characterDescription: string, 
   openaiKey: string, 
-  requestId: string
+  requestId: string,
+  backgroundHex?: string
 ): Promise<string> {
   if (!openaiKey) {
     console.log(`⚠️ [${requestId}] No OpenAI key available for quick sanitization`);
-    return characterDescription;
+    return processBackgroundColor(characterDescription, backgroundHex);
   }
 
   const systemPrompt = `PRESERVE USER INTENT - Transform to safe, respectful language while keeping ALL visual characteristics, themes, and physical traits intact.
@@ -199,12 +274,16 @@ PRESERVE EVERYTHING:
 - Style descriptors: punk, goth, cyberpunk, vintage, futuristic themes
 - Colors, textures, accessories as clothing elements
 - Unique characteristics that make the person distinctive
+- IMPORTANT: If someone requests a different background COLOR (red, blue, etc.), preserve it completely
+- IMPORTANT: If someone requests background elements that are NOT colors (forest, city, volcano, explosion, etc.), remove these completely to keep default background
+- Only preserve background requests that are pure colors
 
 ONLY REMOVE:
 - Objects in hands → convert to clothing style
 - Explicit nudity/sexual content → "artistic performer style"
 - Violence → "dramatic artistic pose"
 - Copyrighted characters → "inspired performer style"
+- Non-color background elements (keep only color backgrounds)
 
 TRANSFORMATION EXAMPLES:
 - "black dude" → "Black male performer"
@@ -215,11 +294,16 @@ TRANSFORMATION EXAMPLES:
 - "Asian woman with purple hair" → "Asian female performer with vibrant purple hair"
 - "holding microphone" → "vocalist performer style"
 - "cyberpunk outfit" → "performer in cyberpunk-styled costume"
+- "red background" → "red background" (preserve)
+- "volcano background" → "" (remove completely)
 
 OUTPUT: Respectful performer description preserving ALL user intent and visual details. MAX 120 characters.`;
 
   try {
     console.log(`⚡ [${requestId}] Quick sanitizing: "${characterDescription}"`);
+    
+    // Process background color first
+    const processedCharacter = processBackgroundColor(characterDescription, backgroundHex);
     
     const response = await Promise.race([
       fetch('https://api.openai.com/v1/chat/completions', {
@@ -232,7 +316,7 @@ OUTPUT: Respectful performer description preserving ALL user intent and visual d
           model: 'gpt-4o-mini',
           messages: [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: `Transform this to safe performer description while preserving ALL visual details and themes: "${characterDescription}"` }
+            { role: 'user', content: `Transform this to safe performer description while preserving ALL visual details and themes: "${processedCharacter}"` }
           ],
           max_tokens: 80,
           temperature: 0.2
@@ -258,10 +342,10 @@ OUTPUT: Respectful performer description preserving ALL user intent and visual d
       console.log(`✅ [${requestId}] Quick sanitized: "${validatedResult}"`);
       return validatedResult;
     }
-    return characterDescription;
+    return processedCharacter;
   } catch (error) {
     console.error(`❌ [${requestId}] Quick sanitization failed:`, error);
-    return characterDescription;
+    return processBackgroundColor(characterDescription, backgroundHex);
   }
 }
 
@@ -454,9 +538,10 @@ Deno.serve(async (req: Request) => {
       try {
         const formData = await withTimeout(req.formData(), 10000, "FormData parsing");
         prompt = (formData.get("prompt") as string) || "";
+        const backgroundHex = (formData.get("backgroundHex") as string) || "";
         const imageFile = formData.get("image") as File;
         
-        console.log(`📝 [${requestId}] Form data - prompt: "${prompt}", hasImage: ${!!imageFile}`);
+        console.log(`📝 [${requestId}] Form data - prompt: "${prompt}", backgroundHex: "${backgroundHex}", hasImage: ${!!imageFile}`);
         
         if (imageFile) {
           console.log(`🖼️ [${requestId}] Image file - name: ${imageFile.name}, size: ${imageFile.size}, type: ${imageFile.type}`);
@@ -507,8 +592,9 @@ Deno.serve(async (req: Request) => {
         // Handle JSON body for text-only prompts
         const body = await withTimeout(req.json(), 5000, "JSON parsing").catch(() => ({}));
         prompt = body?.prompt?.toString?.() || "";
+        const backgroundHex = body?.backgroundHex?.toString?.() || "";
         imageData = body?.imageData?.toString?.() || "";
-        console.log(`📝 [${requestId}] JSON body - prompt: "${prompt}", hasImageData: ${!!imageData}`);
+        console.log(`📝 [${requestId}] JSON body - prompt: "${prompt}", backgroundHex: "${backgroundHex}", hasImageData: ${!!imageData}`);
       } catch (jsonError: any) {
         console.error(`❌ [${requestId}] JSON parsing error:`, jsonError);
         return new Response(
@@ -572,7 +658,8 @@ Deno.serve(async (req: Request) => {
       const sanitizedCharacter = await quickSanitizeCharacter(
         CURRENT_CHARACTER,
         openaiKey, 
-        requestId
+        requestId,
+        backgroundHex
       );
       
       if (sanitizedCharacter !== CURRENT_CHARACTER) {

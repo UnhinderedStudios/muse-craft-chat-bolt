@@ -6,9 +6,10 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { TrackItem } from "@/types";
-import { ChevronUp, ChevronDown, X, User, Wand2, Repeat, ArrowRight, Download } from "lucide-react";
+import { ChevronUp, ChevronDown, X, User, Wand2, Repeat, ArrowRight, Download, Palette, RotateCcw } from "lucide-react";
 import { useSessionManager } from "@/hooks/use-session-manager";
 import { AnimatedPromptInput } from "@/components/ui/animated-prompt-input";
+import { ChromePicker } from 'react-color';
 
 interface ArtistGeneratorProps {
   isOpen: boolean;
@@ -28,6 +29,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   const [isAnimating, setIsAnimating] = useState(false);
   const [sanitizedPrompt, setSanitizedPrompt] = useState("");
   const [originalPrompt, setOriginalPrompt] = useState("");
+  
+  // Color wheel state
+  const [selectedColor, setSelectedColor] = useState<string>("");
+  const [isColorApplied, setIsColorApplied] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
   const VISIBLE_COUNT = 5;
 
@@ -86,11 +92,18 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       
       const cleanPrompt = prompt.trim();
       
-      console.log(`📤 [${clientReqId}] Sending request:`, {
-        prompt: cleanPrompt
-      });
+      // Prepare request payload
+      const requestPayload: any = { prompt: cleanPrompt };
       
-      const result = await api.generateArtistImages(cleanPrompt);
+      // Add background color if applied
+      if (isColorApplied && selectedColor) {
+        requestPayload.backgroundHex = selectedColor;
+        console.log(`🎨 [${clientReqId}] Adding background color: ${selectedColor}`);
+      }
+      
+      console.log(`📤 [${clientReqId}] Sending request:`, requestPayload);
+      
+      const result = await api.generateArtistImages(cleanPrompt, requestPayload.backgroundHex);
       
       console.log(`🖼️ [${clientReqId}] Artist generation response:`, {
         imageCount: result.images?.length || 0,
@@ -215,6 +228,18 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
     toast({ title: "Downloaded", description: "Artist image saved to your device" });
   };
 
+  const handleColorApply = () => {
+    setIsColorApplied(true);
+    setShowColorPicker(false);
+    toast({ title: "Color applied", description: `Background color set to ${selectedColor}` });
+  };
+
+  const handleColorReset = () => {
+    setSelectedColor("");
+    setIsColorApplied(false);
+    setShowColorPicker(false);
+    toast({ title: "Color reset", description: "Background color reset to default" });
+  };
 
   return (
     <Dialog open={isOpen}>
@@ -356,17 +381,90 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   <p className="text-white/50 text-sm">Describe your artist character. A reference composition is automatically used to ensure consistent lighting and pose structure.</p>
                 </header>
 
-                <div className="flex-1 mb-4">
-                  <AnimatedPromptInput
-                    value={prompt}
-                    onChange={setPrompt}
-                    placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
-                    disabled={loading}
-                    animatedText={sanitizedPrompt}
-                    isAnimating={isAnimating}
-                    onAnimationComplete={handleAnimationComplete}
-                    className="flex-1"
-                  />
+                <div className="flex-1 mb-4 space-y-3">
+                  {/* Prompt Input - Reduced height */}
+                  <div>
+                    <AnimatedPromptInput
+                      value={prompt}
+                      onChange={setPrompt}
+                      placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
+                      disabled={loading}
+                      animatedText={sanitizedPrompt}
+                      isAnimating={isAnimating}
+                      onAnimationComplete={handleAnimationComplete}
+                      className="h-20"
+                    />
+                  </div>
+
+                  {/* Color Wheel Section */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-white/80 text-sm font-medium">Background Color</label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowColorPicker(!showColorPicker)}
+                        className="text-white/60 hover:text-white p-1 h-auto"
+                      >
+                        <Palette className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    
+                    {showColorPicker && (
+                      <div className="space-y-3">
+                        <div className="flex justify-center">
+                          <ChromePicker
+                            color={selectedColor || "#ffffff"}
+                            onChange={(color) => setSelectedColor(color.hex)}
+                            disableAlpha
+                            styles={{
+                              default: {
+                                picker: {
+                                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                                  borderRadius: '8px',
+                                  width: '200px',
+                                }
+                              }
+                            }}
+                          />
+                        </div>
+                        
+                        <div className="flex gap-2 justify-center">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleColorApply}
+                            disabled={!selectedColor}
+                            className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs px-3 py-1"
+                          >
+                            Apply
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleColorReset}
+                            className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs px-3 py-1"
+                          >
+                            <RotateCcw className="w-3 h-3 mr-1" />
+                            Reset
+                          </Button>
+                        </div>
+                        
+                        {isColorApplied && selectedColor && (
+                          <div className="text-center">
+                            <div className="inline-flex items-center gap-2 bg-white/10 text-white/80 text-xs px-2 py-1 rounded">
+                              <div 
+                                className="w-3 h-3 rounded-full border border-white/20" 
+                                style={{ backgroundColor: selectedColor }}
+                              />
+                              Color Applied: {selectedColor}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-4 gap-1">
