@@ -548,7 +548,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                     <div className="flex items-center gap-3">
                       {/* Artist Count Slider */}
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <span className="text-xs text-white/80 whitespace-nowrap">Artists:</span>
+                        <span className="text-xs text-white/80 whitespace-nowrap">Characters:</span>
                         <div className="flex-1 min-w-[50px] max-w-[120px]">
                           <div className="slider-container">
                             <Slider
