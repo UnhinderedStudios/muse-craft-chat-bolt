@@ -454,7 +454,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
               {/* Right: Prompt Controls */}
               <aside 
                 className="flex flex-col rounded-xl border border-white/10 px-4 pt-3 pb-3 overflow-hidden min-h-0"
-                style={{ height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
+                style={{ height: "min(468px, 54vh)", backgroundColor: '#33343630' }}
               >
 
                 <header className="mb-2">
