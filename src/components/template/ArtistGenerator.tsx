@@ -349,316 +349,314 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
           {/* Content */}
           <div className="flex-1 min-h-0 px-6 pb-6 flex flex-col items-center justify-center">
             <div className="w-full max-w-6xl space-y-4">
-              <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-4">
-                {/* Top container aligned with left panel only */}
-                <div className="w-full rounded-lg bg-black/20 border border-white/10 px-4 py-2">
+              <div className="grid grid-cols-1 lg:grid-cols-[max-content_420px] gap-4 items-start">
+                {/* Header: matches left panel width and stops at right panel edge */}
+                <div className="w-full rounded-lg bg-black/20 border border-white/10 px-4 py-2 lg:col-start-1 lg:row-start-1">
                   <div className="text-xs text-white/60">Artist Image Generation</div>
                 </div>
-              </div>
-              
-              <div className="grid grid-cols-1 lg:grid-cols-[max-content_420px] gap-4 items-center">
-              {/* Left: Preview + Thumbnails (side-by-side) */}
-              <div className="flex items-start justify-start gap-4">
-                {/* Thumbnails column (left) */}
-                <div className="flex flex-col items-center gap-2 w-20">
-                  {/* Top arrow */}
-                  <button
-                    className={cn(
-                      "w-8 h-8 flex items-center justify-center rounded-full transition-opacity",
-                      canScrollUp ? "opacity-100 hover:bg-white/10" : "opacity-30 pointer-events-none"
-                    )}
-                    onClick={() => canScrollUp && setOffset(o => Math.max(0, o - 1))}
-                    aria-label="Scroll thumbnails up"
-                  >
-                    <ChevronUp className="w-5 h-5 text-white" />
-                  </button>
 
-                  {/* Thumbs */}
-                  <div className="flex flex-col items-center gap-2">
-                    {Array.from({ length: VISIBLE_COUNT }).map((_, i) => {
-                      const img = displayThumbs[i];
-                      const idx = offset + i; // position within display list
-                      const imageIndexInImages = loading ? idx - 1 : idx;
-                      const isPlaceholder = img == null;
-                      const isActive = !isPlaceholder && imageIndexInImages === selectedIndex;
-                      return (
-                        <button
-                          key={idx}
-                          className={cn(
-                            "w-20 h-20 rounded-lg overflow-hidden border transition-all relative",
-                            isActive ? "border-accent-primary ring-2 ring-accent-primary/40" : "border-white/10 hover:border-white/20"
-                          )}
-                          onClick={() => {
-                            if (!isPlaceholder && imageIndexInImages >= 0) setSelectedIndex(imageIndexInImages);
-                          }}
-                          aria-label={`Thumbnail ${idx + 1}`}
-                        >
-                          {img ? (
-                            <img src={img} alt={`Thumbnail ${idx + 1}`} className="block w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full bg-white/5" />
-                          )}
-                          {/* Loading scan only on first placeholder */}
-                          {loading && idx === 0 && isPlaceholder && (
-                            <div className="absolute inset-0 overflow-hidden rounded-lg">
-                              <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning" />
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Bottom arrow */}
-                  <button
-                    className={cn(
-                      "w-8 h-8 flex items-center justify-center rounded-full transition-opacity",
-                      canScrollDown ? "opacity-100 hover:bg-white/10" : "opacity-30 pointer-events-none"
-                    )}
-                    onClick={() => canScrollDown && setOffset(o => o + 1)}
-                    aria-label="Scroll thumbnails down"
-                  >
-                    <ChevronDown className="w-5 h-5 text-white" />
-                  </button>
-                </div>
-
-                {/* Large Preview (right) */}
-                <div
-                  className="rounded-xl overflow-hidden border border-white/10 flex items-center justify-center relative"
-                  style={{ width: "min(520px, 60vh)", height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
-                >
-                  {!loading && images[selectedIndex] ? (
-                    <img
-                      src={images[selectedIndex]}
-                      alt={`Selected artist image ${selectedIndex + 1}`}
-                      className="block w-full h-full object-cover"
-                      loading="eager"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-white/40">
-                      {loading ? (
-                        <div className="loader overlay-loader">
-                          <div className="bar"></div>
-                          <div className="bar"></div>
-                          <div className="bar"></div>
-                        </div>
-                      ) : (
-                        <>
-                          <User className="w-10 h-10 mb-2" />
-                          <span>No image selected</span>
-                        </>
+                {/* Left: Preview + Thumbnails (side-by-side) */}
+                <div className="flex items-start justify-start gap-4 lg:col-start-1 lg:row-start-2">
+                  {/* Thumbnails column (left) */}
+                  <div className="flex flex-col items-center gap-2 w-20">
+                    {/* Top arrow */}
+                    <button
+                      className={cn(
+                        "w-8 h-8 flex items-center justify-center rounded-full transition-opacity",
+                        canScrollUp ? "opacity-100 hover:bg-white/10" : "opacity-30 pointer-events-none"
                       )}
-                    </div>
-                  )}
-                  {/* Loading animation on main preview when generating */}
-                  {loading && (
-                    <div className="absolute inset-0 overflow-hidden rounded-xl">
-                      <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning" />
-                    </div>
-                  )}
-                </div>
-              </div>
+                      onClick={() => canScrollUp && setOffset(o => Math.max(0, o - 1))}
+                      aria-label="Scroll thumbnails up"
+                    >
+                      <ChevronUp className="w-5 h-5 text-white" />
+                    </button>
 
-              {/* Right: Prompt Controls */}
-              <aside 
-                className="flex flex-col rounded-xl border border-white/10 px-4 pt-3 pb-3 overflow-hidden min-h-0"
-                style={{ height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
-              >
-
-                <header className="mb-2">
-                  <h3 className="text-xs text-white/60">Artist Generator</h3>
-                </header>
-
-                <div className="flex-1 min-h-0 mb-1 space-y-1 overflow-auto pr-1">
-                  <div>
-                    <AnimatedPromptInput
-                      value={prompt}
-                      onChange={setPrompt}
-                      placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
-                      disabled={loading}
-                      animatedText={sanitizedPrompt}
-                      isAnimating={isAnimating}
-                      onAnimationComplete={handleAnimationComplete}
-                      className="h-36"
-                    />
-                  </div>
-
-                  {/* Background Color Section */}
-                  <div>
-                    <div className="text-xs text-white/60 mb-2">Background Color</div>
-                    <div className="w-full rounded-lg bg-black/20 border border-white/10 p-3 pb-1.5">
-                      <div className="flex flex-col gap-1.5">
-                        {/* Color Picker - Full Width */}
-                        <div className="color-picker-compact w-full">
-                          <HexColorPicker
-                            color={selectedColor || "#ffffff"}
-                            onChange={setSelectedColor}
-                            style={{ width: '100%', height: '118px' }}
-                          />
-                        </div>
-                        
-                         {/* Color Controls - Below picker */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2 text-xs text-white/80 select-all font-mono">
-                            <span>{selectedColor || "#ffffff"}</span>
-                            {selectedColor && (
-                              <>
-                                <span className="text-white/30">|</span>
-                                <span className="text-white/60 font-sans">{getColorName(selectedColor)}</span>
-                              </>
+                    {/* Thumbs */}
+                    <div className="flex flex-col items-center gap-2">
+                      {Array.from({ length: VISIBLE_COUNT }).map((_, i) => {
+                        const img = displayThumbs[i];
+                        const idx = offset + i; // position within display list
+                        const imageIndexInImages = loading ? idx - 1 : idx;
+                        const isPlaceholder = img == null;
+                        const isActive = !isPlaceholder && imageIndexInImages === selectedIndex;
+                        return (
+                          <button
+                            key={idx}
+                            className={cn(
+                              "w-20 h-20 rounded-lg overflow-hidden border transition-all relative",
+                              isActive ? "border-accent-primary ring-2 ring-accent-primary/40" : "border-white/10 hover:border-white/20"
                             )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleColorRandomize}
-                              className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0"
-                            >
-                              <Dices className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleColorPicker}
-                              className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0"
-                            >
-                              <Pipette className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleColorReset}
-                              className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0"
-                            >
-                              <RotateCcw className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={handleColorApply}
-                              disabled={!selectedColor}
-                              className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0"
-                            >
-                              <Check className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
+                            onClick={() => {
+                              if (!isPlaceholder && imageIndexInImages >= 0) setSelectedIndex(imageIndexInImages);
+                            }}
+                            aria-label={`Thumbnail ${idx + 1}`}
+                          >
+                            {img ? (
+                              <img src={img} alt={`Thumbnail ${idx + 1}`} className="block w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full bg-white/5" />
+                            )}
+                            {/* Loading scan only on first placeholder */}
+                            {loading && idx === 0 && isPlaceholder && (
+                              <div className="absolute inset-0 overflow-hidden rounded-lg">
+                                <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning" />
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
+
+                    {/* Bottom arrow */}
+                    <button
+                      className={cn(
+                        "w-8 h-8 flex items-center justify-center rounded-full transition-opacity",
+                        canScrollDown ? "opacity-100 hover:bg-white/10" : "opacity-30 pointer-events-none"
+                      )}
+                      onClick={() => canScrollDown && setOffset(o => o + 1)}
+                      aria-label="Scroll thumbnails down"
+                    >
+                      <ChevronDown className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+
+                  {/* Large Preview (right) */}
+                  <div
+                    className="rounded-xl overflow-hidden border border-white/10 flex items-center justify-center relative"
+                    style={{ width: "min(520px, 60vh)", height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
+                  >
+                    {!loading && images[selectedIndex] ? (
+                      <img
+                        src={images[selectedIndex]}
+                        alt={`Selected artist image ${selectedIndex + 1}`}
+                        className="block w-full h-full object-cover"
+                        loading="eager"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-white/40">
+                        {loading ? (
+                          <div className="loader overlay-loader">
+                            <div className="bar"></div>
+                            <div className="bar"></div>
+                            <div className="bar"></div>
+                          </div>
+                        ) : (
+                          <>
+                            <User className="w-10 h-10 mb-2" />
+                            <span>No image selected</span>
+                          </>
+                        )}
+                      </div>
+                    )}
+                    {/* Loading animation on main preview when generating */}
+                    {loading && (
+                      <div className="absolute inset-0 overflow-hidden rounded-xl">
+                        <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning" />
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Settings container */}
-                <div className="mt-1.5 mb-1.5">
-                  <div className="text-xs text-white/60 mb-1.5">Settings</div>
-                  <div className="w-full rounded-lg bg-black/20 border border-white/10 p-2.5">
-                    <div className="flex items-center gap-3">
-                      {/* Artist Count Slider */}
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <span className="text-xs text-white/80 whitespace-nowrap">Characters:</span>
-                        <div className="flex-1 min-w-[50px] max-w-[120px]">
-                          <div className="slider-container">
-                            <Slider
-                              value={artistCount}
-                              onValueChange={setArtistCount}
-                              min={1}
-                              max={3}
-                              step={1}
-                              className="w-full"
+                {/* Right: Prompt Controls */}
+                <aside 
+                  className="flex flex-col rounded-xl border border-white/10 px-4 pt-3 pb-3 overflow-hidden min-h-0 lg:col-start-2 lg:row-start-2"
+                  style={{ height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
+                >
+
+                  <header className="mb-2">
+                    <h3 className="text-xs text-white/60">Artist Generator</h3>
+                  </header>
+
+                  <div className="flex-1 min-h-0 mb-1 space-y-1 overflow-auto pr-1">
+                    <div>
+                      <AnimatedPromptInput
+                        value={prompt}
+                        onChange={setPrompt}
+                        placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
+                        disabled={loading}
+                        animatedText={sanitizedPrompt}
+                        isAnimating={isAnimating}
+                        onAnimationComplete={handleAnimationComplete}
+                        className="h-36"
+                      />
+                    </div>
+
+                    {/* Background Color Section */}
+                    <div>
+                      <div className="text-xs text-white/60 mb-2">Background Color</div>
+                      <div className="w-full rounded-lg bg-black/20 border border-white/10 p-3 pb-1.5">
+                        <div className="flex flex-col gap-1.5">
+                          {/* Color Picker - Full Width */}
+                          <div className="color-picker-compact w-full">
+                            <HexColorPicker
+                              color={selectedColor || "#ffffff"}
+                              onChange={setSelectedColor}
+                              style={{ width: '100%', height: '118px' }}
                             />
                           </div>
-                        </div>
-                        <span className="text-xs text-white/60 w-3 text-center">{artistCount[0]}</span>
-                      </div>
-                      
-                      {/* Separator */}
-                      <div className="w-px h-4 bg-white/30"></div>
-                      
-                      {/* Realistic/Animated Toggle - Custom Design */}
-                      <div className="flex-shrink-0">
-                        <button
-                          onClick={() => setIsRealistic(!isRealistic)}
-                          className={cn(
-                            "relative w-32 h-7 rounded-full transition-all duration-300 overflow-hidden",
-                            "bg-white/10 hover:bg-white/15"
-                          )}
-                        >
-                          {/* Sliding background */}
-                          <div
-                            className={cn(
-                              "absolute inset-0.5 rounded-full transition-transform duration-300 bg-accent-primary",
-                              isRealistic ? "translate-x-0" : "translate-x-[100%]"
-                            )}
-                            style={{ width: '50%' }}
-                          />
                           
-                          {/* Text labels */}
-                          <div className="relative w-full h-full flex">
-                            <span
-                              className={cn(
-                                "flex-1 flex items-center justify-center text-[10px] font-medium transition-colors duration-300",
-                                isRealistic ? "text-white" : "text-white/60"
+                           {/* Color Controls - Below picker */}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-xs text-white/80 select-all font-mono">
+                              <span>{selectedColor || "#ffffff"}</span>
+                              {selectedColor && (
+                                <>
+                                  <span className="text-white/30">|</span>
+                                  <span className="text-white/60 font-sans">{getColorName(selectedColor)}</span>
+                                </>
                               )}
-                            >
-                              Realistic
-                            </span>
-                            <span
-                              className={cn(
-                                "flex-1 flex items-center justify-center text-[10px] font-medium transition-colors duration-300",
-                                !isRealistic ? "text-white" : "text-white/60"
-                              )}
-                            >
-                              Animated
-                            </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleColorRandomize}
+                                className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0"
+                              >
+                                <Dices className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleColorPicker}
+                                className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0"
+                              >
+                                <Pipette className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleColorReset}
+                                className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0"
+                              >
+                                <RotateCcw className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleColorApply}
+                                disabled={!selectedColor}
+                                className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0"
+                              >
+                                <Check className="w-3 h-3" />
+                              </Button>
+                            </div>
                           </div>
-                        </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="mt-auto">
-                  <div className="grid grid-cols-4 gap-1 mt-2">
-                    <Button
-                      variant="secondary"
-                      onClick={handleGenerate}
-                      disabled={loading}
-                      className="col-span-1 text-xs px-2 py-1.5 h-7 bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 border-0 flex items-center justify-center leading-none"
-                    >
-                      <Wand2 className="w-2.5 h-2.5 mr-0.25" />
-                      Generate
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={handleRetry}
-                      disabled={loading}
-                      className="col-span-1 text-xs px-2 py-1.5 h-7 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center leading-none"
-                    >
-                      <Repeat className="w-2.5 h-2.5 mr-0.25" />
-                      Retry
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={handleDownload}
-                      disabled={loading}
-                      className="col-span-1 text-xs px-2 py-1.5 h-7 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center leading-none"
-                    >
-                      <Download className="w-2.5 h-2.5 mr-0.25" />
-                      Download
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={handleApply}
-                      disabled={loading}
-                      className="col-span-1 text-xs px-2 py-1.5 h-7 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center leading-none"
-                    >
-                      <ArrowRight className="w-2.5 h-2.5 mr-0.25" />
-                      Next
-                    </Button>
+                  {/* Settings container */}
+                  <div className="mt-1.5 mb-1.5">
+                    <div className="text-xs text-white/60 mb-1.5">Settings</div>
+                    <div className="w-full rounded-lg bg-black/20 border border-white/10 p-2.5">
+                      <div className="flex items-center gap-3">
+                        {/* Artist Count Slider */}
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <span className="text-xs text-white/80 whitespace-nowrap">Characters:</span>
+                          <div className="flex-1 min-w-[50px] max-w-[120px]">
+                            <div className="slider-container">
+                              <Slider
+                                value={artistCount}
+                                onValueChange={setArtistCount}
+                                min={1}
+                                max={3}
+                                step={1}
+                                className="w-full"
+                              />
+                            </div>
+                          </div>
+                          <span className="text-xs text-white/60 w-3 text-center">{artistCount[0]}</span>
+                        </div>
+                        
+                        {/* Separator */}
+                        <div className="w-px h-4 bg-white/30"></div>
+                        
+                        {/* Realistic/Animated Toggle - Custom Design */}
+                        <div className="flex-shrink-0">
+                          <button
+                            onClick={() => setIsRealistic(!isRealistic)}
+                            className={cn(
+                              "relative w-32 h-7 rounded-full transition-all duration-300 overflow-hidden",
+                              "bg-white/10 hover:bg-white/15"
+                            )}
+                          >
+                            {/* Sliding background */}
+                            <div
+                              className={cn(
+                                "absolute inset-0.5 rounded-full transition-transform duration-300 bg-accent-primary",
+                                isRealistic ? "translate-x-0" : "translate-x-[100%]"
+                              )}
+                              style={{ width: '50%' }}
+                            />
+                            
+                            {/* Text labels */}
+                            <div className="relative w-full h-full flex">
+                              <span
+                                className={cn(
+                                  "flex-1 flex items-center justify-center text-[10px] font-medium transition-colors duration-300",
+                                  isRealistic ? "text-white" : "text-white/60"
+                                )}
+                              >
+                                Realistic
+                              </span>
+                              <span
+                                className={cn(
+                                  "flex-1 flex items-center justify-center text-[10px] font-medium transition-colors duration-300",
+                                  !isRealistic ? "text-white" : "text-white/60"
+                                )}
+                              >
+                                Animated
+                              </span>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </aside>
+
+                  <div className="mt-auto">
+                    <div className="grid grid-cols-4 gap-1 mt-2">
+                      <Button
+                        variant="secondary"
+                        onClick={handleGenerate}
+                        disabled={loading}
+                        className="col-span-1 text-xs px-2 py-1.5 h-7 bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 border-0 flex items-center justify-center leading-none"
+                      >
+                        <Wand2 className="w-2.5 h-2.5 mr-0.25" />
+                        Generate
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={handleRetry}
+                        disabled={loading}
+                        className="col-span-1 text-xs px-2 py-1.5 h-7 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center leading-none"
+                      >
+                        <Repeat className="w-2.5 h-2.5 mr-0.25" />
+                        Retry
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={handleDownload}
+                        disabled={loading}
+                        className="col-span-1 text-xs px-2 py-1.5 h-7 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center leading-none"
+                      >
+                        <Download className="w-2.5 h-2.5 mr-0.25" />
+                        Download
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={handleApply}
+                        disabled={loading}
+                        className="col-span-1 text-xs px-2 py-1.5 h-7 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center leading-none"
+                      >
+                        <ArrowRight className="w-2.5 h-2.5 mr-0.25" />
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                </aside>
               </div>
             </div>
           </div>
