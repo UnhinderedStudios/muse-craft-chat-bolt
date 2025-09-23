@@ -388,7 +388,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   <h3 className="text-xs text-white/60">Artist Generator</h3>
                 </header>
 
-                <div className="flex-1 min-h-0 mb-3 space-y-2 overflow-auto pr-1">
+                <div className="flex-1 min-h-0 mb-1.5 space-y-2 overflow-auto pr-1">
                   <div>
                     <AnimatedPromptInput
                       value={prompt}
