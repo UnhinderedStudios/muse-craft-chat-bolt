@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState, useRef } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
@@ -100,6 +102,10 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   // Color wheel state
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [isColorApplied, setIsColorApplied] = useState(false);
+  
+  // Settings state
+  const [artistCount, setArtistCount] = useState([1]);
+  const [isRealistic, setIsRealistic] = useState(true);
 
   const VISIBLE_COUNT = 5;
 
@@ -538,8 +544,36 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                 {/* Settings container */}
                 <div className="mt-2 mb-2">
                   <div className="text-xs text-white/60 mb-2">Settings</div>
-                  <div className="w-full rounded-lg bg-black/40 border border-white/10 p-2 pb-3">
-                    <div className="h-2"></div>
+                  <div className="w-full rounded-lg bg-black/40 border border-white/10 p-3">
+                    <div className="flex items-center justify-between gap-4">
+                      {/* Artist Count Slider */}
+                      <div className="flex items-center gap-2 flex-1">
+                        <span className="text-xs text-white/80 whitespace-nowrap">Artists:</span>
+                        <div className="flex-1 min-w-[60px]">
+                          <Slider
+                            value={artistCount}
+                            onValueChange={setArtistCount}
+                            min={1}
+                            max={4}
+                            step={1}
+                            className="w-full"
+                          />
+                        </div>
+                        <span className="text-xs text-white/60 w-3 text-center">{artistCount[0]}</span>
+                      </div>
+                      
+                      {/* Realistic/Animated Toggle */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-white/80 whitespace-nowrap">
+                          {isRealistic ? "Realistic" : "Animated"}
+                        </span>
+                        <Switch
+                          checked={isRealistic}
+                          onCheckedChange={setIsRealistic}
+                          className="data-[state=checked]:bg-white/20 data-[state=unchecked]:bg-white/10"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
