@@ -398,7 +398,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                       animatedText={sanitizedPrompt}
                       isAnimating={isAnimating}
                       onAnimationComplete={handleAnimationComplete}
-                      className="h-40"
+                      className="h-36"
                     />
                   </div>
 
