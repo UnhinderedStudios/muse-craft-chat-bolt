@@ -432,7 +432,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                       />
                     ) : !loading && images.length === 0 ? (
                       // Show video when no generated images are present
-                      <div className="relative w-full h-full">
+                      <>
                         <video
                           src={artistPlaceholderVideo}
                           autoPlay
@@ -449,7 +449,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                             <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning" />
                           </div>
                         )}
-                      </div>
+                       </>
                     ) : (
                       <div className="flex flex-col items-center justify-center text-white/40">
                         {loading ? (
