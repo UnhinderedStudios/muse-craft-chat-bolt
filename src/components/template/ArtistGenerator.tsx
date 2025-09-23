@@ -358,7 +358,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
               
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 items-center">
               {/* Left: Preview + Thumbnails (side-by-side) */}
-              <div className="flex items-start justify-end gap-6">
+              <div className="flex items-start justify-start gap-6">
                 {/* Thumbnails column (left) */}
                 <div className="flex flex-col items-center gap-2 w-20">
                   {/* Top arrow */}
