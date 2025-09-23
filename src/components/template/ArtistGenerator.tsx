@@ -564,6 +564,9 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                         <span className="text-xs text-white/60 w-3 text-center">{artistCount[0]}</span>
                       </div>
                       
+                      {/* Separator */}
+                      <span className="text-white/30">|</span>
+                      
                       {/* Realistic/Animated Toggle - Custom Design */}
                       <div className="flex-shrink-0">
                         <button
