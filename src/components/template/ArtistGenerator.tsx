@@ -7,6 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { TrackItem } from "@/types";
 import { ChevronUp, ChevronDown, X, User, Wand2, Repeat, ArrowRight, Download, Palette, RotateCcw, Check, Dices, Pipette } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import { useSessionManager } from "@/hooks/use-session-manager";
 import { AnimatedPromptInput } from "@/components/ui/animated-prompt-input";
 import { HexColorPicker } from "react-colorful";
@@ -100,6 +102,10 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   // Color wheel state
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [isColorApplied, setIsColorApplied] = useState(false);
+  
+  // Settings state
+  const [artistCount, setArtistCount] = useState<number[]>([1]);
+  const [isRealistic, setIsRealistic] = useState(true);
 
   const VISIBLE_COUNT = 5;
 
@@ -538,8 +544,36 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                 {/* Settings container */}
                 <div className="mt-2 mb-2">
                   <div className="text-xs text-white/60 mb-2">Settings</div>
-                  <div className="w-full rounded-lg bg-black/40 border border-white/10 p-2 pb-3">
-                    <div className="h-2"></div>
+                  <div className="w-full rounded-lg bg-black/40 border border-white/10 p-3">
+                    <div className="flex items-center justify-between gap-4">
+                      {/* Artist count slider */}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs text-white/70">Artists:</span>
+                          <span className="text-xs text-white/90 font-mono">{artistCount[0]}</span>
+                        </div>
+                        <Slider
+                          value={artistCount}
+                          onValueChange={setArtistCount}
+                          max={4}
+                          min={1}
+                          step={1}
+                          className="w-full"
+                        />
+                      </div>
+                      
+                      {/* Realistic/Animated toggle */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-white/70 whitespace-nowrap">
+                          {isRealistic ? 'Realistic' : 'Animated'}
+                        </span>
+                        <Switch
+                          checked={isRealistic}
+                          onCheckedChange={setIsRealistic}
+                          className="data-[state=checked]:bg-white/20 data-[state=unchecked]:bg-white/10"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
