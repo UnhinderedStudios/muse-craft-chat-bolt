@@ -412,7 +412,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                           <HexColorPicker
                             color={selectedColor || "#ffffff"}
                             onChange={setSelectedColor}
-                            style={{ width: '100%', height: '140px' }}
+                            style={{ width: '100%', height: '132px' }}
                           />
                         </div>
                         
