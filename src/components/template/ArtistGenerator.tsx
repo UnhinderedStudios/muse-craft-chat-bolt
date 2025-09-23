@@ -569,8 +569,8 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                         <button
                           onClick={() => setIsRealistic(!isRealistic)}
                           className={cn(
-                            "relative w-24 h-6 rounded-full transition-all duration-300 overflow-hidden",
-                            "bg-white/10 border border-white/20 hover:border-white/30"
+                            "relative w-28 h-7 rounded-full transition-all duration-300 overflow-hidden",
+                            "bg-white/10 hover:bg-white/15"
                           )}
                         >
                           {/* Sliding background */}
