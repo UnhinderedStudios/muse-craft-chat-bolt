@@ -569,7 +569,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                         <button
                           onClick={() => setIsRealistic(!isRealistic)}
                           className={cn(
-                            "relative w-28 h-7 rounded-full transition-all duration-300 overflow-hidden",
+                            "relative w-32 h-7 rounded-full transition-all duration-300 overflow-hidden",
                             "bg-white/10 hover:bg-white/15"
                           )}
                         >
@@ -586,7 +586,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                           <div className="relative w-full h-full flex">
                             <span
                               className={cn(
-                                "flex-1 flex items-center justify-center text-[8px] font-medium transition-colors duration-300",
+                                "flex-1 flex items-center justify-center text-[10px] font-medium transition-colors duration-300",
                                 isRealistic ? "text-white" : "text-white/60"
                               )}
                             >
@@ -594,7 +594,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                             </span>
                             <span
                               className={cn(
-                                "flex-1 flex items-center justify-center text-[8px] font-medium transition-colors duration-300",
+                                "flex-1 flex items-center justify-center text-[10px] font-medium transition-colors duration-300",
                                 !isRealistic ? "text-white" : "text-white/60"
                               )}
                             >
