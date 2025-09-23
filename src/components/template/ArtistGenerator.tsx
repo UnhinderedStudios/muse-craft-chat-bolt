@@ -417,7 +417,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                               size="sm"
                               onClick={handleColorApply}
                               disabled={!selectedColor}
-                              className="bg-white/10 border-white/20 text-white hover:bg-white/20 w-6 h-6 p-0"
+                              className="bg-white/10 border-0 text-white hover:bg-white/20 w-6 h-6 p-0"
                             >
                               <Check className="w-3 h-3" />
                             </Button>
@@ -425,7 +425,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                               variant="outline"
                               size="sm"
                               onClick={handleColorReset}
-                              className="bg-white/10 border-white/20 text-white hover:bg-white/20 w-6 h-6 p-0"
+                              className="bg-white/10 border-0 text-white hover:bg-white/20 w-6 h-6 p-0"
                             >
                               <RotateCcw className="w-3 h-3" />
                             </Button>
