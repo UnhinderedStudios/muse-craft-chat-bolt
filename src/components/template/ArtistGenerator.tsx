@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { TrackItem } from "@/types";
 import { ChevronUp, ChevronDown, X, User, Wand2, Repeat, ArrowRight, Download, Palette, RotateCcw, Check, Dices, Pipette } from "lucide-react";
+import artistPlaceholderVideo from "@/assets/artist-placeholder.mp4";
 import { useSessionManager } from "@/hooks/use-session-manager";
 import { AnimatedPromptInput } from "@/components/ui/animated-prompt-input";
 import { HexColorPicker } from "react-colorful";
@@ -96,6 +97,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [videoLoading, setVideoLoading] = useState(true);
   const [sanitizedPrompt, setSanitizedPrompt] = useState("");
   const [originalPrompt, setOriginalPrompt] = useState("");
   
@@ -126,6 +128,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       setSelectedIndex(0);
       setOffset(0);
       setPrompt("");
+      setVideoLoading(true);
     }
   }, [isOpen, track]);
 
@@ -432,6 +435,26 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                         className="block w-full h-full object-cover"
                         loading="eager"
                       />
+                    ) : !loading && images.length === 0 ? (
+                      // Show video when no generated images are present
+                      <div className="relative w-full h-full">
+                        <video
+                          src={artistPlaceholderVideo}
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          className="block w-full h-full object-cover"
+                          onLoadedData={() => setVideoLoading(false)}
+                          onError={() => setVideoLoading(false)}
+                        />
+                        {/* Scanning animation while video loads */}
+                        {videoLoading && (
+                          <div className="absolute inset-0 overflow-hidden rounded-xl">
+                            <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning" />
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center text-white/40">
                         {loading ? (
