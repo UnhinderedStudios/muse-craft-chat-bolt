@@ -465,7 +465,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                 {/* Thin separator container */}
                 <div className="mt-2 mb-2">
                   <div className="w-full rounded-lg bg-black/40 border border-white/10 p-2">
-                    <div className="h-2"></div>
+                    <div className="h-4"></div>
                   </div>
                 </div>
 
