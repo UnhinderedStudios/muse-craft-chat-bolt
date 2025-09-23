@@ -547,31 +547,61 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   <div className="w-full rounded-lg bg-black/40 border border-white/10 p-3">
                     <div className="flex items-center justify-between gap-4">
                       {/* Artist Count Slider */}
-                      <div className="flex items-center gap-2 flex-1">
+                      <div className="flex items-center gap-3 flex-1">
                         <span className="text-xs text-white/80 whitespace-nowrap">Artists:</span>
                         <div className="flex-1 min-w-[60px]">
-                          <Slider
-                            value={artistCount}
-                            onValueChange={setArtistCount}
-                            min={1}
-                            max={4}
-                            step={1}
-                            className="w-full"
-                          />
+                          <div className="slider-container">
+                            <Slider
+                              value={artistCount}
+                              onValueChange={setArtistCount}
+                              min={1}
+                              max={3}
+                              step={1}
+                              className="w-full"
+                            />
+                          </div>
                         </div>
                         <span className="text-xs text-white/60 w-3 text-center">{artistCount[0]}</span>
                       </div>
                       
-                      {/* Realistic/Animated Toggle */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-white/80 whitespace-nowrap">
-                          {isRealistic ? "Realistic" : "Animated"}
-                        </span>
-                        <Switch
-                          checked={isRealistic}
-                          onCheckedChange={setIsRealistic}
-                          className="data-[state=checked]:bg-white/20 data-[state=unchecked]:bg-white/10"
-                        />
+                      {/* Realistic/Animated Toggle - Custom Design */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setIsRealistic(!isRealistic)}
+                          className={cn(
+                            "relative w-20 h-7 rounded-full transition-all duration-300 overflow-hidden",
+                            "bg-white/10 border border-white/20 hover:border-white/30"
+                          )}
+                        >
+                          {/* Sliding background */}
+                          <div
+                            className={cn(
+                              "absolute inset-0.5 rounded-full transition-transform duration-300 bg-accent-primary/80",
+                              isRealistic ? "translate-x-0" : "translate-x-[100%]"
+                            )}
+                            style={{ width: '50%' }}
+                          />
+                          
+                          {/* Text labels */}
+                          <div className="relative w-full h-full flex">
+                            <span
+                              className={cn(
+                                "flex-1 flex items-center justify-center text-[10px] font-medium transition-colors duration-300",
+                                isRealistic ? "text-white" : "text-white/60"
+                              )}
+                            >
+                              Real
+                            </span>
+                            <span
+                              className={cn(
+                                "flex-1 flex items-center justify-center text-[10px] font-medium transition-colors duration-300",
+                                !isRealistic ? "text-white" : "text-white/60"
+                              )}
+                            >
+                              Anim
+                            </span>
+                          </div>
+                        </button>
                       </div>
                     </div>
                   </div>
