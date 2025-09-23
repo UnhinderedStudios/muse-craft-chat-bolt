@@ -11,6 +11,41 @@ import { useSessionManager } from "@/hooks/use-session-manager";
 import { AnimatedPromptInput } from "@/components/ui/animated-prompt-input";
 import { HexColorPicker } from "react-colorful";
 
+// Function to convert hex color to human-readable name
+const getColorName = (hex: string): string => {
+  if (!hex || !hex.startsWith('#')) return '';
+  
+  const colors: { [key: string]: string } = {
+    '#000000': 'black', '#ffffff': 'white', '#ff0000': 'red', '#00ff00': 'lime',
+    '#0000ff': 'blue', '#ffff00': 'yellow', '#ff00ff': 'magenta', '#00ffff': 'cyan',
+    '#800000': 'maroon', '#008000': 'green', '#000080': 'navy', '#808000': 'olive',
+    '#800080': 'purple', '#008080': 'teal', '#c0c0c0': 'silver', '#808080': 'gray',
+    '#ffa500': 'orange', '#ffc0cb': 'pink', '#a52a2a': 'brown', '#40e0d0': 'turquoise',
+    '#ee82ee': 'violet', '#90ee90': 'light green', '#add8e6': 'light blue', '#f0e68c': 'khaki',
+    '#dda0dd': 'plum', '#98fb98': 'pale green', '#afeeee': 'pale turquoise', '#db7093': 'pale violet red'
+  };
+  
+  // Direct match
+  if (colors[hex.toLowerCase()]) return colors[hex.toLowerCase()];
+  
+  // Parse hex to RGB
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  
+  // Basic color detection
+  if (r > 200 && g > 200 && b > 200) return 'light gray';
+  if (r < 50 && g < 50 && b < 50) return 'dark gray';
+  if (r > g + 50 && r > b + 50) return g > b ? 'orange-red' : 'red';
+  if (g > r + 50 && g > b + 50) return r > b ? 'yellow-green' : 'green';
+  if (b > r + 50 && b > g + 50) return r > g ? 'purple' : 'blue';
+  if (r > 150 && g > 150 && b < 100) return 'yellow';
+  if (r > 150 && g < 100 && b > 150) return 'magenta';
+  if (r < 100 && g > 150 && b > 150) return 'cyan';
+  
+  return 'custom';
+};
+
 interface ArtistGeneratorProps {
   isOpen: boolean;
   onClose: () => void;
@@ -416,10 +451,16 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                           />
                         </div>
                         
-                        {/* Color Controls - Below picker */}
+                         {/* Color Controls - Below picker */}
                         <div className="flex items-center justify-between">
-                          <div className="text-xs text-white/80 select-all font-mono">
-                            {selectedColor || "#ffffff"}
+                          <div className="flex items-center gap-2 text-xs text-white/80 select-all font-mono">
+                            <span>{selectedColor || "#ffffff"}</span>
+                            {selectedColor && (
+                              <>
+                                <span className="text-white/30">|</span>
+                                <span className="text-white/60 font-sans">{getColorName(selectedColor)}</span>
+                              </>
+                            )}
                           </div>
                           <div className="flex items-center gap-2">
                             <Button
