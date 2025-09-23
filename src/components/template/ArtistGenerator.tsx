@@ -445,7 +445,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                         />
                         {/* Scanning animation while video loads */}
                         {videoLoading && (
-                          <div className="absolute inset-0 overflow-hidden rounded-xl">
+                          <div className="absolute inset-0 pointer-events-none">
                             <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning" />
                           </div>
                         )}
@@ -468,7 +468,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                     )}
                     {/* Loading animation on main preview when generating */}
                     {loading && (
-                      <div className="absolute inset-0 overflow-hidden rounded-xl">
+                      <div className="absolute inset-0 pointer-events-none">
                         <div className="w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent animate-scanning" />
                       </div>
                     )}
