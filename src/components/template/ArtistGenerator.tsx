@@ -388,7 +388,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   <h3 className="text-xs text-white/60">Artist Generator</h3>
                 </header>
 
-                <div className="flex-1 min-h-0 mb-1 space-y-2 overflow-auto pr-1">
+                <div className="flex-1 min-h-0 mb-1 space-y-1 overflow-auto pr-1">
                   <div>
                     <AnimatedPromptInput
                       value={prompt}
@@ -462,10 +462,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   </div>
                 </div>
 
-                {/* Thin separator container */}
+                {/* Settings container */}
                 <div className="mt-2 mb-2">
                   <div className="w-full rounded-lg bg-black/40 border border-white/10 p-2 pb-3">
-                    <div className="h-2"></div>
+                    <div className="text-xs text-white/60 mb-1">Settings</div>
+                    <div className="h-1"></div>
                   </div>
                 </div>
 
