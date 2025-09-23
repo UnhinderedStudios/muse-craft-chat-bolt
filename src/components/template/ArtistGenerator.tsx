@@ -426,7 +426,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                               variant="outline"
                               size="sm"
                               onClick={handleColorRandomize}
-                              className="bg-white/10 border-0 text-white hover:bg-white/20 w-6 h-6 p-0"
+                              className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0"
                             >
                               <Dices className="w-3 h-3" />
                             </Button>
@@ -434,26 +434,26 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                               variant="outline"
                               size="sm"
                               onClick={handleColorPicker}
-                              className="bg-white/10 border-0 text-white hover:bg-white/20 w-6 h-6 p-0"
+                              className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0"
                             >
                               <Pipette className="w-3 h-3" />
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={handleColorApply}
-                              disabled={!selectedColor}
-                              className="bg-white/10 border-0 text-white hover:bg-white/20 w-6 h-6 p-0"
+                              onClick={handleColorReset}
+                              className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0"
                             >
-                              <Check className="w-3 h-3" />
+                              <RotateCcw className="w-3 h-3" />
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={handleColorReset}
-                              className="bg-white/10 border-0 text-white hover:bg-white/20 w-6 h-6 p-0"
+                              onClick={handleColorApply}
+                              disabled={!selectedColor}
+                              className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0"
                             >
-                              <RotateCcw className="w-3 h-3" />
+                              <Check className="w-3 h-3" />
                             </Button>
                           </div>
                         </div>
