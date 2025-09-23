@@ -462,6 +462,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   </div>
                 </div>
 
+                {/* Thin separator container */}
+                <div className="mt-2 mb-2">
+                  <div className="h-px bg-white/10"></div>
+                </div>
+
                 <div className="mt-auto">
                   <div className="grid grid-cols-4 gap-1 mt-2">
                     <Button
