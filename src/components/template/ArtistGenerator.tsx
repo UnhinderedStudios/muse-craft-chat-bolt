@@ -464,9 +464,9 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
                 {/* Settings container */}
                 <div className="mt-2 mb-2">
+                  <div className="text-xs text-white/60 mb-2">Settings</div>
                   <div className="w-full rounded-lg bg-black/40 border border-white/10 p-2 pb-3">
-                    <div className="text-xs text-white/60 mb-1">Settings</div>
-                    <div className="h-1"></div>
+                    <div className="h-2"></div>
                   </div>
                 </div>
 
