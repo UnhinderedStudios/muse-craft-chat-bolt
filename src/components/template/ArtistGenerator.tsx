@@ -380,7 +380,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
               {/* Right: Prompt Controls */}
               <aside 
-                className="flex flex-col rounded-xl border border-white/10 p-4 overflow-hidden min-h-0"
+                className="flex flex-col rounded-xl border border-white/10 px-4 pt-4 pb-3 overflow-hidden min-h-0"
                 style={{ height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
               >
 
@@ -388,7 +388,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   <h3 className="text-xs text-white/60">Artist Generator</h3>
                 </header>
 
-                <div className="flex-1 min-h-0 mb-3 space-y-2 overflow-auto pr-1">
+                <div className="flex-1 min-h-0 mb-1 space-y-2 overflow-auto pr-1">
                   <div>
                     <AnimatedPromptInput
                       value={prompt}
