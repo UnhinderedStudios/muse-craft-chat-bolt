@@ -565,7 +565,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                       </div>
                       
                       {/* Separator */}
-                      <span className="text-white/30">|</span>
+                      <div className="w-px h-4 bg-white/30"></div>
                       
                       {/* Realistic/Animated Toggle - Custom Design */}
                       <div className="flex-shrink-0">
