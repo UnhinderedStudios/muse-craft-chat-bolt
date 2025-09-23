@@ -370,7 +370,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
               {/* Right: Prompt Controls */}
               <aside 
-                className="flex flex-col rounded-xl border border-white/10 p-4 overflow-hidden min-h-0"
+                className="flex flex-col rounded-xl border border-white/10 p-4 pb-2 overflow-hidden min-h-0"
                 style={{ height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
               >
 
