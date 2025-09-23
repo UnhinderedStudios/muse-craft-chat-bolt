@@ -454,7 +454,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
               {/* Right: Prompt Controls */}
               <aside 
                 className="flex flex-col rounded-xl border border-white/10 px-4 pt-3 pb-3 overflow-hidden min-h-0"
-                style={{ height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
+                style={{ height: "min(520px, 60vh)", backgroundColor: '#33343615' }}
               >
 
                 <header className="mb-2">
@@ -471,14 +471,14 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                       animatedText={sanitizedPrompt}
                       isAnimating={isAnimating}
                       onAnimationComplete={handleAnimationComplete}
-                      className="h-36"
+                      className="h-36 bg-white/5"
                     />
                   </div>
 
                   {/* Background Color Section */}
                   <div>
                     <div className="text-xs text-white/60 mb-2">Background Color</div>
-                    <div className="w-full rounded-lg bg-black/40 border border-white/10 p-3 pb-1.5">
+                    <div className="w-full rounded-lg bg-black/20 border border-white/10 p-3 pb-1.5">
                       <div className="flex flex-col gap-1.5">
                         {/* Color Picker - Full Width */}
                         <div className="color-picker-compact w-full">
