@@ -395,7 +395,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   {/* Background Color Section */}
                   <div>
                     <div className="text-xs text-white/60 mb-2">Background Color</div>
-                    <div className="w-full rounded-lg bg-black/40 border border-white/10 p-3">
+                    <div className="w-full rounded-lg bg-black/40 border border-white/10 p-3 pb-1.5">
                       <div className="flex flex-col gap-1.5">
                         {/* Color Picker - Full Width */}
                         <div className="color-picker-compact w-full">
