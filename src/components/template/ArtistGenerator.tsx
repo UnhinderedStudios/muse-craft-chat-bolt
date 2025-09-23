@@ -579,7 +579,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                           {/* Sliding background */}
                           <div
                             className={cn(
-                              "absolute inset-0.5 rounded-full transition-transform duration-300 bg-accent-primary/80",
+                              "absolute inset-0.5 rounded-full transition-transform duration-300 bg-accent-primary",
                               isRealistic ? "translate-x-0" : "translate-x-[100%]"
                             )}
                             style={{ width: '50%' }}
