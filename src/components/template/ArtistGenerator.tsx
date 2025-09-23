@@ -396,24 +396,22 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   <div>
                     <div className="text-xs text-white/60 mb-2">Background Color</div>
                     <div className="w-full rounded-lg bg-black/40 border border-white/10 p-3">
-                      <div className="flex items-start gap-3">
-                        {/* Color Picker */}
-                        <div className="color-picker-compact">
-                          <div style={{ width: '130px', height: '130px' }}>
-                            <HexColorPicker
-                              color={selectedColor || "#ffffff"}
-                              onChange={setSelectedColor}
-                              style={{ width: '100%', height: '100%' }}
-                            />
-                          </div>
+                      <div className="flex flex-col gap-3">
+                        {/* Color Picker - Full Width */}
+                        <div className="color-picker-compact w-full">
+                          <HexColorPicker
+                            color={selectedColor || "#ffffff"}
+                            onChange={setSelectedColor}
+                            style={{ width: '100%', height: '140px' }}
+                          />
                         </div>
                         
-                        {/* Color Controls */}
-                        <div className="flex-1 flex flex-col justify-center space-y-2">
+                        {/* Color Controls - Below picker */}
+                        <div className="flex items-center justify-between">
+                          <div className="text-xs text-white/80 select-all font-mono">
+                            {selectedColor || "#ffffff"}
+                          </div>
                           <div className="flex items-center gap-2">
-                            <div className="text-xs text-white/80 select-all font-mono">
-                              {selectedColor || "#ffffff"}
-                            </div>
                             <Button
                               variant="outline"
                               size="sm"
