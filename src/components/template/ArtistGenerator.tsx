@@ -15,35 +15,67 @@ import { HexColorPicker } from "react-colorful";
 const getColorName = (hex: string): string => {
   if (!hex || !hex.startsWith('#')) return '';
   
-  const colors: { [key: string]: string } = {
-    '#000000': 'black', '#ffffff': 'white', '#ff0000': 'red', '#00ff00': 'lime',
-    '#0000ff': 'blue', '#ffff00': 'yellow', '#ff00ff': 'magenta', '#00ffff': 'cyan',
-    '#800000': 'maroon', '#008000': 'green', '#000080': 'navy', '#808000': 'olive',
-    '#800080': 'purple', '#008080': 'teal', '#c0c0c0': 'silver', '#808080': 'gray',
-    '#ffa500': 'orange', '#ffc0cb': 'pink', '#a52a2a': 'brown', '#40e0d0': 'turquoise',
-    '#ee82ee': 'violet', '#90ee90': 'light green', '#add8e6': 'light blue', '#f0e68c': 'khaki',
-    '#dda0dd': 'plum', '#98fb98': 'pale green', '#afeeee': 'pale turquoise', '#db7093': 'pale violet red'
-  };
-  
-  // Direct match
-  if (colors[hex.toLowerCase()]) return colors[hex.toLowerCase()];
-  
   // Parse hex to RGB
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   
-  // Basic color detection
-  if (r > 200 && g > 200 && b > 200) return 'light gray';
-  if (r < 50 && g < 50 && b < 50) return 'dark gray';
-  if (r > g + 50 && r > b + 50) return g > b ? 'orange-red' : 'red';
-  if (g > r + 50 && g > b + 50) return r > b ? 'yellow-green' : 'green';
-  if (b > r + 50 && b > g + 50) return r > g ? 'purple' : 'blue';
-  if (r > 150 && g > 150 && b < 100) return 'yellow';
-  if (r > 150 && g < 100 && b > 150) return 'magenta';
-  if (r < 100 && g > 150 && b > 150) return 'cyan';
+  // Calculate luminance for brightness detection
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   
-  return 'custom';
+  // Very dark colors
+  if (luminance < 0.1) return 'very dark';
+  
+  // Very light colors  
+  if (luminance > 0.9) return 'very light';
+  
+  // Grayscale detection
+  const grayTolerance = 15;
+  if (Math.abs(r - g) < grayTolerance && Math.abs(g - b) < grayTolerance && Math.abs(r - b) < grayTolerance) {
+    if (luminance > 0.7) return 'light gray';
+    if (luminance > 0.4) return 'gray';
+    return 'dark gray';
+  }
+  
+  // Find dominant color channel
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const saturation = max === 0 ? 0 : (max - min) / max;
+  
+  // Low saturation colors
+  if (saturation < 0.2) {
+    if (luminance > 0.6) return 'light gray';
+    if (luminance > 0.3) return 'gray';
+    return 'dark gray';
+  }
+  
+  // Determine hue-based color names
+  let hue = 0;
+  if (max !== min) {
+    if (max === r) hue = ((g - b) / (max - min) + 6) % 6;
+    else if (max === g) hue = (b - r) / (max - min) + 2;
+    else hue = (r - g) / (max - min) + 4;
+    hue *= 60;
+  }
+  
+  // Color name based on hue ranges
+  const brightness = luminance > 0.6 ? 'light ' : luminance < 0.3 ? 'dark ' : '';
+  const intensity = saturation > 0.7 ? 'bright ' : saturation < 0.4 ? 'muted ' : '';
+  
+  if (hue >= 345 || hue < 15) return `${intensity}${brightness}red`;
+  if (hue >= 15 && hue < 45) return `${intensity}${brightness}orange`;
+  if (hue >= 45 && hue < 75) return `${intensity}${brightness}yellow`;
+  if (hue >= 75 && hue < 105) return `${intensity}${brightness}lime green`;
+  if (hue >= 105 && hue < 135) return `${intensity}${brightness}green`;
+  if (hue >= 135 && hue < 165) return `${intensity}${brightness}teal`;
+  if (hue >= 165 && hue < 195) return `${intensity}${brightness}cyan`;
+  if (hue >= 195 && hue < 225) return `${intensity}${brightness}blue`;
+  if (hue >= 225 && hue < 255) return `${intensity}${brightness}indigo`;
+  if (hue >= 255 && hue < 285) return `${intensity}${brightness}purple`;
+  if (hue >= 285 && hue < 315) return `${intensity}${brightness}magenta`;
+  if (hue >= 315 && hue < 345) return `${intensity}${brightness}pink`;
+  
+  return 'color';
 };
 
 interface ArtistGeneratorProps {
