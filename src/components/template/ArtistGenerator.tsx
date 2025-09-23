@@ -468,36 +468,36 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                       variant="secondary"
                       onClick={handleGenerate}
                       disabled={loading}
-                      className="col-span-1 text-xs px-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 border-0 flex items-center justify-center leading-none"
+                      className="col-span-1 text-[10px] px-2 py-1.5 h-7 bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 border-0 flex items-center justify-center leading-none"
                     >
-                      <Wand2 className="w-3 h-3 mr-0.25" />
+                      <Wand2 className="w-2.5 h-2.5 mr-0.25" />
                       Generate
                     </Button>
                     <Button
                       variant="secondary"
                       onClick={handleRetry}
                       disabled={loading}
-                      className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center leading-none"
+                      className="col-span-1 text-[10px] px-2 py-1.5 h-7 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center leading-none"
                     >
-                      <Repeat className="w-3 h-3 mr-0.25" />
+                      <Repeat className="w-2.5 h-2.5 mr-0.25" />
                       Retry
                     </Button>
                     <Button
                       variant="secondary"
                       onClick={handleDownload}
                       disabled={loading}
-                      className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center leading-none"
+                      className="col-span-1 text-[10px] px-2 py-1.5 h-7 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center leading-none"
                     >
-                      <Download className="w-3 h-3 mr-0.25" />
+                      <Download className="w-2.5 h-2.5 mr-0.25" />
                       Download
                     </Button>
                     <Button
                       variant="secondary"
                       onClick={handleApply}
                       disabled={loading}
-                      className="col-span-1 text-xs px-2 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center leading-none"
+                      className="col-span-1 text-[10px] px-2 py-1.5 h-7 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center leading-none"
                     >
-                      <ArrowRight className="w-3 h-3 mr-0.25" />
+                      <ArrowRight className="w-2.5 h-2.5 mr-0.25" />
                       Apply
                     </Button>
                   </div>
