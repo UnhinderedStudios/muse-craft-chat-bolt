@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { TrackItem } from "@/types";
-import { ChevronUp, ChevronDown, X, User, Wand2, Repeat, ArrowRight, Download, Palette, RotateCcw, Check } from "lucide-react";
+import { ChevronUp, ChevronDown, X, User, Wand2, Repeat, ArrowRight, Download, Palette, RotateCcw, Check, Dices, Pipette } from "lucide-react";
 import { useSessionManager } from "@/hooks/use-session-manager";
 import { AnimatedPromptInput } from "@/components/ui/animated-prompt-input";
 import { HexColorPicker } from "react-colorful";
@@ -238,6 +238,16 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
     toast({ title: "Color reset", description: "Background color reset to default" });
   };
 
+  const handleColorRandomize = () => {
+    const randomColor = `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`;
+    setSelectedColor(randomColor);
+    toast({ title: "Color randomized", description: `Random color: ${randomColor}` });
+  };
+
+  const handleColorPicker = () => {
+    toast({ title: "Color picker", description: "Eyedropper tool (coming soon)" });
+  };
+
   return (
     <Dialog open={isOpen}>
       <DialogContent 
@@ -412,6 +422,22 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                             {selectedColor || "#ffffff"}
                           </div>
                           <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleColorRandomize}
+                              className="bg-white/10 border-0 text-white hover:bg-white/20 w-6 h-6 p-0"
+                            >
+                              <Dices className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleColorPicker}
+                              className="bg-white/10 border-0 text-white hover:bg-white/20 w-6 h-6 p-0"
+                            >
+                              <Pipette className="w-3 h-3" />
+                            </Button>
                             <Button
                               variant="outline"
                               size="sm"
