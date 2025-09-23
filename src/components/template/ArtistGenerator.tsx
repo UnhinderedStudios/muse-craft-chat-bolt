@@ -646,7 +646,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                       className="col-span-1 text-xs px-2 py-1.5 h-7 bg-[#202020] text-gray-300 hover:bg-[#2a2a2a] border-white/10 flex items-center justify-center leading-none"
                     >
                       <ArrowRight className="w-2.5 h-2.5 mr-0.25" />
-                      Apply
+                      Next
                     </Button>
                   </div>
                 </div>
