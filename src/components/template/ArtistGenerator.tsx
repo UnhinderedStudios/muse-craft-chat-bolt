@@ -384,7 +384,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                 style={{ height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
               >
 
-                <header className="mb-1">
+                <header className="mb-2">
                   <h3 className="text-xs text-white/60">Artist Generator</h3>
                 </header>
 
