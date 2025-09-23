@@ -545,11 +545,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                 <div className="mt-2 mb-2">
                   <div className="text-xs text-white/60 mb-2">Settings</div>
                   <div className="w-full rounded-lg bg-black/40 border border-white/10 p-3">
-                    <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
                       {/* Artist Count Slider */}
-                      <div className="flex items-center gap-3" style={{ flex: '0 0 70%' }}>
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
                         <span className="text-xs text-white/80 whitespace-nowrap">Artists:</span>
-                        <div className="flex-1 min-w-[40px] max-w-[80px]">
+                        <div className="flex-1 min-w-[50px] max-w-[100px]">
                           <div className="slider-container">
                             <Slider
                               value={artistCount}
@@ -565,11 +565,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                       </div>
                       
                       {/* Realistic/Animated Toggle - Custom Design */}
-                      <div className="relative flex-shrink-0">
+                      <div className="flex-shrink-0">
                         <button
                           onClick={() => setIsRealistic(!isRealistic)}
                           className={cn(
-                            "relative w-28 h-7 rounded-full transition-all duration-300 overflow-hidden",
+                            "relative w-24 h-6 rounded-full transition-all duration-300 overflow-hidden",
                             "bg-white/10 border border-white/20 hover:border-white/30"
                           )}
                         >
@@ -586,7 +586,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                           <div className="relative w-full h-full flex">
                             <span
                               className={cn(
-                                "flex-1 flex items-center justify-center text-[9px] font-medium transition-colors duration-300",
+                                "flex-1 flex items-center justify-center text-[8px] font-medium transition-colors duration-300",
                                 isRealistic ? "text-white" : "text-white/60"
                               )}
                             >
@@ -594,7 +594,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                             </span>
                             <span
                               className={cn(
-                                "flex-1 flex items-center justify-center text-[9px] font-medium transition-colors duration-300",
+                                "flex-1 flex items-center justify-center text-[8px] font-medium transition-colors duration-300",
                                 !isRealistic ? "text-white" : "text-white/60"
                               )}
                             >
