@@ -86,54 +86,61 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
   };
 
   return (
-    <div className="relative w-full h-full">
-      <textarea
-        ref={textareaRef}
-        value={showAnimatedText ? animatedText : value}
-        onChange={handleChange}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        placeholder={showAnimatedText ? "" : placeholder}
-        disabled={disabled}
-        className={cn(
-          "w-full h-full resize-none rounded-lg bg-black/40 border border-white/10 text-white text-sm leading-6 placeholder:text-white/40 p-3 pb-24 pr-20 focus:outline-none focus:border-white/30 transition-colors duration-200 overflow-y-auto lyrics-scrollbar",
-          disabled && "cursor-default",
-          showAnimatedText && "opacity-80",
-          className
-        )}
-      />
-      {/* Divider line at the top of the bottom area */}
-      <div className="absolute bottom-12 left-3 right-16 h-px bg-white/10 z-30" />
-      
-      {/* Button container on the right side */}
-      <div className="absolute bottom-4 right-3 flex gap-1 z-40">
-        {onPersonClick && (
-          <button
-            onClick={onPersonClick}
-            className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200"
-            type="button"
-          >
-            <User size={12} className="text-white/60" />
-          </button>
-        )}
-        {onClothingClick && (
-          <button
-            onClick={onClothingClick}
-            className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200"
-            type="button"
-          >
-            <Shirt size={12} className="text-white/60" />
-          </button>
-        )}
-        {onResetClick && (
-          <button
-            onClick={onResetClick}
-            className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200"
-            type="button"
-          >
-            <RotateCcw size={12} className="text-white/60" />
-          </button>
-        )}
+    <div className={cn("relative w-full h-full rounded-lg bg-black/40 border border-white/10", className)}>
+      <div className="flex flex-col h-full">
+        {/* Top: scrollable input area */}
+        <div className="flex-1 min-h-0 p-3">
+          <textarea
+            ref={textareaRef}
+            value={showAnimatedText ? animatedText : value}
+            onChange={handleChange}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            placeholder={showAnimatedText ? "" : placeholder}
+            disabled={disabled}
+            className={cn(
+              "w-full h-full resize-none bg-transparent text-white text-sm leading-6 placeholder:text-white/40 pr-20 focus:outline-none transition-colors duration-200 overflow-y-auto lyrics-scrollbar",
+              disabled && "cursor-default",
+              showAnimatedText && "opacity-80"
+            )}
+          />
+        </div>
+
+        {/* Divider */}
+        <div className="px-3">
+          <div className="h-px bg-white/10 mr-16" />
+        </div>
+
+        {/* Bottom: button row */}
+        <div className="px-3 py-2 flex justify-end gap-1">
+          {onPersonClick && (
+            <button
+              onClick={onPersonClick}
+              className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200"
+              type="button"
+            >
+              <User size={12} className="text-white/60" />
+            </button>
+          )}
+          {onClothingClick && (
+            <button
+              onClick={onClothingClick}
+              className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200"
+              type="button"
+            >
+              <Shirt size={12} className="text-white/60" />
+            </button>
+          )}
+          {onResetClick && (
+            <button
+              onClick={onResetClick}
+              className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200"
+              type="button"
+            >
+              <RotateCcw size={12} className="text-white/60" />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
