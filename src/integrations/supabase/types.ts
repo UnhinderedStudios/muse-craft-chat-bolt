@@ -7,14 +7,117 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
-      [_ in never]: never
+      album_covers: {
+        Row: {
+          created_at: string
+          id: string
+          image_type: string
+          image_url: string
+          is_selected: boolean
+          metadata: Json | null
+          prompt_used: string | null
+          track_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_type: string
+          image_url: string
+          is_selected?: boolean
+          metadata?: Json | null
+          prompt_used?: string | null
+          track_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_type?: string
+          image_url?: string
+          is_selected?: boolean
+          metadata?: Json | null
+          prompt_used?: string | null
+          track_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      playlist_items: {
+        Row: {
+          added_at: string
+          id: string
+          playlist_id: string
+          track_cover_url: string | null
+          track_id: string
+          track_params: string[] | null
+          track_title: string | null
+          track_url: string | null
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          playlist_id: string
+          track_cover_url?: string | null
+          track_id: string
+          track_params?: string[] | null
+          track_title?: string | null
+          track_url?: string | null
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          playlist_id?: string
+          track_cover_url?: string | null
+          track_id?: string
+          track_params?: string[] | null
+          track_title?: string | null
+          track_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "playlist_items_playlist_id_fkey"
+            columns: ["playlist_id"]
+            isOneToOne: false
+            referencedRelation: "playlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      playlists: {
+        Row: {
+          created_at: string
+          id: string
+          is_favorites: boolean
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_favorites?: boolean
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_favorites?: boolean
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

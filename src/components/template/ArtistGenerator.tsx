@@ -115,7 +115,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
     console.log("🎯 ArtistGenerator opened:", { isOpen, track: track?.title, trackId: track?.id });
     if (isOpen && track) {
       // Load only previously generated artist images for this track (newest first)
-      const existingCovers = track.generatedCovers || [];
+      const existingCovers = track.albumCoverIds || [];
       const initial: string[] = [...existingCovers];
       
       console.log("🎨 Setting up initial artist images:", initial);
@@ -279,7 +279,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
         ...t, 
         coverUrl: selected, // For now, just use coverUrl for artist image too
         // Update the generated covers array to put the selected cover first
-        generatedCovers: selected ? [selected, ...(t.generatedCovers || []).filter(c => c !== selected)] : t.generatedCovers
+        albumCoverIds: selected ? [selected, ...(t.albumCoverIds || []).filter(c => c !== selected)] : t.albumCoverIds
       } : t
     );
     updateSession(currentSession.id, { tracks: updatedTracks });

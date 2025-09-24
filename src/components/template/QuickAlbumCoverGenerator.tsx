@@ -31,7 +31,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
     console.log("🎯 QuickAlbumCoverGenerator opened:", { isOpen, track: track?.title, trackId: track?.id });
     if (isOpen && track) {
       // Load all previously generated covers for this track (newest first)
-      const existingCovers = track.generatedCovers || [];
+      const existingCovers = track.albumCoverIds || [];
       const initial: string[] = [...existingCovers];
       
       // Add current cover if it exists and not already in generated covers
@@ -178,7 +178,7 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
         ...t, 
         coverUrl: selected,
         // Update the generated covers array to put the selected cover first
-        generatedCovers: selected ? [selected, ...(t.generatedCovers || []).filter(c => c !== selected)] : t.generatedCovers
+        albumCoverIds: selected ? [selected, ...(t.albumCoverIds || []).filter(c => c !== selected)] : t.albumCoverIds
       } : t
     );
     updateSession(currentSession.id, { tracks: updatedTracks });

@@ -36,6 +36,7 @@ export interface SessionManagerContextValue {
   addTracksToCurrentSession: (tracks: TrackItem[]) => void;
   removeTrackFromSession: (sessionId: string, trackId: string) => void;
   updateCurrentSessionChat: (messages: ChatMessage[]) => void;
+  updateTrackCover: (trackId: string, coverUrl: string, albumCoverIds?: string[]) => void;
   
   // Generation management
   addActiveGeneration: (generation: { id: string; sunoJobId?: string; startTime: number; progress: number; details: any; covers?: { cover1: string; cover2: string } | null; isCompleting?: boolean }) => void;
@@ -365,6 +366,24 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     });
   }, [currentSessionId]);
 
+  const updateTrackCover = useCallback((trackId: string, coverUrl: string, albumCoverIds?: string[]) => {
+    if (!currentSessionId) return;
+    
+    setSessions(prev => prev.map(session => 
+      session.id === currentSessionId 
+        ? { 
+            ...session, 
+            tracks: session.tracks.map(track => 
+              track.id === trackId 
+                ? { ...track, coverUrl, albumCoverIds: albumCoverIds || track.albumCoverIds }
+                : track
+            ),
+            lastModified: Date.now()
+          }
+        : session
+    ));
+  }, [currentSessionId]);
+
   const addTracksToCurrentSession = useCallback((newTracks: TrackItem[]) => {
     setSessions(prev => {
       return prev.map(s => {
@@ -580,6 +599,7 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     addTracksToCurrentSession,
     removeTrackFromSession,
     updateCurrentSessionChat,
+    updateTrackCover,
     addActiveGeneration,
     updateActiveGeneration,
     removeActiveGeneration,
