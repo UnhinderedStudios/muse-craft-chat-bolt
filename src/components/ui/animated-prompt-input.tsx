@@ -102,11 +102,13 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
           className
         )}
       />
-      {/* Divider line */}
-      <div className="absolute bottom-16 left-3 right-16 h-px bg-white/10 z-10" />
+      {/* Bottom overlay area to visually clip text below the divider */}
+      <div className="pointer-events-none absolute left-3 right-16 bottom-0 h-12 bg-black/40 rounded-b-lg z-10" />
+      {/* Divider line at the top of the clipped area */}
+      <div className="absolute bottom-12 left-3 right-16 h-px bg-white/10 z-20" />
       
       {/* Button container on the right side */}
-      <div className="absolute bottom-4 right-3 flex gap-1">
+      <div className="absolute bottom-4 right-3 flex gap-1 z-30">
         {onPersonClick && (
           <button
             onClick={onPersonClick}
