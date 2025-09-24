@@ -138,8 +138,8 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
               <div className="absolute inset-0 overflow-hidden rounded-lg pointer-events-none">
                 <div className="absolute top-0 left-0 w-16 h-full animate-scan" 
                      style={{
-                       background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.8) 50%, transparent 100%)',
-                       boxShadow: '0 0 20px rgba(255,255,255,0.6)'
+                       background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+                       boxShadow: '0 0 20px rgba(255,255,255,0.3)'
                      }} />
               </div>
               {/* Main overlay */}
