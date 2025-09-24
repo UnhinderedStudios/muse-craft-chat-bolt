@@ -103,7 +103,7 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
         )}
       />
       {/* Divider line */}
-      <div className="absolute bottom-9 left-3 right-16 h-px bg-white/10" />
+      <div className="absolute bottom-12 left-3 right-16 h-px bg-white/10" />
       
       {/* Button container on the right side */}
       <div className="absolute bottom-2 right-3 flex gap-1">
