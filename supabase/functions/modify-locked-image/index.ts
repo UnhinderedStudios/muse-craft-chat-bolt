@@ -48,11 +48,12 @@ serve(async (req) => {
 
     const requestBody = {
       contents: [{
+        role: "user",
         parts: [
           { text: prompt },
           {
-            inline_data: {
-              mime_type: "image/jpeg",
+            inlineData: {
+              mimeType: imageResponse.headers.get('content-type') || "image/jpeg",
               data: base64Image
             }
           }
@@ -94,10 +95,12 @@ serve(async (req) => {
 
     // Extract images from the response
     const images: string[] = [];
-    for (const part of data.candidates[0].content.parts) {
-      if (part.inline_data?.data) {
-        const base64Data = part.inline_data.data;
-        const dataUrl = `data:${part.inline_data.mime_type || 'image/jpeg'};base64,${base64Data}`;
+    const parts = data.candidates?.[0]?.content?.parts ?? [];
+    for (const part of parts) {
+      const inline = part.inlineData || part.inline_data;
+      if (inline?.data) {
+        const mime = inline.mimeType || inline.mime_type || 'image/png';
+        const dataUrl = `data:${mime};base64,${inline.data}`;
         images.push(dataUrl);
       }
     }
