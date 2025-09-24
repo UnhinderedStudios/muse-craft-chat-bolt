@@ -942,7 +942,7 @@ Deno.serve(async (req: Request) => {
     
     // Use transport-retry wrapper for robust Gemini calls
     const seed = Math.floor(Math.random() * 1000000);
-    console.log(`🚀 [${requestId}] Sending initial request to Gemini (seed: ${seed}): "${finalPrompt.substring(0, 100)}..."`);
+    console.log(`🚀 [${requestId}] Sending initial request to Gemini (seed: ${seed}): "${FINAL_GENERATION_PROMPT.substring(0, 100)}..."`);
     
     const generationRes = await withTimeout(
       callGeminiWithTransportRetries(
