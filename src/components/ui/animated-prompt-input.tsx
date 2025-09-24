@@ -191,8 +191,8 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
             {onPersonClick && (
               <button
                 onClick={onPersonClick}
-                disabled={isAnalyzingFace}
-                className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isAnalyzingFace || !!facialReferenceImage}
+                className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white/10"
                 type="button"
               >
                 <User size={12} className="text-white/60" />
