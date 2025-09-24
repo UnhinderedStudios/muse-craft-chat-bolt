@@ -737,7 +737,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                         variant="secondary"
                         onClick={handleGenerate}
                         disabled={loading}
-                        className="col-span-1 text-xs px-2 py-1.5 h-7 bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:from-pink-600 hover:to-purple-700 border-0 flex items-center justify-center leading-none"
+                        className="col-span-1 text-xs px-2 py-1.5 h-7 bg-accent-primary hover:bg-accent-primary/90 text-white border-0 flex items-center justify-center leading-none"
                       >
                         <Wand2 className="w-2.5 h-2.5 mr-0.25" />
                         Generate
