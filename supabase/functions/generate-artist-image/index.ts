@@ -615,8 +615,8 @@ Deno.serve(async (req: Request) => {
       prompt = "Professional musician portrait, studio lighting, artistic and cinematic";
     }
 
-    // Standard prefix template with object removal constraints - using Gemini-friendly language
-    const STANDARD_PREFIX = "Keep composition, structure, lighting and character position identical, character must be completely transformed to the reference image, in other words not a single thing must resemble from the character in the image, this should be changed, pose must be completely different but very cool to the current image, it should be clear that the person is a music artist. No objects such as guitars, mics, chairs or anything else at all can be present in the image. Character must be completely transformed with:";
+    // Standard prefix template with object removal constraints - using original working language
+    const STANDARD_PREFIX = "Keep composition, structure, lighting and character position identical, character must be entirely different to the reference image, in other words not a single thing must resemble from the character in the image, this should be erased, pose must be entirely different but very cool to the current image, it should be clear that the person is a music artist. No objects such as guitars, mics, chairs or anything else at all can be present in the image. Character must be entirely replaced with:";
 
     // Extract or establish the immutable prefix and character parts
     let FULL_PREFIX = "";
