@@ -247,6 +247,7 @@ Deno.serve(async (req: Request) => {
     let backgroundHex: string | undefined;
     let characterCount: number;
     let imageData: string | undefined;
+    let imageMimeType: string | undefined;
 
     const contentType = req.headers.get('content-type') || '';
     console.log(`📥 [${requestId}] Content-Type: ${contentType}`);
@@ -266,6 +267,7 @@ Deno.serve(async (req: Request) => {
         console.log(`🖼️ [${requestId}] Image file - name: ${imageFile.name}, size: ${imageFile.size}, type: ${imageFile.type}`);
         const arrayBuffer = await imageFile.arrayBuffer();
         imageData = encodeBase64(new Uint8Array(arrayBuffer));
+        imageMimeType = imageFile.type || 'image/png';
         console.log(`✅ [${requestId}] Image converted to base64, length: ${imageData.length}`);
       }
       
@@ -313,11 +315,12 @@ Deno.serve(async (req: Request) => {
     // Build request body for Gemini
     const requestBody: any = {
       contents: [{
+        role: "user",
         parts: []
       }],
       generationConfig: {
         temperature: 0.7,
-        maxOutputTokens: 4096
+        responseMimeType: "image/png"
       }
     };
 
@@ -325,7 +328,7 @@ Deno.serve(async (req: Request) => {
     if (imageData) {
       requestBody.contents[0].parts.push({
         inline_data: {
-          mime_type: "image/png",
+          mime_type: imageMimeType || "image/png",
           data: imageData
         }
       });
