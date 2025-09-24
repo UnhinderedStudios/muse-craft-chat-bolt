@@ -36,7 +36,7 @@ type Props = {
   isGenerating?: boolean;
   generationProgress?: number;
   activeJobCount?: number;
-  activeGenerations?: Array<{id: string, startTime: number, progress: number, details: any, covers?: { cover1: string; cover2: string } | null, isCompleting?: boolean}>;
+  activeGenerations?: Array<{id: string, startTime: number, progress: number, details: any, covers?: { coverUrls: string[] } | null, isCompleting?: boolean}>;
   onPlaylistClick?: (playlist: SessionPlaylist) => void;
 };
 
@@ -503,7 +503,7 @@ export default function TrackListPanel({
               });
               return jobsToShow.flatMap((job, jobIndex) => [0, 1].map((trackInJob) => {
                 const jobProgress = job?.progress || 0;
-                const coverUrl = job?.covers ? (trackInJob === 0 ? job.covers.cover1 : job.covers.cover2) : undefined;
+                const coverUrl = job?.covers?.coverUrls?.[trackInJob] || undefined;
                 const listIndex = tracks.length + jobIndex * 2 + trackInJob + 1;
                 return (
                   <TrackLoadingShell

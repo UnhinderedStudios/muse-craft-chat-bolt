@@ -157,16 +157,8 @@ export const api = {
   },
 
   async generateAlbumCovers(songDetails: SongDetails): Promise<{ 
-    cover1: string; 
-    cover2: string; 
-    debug?: {
-      inputSource: string;
-      inputContent: string;
-      chatPrompt: string;
-      imagenPrompt: string;
-      imagenParams: any;
-      rawResponse: any;
-    }
+    coverIds: string[];
+    coverUrls: string[];
   }> {
     // Determine the source for the prompt in priority order: title > lyrics > style
     let source = "fallback";
@@ -225,20 +217,80 @@ export const api = {
     };
 
     // Handle response format with base64 images array
-    if (data.images && Array.isArray(data.images) && data.images.length > 0) {
-      return {
-        cover1: data.images[0] || '',
-        cover2: data.images[1] || data.images[0] || '', // Fallback to first image if only one generated
-        debug
-      };
+    if (!data?.images || !Array.isArray(data.images) || data.images.length === 0) {
+      console.log("No images returned from edge function");
+      return { coverIds: [], coverUrls: [] };
     }
 
-    // If no images returned, return empty strings
-    return {
-      cover1: '',
-      cover2: '',
-      debug
-    };
+    // Upload images to Supabase storage and create database records
+    const coverIds: string[] = [];
+    const coverUrls: string[] = [];
+
+    for (let i = 0; i < data.images.length; i++) {
+      const base64Image = data.images[i];
+      if (!base64Image) continue;
+
+      try {
+        // Convert base64 to blob
+        const base64Data = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let j = 0; j < byteCharacters.length; j++) {
+          byteNumbers[j] = byteCharacters.charCodeAt(j);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'image/jpeg' });
+
+        // Generate unique filename
+        const filename = `cover-${Date.now()}-${i + 1}.jpg`;
+        
+        // Upload to storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('album-covers')
+          .upload(filename, blob);
+
+        if (uploadError) {
+          console.error("❌ Upload error:", uploadError);
+          continue;
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('album-covers')
+          .getPublicUrl(filename);
+
+        if (!urlData?.publicUrl) {
+          console.error("❌ Failed to get public URL");
+          continue;
+        }
+
+        // Create database record
+        const { data: dbData, error: dbError } = await supabase
+          .from('album_covers')
+          .insert({
+            track_id: 'temp', // Will be updated when applied to track
+            image_url: urlData.publicUrl,
+            image_type: 'album_cover',
+            prompt_used: albumPrompt,
+            is_selected: false
+          })
+          .select('id')
+          .single();
+
+        if (dbError) {
+          console.error("❌ Database error:", dbError);
+          continue;
+        }
+
+        coverIds.push(dbData.id);
+        coverUrls.push(urlData.publicUrl);
+        console.log(`✅ Uploaded cover ${i + 1}: ${dbData.id}`);
+      } catch (error) {
+        console.error(`❌ Error processing image ${i + 1}:`, error);
+      }
+    }
+
+    return { coverIds, coverUrls };
   },
 
   async testAlbumCoverHealth(): Promise<{
@@ -381,7 +433,7 @@ export const api = {
   },
 
   // Generate album covers from a custom prompt using Gemini/Imagen edge function
-  async generateAlbumCoversByPrompt(prompt: string, n: number = 4): Promise<string[]> {
+  async generateAlbumCoversByPrompt(prompt: string, trackId?: string, n: number = 4): Promise<{ coverIds: string[]; coverUrls: string[] }> {
     console.log("🎨 Calling edge function with prompt:", prompt);
     
     const { data, error } = await supabase.functions.invoke('generate-album-cover', {
@@ -395,10 +447,79 @@ export const api = {
     
     console.log("✅ Edge function response:", data);
     
-    if (data?.images && Array.isArray(data.images)) {
-      return data.images as string[];
+    if (!data?.images || !Array.isArray(data.images) || data.images.length === 0) {
+      return { coverIds: [], coverUrls: [] };
     }
-    return [];
+
+    // Upload images to Supabase storage and create database records
+    const coverIds: string[] = [];
+    const coverUrls: string[] = [];
+
+    for (let i = 0; i < data.images.length; i++) {
+      const base64Image = data.images[i];
+      if (!base64Image) continue;
+
+      try {
+        // Convert base64 to blob
+        const base64Data = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
+        const byteCharacters = atob(base64Data);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let j = 0; j < byteCharacters.length; j++) {
+          byteNumbers[j] = byteCharacters.charCodeAt(j);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'image/jpeg' });
+
+        // Generate unique filename
+        const filename = `cover-${Date.now()}-${i + 1}.jpg`;
+        
+        // Upload to storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('album-covers')
+          .upload(filename, blob);
+
+        if (uploadError) {
+          console.error("❌ Upload error:", uploadError);
+          continue;
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('album-covers')
+          .getPublicUrl(filename);
+
+        if (!urlData?.publicUrl) {
+          console.error("❌ Failed to get public URL");
+          continue;
+        }
+
+        // Create database record
+        const { data: dbData, error: dbError } = await supabase
+          .from('album_covers')
+          .insert({
+            track_id: trackId || 'temp',
+            image_url: urlData.publicUrl,
+            image_type: 'album_cover',
+            prompt_used: prompt,
+            is_selected: false
+          })
+          .select('id')
+          .single();
+
+        if (dbError) {
+          console.error("❌ Database error:", dbError);
+          continue;
+        }
+
+        coverIds.push(dbData.id);
+        coverUrls.push(urlData.publicUrl);
+        console.log(`✅ Uploaded cover ${i + 1}: ${dbData.id}`);
+      } catch (error) {
+        console.error(`❌ Error processing image ${i + 1}:`, error);
+      }
+    }
+
+    return { coverIds, coverUrls };
   },
 
   // Generate artist images using Gemini 2.5 Flash with fixed reference image

@@ -20,7 +20,7 @@ interface KaraokeRightPanelProps {
   currentTrackIndex: number;
   currentTime: number;
   isPlaying: boolean;
-  albumCovers: { cover1: string; cover2: string } | null;
+  albumCovers: { coverUrls: string[] } | null;
   currentTrackCoverUrl?: string;
   currentTrackTitle?: string;
   isGeneratingCovers: boolean;

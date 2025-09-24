@@ -5,9 +5,10 @@ import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
-import { TrackItem } from "@/types";
+import { TrackItem, AlbumCover } from "@/types";
 import { ChevronUp, ChevronDown, X, ImageIcon, Wand2, Repeat, ArrowRight, Download } from "lucide-react";
 import { useSessionManager } from "@/hooks/use-session-manager";
+import { useAlbumCovers } from "@/hooks/use-album-covers";
 
 interface QuickAlbumCoverGeneratorProps {
   isOpen: boolean;
@@ -18,8 +19,9 @@ interface QuickAlbumCoverGeneratorProps {
 export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> = ({ isOpen, onClose, track }) => {
   const { toast } = useToast();
   const { currentSession, updateSession } = useSessionManager();
+  const { fetchAlbumCovers, updateSelectedCover } = useAlbumCovers();
 
-  const [images, setImages] = useState<string[]>([]);
+  const [covers, setCovers] = useState<AlbumCover[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [offset, setOffset] = useState(0); // thumbnail scroll offset
   const [prompt, setPrompt] = useState("");
@@ -31,30 +33,32 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
     console.log("🎯 QuickAlbumCoverGenerator opened:", { isOpen, track: track?.title, trackId: track?.id });
     if (isOpen && track) {
       // Load all previously generated covers for this track (newest first)
-      const existingCovers = track.albumCoverIds || [];
-      const initial: string[] = [...existingCovers];
-      
-      // Add current cover if it exists and not already in generated covers
-      if (track.coverUrl && !initial.includes(track.coverUrl)) {
-        initial.push(track.coverUrl);
-      }
-      
-      console.log("📸 Setting up initial images:", initial);
-      setImages(initial);
+      loadCovers();
       setSelectedIndex(0);
       setOffset(0);
       setPrompt("");
     }
   }, [isOpen, track]);
 
+  const loadCovers = async () => {
+    if (!track) return;
+    try {
+      const trackCovers = await fetchAlbumCovers(track.id);
+      setCovers(trackCovers);
+      console.log("📸 Loaded covers:", trackCovers);
+    } catch (error) {
+      console.error("Failed to load covers:", error);
+    }
+  };
+
   const canScrollUp = offset > 0;
-  const totalThumbs = loading ? images.length + 1 : images.length;
+  const totalThumbs = loading ? covers.length + 1 : covers.length;
   const canScrollDown = totalThumbs > offset + VISIBLE_COUNT;
 
-  const displayThumbs = useMemo<(string | null)[]>(() => {
-    const list: (string | null)[] = loading ? [null, ...images] : [...images];
+  const displayThumbs = useMemo<(AlbumCover | null)[]>(() => {
+    const list: (AlbumCover | null)[] = loading ? [null, ...covers] : [...covers];
     return list.slice(offset, offset + VISIBLE_COUNT);
-  }, [loading, images, offset]);
+  }, [loading, covers, offset]);
 
   const handleGenerate = async () => {
     console.log("🚀 Generate button clicked, prompt:", prompt.trim());
@@ -63,38 +67,28 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
       toast({ title: "Enter a prompt", description: "Type what you want to see on the album cover." });
       return;
     }
+    if (!track) return;
+
     try {
       setLoading(true);
       console.log("🎨 Starting generation with prompt:", prompt.trim());
       
-      const newImages = await api.generateAlbumCoversByPrompt(prompt.trim(), 1);
-      console.log("🖼️ Generation response:", newImages);
+      const result = await api.generateAlbumCoversByPrompt(prompt.trim(), track.id, 1);
+      console.log("🖼️ Generation response:", result);
       
-      if (!newImages || newImages.length === 0) {
-        console.error("❌ No images returned from API");
-        toast({ title: "No images returned", description: "Try a different prompt.", variant: "destructive" });
+      if (!result.coverIds || result.coverIds.length === 0) {
+        console.error("❌ No covers generated");
+        toast({ title: "No covers generated", description: "Try a different prompt.", variant: "destructive" });
         return;
       }
       
-      console.log("✅ Generated", newImages.length, "images, updating state");
+      console.log("✅ Generated", result.coverIds.length, "covers, reloading...");
       
-      // Add new images to the front (newest first)
-      const updatedImages = [...newImages, ...images];
-      setImages(updatedImages);
-      
-      // Update track's generated covers in session
-      if (track && currentSession) {
-        const updatedTracks = (currentSession.tracks || []).map(t =>
-          t.id === track.id ? { 
-            ...t, 
-            generatedCovers: updatedImages
-          } : t
-        );
-        updateSession(currentSession.id, { tracks: updatedTracks });
-      }
+      // Reload covers from database to get the latest
+      await loadCovers();
       
       setSelectedIndex(0); // Select the newest generated image
-      toast({ title: "Generated", description: `${newImages.length} cover${newImages.length > 1 ? 's' : ''} added` });
+      toast({ title: "Generated", description: `${result.coverIds.length} cover${result.coverIds.length > 1 ? 's' : ''} added` });
     } catch (e: any) {
       console.error("[Covers] Generate error", e);
       toast({ title: "Generation failed", description: e?.message || "Please try again.", variant: "destructive" });
@@ -133,30 +127,17 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
         style: Array.isArray(track.params) ? track.params.join(", ") : undefined,
       };
       const result = await api.generateAlbumCovers(details);
-      const covers: string[] = [];
-      if (result.cover1) covers.push(result.cover1);
-      if (covers.length === 0) {
+      
+      if (!result.coverIds || result.coverIds.length === 0) {
         toast({ title: "No covers returned", description: "Try again in a moment.", variant: "destructive" });
         return;
       }
       
-      // Add new covers to the front (newest first)
-      const updatedImages = [...covers, ...images];
-      setImages(updatedImages);
-      
-      // Update track's generated covers in session
-      if (track && currentSession) {
-        const updatedTracks = (currentSession.tracks || []).map(t =>
-          t.id === track.id ? { 
-            ...t, 
-            generatedCovers: updatedImages
-          } : t
-        );
-        updateSession(currentSession.id, { tracks: updatedTracks });
-      }
+      // Reload covers from database to get the latest
+      await loadCovers();
       
       setSelectedIndex(0); // Select the newest generated image
-      toast({ title: "Regenerated", description: "1 new cover added" });
+      toast({ title: "Regenerated", description: `${result.coverIds.length} new cover${result.coverIds.length > 1 ? 's' : ''} added` });
     } catch (e: any) {
       console.error("[Covers] Retry error", e);
       toast({ title: "Retry failed", description: e?.message || "Please try again.", variant: "destructive" });
@@ -165,35 +146,43 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
     }
   };
 
-  const handleApply = () => {
+  const handleApply = async () => {
     if (!track || !currentSession) return;
-    const selected = images[selectedIndex];
-    if (!selected) {
+    const selectedCover = covers[selectedIndex];
+    if (!selectedCover) {
       toast({ title: "Select an image", description: "Pick a thumbnail to apply as cover.", variant: "destructive" });
       return;
     }
 
-    const updatedTracks = (currentSession.tracks || []).map(t =>
-      t.id === track.id ? { 
-        ...t, 
-        coverUrl: selected,
-        // Update the generated covers array to put the selected cover first
-        albumCoverIds: selected ? [selected, ...(t.albumCoverIds || []).filter(c => c !== selected)] : t.albumCoverIds
-      } : t
-    );
-    updateSession(currentSession.id, { tracks: updatedTracks });
-    toast({ title: "Cover applied", description: `Updated cover for "${track.title || 'Song'}"` });
-    onClose();
+    try {
+      // Update the selected cover in the database
+      await updateSelectedCover(track.id, selectedCover.id);
+
+      // Update track in session with new cover URL
+      const updatedTracks = (currentSession.tracks || []).map(t =>
+        t.id === track.id ? { 
+          ...t, 
+          coverUrl: selectedCover.image_url
+        } : t
+      );
+      updateSession(currentSession.id, { tracks: updatedTracks });
+      toast({ title: "Cover applied", description: `Updated cover for "${track.title || 'Song'}"` });
+      onClose();
+    } catch (error) {
+      console.error("Failed to apply cover:", error);
+      toast({ title: "Failed to apply cover", description: "Please try again.", variant: "destructive" });
+    }
   };
 
   const handleDownload = () => {
-    if (!images[selectedIndex]) {
+    const selectedCover = covers[selectedIndex];
+    if (!selectedCover) {
       toast({ title: "No image to download", description: "Select an image first.", variant: "destructive" });
       return;
     }
     
     const link = document.createElement('a');
-    link.href = images[selectedIndex];
+    link.href = selectedCover.image_url;
     link.download = `album-cover-${track?.title || 'untitled'}.jpg`;
     document.body.appendChild(link);
     link.click();
@@ -238,11 +227,11 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   {/* Thumbs */}
                   <div className="flex flex-col items-center gap-2">
                     {Array.from({ length: VISIBLE_COUNT }).map((_, i) => {
-                      const img = displayThumbs[i];
+                      const cover = displayThumbs[i];
                       const idx = offset + i; // position within display list
-                      const imageIndexInImages = loading ? idx - 1 : idx;
-                      const isPlaceholder = img == null;
-                      const isActive = !isPlaceholder && imageIndexInImages === selectedIndex;
+                      const coverIndexInCovers = loading ? idx - 1 : idx;
+                      const isPlaceholder = cover == null;
+                      const isActive = !isPlaceholder && coverIndexInCovers === selectedIndex;
                       return (
                         <button
                           key={idx}
@@ -251,12 +240,12 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                             isActive ? "border-accent-primary ring-2 ring-accent-primary/40" : "border-white/10 hover:border-white/20"
                           )}
                           onClick={() => {
-                            if (!isPlaceholder && imageIndexInImages >= 0) setSelectedIndex(imageIndexInImages);
+                            if (!isPlaceholder && coverIndexInCovers >= 0) setSelectedIndex(coverIndexInCovers);
                           }}
                           aria-label={`Thumbnail ${idx + 1}`}
                         >
-                          {img ? (
-                            <img src={img} alt={`Thumbnail ${idx + 1}`} className="block w-full h-full object-cover" />
+                          {cover ? (
+                            <img src={cover.image_url} alt={`Thumbnail ${idx + 1}`} className="block w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full bg-white/5" />
                           )}
@@ -289,9 +278,9 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
                   className="rounded-xl overflow-hidden border border-white/10 flex items-center justify-center relative"
                   style={{ width: "min(520px, 60vh)", height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
                 >
-                  {!loading && images[selectedIndex] ? (
+                  {!loading && covers[selectedIndex] ? (
                     <img
-                      src={images[selectedIndex]}
+                      src={covers[selectedIndex].image_url}
                       alt={`Selected album cover ${selectedIndex + 1}`}
                       className="block w-full h-full object-cover"
                       loading="eager"

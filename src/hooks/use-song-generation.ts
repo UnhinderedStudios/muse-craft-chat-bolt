@@ -76,7 +76,7 @@ export function useSongGeneration() {
         // Generate album covers
         try {
           const coverResponse = await api.generateAlbumCovers(details);
-          setCovers([coverResponse.cover1, coverResponse.cover2]);
+          setCovers(coverResponse.coverUrls);
         } catch (error) {
           console.error("Album cover generation failed:", error);
         }

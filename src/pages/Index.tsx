@@ -643,7 +643,7 @@ const Index = () => {
   const lastDiceAt = useRef<number>(0);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   // Cache real album covers by jobId to ensure shells and final tracks match
-  const coversByJobIdRef = useRef<Record<string, { cover1: string; cover2: string }>>({});
+  const coversByJobIdRef = useRef<Record<string, { coverUrls: string[] }>>({});
   const [attachedFiles, setAttachedFiles] = useState<FileAttachment[]>([]);
 
   // Global spacebar controls for play/pause
@@ -1334,9 +1334,7 @@ const Index = () => {
       const result = await api.testAlbumCover(details);
       console.log("Test album covers generated:", result);
       setAlbumCovers({
-        cover1: result.cover1,
-        cover2: result.cover2,
-        debug: result.debug
+        coverUrls: result.coverUrls || []
       });
       toast.success("Test album covers generated!");
     } catch (error) {
@@ -1385,11 +1383,11 @@ const Index = () => {
       setJobId(sunoJobId);
 
       // For non-concurrent runs, generate covers in parallel so we can assign them to final tracks
-      let coversPromise: Promise<{ cover1: string; cover2: string } | null> | null = null;
+      let coversPromise: Promise<{ coverUrls: string[] } | null> | null = null;
       if (!wrapperJobId) {
         coversPromise = api
           .generateAlbumCovers(songData)
-          .then((d) => ({ cover1: d.cover1, cover2: d.cover2 }))
+          .then((d) => ({ coverUrls: d.coverUrls }))
           .catch((err) => {
             console.warn("[CoverGen] Non-concurrent cover generation failed:", err);
             return null;
@@ -1688,7 +1686,7 @@ const Index = () => {
           console.log(`[CoverGen] Target job:`, targetJob?.id, targetJob?.covers ? 'has covers' : 'no covers');
           
           // 1) First try cached covers to guarantee shells -> finals consistency
-          let jobCovers: { cover1: string; cover2: string } | null =
+          let jobCovers: { coverUrls: string[] } | null =
             (wrapperJobId ? coversByJobIdRef.current[wrapperJobId] : null) ||
             (sunoJobId ? coversByJobIdRef.current[sunoJobId] : null) ||
             null;
@@ -1702,11 +1700,11 @@ const Index = () => {
           if (!jobCovers && !wrapperJobId && typeof coversPromise !== 'undefined' && coversPromise) {
             try {
               const resolved = await coversPromise;
-              if (resolved?.cover1) {
+              if (resolved?.coverUrls && resolved.coverUrls.length > 0) {
                 jobCovers = resolved;
                 // Cache under sunoJobId for consistency
                 if (sunoJobId) {
-                  coversByJobIdRef.current[sunoJobId] = { cover1: resolved.cover1, cover2: resolved.cover2 };
+                  coversByJobIdRef.current[sunoJobId] = { coverUrls: resolved.coverUrls };
                 }
               }
             } catch (e) {
@@ -1715,8 +1713,9 @@ const Index = () => {
           }
           
           // 4) Only as a last resort, use bundled placeholders
-          if (!jobCovers || !jobCovers.cover1) {
-            jobCovers = getFallbackCovers();
+          if (!jobCovers || !jobCovers.coverUrls || jobCovers.coverUrls.length === 0) {
+            const fallback = getFallbackCovers();
+            jobCovers = { coverUrls: [fallback.cover1, fallback.cover2] };
             console.log(`[CoverGen] Using fallback covers`);
           } else {
             console.log(`[CoverGen] Using generated covers from job/cache`);
@@ -1725,11 +1724,10 @@ const Index = () => {
             console.log(`[Generation] Target job found:`, targetJob);
             console.log(`[Generation] Job covers extracted:`, jobCovers);
             console.log(`[Generation] Job covers type:`, typeof jobCovers);
-            console.log(`[Generation] Cover1 applied:`, jobCovers?.cover1?.substring(0, 100));
-            console.log(`[Generation] Cover2 applied:`, jobCovers?.cover2?.substring(0, 100));
+            console.log(`[Generation] Cover URLs applied:`, jobCovers?.coverUrls?.map(url => url.substring(0, 100)));
             
             const fresh = updatedVersions.map((v, i) => {
-              const assignedCover = jobCovers ? (i === 0 ? jobCovers.cover1 : jobCovers.cover2) : undefined;
+              const assignedCover = jobCovers && jobCovers.coverUrls && jobCovers.coverUrls[i] ? jobCovers.coverUrls[i] : undefined;
               const providerId = isValidSunoAudioId(v.audioId) ? v.audioId : undefined;
               
               // Use stable, deterministic ID generation
@@ -1915,8 +1913,8 @@ const Index = () => {
       console.log(`[CoverGen] ✅ Covers generated immediately:`, coverData);
       
       // Update shells with covers right away and cache for final tracks
-      updateActiveGeneration(jobId, { covers: coverData });
-      coversByJobIdRef.current[jobId] = { cover1: coverData.cover1, cover2: coverData.cover2 };
+      updateActiveGeneration(jobId, { covers: { coverUrls: coverData.coverUrls } });
+      coversByJobIdRef.current[jobId] = { coverUrls: coverData.coverUrls };
       console.log(`[CoverGen] 📦 Shells updated and cached covers for job ${jobId}`);
     } catch (error) {
       console.warn(`[CoverGen] ⚠️ Cover generation failed for job ${jobId}:`, error);
