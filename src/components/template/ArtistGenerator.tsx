@@ -439,8 +439,8 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
           <div className="flex-1 min-h-0 px-6 pb-6 flex flex-col items-center justify-center">
             <div className="w-full max-w-6xl space-y-4">
               <div className="grid grid-cols-1 lg:grid-cols-[max-content_420px] gap-4 items-start">
-                {/* Header: matches left panel width and stops at right panel edge */}
-                <div className="w-full rounded-lg border border-white/10 px-4 py-2 lg:col-start-1 lg:row-start-1" style={{ backgroundColor: '#33343630' }}>
+                {/* Header: spans full width across both columns */}
+                <div className="w-full rounded-lg border border-white/10 px-4 py-2 lg:col-span-2" style={{ backgroundColor: '#33343630' }}>
                   <div className="text-xs text-white/60">Artist Image Generation</div>
                 </div>
 
