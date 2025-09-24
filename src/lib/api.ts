@@ -506,13 +506,17 @@ export const api = {
   },
 
   // Generate artist images using Gemini 2.5 Flash with fixed reference image
-  async generateArtistImages(prompt: string, backgroundHex?: string, characterCount?: number): Promise<{ images: string[]; enhancedPrompt?: string; debug?: any }> {
+  async generateArtistImages(prompt: string, backgroundHex?: string, characterCount?: number, isRealistic?: boolean): Promise<{ images: string[]; enhancedPrompt?: string; debug?: any }> {
     // Generate client-side request ID for tracking
     const clientRequestId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     // Add automatic prompt prefix for artist generation (safer language)
     const promptPrefix = "Match the overall framing, camera angle, and lighting style of the reference image. Generate a new, original character from scratch that is completely different from the alien creature in the reference image. The character should have a dynamic pose and it should be clear that the character is a music artist. No objects such as guitars, mics, chairs or anything else at all can be present in the image. Generate a new character: ";
-    const fullPrompt = promptPrefix + prompt;
+    
+    // Add style prefix based on toggle state
+    const stylePrefix = isRealistic ? "Realistic: " : "Realistic 3D anime stylized: ";
+    
+    const fullPrompt = promptPrefix + stylePrefix + prompt;
     
     console.log(`🎨 [${clientRequestId}] Calling artist generator with enhanced prompt:`, fullPrompt);
     console.log(`🔄 [${clientRequestId}] Using fixed reference image from /reference-frame.png`);
