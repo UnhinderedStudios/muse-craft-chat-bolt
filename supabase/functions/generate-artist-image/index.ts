@@ -539,7 +539,7 @@ Deno.serve(async (req: Request) => {
     if (contentType.includes("multipart/form-data")) {
       console.log(`📤 [${requestId}] Processing multipart form data`);
       try {
-        const formData = await withTimeout(req.formData(), 10000, "FormData parsing");
+        const formData = await withTimeout(req.formData(), 15000, "FormData parsing");
         prompt = (formData.get("prompt") as string) || "";
         backgroundHex = (formData.get("backgroundHex") as string) || "";
         const characterCountValue = formData.get("characterCount") as string;
@@ -841,7 +841,7 @@ Deno.serve(async (req: Request) => {
           })
         }
       ),
-      20000,
+      45000,
       "Gemini generation"
     );
 
@@ -935,7 +935,7 @@ Deno.serve(async (req: Request) => {
               })
             }
           ),
-          20000,
+          45000,
           `Gemini retry attempt ${attempt}`
         );
 
