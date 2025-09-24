@@ -124,7 +124,7 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
               placeholder={showAnimatedText ? "" : placeholder}
               disabled={isDisabledByAnalysis}
               className={cn(
-                "w-full h-full resize-none bg-transparent text-white text-sm leading-6 placeholder:text-white/40 pr-20 focus:outline-none transition-colors duration-200 overflow-y-auto lyrics-scrollbar",
+                "w-full h-full resize-none bg-transparent text-white text-sm leading-6 placeholder:text-white/40 pr-20 pb-2 focus:outline-none transition-colors duration-200 overflow-y-auto lyrics-scrollbar",
                 overScrollbar ? "cursor-default" : "cursor-text",
                 isDisabledByAnalysis && "cursor-default",
                 showAnimatedText && "opacity-80",
