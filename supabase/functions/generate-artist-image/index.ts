@@ -308,7 +308,7 @@ Deno.serve(async (req: Request) => {
     console.log(`🎨 [${requestId}] Generating with Gemini...`);
     console.log(`🎭 [${requestId}] CHARACTER COUNT: ${characterCount}, BACKGROUND: ${backgroundHex || 'default'}`);
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiKey}`;
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${geminiKey}`;
 
     // Build request body for Gemini
     const requestBody: any = {
@@ -360,6 +360,8 @@ Deno.serve(async (req: Request) => {
     }
 
     // Extract images from Gemini response
+    console.log(`🔍 [${requestId}] Full Gemini response:`, JSON.stringify(result.data, null, 2));
+    
     const candidates = result.data?.candidates;
     if (!candidates || candidates.length === 0) {
       console.error(`❌ [${requestId}] No candidates in response`);
@@ -373,6 +375,8 @@ Deno.serve(async (req: Request) => {
     }
 
     const candidate = candidates[0];
+    console.log(`🔍 [${requestId}] First candidate:`, JSON.stringify(candidate, null, 2));
+    
     const parts = candidate?.content?.parts;
     
     if (!parts || parts.length === 0) {
@@ -386,9 +390,12 @@ Deno.serve(async (req: Request) => {
       );
     }
 
+    console.log(`🔍 [${requestId}] Parts:`, JSON.stringify(parts, null, 2));
+
     // Look for inline data (images) in the parts
     const extractedImages = [];
     for (const part of parts) {
+      console.log(`🔍 [${requestId}] Checking part:`, JSON.stringify(part, null, 2));
       if (part.inline_data && part.inline_data.data) {
         extractedImages.push(part.inline_data.data);
       }
@@ -400,7 +407,7 @@ Deno.serve(async (req: Request) => {
       return new Response(
         JSON.stringify({ 
           error: 'No image data in response',
-          debug: { parts, candidate }
+          debug: { parts, candidate, fullResponse: result.data }
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
