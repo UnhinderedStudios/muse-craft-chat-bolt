@@ -588,9 +588,12 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   </div>
                 </div>
 
-                {/* Right: Prompt Controls */}
+                 {/* Right: Prompt Controls */}
                 <aside 
-                  className="flex flex-col rounded-xl border border-white/10 px-4 pt-3 pb-3 overflow-hidden min-h-0 lg:col-start-2 lg:row-start-2"
+                  className={cn(
+                    "flex flex-col rounded-xl border border-white/10 px-4 pt-3 pb-3 overflow-hidden min-h-0 lg:col-start-2 lg:row-start-2 transition-opacity",
+                    isLocked && "opacity-30 pointer-events-none"
+                  )}
                   style={{ height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
                 >
 
@@ -599,18 +602,18 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   </header>
 
                   <div className="flex-1 min-h-0 mb-1 space-y-1 overflow-auto pr-1">
-                    <div>
+                     <div>
                         <AnimatedPromptInput
                           value={prompt}
                           onChange={setPrompt}
                           placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
-                          disabled={loading || isLocked}
+                          disabled={loading}
                           animatedText={sanitizedPrompt}
                           isAnimating={isAnimating}
                           onAnimationComplete={handleAnimationComplete}
-                          onPersonClick={isLocked ? undefined : handlePersonClick}
-                          onClothingClick={isLocked ? undefined : handleClothingClick}
-                          onResetClick={isLocked ? undefined : handlePromptReset}
+                          onPersonClick={handlePersonClick}
+                          onClothingClick={handleClothingClick}
+                          onResetClick={handlePromptReset}
                           facialReferenceImage={facialReferenceImage}
                           isAnalyzingFace={isAnalyzingFace}
                           onFacialReferenceRemoved={handleFacialReferenceRemoved}
@@ -619,9 +622,8 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                     </div>
 
                      {/* Background Color Section */}
-                     {!isLocked && (
-                       <div>
-                         <div className="text-xs text-white/60 mb-2">Background Color</div>
+                     <div>
+                       <div className="text-xs text-white/60 mb-2">Background Color</div>
                       <div className="w-full rounded-lg bg-black/20 border border-white/10 p-3 pb-1.5">
                         <div className="flex flex-col gap-1.5">
                           {/* Color Picker - Full Width */}
@@ -681,12 +683,10 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                             </div>
                           </div>
                         </div>
-                       </div>
+                        </div>
                      </div>
-                   )}
 
                    {/* Settings container */}
-                   {!isLocked && (
                   <div className="mt-1.5 mb-1.5">
                     <div className="text-xs text-white/60 mb-1.5">Settings</div>
                     <div className="w-full rounded-lg bg-black/20 border border-white/10 p-2.5">
@@ -754,7 +754,6 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                       </div>
                      </div>
                    </div>
-                    )}
                   </div>
 
                   <div className="mt-auto">
