@@ -87,24 +87,26 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
 
   return (
     <div className="relative w-full h-full">
-      <textarea
-        ref={textareaRef}
-        value={showAnimatedText ? animatedText : value}
-        onChange={handleChange}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
-        placeholder={showAnimatedText ? "" : placeholder}
-        disabled={disabled}
-        style={{ height: 'calc(100% - 3rem)' }}
-        className={cn(
-          "w-full resize-none rounded-lg bg-black/40 border border-white/10 text-white text-sm leading-6 placeholder:text-white/40 p-3 pr-20 focus:outline-none focus:border-white/30 transition-colors duration-200 overflow-y-auto lyrics-scrollbar",
-          disabled && "cursor-default",
-          showAnimatedText && "opacity-80",
-          className
-        )}
-      />
-      {/* Divider line at the top of the bottom area */}
-      <div className="absolute bottom-12 left-3 right-16 h-px bg-white/10 z-30" />
+      {/* Input region that ends exactly at the divider */}
+      <div className="absolute inset-x-0 top-0 bottom-12">
+        <textarea
+          ref={textareaRef}
+          value={showAnimatedText ? animatedText : value}
+          onChange={handleChange}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          placeholder={showAnimatedText ? "" : placeholder}
+          disabled={disabled}
+          className={cn(
+            "w-full h-full resize-none rounded-lg bg-black/40 border border-white/10 text-white text-sm leading-6 placeholder:text-white/40 p-3 pr-20 pb-2 focus:outline-none focus:border-white/30 transition-colors duration-200 overflow-y-auto lyrics-scrollbar",
+            disabled && "cursor-default",
+            showAnimatedText && "opacity-80",
+            className
+          )}
+        />
+        {/* Divider line at the bottom of the input region */}
+        <div className="pointer-events-none absolute bottom-0 left-3 right-16 h-px bg-white/10 z-30" />
+      </div>
       
       {/* Button container on the right side */}
       <div className="absolute bottom-4 right-3 flex gap-1 z-40">
