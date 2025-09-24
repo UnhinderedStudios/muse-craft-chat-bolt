@@ -202,13 +202,16 @@ function generateRequestId(): string {
 }
 
 // Simple direct prompt construction
-function buildPrompt(userInput: string, backgroundHex?: string, characterCount?: number): string {
+function buildPrompt(userInput: string, backgroundHex?: string, characterCount?: number, hasFacialReference?: boolean): string {
+  const facialReferencePrefix = hasFacialReference 
+    ? "Character's face must match the image titled (Facial Reference), this is the only thing that this image must be used for and nothing else. " 
+    : "";
   const baseInstructions = "Match reference image framing, lighting, camera angle. Keep background identical but totally replace the character in the reference image, no reference to it should exist in the final image unless instructed in .";
   const characterInstruction = ` ${characterCount || 1} character${(characterCount || 1) > 1 ? 's' : ''}. All characters must match the gender specified, if 1 gender is specified then all characters must be that gender unless properly defined.`;
   const objectRestrictions = " NO objects, props, instruments, tools. Empty hands. Clean background.";
   const backgroundInstruction = backgroundHex ? ` Background color: Overall background colour should be (do not actually enter hex code text into the final result only the color of it): ${backgroundHex}.` : '';
   
-  return `${userInput}. ${baseInstructions}${backgroundInstruction}${characterInstruction}${objectRestrictions}`;
+  return `${facialReferencePrefix}${userInput}. ${baseInstructions}${backgroundInstruction}${characterInstruction}${objectRestrictions}`;
 }
 
 // CORS headers
@@ -313,7 +316,7 @@ Deno.serve(async (req: Request) => {
     console.log(`📝 [${requestId}] User input: "${prompt}"`);
 
     // Build the final prompt directly
-    const finalPrompt = buildPrompt(prompt, backgroundHex, characterCount);
+    const finalPrompt = buildPrompt(prompt, backgroundHex, characterCount, !!facialReferenceData);
     console.log(`🎯 [${requestId}] Final prompt: "${finalPrompt}"`);
 
     // Generate with Gemini
