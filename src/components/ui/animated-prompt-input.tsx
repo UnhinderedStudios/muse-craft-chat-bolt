@@ -96,13 +96,17 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
         placeholder={showAnimatedText ? "" : placeholder}
         disabled={disabled}
         className={cn(
-          "w-full h-full resize-none rounded-lg bg-black/40 border border-white/10 text-white placeholder:text-white/40 p-3 pb-10 focus:outline-none focus:border-white/30 transition-colors duration-200 overflow-hidden",
+          "w-full h-full resize-none rounded-lg bg-black/40 border border-white/10 text-white placeholder:text-white/40 p-3 pb-12 pr-20 focus:outline-none focus:border-white/30 transition-colors duration-200 overflow-hidden",
           disabled && "cursor-default",
           showAnimatedText && "opacity-80",
           className
         )}
       />
-      <div className="absolute bottom-2 left-3 flex gap-1">
+      {/* Divider line */}
+      <div className="absolute bottom-9 left-3 right-16 h-px bg-white/10" />
+      
+      {/* Button container on the right side */}
+      <div className="absolute bottom-2 right-3 flex gap-1">
         {onPersonClick && (
           <button
             onClick={onPersonClick}
