@@ -4,7 +4,55 @@
 
 import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 
-// Transport layer helper for robust Gemini API calls with retry logic
+// Request queue for spacing out Gemini calls
+const requestQueue: Array<() => Promise<void>> = [];
+let isProcessingQueue = false;
+let lastRequestTime = 0;
+
+async function processQueue() {
+  if (isProcessingQueue || requestQueue.length === 0) return;
+  
+  isProcessingQueue = true;
+  while (requestQueue.length > 0) {
+    const request = requestQueue.shift();
+    if (request) {
+      // Ensure minimum 1.5 second spacing between requests
+      const timeSinceLastRequest = Date.now() - lastRequestTime;
+      if (timeSinceLastRequest < 1500) {
+        await new Promise(resolve => setTimeout(resolve, 1500 - timeSinceLastRequest));
+      }
+      
+      lastRequestTime = Date.now();
+      await request();
+    }
+  }
+  isProcessingQueue = false;
+}
+
+// Compressed reference image cache
+const referenceImageCache = new Map<string, string>();
+
+function compressReferenceImage(base64Data: string, requestId: string): string {
+  // Simple compression: if image is very large, we could resize it
+  // For now, just return the original but cache it
+  const cacheKey = base64Data.substring(0, 100); // Use first 100 chars as cache key
+  
+  if (referenceImageCache.has(cacheKey)) {
+    console.log(`📦 [${requestId}] Using cached reference image`);
+    return referenceImageCache.get(cacheKey)!;
+  }
+  
+  referenceImageCache.set(cacheKey, base64Data);
+  
+  // If cache gets too large, clear it
+  if (referenceImageCache.size > 10) {
+    referenceImageCache.clear();
+  }
+  
+  return base64Data;
+}
+
+// Optimized transport layer helper with request queuing
 async function callGeminiWithTransportRetries(
   url: string,
   body: any,
@@ -12,51 +60,85 @@ async function callGeminiWithTransportRetries(
   requestId: string,
   attemptNumber: number = 1
 ): Promise<Response> {
-  const maxTransportRetries = 3;
-  const baseDelay = 1000; // 1 second base delay
+  const maxTransportRetries = 2; // Reduced from 3 to 2
+  const baseDelay = 100; // Even faster retry for speed
   
-  for (let retry = 0; retry < maxTransportRetries; retry++) {
-    try {
-      console.log(`🌐 [${requestId}] Gemini API call attempt ${retry + 1}/${maxTransportRetries} (generation attempt ${attemptNumber})`);
-      
-      // Add optimized headers for proxy handling
-      const optimizedHeaders = {
-        ...headers,
-        'Accept': 'application/json',
-        'Connection': 'keep-alive',
-        'User-Agent': 'Supabase-Edge-Function/1.0'
-      };
-      
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: optimizedHeaders,
-        body: JSON.stringify(body)
-      });
-      
-      // Log response details for debugging
-      console.log(`📡 [${requestId}] Gemini response: ${response.status} ${response.statusText}`);
-      console.log(`📊 [${requestId}] Response headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`);
-      
-      return response;
-      
-    } catch (error) {
-      const isLastRetry = retry === maxTransportRetries - 1;
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      
-      console.error(`🔌 [${requestId}] Transport error attempt ${retry + 1}: ${errorMessage}`);
-      
-      if (isLastRetry) {
-        throw new Error(`Transport failed after ${maxTransportRetries} attempts: ${errorMessage}`);
+  // Queue the request to prevent overwhelming Gemini
+  return new Promise((resolve, reject) => {
+    requestQueue.push(async () => {
+      try {
+        for (let retry = 0; retry < maxTransportRetries; retry++) {
+          try {
+            console.log(`🌐 [${requestId}] Gemini API call attempt ${retry + 1}/${maxTransportRetries} (generation attempt ${attemptNumber})`);
+            
+            // Optimized headers for faster processing
+            const optimizedHeaders = {
+              ...headers,
+              'Accept': 'application/json',
+              'Connection': 'keep-alive',
+              'User-Agent': 'Supabase-Edge-Function/1.0'
+            };
+            
+            // Optimize reference image processing
+            let processedBody = body;
+            if (body.contents?.[0]?.parts?.[0]?.inline_data?.data) {
+              const originalData = body.contents[0].parts[0].inline_data.data;
+              const compressedData = compressReferenceImage(originalData, requestId);
+              processedBody = {
+                ...body,
+                contents: [{
+                  ...body.contents[0],
+                  parts: [
+                    {
+                      ...body.contents[0].parts[0],
+                      inline_data: {
+                        ...body.contents[0].parts[0].inline_data,
+                        data: compressedData
+                      }
+                    },
+                    ...body.contents[0].parts.slice(1)
+                  ]
+                }]
+              };
+            }
+            
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: optimizedHeaders,
+              body: JSON.stringify(processedBody)
+            });
+            
+            // Log response details for debugging
+            console.log(`📡 [${requestId}] Gemini response: ${response.status} ${response.statusText}`);
+            console.log(`📊 [${requestId}] Response headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`);
+            
+            resolve(response);
+            return;
+            
+          } catch (error) {
+            const isLastRetry = retry === maxTransportRetries - 1;
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            
+            console.error(`🔌 [${requestId}] Transport error attempt ${retry + 1}: ${errorMessage}`);
+            
+            if (isLastRetry) {
+              reject(new Error(`Transport failed after ${maxTransportRetries} attempts: ${errorMessage}`));
+              return;
+            }
+            
+            // Faster exponential backoff
+            const delay = baseDelay * Math.pow(2, retry);
+            console.log(`⏳ [${requestId}] Retrying in ${delay}ms...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
+        }
+      } catch (error) {
+        reject(error);
       }
-      
-      // Exponential backoff with jitter
-      const delay = baseDelay * Math.pow(2, retry) + Math.random() * 1000;
-      console.log(`⏳ [${requestId}] Retrying in ${Math.round(delay)}ms...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-  
-  throw new Error('Unexpected transport retry loop exit');
+    });
+    
+    processQueue();
+  });
 }
 
 // Safe response reader that handles 502s and non-JSON responses
@@ -146,24 +228,24 @@ function getAnalysisInstruction(finalPrompt: string, prefix: string, requestId: 
   }
 }
 
-// Helper function to get generation prompt with object constraints
+// Helper function to get optimized generation prompt with object constraints
 function getGenerationPrompt(finalPrompt: string, hasObjectConstraints: boolean, requestId: string, backgroundHex?: string, characterCount?: number): string {
-  const preservation = `\nPRESERVE COMPOSITION & BACKGROUND:\n- Keep camera angle, lighting setup, background elements, and overall structure IDENTICAL to the reference image\n- DO NOT change the environment, backdrop, or scene in any way`; 
+  const preservation = `Match reference image framing, lighting, camera angle. Keep background identical.`; 
   
   // Add background color instruction if provided
-  const backgroundInstruction = backgroundHex ? `\n- BACKGROUND COLOR: Change background color to ${backgroundHex}` : '';
+  const backgroundInstruction = backgroundHex ? ` Background color: ${backgroundHex}.` : '';
   
-  // Always add character count instruction (include for characterCount = 1)
-  const characterInstruction = `\n- CHARACTER COUNT: Image contains ${characterCount || 1} distinct character${(characterCount || 1) > 1 ? 's' : ''}`;
+  // Add character count instruction 
+  const characterInstruction = ` ${characterCount || 1} character${(characterCount || 1) > 1 ? 's' : ''}.`;
   
-  // Add safety hint for single characters to avoid face-swap detection
-  const singleCharacterSafety = (characterCount === 1) ? `\n- SAFETY NOTE: Do not edit or transform the identity of the person in the reference image. Use the image only as a style guide for lighting, framing and mood. Generate a completely new, original character from scratch.` : '';
+  // Add safety hint for single characters
+  const singleCharacterSafety = (characterCount === 1) ? ` Generate new original character, use reference only for style guide.` : '';
   
   if (hasObjectConstraints) {
     console.log(`🚫 [${requestId}] Adding object removal + preservation instructions to generation prompt`);
-    return `GENERATE AN IMAGE: ${finalPrompt}${preservation}${backgroundInstruction}${characterInstruction}${singleCharacterSafety}\n\nHARD RULES FOR GENERATION:\n- NO OBJECTS/PROPS: Absolutely no lamp posts, microphones, guitars, chairs, stands, instruments, tools, furniture, or any physical objects\n- EMPTY HANDS: Character's hands must be completely empty\n- CLEAN BACKGROUND: If reference contains props, erase them in-painting to seamlessly match the existing background\n- FOCUS: Only the character/person, their pose, expression, and clothing\n\nNEGATIVE PROMPT: different background, new environment, alternate scene, outdoors, landscape, room switch, lamp post, microphone, guitar, chair, stand, instrument, tool, furniture, object, prop, holding, carrying, gripping\n\nIMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
+    return `${finalPrompt}. ${preservation}${backgroundInstruction}${characterInstruction}${singleCharacterSafety} NO objects, props, instruments, tools. Empty hands. Clean background.`;
   } else {
-    return `GENERATE AN IMAGE: ${finalPrompt}${preservation}${backgroundInstruction}${characterInstruction}${singleCharacterSafety}\n\nNEGATIVE PROMPT: different background, new environment, alternate scene, outdoors, landscape, room switch\n\nIMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
+    return `${finalPrompt}. ${preservation}${backgroundInstruction}${characterInstruction}${singleCharacterSafety}`;
   }
 }
 
@@ -966,7 +1048,7 @@ Deno.serve(async (req: Request) => {
         requestId,
         1
       ),
-      45000,
+      20000,
       "Gemini generation"
     );
 
@@ -1015,10 +1097,10 @@ Deno.serve(async (req: Request) => {
       const originalKeywords = extractKeywords(CURRENT_CHARACTER);
       const retryAttempts = [];
       
-      console.log(`🔄 [${requestId}] Starting multi-attempt retry (max 3 attempts)...`);
+      console.log(`🔄 [${requestId}] Starting multi-attempt retry (max 2 attempts)...`);
       
-      for (let attempt = 1; attempt <= 3 && images.length === 0; attempt++) {
-        console.log(`🎯 [${requestId}] Retry attempt ${attempt}/3`);
+      for (let attempt = 1; attempt <= 2 && images.length === 0; attempt++) {
+        console.log(`🎯 [${requestId}] Retry attempt ${attempt}/2`);
         
         // Get preservation-first fix
         const fixedCharacter = await analyzeAndFixFailure(
@@ -1077,7 +1159,7 @@ Deno.serve(async (req: Request) => {
             requestId,
             attempt + 1
           ),
-          45000,
+          20000,
           `Gemini retry attempt ${attempt}`
         );
 
