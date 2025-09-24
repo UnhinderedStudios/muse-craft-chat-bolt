@@ -100,11 +100,59 @@ export const api = {
     hootCer?: number;
     isStreamed?: boolean;
   }> {
+    const trackId = params.audioId || `${params.taskId}-${params.musicIndex || 0}`;
+    
+    // First, check if we have cached karaoke data in Supabase
+    const { data: existingKaraoke, error: fetchError } = await supabase
+      .from('karaoke_lyrics')
+      .select('*')
+      .eq('track_id', trackId)
+      .maybeSingle();
+    
+    if (!fetchError && existingKaraoke) {
+      console.log(`🎤 Found cached karaoke data for track ${trackId}`);
+      return {
+        alignedWords: existingKaraoke.lyrics_data as Array<{
+          word: string;
+          success: boolean;
+          start_s: number;
+          end_s: number;
+          p_align: number;
+        }>,
+        waveformData: existingKaraoke.waveform_data as number[],
+        hootCer: existingKaraoke.hoot_cer,
+        isStreamed: existingKaraoke.is_streamed
+      };
+    }
+    
+    // If not cached, fetch from edge function
+    console.log(`🎤 Fetching new karaoke data for track ${trackId}`);
     const { data, error } = await supabase.functions.invoke('timestamped-lyrics', {
       body: params
     });
     
     if (error) throw new Error(error.message);
+    
+    // Cache the result in Supabase for future use
+    try {
+      await supabase
+        .from('karaoke_lyrics')
+        .insert({
+          track_id: trackId,
+          task_id: params.taskId,
+          music_index: params.musicIndex || 0,
+          audio_id: params.audioId,
+          lyrics_data: data.alignedWords,
+          waveform_data: data.waveformData,
+          hoot_cer: data.hootCer,
+          is_streamed: data.isStreamed
+        });
+      console.log(`✅ Cached karaoke data for track ${trackId}`);
+    } catch (cacheError) {
+      console.warn('Failed to cache karaoke data:', cacheError);
+      // Don't throw - the main operation succeeded
+    }
+    
     return data;
   },
 

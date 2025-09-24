@@ -4,6 +4,7 @@ import { CyberButton } from "@/components/cyber/CyberButton";
 import { KaraokeLyrics } from "./KaraokeLyrics";
 import { Play, Pause, SkipBack, SkipForward } from "lucide-react";
 import { TimestampedWord } from "@/types";
+import { useKaraokeLyrics } from "@/hooks/use-karaoke-lyrics";
 
 interface AudioPlayerProps {
   audioUrls: string[];
@@ -14,7 +15,10 @@ interface AudioPlayerProps {
   isPlaying: boolean;
   setIsPlaying: (playing: boolean) => void;
   covers: string[];
-  timestampedLyrics: TimestampedWord[];
+  trackId?: string;
+  taskId?: string;
+  musicIndex?: number;
+  audioId?: string;
   onFullscreenKaraoke: () => void;
   onSeek?: (time: number) => void;
 }
@@ -28,12 +32,23 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   isPlaying,
   setIsPlaying,
   covers,
-  timestampedLyrics,
+  trackId,
+  taskId,
+  musicIndex,
+  audioId,
   onFullscreenKaraoke,
   onSeek
 }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [duration, setDuration] = React.useState(0);
+  
+  // Use karaoke hook to get lyrics from Supabase
+  const { lyrics: karaokeLyrics, loading: karaokeLoading } = useKaraokeLyrics(
+    trackId || `${taskId}-${currentIndex}`,
+    taskId,
+    musicIndex !== undefined ? musicIndex : currentIndex,
+    audioId
+  );
 
   const togglePlayPause = () => {
     if (audioRef.current) {
@@ -187,11 +202,11 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       </CyberCard>
 
       {/* Karaoke Lyrics */}
-      {timestampedLyrics.length > 0 && (
+      {karaokeLyrics?.words && karaokeLyrics.words.length > 0 && (
         <CyberCard className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-medium text-text-primary">
-              Karaoke Lyrics
+              Karaoke Lyrics {karaokeLoading && "(Loading...)"}
             </h3>
             <CyberButton
               variant="secondary"
@@ -203,7 +218,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
           </div>
           
           <KaraokeLyrics
-            words={timestampedLyrics}
+            words={karaokeLyrics.words}
             currentTime={currentTime}
             isPlaying={isPlaying}
             className="h-64"

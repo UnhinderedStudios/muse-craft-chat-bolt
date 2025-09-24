@@ -19,6 +19,7 @@ import { ChatBubble } from "@/components/chat/ChatBubble";
 import { ChatContainer } from "@/components/chat/ChatContainer";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { SongDetailsForm } from "@/components/song/SongDetailsForm";
+// AudioPlayer now uses karaoke data from Supabase
 import { AudioPlayer } from "@/components/audio/AudioPlayer";
 import { KaraokeLyrics } from "@/components/audio/KaraokeLyrics";
 import { FullscreenKaraoke } from "@/components/karaoke/FullscreenKaraoke";

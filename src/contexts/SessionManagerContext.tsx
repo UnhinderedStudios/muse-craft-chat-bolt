@@ -187,8 +187,8 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
             hasBeenPlayed: t.hasBeenPlayed,
             jobId: t.jobId,
             audioId: t.audioId,
-            // do not persist heavy word timings
-            words: [],
+            // Don't persist words - karaoke data now stored in Supabase
+            words: undefined,
             // Remove generatedCovers entirely - don't persist base64 covers
           }));
 

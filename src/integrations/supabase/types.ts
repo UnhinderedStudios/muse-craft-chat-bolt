@@ -50,6 +50,54 @@ export type Database = {
         }
         Relationships: []
       }
+      karaoke_lyrics: {
+        Row: {
+          audio_id: string | null
+          created_at: string
+          fetch_attempts: number | null
+          hoot_cer: number | null
+          id: string
+          is_streamed: boolean | null
+          last_fetch_error: string | null
+          lyrics_data: Json
+          music_index: number | null
+          task_id: string | null
+          track_id: string
+          updated_at: string
+          waveform_data: Json | null
+        }
+        Insert: {
+          audio_id?: string | null
+          created_at?: string
+          fetch_attempts?: number | null
+          hoot_cer?: number | null
+          id?: string
+          is_streamed?: boolean | null
+          last_fetch_error?: string | null
+          lyrics_data: Json
+          music_index?: number | null
+          task_id?: string | null
+          track_id: string
+          updated_at?: string
+          waveform_data?: Json | null
+        }
+        Update: {
+          audio_id?: string | null
+          created_at?: string
+          fetch_attempts?: number | null
+          hoot_cer?: number | null
+          id?: string
+          is_streamed?: boolean | null
+          last_fetch_error?: string | null
+          lyrics_data?: Json
+          music_index?: number | null
+          task_id?: string | null
+          track_id?: string
+          updated_at?: string
+          waveform_data?: Json | null
+        }
+        Relationships: []
+      }
       playlist_items: {
         Row: {
           added_at: string
