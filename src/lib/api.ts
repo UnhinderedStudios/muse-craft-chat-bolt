@@ -358,8 +358,8 @@ export const api = {
     // Generate client-side request ID for tracking
     const clientRequestId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    // Add automatic prompt prefix for artist generation
-    const promptPrefix = "Keep composition, structure, lighting and character position identical, character must be entirely different to the reference image, in other words not a single thing must resemble from the character in the image, this should be erased, pose must be entirely different but very cool to the current image, it should be clear that the person is a music artist. No objects such as guitars, mics, chairs or anything else at all can be present in the image. Character must be entirely replaced with: ";
+    // Add automatic prompt prefix for artist generation (safer language)
+    const promptPrefix = "Match the overall framing, camera angle, and lighting style of the reference image. Generate a new, original character from scratch that is completely different from any person in the reference image. The character should have a dynamic pose and it should be clear that the person is a music artist. No objects such as guitars, mics, chairs or anything else at all can be present in the image. Generate a new character: ";
     const fullPrompt = promptPrefix + prompt;
     
     console.log(`🎨 [${clientRequestId}] Calling artist generator with enhanced prompt:`, fullPrompt);
@@ -387,9 +387,8 @@ export const api = {
       if (backgroundHex) {
         formData.append('backgroundHex', backgroundHex);
       }
-      if (characterCount && characterCount > 1) {
-        formData.append('characterCount', characterCount.toString());
-      }
+      // Always send characterCount, default to 1 if not specified
+      formData.append('characterCount', (characterCount || 1).toString());
       
       const apiResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-artist-image`, {
         method: 'POST',
