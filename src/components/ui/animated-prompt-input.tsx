@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { User, Shirt, RotateCcw } from "lucide-react";
 
 interface AnimatedPromptInputProps {
   value: string;
@@ -10,6 +11,9 @@ interface AnimatedPromptInputProps {
   animatedText?: string;
   isAnimating?: boolean;
   onAnimationComplete?: () => void;
+  onPersonClick?: () => void;
+  onClothingClick?: () => void;
+  onResetClick?: () => void;
 }
 
 export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
@@ -20,7 +24,10 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
   disabled = false,
   animatedText = "",
   isAnimating = false,
-  onAnimationComplete
+  onAnimationComplete,
+  onPersonClick,
+  onClothingClick,
+  onResetClick
 }) => {
   const [showAnimatedText, setShowAnimatedText] = useState(false);
   const [isUserEditing, setIsUserEditing] = useState(false);
@@ -79,20 +86,51 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
   };
 
   return (
-    <textarea
-      ref={textareaRef}
-      value={showAnimatedText ? animatedText : value}
-      onChange={handleChange}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
-      placeholder={showAnimatedText ? "" : placeholder}
-      disabled={disabled}
-      className={cn(
-        "w-full h-full resize-none rounded-lg bg-black/40 border border-white/10 text-white placeholder:text-white/40 p-3 focus:outline-none focus:border-white/30 transition-colors duration-200 overflow-hidden",
-        disabled && "cursor-default",
-        showAnimatedText && "opacity-80",
-        className
-      )}
-    />
+    <div className="relative w-full h-full">
+      <textarea
+        ref={textareaRef}
+        value={showAnimatedText ? animatedText : value}
+        onChange={handleChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        placeholder={showAnimatedText ? "" : placeholder}
+        disabled={disabled}
+        className={cn(
+          "w-full h-full resize-none rounded-lg bg-black/40 border border-white/10 text-white placeholder:text-white/40 p-3 pb-10 focus:outline-none focus:border-white/30 transition-colors duration-200 overflow-hidden",
+          disabled && "cursor-default",
+          showAnimatedText && "opacity-80",
+          className
+        )}
+      />
+      <div className="absolute bottom-2 left-3 flex gap-1">
+        {onPersonClick && (
+          <button
+            onClick={onPersonClick}
+            className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200"
+            type="button"
+          >
+            <User size={12} className="text-white/60" />
+          </button>
+        )}
+        {onClothingClick && (
+          <button
+            onClick={onClothingClick}
+            className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200"
+            type="button"
+          >
+            <Shirt size={12} className="text-white/60" />
+          </button>
+        )}
+        {onResetClick && (
+          <button
+            onClick={onResetClick}
+            className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200"
+            type="button"
+          >
+            <RotateCcw size={12} className="text-white/60" />
+          </button>
+        )}
+      </div>
+    </div>
   );
 };
