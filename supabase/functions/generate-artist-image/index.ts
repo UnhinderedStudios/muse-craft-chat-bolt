@@ -319,8 +319,7 @@ Deno.serve(async (req: Request) => {
         parts: []
       }],
       generationConfig: {
-        temperature: 0.7,
-        responseMimeType: "image/png"
+        temperature: 0.7
       }
     };
 
@@ -396,17 +395,45 @@ Deno.serve(async (req: Request) => {
     console.log(`🔍 [${requestId}] Parts:`, JSON.stringify(parts, null, 2));
 
     // Look for inline data (images) in the parts
-    const extractedImages = [];
+    const extractedImages: string[] = [];
     for (const part of parts) {
-      console.log(`🔍 [${requestId}] Checking part:`, JSON.stringify(part, null, 2));
-      if (part.inline_data && part.inline_data.data) {
-        extractedImages.push(part.inline_data.data);
+      const inline = part.inline_data || part.inlineData;
+      if (inline && inline.data) {
+        const mime = inline.mime_type || inline.mimeType || 'image/png';
+        const b64 = inline.data as string;
+        const dataUrl = `data:${mime};base64,${b64}`;
+        extractedImages.push(dataUrl);
       }
     }
 
     if (extractedImages.length === 0) {
       console.error(`❌ [${requestId}] No image data found in parts`);
       console.log(`📋 [${requestId}] Parts structure:`, JSON.stringify(parts, null, 2));
+
+      // Fallback: check if model returned JSON text with images
+      for (const part of parts) {
+        if (part.text) {
+          try {
+            const parsed = JSON.parse(part.text);
+            const imgs = parsed?.images;
+            if (Array.isArray(imgs) && imgs.length > 0) {
+              const normalized = imgs.map((s: string) => {
+                if (s.startsWith('data:')) return s;
+                // Heuristic: if looks like base64, wrap as data URL
+                return `data:image/png;base64,${s}`;
+              });
+              console.log(`✅ [${requestId}] Fallback parsed ${normalized.length} images from JSON text`);
+              return new Response(
+                JSON.stringify({ images: normalized, enhancedPrompt: finalPrompt }),
+                { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+              );
+            }
+          } catch (_) {
+            // ignore parse errors
+          }
+        }
+      }
+
       return new Response(
         JSON.stringify({ 
           error: 'No image data in response',
@@ -422,7 +449,7 @@ Deno.serve(async (req: Request) => {
     console.log(`🔍 [${requestId}] TRANSFORMATION DEBUG:`);
     console.log(`  📝 Original input: "${prompt}"`);
     console.log(`  🔧 Final prompt: "${finalPrompt}"`);
-    console.log(`  ✅ [${requestId}] SUCCESS! Generated ${extractedImages.length} artist image(s) with Gemini 2.0 Flash`);
+    console.log(`  ✅ [${requestId}] SUCCESS! Generated ${extractedImages.length} artist image(s) with Gemini 2.5 Flash Image Preview`);
 
     return new Response(
       JSON.stringify({
