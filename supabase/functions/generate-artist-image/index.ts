@@ -387,14 +387,14 @@ Deno.serve(async (req: Request) => {
     }
 
     // Look for inline data (images) in the parts
-    const imageData = [];
+    const extractedImages = [];
     for (const part of parts) {
       if (part.inline_data && part.inline_data.data) {
-        imageData.push(part.inline_data.data);
+        extractedImages.push(part.inline_data.data);
       }
     }
 
-    if (imageData.length === 0) {
+    if (extractedImages.length === 0) {
       console.error(`❌ [${requestId}] No image data found in parts`);
       console.log(`📋 [${requestId}] Parts structure:`, JSON.stringify(parts, null, 2));
       return new Response(
@@ -406,17 +406,17 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    console.log(`✅ [${requestId}] Generated ${imageData.length} images successfully`);
+    console.log(`✅ [${requestId}] Generated ${extractedImages.length} images successfully`);
 
     // Debug info
     console.log(`🔍 [${requestId}] TRANSFORMATION DEBUG:`);
     console.log(`  📝 Original input: "${prompt}"`);
     console.log(`  🔧 Final prompt: "${finalPrompt}"`);
-    console.log(`  ✅ [${requestId}] SUCCESS! Generated ${imageData.length} artist image(s) with Gemini 2.0 Flash`);
+    console.log(`  ✅ [${requestId}] SUCCESS! Generated ${extractedImages.length} artist image(s) with Gemini 2.0 Flash`);
 
     return new Response(
       JSON.stringify({
-        images: imageData,
+        images: extractedImages,
         enhancedPrompt: finalPrompt
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
