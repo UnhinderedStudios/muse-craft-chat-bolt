@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { User, Shirt, RotateCcw } from "lucide-react";
+import { User, Shirt, RotateCcw, X } from "lucide-react";
 
 interface AnimatedPromptInputProps {
   value: string;
@@ -14,6 +14,10 @@ interface AnimatedPromptInputProps {
   onPersonClick?: () => void;
   onClothingClick?: () => void;
   onResetClick?: () => void;
+  facialReferenceImage?: string;
+  isAnalyzingFace?: boolean;
+  onFacialReferenceAccepted?: (imageUrl: string) => void;
+  onFacialReferenceRemoved?: () => void;
 }
 
 export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
@@ -27,7 +31,11 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
   onAnimationComplete,
   onPersonClick,
   onClothingClick,
-  onResetClick
+  onResetClick,
+  facialReferenceImage,
+  isAnalyzingFace = false,
+  onFacialReferenceAccepted,
+  onFacialReferenceRemoved
 }) => {
   const [showAnimatedText, setShowAnimatedText] = useState(false);
   const [isUserEditing, setIsUserEditing] = useState(false);
@@ -96,11 +104,23 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
   }, [overScrollbar]);
 
   const handleMouseLeave = () => setOverScrollbar(false);
+  
+  const isDisabledByAnalysis = disabled || isAnalyzingFace;
+  
   return (
     <div className={cn("relative w-full h-full rounded-lg bg-black/40 border border-white/10", className)}>
       <div className="flex flex-col h-full">
         {/* Top: scrollable input area */}
-        <div className="flex-1 min-h-0 p-3">
+        <div className="flex-1 min-h-0 p-3 relative">
+          {isAnalyzingFace && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" 
+                     style={{ filter: "drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))" }} />
+                <span className="text-white/80 text-sm font-medium">Analyzing face...</span>
+              </div>
+            </div>
+          )}
           <textarea
             ref={textareaRef}
             value={showAnimatedText ? animatedText : value}
@@ -110,12 +130,13 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
             placeholder={showAnimatedText ? "" : placeholder}
-            disabled={disabled}
+            disabled={isDisabledByAnalysis}
             className={cn(
               "w-full h-full resize-none bg-transparent text-white text-sm leading-6 placeholder:text-white/40 pr-20 focus:outline-none transition-colors duration-200 overflow-y-auto lyrics-scrollbar",
               overScrollbar ? "cursor-default" : "cursor-text",
-              disabled && "cursor-default",
-              showAnimatedText && "opacity-80"
+              isDisabledByAnalysis && "cursor-default",
+              showAnimatedText && "opacity-80",
+              isAnalyzingFace && "opacity-20"
             )}
           />
         </div>
@@ -127,10 +148,29 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
 
         {/* Bottom: button row */}
         <div className="px-3 py-2 flex justify-end gap-1">
+          {facialReferenceImage && (
+            <div className="w-6 h-6 rounded overflow-hidden border border-accent-primary/40 relative group">
+              <img 
+                src={facialReferenceImage} 
+                alt="Facial reference" 
+                className="w-full h-full object-cover"
+              />
+              {onFacialReferenceRemoved && (
+                <button
+                  onClick={onFacialReferenceRemoved}
+                  className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  type="button"
+                >
+                  <X size={8} className="text-white" />
+                </button>
+              )}
+            </div>
+          )}
           {onPersonClick && (
             <button
               onClick={onPersonClick}
-              className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200"
+              disabled={isAnalyzingFace}
+              className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               type="button"
             >
               <User size={12} className="text-white/60" />
@@ -139,7 +179,8 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
           {onClothingClick && (
             <button
               onClick={onClothingClick}
-              className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200"
+              disabled={isAnalyzingFace}
+              className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               type="button"
             >
               <Shirt size={12} className="text-white/60" />
@@ -148,7 +189,8 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
           {onResetClick && (
             <button
               onClick={onResetClick}
-              className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200"
+              disabled={isAnalyzingFace}
+              className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               type="button"
             >
               <RotateCcw size={12} className="text-white/60" />

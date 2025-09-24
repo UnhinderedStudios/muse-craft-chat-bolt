@@ -247,6 +247,8 @@ Deno.serve(async (req: Request) => {
     let characterCount: number;
     let imageData: string | undefined;
     let imageMimeType: string | undefined;
+    let facialReferenceData: string | undefined;
+    let facialReferenceMimeType: string | undefined;
 
     const contentType = req.headers.get('content-type') || '';
     console.log(`📥 [${requestId}] Content-Type: ${contentType}`);
@@ -261,6 +263,7 @@ Deno.serve(async (req: Request) => {
       characterCount = parseInt(formData.get('characterCount') as string) || 1;
       
       const imageFile = formData.get('image') as File;
+      const facialReferenceFile = formData.get('facialReference') as File;
       
       if (imageFile) {
         console.log(`🖼️ [${requestId}] Image file - name: ${imageFile.name}, size: ${imageFile.size}, type: ${imageFile.type}`);
@@ -268,6 +271,14 @@ Deno.serve(async (req: Request) => {
         imageData = encodeBase64(new Uint8Array(arrayBuffer));
         imageMimeType = imageFile.type || 'image/png';
         console.log(`✅ [${requestId}] Image converted to base64, length: ${imageData.length}`);
+      }
+      
+      if (facialReferenceFile) {
+        console.log(`👤 [${requestId}] Facial reference file - name: ${facialReferenceFile.name}, size: ${facialReferenceFile.size}, type: ${facialReferenceFile.type}`);
+        const facialArrayBuffer = await facialReferenceFile.arrayBuffer();
+        facialReferenceData = encodeBase64(new Uint8Array(facialArrayBuffer));
+        facialReferenceMimeType = facialReferenceFile.type || 'image/jpeg';
+        console.log(`✅ [${requestId}] Facial reference converted to base64, length: ${facialReferenceData.length}`);
       }
       
       // Extract user prompt from full prompt (remove any existing prefix)
@@ -328,6 +339,16 @@ Deno.serve(async (req: Request) => {
         inline_data: {
           mime_type: imageMimeType || "image/png",
           data: imageData
+        }
+      });
+    }
+
+    // Add facial reference image if provided (labeled as "Facial Reference")
+    if (facialReferenceData) {
+      requestBody.contents[0].parts.push({
+        inline_data: {
+          mime_type: facialReferenceMimeType || "image/jpeg",
+          data: facialReferenceData
         }
       });
     }

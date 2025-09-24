@@ -506,9 +506,14 @@ export const api = {
   },
 
   // Generate artist images using Gemini 2.5 Flash with fixed reference image
-  async generateArtistImages(prompt: string, backgroundHex?: string, characterCount?: number, isRealistic?: boolean): Promise<{ images: string[]; enhancedPrompt?: string; debug?: any }> {
+  async generateArtistImages(prompt: string, backgroundHex?: string, characterCount?: number, isRealistic?: boolean, facialReference?: string): Promise<{ images: string[]; enhancedPrompt?: string; debug?: any }> {
     // Generate client-side request ID for tracking
     const clientRequestId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Add facial reference instruction if provided
+    const facialReferencePrefix = facialReference 
+      ? "Character's face must match the image titled (Facial Reference), this is the only thing that this image must be used for and nothing else. " 
+      : "";
     
     // Add automatic prompt prefix for artist generation (safer language)
     const promptPrefix = "Match the overall framing, camera angle, and lighting style of the reference image. Generate a new, original character from scratch that is completely different from the alien creature in the reference image. The character should have a dynamic pose and it should be clear that the character is a music artist. No objects such as guitars, mics, chairs or anything else at all can be present in the image. Generate a new character: ";
@@ -516,7 +521,7 @@ export const api = {
     // Add style prefix based on toggle state
     const stylePrefix = isRealistic ? "Realistic: " : "Realistic 3D anime stylized: ";
     
-    const fullPrompt = promptPrefix + stylePrefix + prompt;
+    const fullPrompt = facialReferencePrefix + promptPrefix + stylePrefix + prompt;
     
     console.log(`🎨 [${clientRequestId}] Calling artist generator with enhanced prompt:`, fullPrompt);
     console.log(`🔄 [${clientRequestId}] Using fixed reference image from /reference-frame.png`);
@@ -545,6 +550,15 @@ export const api = {
       }
       // Always send characterCount, default to 1 if not specified
       formData.append('characterCount', (characterCount || 1).toString());
+      
+      // Add facial reference if provided
+      if (facialReference) {
+        // Convert data URL to blob for facial reference
+        const facialResponse = await fetch(facialReference);
+        const facialBlob = await facialResponse.blob();
+        const facialFile = new File([facialBlob], 'facial-reference.jpg', { type: 'image/jpeg' });
+        formData.append('facialReference', facialFile);
+      }
       
       const apiResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-artist-image`, {
         method: 'POST',

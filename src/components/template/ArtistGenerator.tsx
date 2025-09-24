@@ -101,6 +101,10 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   const [sanitizedPrompt, setSanitizedPrompt] = useState("");
   const [originalPrompt, setOriginalPrompt] = useState("");
   
+  // Facial reference state
+  const [facialReferenceImage, setFacialReferenceImage] = useState<string>("");
+  const [isAnalyzingFace, setIsAnalyzingFace] = useState(false);
+  
   // Color wheel state
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [isColorApplied, setIsColorApplied] = useState(false);
@@ -171,13 +175,19 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
         console.log(`🎨 [${clientReqId}] Adding background color: ${selectedColor}`);
       }
       
+      // Add facial reference if available
+      if (facialReferenceImage) {
+        requestPayload.facialReference = facialReferenceImage;
+        console.log(`👤 [${clientReqId}] Adding facial reference image`);
+      }
+      
       // Always add character count (including 1)
       requestPayload.characterCount = artistCount[0];
       console.log(`👥 [${clientReqId}] Adding character count: ${artistCount[0]}`);
       
       console.log(`📤 [${clientReqId}] Sending request:`, requestPayload);
       
-      const result = await api.generateArtistImages(cleanPrompt, requestPayload.backgroundHex, requestPayload.characterCount, isRealistic);
+      const result = await api.generateArtistImages(cleanPrompt, requestPayload.backgroundHex, requestPayload.characterCount, isRealistic, requestPayload.facialReference);
       
       console.log(`🖼️ [${clientReqId}] Artist generation response:`, {
         imageCount: result.images?.length || 0,
@@ -324,9 +334,63 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   };
 
   const handlePersonClick = () => {
-    const suggestions = ["19 year old woman", "25 year old man", "young artist", "mature musician", "teenage performer"];
-    const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
-    setPrompt(prev => prev ? `${prev}, ${randomSuggestion}` : randomSuggestion);
+    // Create a file input to upload facial reference
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/jpeg,image/png,image/webp';
+    input.onchange = handleFacialReferenceUpload;
+    input.click();
+  };
+
+  const handleFacialReferenceUpload = async (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    const file = target.files?.[0];
+    if (!file) return;
+
+    setIsAnalyzingFace(true);
+    
+    try {
+      // Create FormData for the face analysis
+      const formData = new FormData();
+      formData.append('image', file);
+
+      console.log('🔍 Analyzing uploaded facial reference...');
+      
+      const response = await fetch('https://afsyxzxwxszujnsmukff.supabase.co/functions/v1/analyze-face', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Analysis failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('📊 Face analysis result:', result);
+
+      if (result.accepted) {
+        setFacialReferenceImage(result.imageData);
+        toast({ 
+          title: "Facial reference accepted", 
+          description: "Face detected and ready for generation" 
+        });
+      } else {
+        toast({ 
+          title: "Image rejected", 
+          description: result.rejectionReason || "Please try a different image",
+          variant: "destructive" 
+        });
+      }
+    } catch (error) {
+      console.error('❌ Face analysis error:', error);
+      toast({ 
+        title: "Analysis failed", 
+        description: "Could not analyze the image. Please try again.",
+        variant: "destructive" 
+      });
+    } finally {
+      setIsAnalyzingFace(false);
+    }
   };
 
   const handleClothingClick = () => {
@@ -337,7 +401,13 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
   const handlePromptReset = () => {
     setPrompt("");
-    toast({ title: "Prompt cleared", description: "Input field has been reset" });
+    setFacialReferenceImage("");
+    toast({ title: "Reset complete", description: "Prompt and facial reference cleared" });
+  };
+
+  const handleFacialReferenceRemoved = () => {
+    setFacialReferenceImage("");
+    toast({ title: "Facial reference removed", description: "Reference image cleared" });
   };
 
   return (
@@ -508,19 +578,22 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
                   <div className="flex-1 min-h-0 mb-1 space-y-1 overflow-auto pr-1">
                     <div>
-                      <AnimatedPromptInput
-                        value={prompt}
-                        onChange={setPrompt}
-                        placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
-                        disabled={loading}
-                        animatedText={sanitizedPrompt}
-                        isAnimating={isAnimating}
-                        onAnimationComplete={handleAnimationComplete}
-                        onPersonClick={handlePersonClick}
-                        onClothingClick={handleClothingClick}
-                        onResetClick={handlePromptReset}
-                        className="h-36"
-                      />
+                       <AnimatedPromptInput
+                         value={prompt}
+                         onChange={setPrompt}
+                         placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
+                         disabled={loading}
+                         animatedText={sanitizedPrompt}
+                         isAnimating={isAnimating}
+                         onAnimationComplete={handleAnimationComplete}
+                         onPersonClick={handlePersonClick}
+                         onClothingClick={handleClothingClick}
+                         onResetClick={handlePromptReset}
+                         facialReferenceImage={facialReferenceImage}
+                         isAnalyzingFace={isAnalyzingFace}
+                         onFacialReferenceRemoved={handleFacialReferenceRemoved}
+                         className="h-36"
+                       />
                     </div>
 
                     {/* Background Color Section */}
