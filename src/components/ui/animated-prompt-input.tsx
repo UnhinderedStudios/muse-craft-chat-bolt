@@ -113,7 +113,7 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
         {/* Top: scrollable input area */}
         <div className="flex-1 min-h-0 p-3 relative">
           {isAnalyzingFace && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-lg">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-md rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" 
                      style={{ filter: "drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))" }} />

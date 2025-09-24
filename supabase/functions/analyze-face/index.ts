@@ -78,19 +78,19 @@ Deno.serve(async (req: Request) => {
     // Analyze image with GPT-4 Vision
     const analysisPrompt = `Analyze this image for face detection. Respond with a JSON object containing:
 {
-  "faceCount": number (exact count of human or animal faces detected),
+  "faceCount": number (exact count of faces detected),
   "isQualityGood": boolean (true if faces are clear and well-defined, false if blurry/unclear),
   "hasFace": boolean (true if at least one face is detected),
-  "isAnimalFace": boolean (true if any detected faces are animals),
-  "isHumanFace": boolean (true if any detected faces are human),
+  "isHumanFace": boolean (true if ALL detected faces are clearly human),
   "reasoning": "brief explanation of the analysis"
 }
 
 Requirements:
-- Detect both human and animal faces
+- ONLY accept real human faces - reject animals, creatures, aliens, cartoons, drawings, or anything non-human
 - Count EXACTLY how many faces are visible
 - Assess image quality - faces should be clear and well-defined
-- Be strict about quality - reject if faces are too blurry, pixelated, or unclear`;
+- Be extremely strict - only real human faces should pass validation
+- Reject if faces are too blurry, pixelated, or unclear`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -163,8 +163,8 @@ Requirements:
       rejectionReason = 'Multiple faces detected - only single face images are allowed';
     } else if (!analysis.isQualityGood) {
       rejectionReason = 'Image quality is too low - face is not clear enough';
-    } else if (!analysis.isHumanFace && !analysis.isAnimalFace) {
-      rejectionReason = 'No valid human or animal face detected';
+    } else if (!analysis.isHumanFace) {
+      rejectionReason = 'Only human faces are allowed - animals, creatures, or non-human faces are not accepted';
     } else {
       accepted = true;
     }
