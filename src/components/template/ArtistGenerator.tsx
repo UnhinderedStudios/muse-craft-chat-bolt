@@ -590,10 +590,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
                  {/* Right: Prompt Controls */}
                 <aside 
-                  className={cn(
-                    "flex flex-col rounded-xl border border-white/10 px-4 pt-3 pb-3 overflow-hidden min-h-0 lg:col-start-2 lg:row-start-2 transition-opacity",
-                    isLocked && "opacity-30 pointer-events-none"
-                  )}
+                  className="flex flex-col rounded-xl border border-white/10 px-4 pt-3 pb-3 overflow-hidden min-h-0 lg:col-start-2 lg:row-start-2"
                   style={{ height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
                 >
 
@@ -622,7 +619,10 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                     </div>
 
                      {/* Background Color Section */}
-                     <div>
+                     <div className={cn(
+                       "transition-opacity",
+                       isLocked && "opacity-30 pointer-events-none"
+                     )}>
                        <div className="text-xs text-white/60 mb-2">Background Color</div>
                       <div className="w-full rounded-lg bg-black/20 border border-white/10 p-3 pb-1.5">
                         <div className="flex flex-col gap-1.5">
@@ -687,7 +687,10 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                      </div>
 
                    {/* Settings container */}
-                  <div className="mt-1.5 mb-1.5">
+                  <div className={cn(
+                    "mt-1.5 mb-1.5 transition-opacity",
+                    isLocked && "opacity-30 pointer-events-none"
+                  )}>
                     <div className="text-xs text-white/60 mb-1.5">Settings</div>
                     <div className="w-full rounded-lg bg-black/20 border border-white/10 p-2.5">
                       <div className="flex items-center gap-3">
