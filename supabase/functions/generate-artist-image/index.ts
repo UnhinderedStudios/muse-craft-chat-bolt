@@ -310,27 +310,14 @@ Deno.serve(async (req: Request) => {
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiKey}`;
 
-    // Build request body
+    // Build request body for Gemini
     const requestBody: any = {
       contents: [{
         parts: []
       }],
       generationConfig: {
         temperature: 0.7,
-        maxOutputTokens: 4096,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "object",
-          properties: {
-            images: {
-              type: "array",
-              items: {
-                type: "string"
-              }
-            }
-          },
-          required: ["images"]
-        }
+        maxOutputTokens: 4096
       }
     };
 
@@ -372,57 +359,64 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Extract images from response
-    const images = result.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-    if (!images) {
-      console.error(`❌ [${requestId}] No images in response`);
+    // Extract images from Gemini response
+    const candidates = result.data?.candidates;
+    if (!candidates || candidates.length === 0) {
+      console.error(`❌ [${requestId}] No candidates in response`);
       return new Response(
         JSON.stringify({ 
-          error: 'No images generated',
+          error: 'No candidates generated',
           debug: result.data
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    let parsedImages;
-    try {
-      parsedImages = JSON.parse(images);
-    } catch (parseError) {
-      console.error(`❌ [${requestId}] Failed to parse images JSON:`, parseError);
+    const candidate = candidates[0];
+    const parts = candidate?.content?.parts;
+    
+    if (!parts || parts.length === 0) {
+      console.error(`❌ [${requestId}] No parts in candidate response`);
       return new Response(
         JSON.stringify({ 
-          error: 'Invalid response format',
-          debug: { images, parseError: parseError.message }
+          error: 'No content parts in response',
+          debug: candidate
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    if (!parsedImages.images || !Array.isArray(parsedImages.images) || parsedImages.images.length === 0) {
-      console.error(`❌ [${requestId}] No valid images in parsed response`);
+    // Look for inline data (images) in the parts
+    const imageData = [];
+    for (const part of parts) {
+      if (part.inline_data && part.inline_data.data) {
+        imageData.push(part.inline_data.data);
+      }
+    }
+
+    if (imageData.length === 0) {
+      console.error(`❌ [${requestId}] No image data found in parts`);
+      console.log(`📋 [${requestId}] Parts structure:`, JSON.stringify(parts, null, 2));
       return new Response(
         JSON.stringify({ 
-          error: 'No valid images in response',
-          debug: parsedImages
+          error: 'No image data in response',
+          debug: { parts, candidate }
         }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`✅ [${requestId}] Generated ${parsedImages.images.length} images successfully`);
-    console.log(`📦 [${requestId}] Response size: ${JSON.stringify(parsedImages).length} characters`);
+    console.log(`✅ [${requestId}] Generated ${imageData.length} images successfully`);
 
     // Debug info
     console.log(`🔍 [${requestId}] TRANSFORMATION DEBUG:`);
     console.log(`  📝 Original input: "${prompt}"`);
     console.log(`  🔧 Final prompt: "${finalPrompt}"`);
-    console.log(`  ✅ [${requestId}] SUCCESS! Generated ${parsedImages.images.length} artist image(s) with Gemini 2.0 Flash`);
+    console.log(`  ✅ [${requestId}] SUCCESS! Generated ${imageData.length} artist image(s) with Gemini 2.0 Flash`);
 
     return new Response(
       JSON.stringify({
-        images: parsedImages.images,
+        images: imageData,
         enhancedPrompt: finalPrompt
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
