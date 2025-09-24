@@ -619,7 +619,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Standard prefix template with safer language to avoid PROHIBITED_CONTENT
-    const STANDARD_PREFIX = "Match the overall framing, camera angle, and lighting style of the reference image. Generate a new, original character from scratch that is completely different from any person in the reference image. The character should have a dynamic pose and it should be clear that the person is a music artist. No objects such as guitars, mics, chairs or anything else at all can be present in the image. Generate a new character:";
+    const STANDARD_PREFIX = "Match the overall framing, camera angle, and lighting style of the reference image. Generate a new, original character from scratch that is completely different from the alien creature in the reference image. The character should have a dynamic pose and it should be clear that the character is a music artist. No objects such as guitars, mics, chairs or anything else at all can be present in the image. Generate a new character:";
 
     // Extract or establish the immutable prefix and character parts
     let FULL_PREFIX = "";

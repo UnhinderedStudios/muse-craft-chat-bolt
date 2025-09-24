@@ -359,7 +359,7 @@ export const api = {
     const clientRequestId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     // Add automatic prompt prefix for artist generation (safer language)
-    const promptPrefix = "Match the overall framing, camera angle, and lighting style of the reference image. Generate a new, original character from scratch that is completely different from any person in the reference image. The character should have a dynamic pose and it should be clear that the person is a music artist. No objects such as guitars, mics, chairs or anything else at all can be present in the image. Generate a new character: ";
+    const promptPrefix = "Match the overall framing, camera angle, and lighting style of the reference image. Generate a new, original character from scratch that is completely different from the alien creature in the reference image. The character should have a dynamic pose and it should be clear that the character is a music artist. No objects such as guitars, mics, chairs or anything else at all can be present in the image. Generate a new character: ";
     const fullPrompt = promptPrefix + prompt;
     
     console.log(`🎨 [${clientRequestId}] Calling artist generator with enhanced prompt:`, fullPrompt);
