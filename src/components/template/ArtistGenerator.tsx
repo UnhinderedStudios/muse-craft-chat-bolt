@@ -323,6 +323,23 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
     toast({ title: "Color picker", description: "Eyedropper tool (coming soon)" });
   };
 
+  const handlePersonClick = () => {
+    const suggestions = ["19 year old woman", "25 year old man", "young artist", "mature musician", "teenage performer"];
+    const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
+    setPrompt(prev => prev ? `${prev}, ${randomSuggestion}` : randomSuggestion);
+  };
+
+  const handleClothingClick = () => {
+    const clothing = ["wearing casual streetwear", "in elegant formal attire", "wearing leather jacket", "in vintage clothing", "wearing colorful outfit"];
+    const randomClothing = clothing[Math.floor(Math.random() * clothing.length)];
+    setPrompt(prev => prev ? `${prev}, ${randomClothing}` : randomClothing);
+  };
+
+  const handlePromptReset = () => {
+    setPrompt("");
+    toast({ title: "Prompt cleared", description: "Input field has been reset" });
+  };
+
   return (
     <Dialog open={isOpen}>
       <DialogContent 
@@ -499,6 +516,9 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                         animatedText={sanitizedPrompt}
                         isAnimating={isAnimating}
                         onAnimationComplete={handleAnimationComplete}
+                        onPersonClick={handlePersonClick}
+                        onClothingClick={handleClothingClick}
+                        onResetClick={handlePromptReset}
                         className="h-36"
                       />
                     </div>
