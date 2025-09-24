@@ -4,6 +4,128 @@
 
 import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 
+// Transport layer helper for robust Gemini API calls with retry logic
+async function callGeminiWithTransportRetries(
+  url: string,
+  body: any,
+  headers: Record<string, string>,
+  requestId: string,
+  attemptNumber: number = 1
+): Promise<Response> {
+  const maxTransportRetries = 3;
+  const baseDelay = 1000; // 1 second base delay
+  
+  for (let retry = 0; retry < maxTransportRetries; retry++) {
+    try {
+      console.log(`🌐 [${requestId}] Gemini API call attempt ${retry + 1}/${maxTransportRetries} (generation attempt ${attemptNumber})`);
+      
+      // Add optimized headers for proxy handling
+      const optimizedHeaders = {
+        ...headers,
+        'Accept': 'application/json',
+        'Connection': 'keep-alive',
+        'User-Agent': 'Supabase-Edge-Function/1.0'
+      };
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: optimizedHeaders,
+        body: JSON.stringify(body)
+      });
+      
+      // Log response details for debugging
+      console.log(`📡 [${requestId}] Gemini response: ${response.status} ${response.statusText}`);
+      console.log(`📊 [${requestId}] Response headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()))}`);
+      
+      return response;
+      
+    } catch (error) {
+      const isLastRetry = retry === maxTransportRetries - 1;
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      console.error(`🔌 [${requestId}] Transport error attempt ${retry + 1}: ${errorMessage}`);
+      
+      if (isLastRetry) {
+        throw new Error(`Transport failed after ${maxTransportRetries} attempts: ${errorMessage}`);
+      }
+      
+      // Exponential backoff with jitter
+      const delay = baseDelay * Math.pow(2, retry) + Math.random() * 1000;
+      console.log(`⏳ [${requestId}] Retrying in ${Math.round(delay)}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+  
+  throw new Error('Unexpected transport retry loop exit');
+}
+
+// Safe response reader that handles 502s and non-JSON responses
+async function readResponseSafely(response: Response, requestId: string): Promise<{
+  success: boolean;
+  data?: any;
+  error?: {
+    status: number;
+    statusText: string;
+    contentType: string;
+    headers: Record<string, string>;
+    bodySnippet: string;
+    isHtml502: boolean;
+  };
+}> {
+  const status = response.status;
+  const statusText = response.statusText;
+  const contentType = response.headers.get('content-type') || '';
+  const headers = Object.fromEntries(response.headers.entries());
+  
+  try {
+    const text = await response.text();
+    const bodySnippet = text.substring(0, 500); // First 500 chars for debugging
+    
+    // Check if it's an HTML 502 error page
+    const isHtml502 = status === 502 && contentType.includes('text/html');
+    if (isHtml502) {
+      console.error(`🚫 [${requestId}] HTML 502 detected - proxy/gateway error`);
+      console.error(`📄 [${requestId}] Response body snippet: ${bodySnippet}`);
+    }
+    
+    // Log non-JSON responses for debugging
+    if (!contentType.includes('application/json') && status !== 200) {
+      console.error(`📋 [${requestId}] Non-JSON error response (${status}): ${bodySnippet}`);
+    }
+    
+    if (response.ok && contentType.includes('application/json')) {
+      const data = JSON.parse(text);
+      return { success: true, data };
+    }
+    
+    return {
+      success: false,
+      error: {
+        status,
+        statusText,
+        contentType,
+        headers,
+        bodySnippet,
+        isHtml502
+      }
+    };
+    
+  } catch (parseError) {
+    console.error(`🔍 [${requestId}] Failed to read response: ${parseError}`);
+    return {
+      success: false,
+      error: {
+        status,
+        statusText,
+        contentType,
+        headers,
+        bodySnippet: `Parse error: ${parseError}`,
+        isHtml502: false
+      }
+    };
+  }
+}
+
 // Generate unique request ID for tracking
 function generateRequestId(): string {
   return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -818,37 +940,43 @@ Deno.serve(async (req: Request) => {
     console.log(`🎭 [${requestId}] CHARACTER COUNT: ${characterCount}, BACKGROUND: ${backgroundHex || 'default'}`);
     console.log(`🎨 [${requestId}] Generating with Gemini...`);
     
+    // Use transport-retry wrapper for robust Gemini calls
+    const seed = Math.floor(Math.random() * 1000000);
+    console.log(`🚀 [${requestId}] Sending initial request to Gemini (seed: ${seed}): "${finalPrompt.substring(0, 100)}..."`);
+    
     const generationRes = await withTimeout(
-      fetch(
+      callGeminiWithTransportRetries(
         `https://generativelanguage.googleapis.com/v1beta/models/${generationModel}:generateContent`,
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-goog-api-key": geminiKey,
-          },
-          body: JSON.stringify({
-            contents: [{
-              parts: generationParts
-            }],
-            generationConfig: {
-              temperature: 0.85,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 8192,
-              seed: Math.floor(Math.random() * 1000000)
-            }
-          })
-        }
+          contents: [{
+            parts: generationParts
+          }],
+          generationConfig: {
+            temperature: 0.85,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 8192,
+            seed
+          }
+        },
+        {
+          "Content-Type": "application/json",
+          "x-goog-api-key": geminiKey,
+        },
+        requestId,
+        1
       ),
       45000,
       "Gemini generation"
     );
 
-    const generationJson = await generationRes.json().catch(() => ({}));
+    // Use safe response reader for structured error handling
+    const responseResult = await readResponseSafely(generationRes, requestId);
     let images: string[] = [];
+    let lastGeminiError: any = null;
 
-    if (generationRes.ok) {
+    if (responseResult.success) {
+      const generationJson = responseResult.data;
       const candidate = generationJson?.candidates?.[0];
       if (candidate) {
         const parts = candidate?.content?.parts ?? [];
@@ -863,12 +991,27 @@ Deno.serve(async (req: Request) => {
           .filter(Boolean);
         
         console.log(`✅ [${requestId}] Generated ${images.length} images`);
+      } else {
+        console.log(`⚠️ [${requestId}] No candidate in successful response`);
+        lastGeminiError = { message: "No candidate in response", data: generationJson };
       }
+    } else {
+      lastGeminiError = responseResult.error;
+      const errorInfo = responseResult.error!;
+      
+      if (errorInfo.isHtml502) {
+        console.error(`🚫 [${requestId}] Gemini returned HTML 502 - gateway/proxy issue`);
+      } else {
+        console.error(`❌ [${requestId}] Gemini API error: ${errorInfo.status} ${errorInfo.statusText}`);
+      }
+      
+      // Log detailed error information for debugging
+      console.error(`🔍 [${requestId}] Error details: status=${errorInfo.status}, type=${errorInfo.contentType}, body="${errorInfo.bodySnippet}"`);
     }
 
     // Multi-attempt retry loop with preservation-first approach (3 attempts total)
     if (images.length === 0 && openaiKey) {
-      const failureReason = generationJson?.error?.message || "No images returned";
+      const failureReason = lastGeminiError?.message || lastGeminiError?.bodySnippet || "No images returned";
       const originalKeywords = extractKeywords(CURRENT_CHARACTER);
       const retryAttempts = [];
       
@@ -911,37 +1054,37 @@ Deno.serve(async (req: Request) => {
         const retrySeed = Math.floor(Math.random() * 1000000);
         console.log(`🚀 [${requestId}] Sending attempt ${attempt} to Gemini (seed: ${retrySeed}): "${retryPrompt.substring(0, 100)}..."`);
         
-        // Send to Gemini
+        // Send to Gemini with transport retries
         const retryRes = await withTimeout(
-          fetch(
+          callGeminiWithTransportRetries(
             `https://generativelanguage.googleapis.com/v1beta/models/${generationModel}:generateContent`,
             {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-goog-api-key": geminiKey,
-              },
-              body: JSON.stringify({
-                contents: [{
-                  parts: generationParts
-                }],
-                generationConfig: {
-                  temperature: 0.85,
-                  topK: 40,
-                  topP: 0.95,
-                  maxOutputTokens: 8192,
-                  seed: retrySeed
-                }
-              })
-            }
+              contents: [{
+                parts: generationParts
+              }],
+              generationConfig: {
+                temperature: 0.85,
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 8192,
+                seed: retrySeed
+              }
+            },
+            {
+              "Content-Type": "application/json",
+              "x-goog-api-key": geminiKey,
+            },
+            requestId,
+            attempt + 1
           ),
           45000,
           `Gemini retry attempt ${attempt}`
         );
 
-        const retryJson = await retryRes.json().catch(() => ({}));
+        const retryResult = await readResponseSafely(retryRes, requestId);
         
-        if (retryRes.ok) {
+        if (retryResult.success) {
+          const retryJson = retryResult.data;
           const candidate = retryJson?.candidates?.[0];
           if (candidate) {
             const parts = candidate?.content?.parts ?? [];
@@ -963,7 +1106,13 @@ Deno.serve(async (req: Request) => {
             }
           }
         } else {
-          console.log(`❌ [${requestId}] Attempt ${attempt} failed: ${retryJson?.error?.message || 'Unknown error'}`);
+          // Update last error for better error reporting
+          lastGeminiError = retryResult.error;
+          const errorInfo = retryResult.error!;
+          console.log(`❌ [${requestId}] Attempt ${attempt} failed: ${errorInfo.status} ${errorInfo.statusText}`);
+          if (errorInfo.isHtml502) {
+            console.log(`🚫 [${requestId}] Attempt ${attempt} got HTML 502 - proxy issue`);
+          }
         }
       }
       
@@ -983,12 +1132,28 @@ Deno.serve(async (req: Request) => {
 
     if (!images.length) {
       console.error(`❌ [${requestId}] No images extracted from Gemini response after attempts`);
+      
+      // Prepare structured error response with debug info
+      const errorResponse = {
+        error: "No images generated by Gemini 2.5 Flash Image Preview after multiple attempts",
+        requestId,
+        details: {
+          lastGeminiStatus: lastGeminiError?.status,
+          lastGeminiStatusText: lastGeminiError?.statusText,
+          lastGeminiHeaders: lastGeminiError?.headers,
+          lastGeminiBodySnippet: lastGeminiError?.bodySnippet,
+          isHtml502: lastGeminiError?.isHtml502,
+          transient: lastGeminiError?.isHtml502 || lastGeminiError?.status >= 500
+        },
+        debug: {
+          originalPrompt: CHARACTER,
+          finalCharacter: CURRENT_CHARACTER,
+          finalPrompt: FINAL_GENERATION_PROMPT
+        }
+      };
+      
       return new Response(
-        JSON.stringify({ 
-          error: "No images generated by Gemini 2.5 Flash Image Preview after multiple attempts",
-          raw: generationJson,
-          requestId
-        }),
+        JSON.stringify(errorResponse),
         { status: 502, headers: CORS }
       );
     }
