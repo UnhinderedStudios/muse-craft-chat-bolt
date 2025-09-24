@@ -112,8 +112,28 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
       <div className="flex flex-col h-full">
         {/* Top: scrollable input area */}
         <div className="flex-1 min-h-0 p-3 relative">
+          <div className={cn("relative", isAnalyzingFace && "blur-3xl")}> 
+            <textarea
+              ref={textareaRef}
+              value={showAnimatedText ? animatedText : value}
+              onChange={handleChange}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+              placeholder={showAnimatedText ? "" : placeholder}
+              disabled={isDisabledByAnalysis}
+              className={cn(
+                "w-full h-full resize-none bg-transparent text-white text-sm leading-6 placeholder:text-white/40 pr-20 focus:outline-none transition-colors duration-200 overflow-y-auto lyrics-scrollbar",
+                overScrollbar ? "cursor-default" : "cursor-text",
+                isDisabledByAnalysis && "cursor-default",
+                showAnimatedText && "opacity-80",
+                isAnalyzingFace && "opacity-20"
+              )}
+            />
+          </div>
           {isAnalyzingFace && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-3xl rounded-lg">
+            <div className="absolute inset-0 flex items-center justify-center bg-black/80 rounded-lg">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" 
                      style={{ filter: "drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))" }} />
@@ -121,24 +141,6 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
               </div>
             </div>
           )}
-          <textarea
-            ref={textareaRef}
-            value={showAnimatedText ? animatedText : value}
-            onChange={handleChange}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={handleMouseLeave}
-            placeholder={showAnimatedText ? "" : placeholder}
-            disabled={isDisabledByAnalysis}
-            className={cn(
-              "w-full h-full resize-none bg-transparent text-white text-sm leading-6 placeholder:text-white/40 pr-20 focus:outline-none transition-colors duration-200 overflow-y-auto lyrics-scrollbar",
-              overScrollbar ? "cursor-default" : "cursor-text",
-              isDisabledByAnalysis && "cursor-default",
-              showAnimatedText && "opacity-80",
-              isAnalyzingFace && "opacity-20"
-            )}
-          />
         </div>
 
         {/* Divider */}
