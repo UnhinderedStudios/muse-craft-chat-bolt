@@ -174,6 +174,14 @@ export default {
 						transform: 'translateX(100%)'
 					}
 				},
+				'scan': {
+					'0%': {
+						transform: 'translateX(-60px)'
+					},
+					'100%': {
+						transform: 'translateX(calc(100vw + 60px))'
+					}
+				},
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
@@ -194,6 +202,7 @@ export default {
 				'waveform-9': 'waveform-9 0.55s ease-in-out infinite',
 				'waveform-10': 'waveform-10 0.8s ease-in-out infinite',
 				'scanning': 'scanning 2s ease-in-out infinite',
+				'scan': 'scan 2s ease-in-out infinite',
 				
 			}
 		}

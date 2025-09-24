@@ -133,13 +133,24 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
             />
           </div>
           {isAnalyzingFace && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/80 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" 
-                     style={{ filter: "drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))" }} />
-                <span className="text-white/80 text-sm font-medium">Analyzing face...</span>
+            <>
+              {/* Scanning beam animation */}
+              <div className="absolute inset-0 overflow-hidden rounded-lg pointer-events-none">
+                <div className="absolute top-0 left-0 w-16 h-full animate-scan" 
+                     style={{
+                       background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.8) 50%, transparent 100%)',
+                       boxShadow: '0 0 20px rgba(255,255,255,0.6)'
+                     }} />
               </div>
-            </div>
+              {/* Main overlay */}
+              <div className="absolute inset-0 flex items-center justify-center bg-black/80 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" 
+                       style={{ filter: "drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))" }} />
+                  <span className="text-white/80 text-sm font-medium">Analyzing face...</span>
+                </div>
+              </div>
+            </>
           )}
         </div>
 
