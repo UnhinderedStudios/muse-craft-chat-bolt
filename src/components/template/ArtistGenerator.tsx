@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { TrackItem } from "@/types";
-import { ChevronUp, ChevronDown, X, User, Wand2, Repeat, ArrowRight, Download, Palette, RotateCcw, Check, Dices, Pipette } from "lucide-react";
+import { ChevronUp, ChevronDown, X, User, Wand2, Repeat, ArrowRight, Download, Palette, RotateCcw, Check, Dices, Pipette, Lock } from "lucide-react";
 import artistPlaceholderVideo from "@/assets/artist-placeholder.mp4";
 import { useSessionManager } from "@/hooks/use-session-manager";
 import { AnimatedPromptInput } from "@/components/ui/animated-prompt-input";
@@ -112,6 +112,9 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   // Settings state
   const [artistCount, setArtistCount] = useState([1]);
   const [isRealistic, setIsRealistic] = useState(true);
+  
+  // Lock state
+  const [isLocked, setIsLocked] = useState(false);
 
   const VISIBLE_COUNT = 5;
 
@@ -405,6 +408,14 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
     toast({ title: "Reset complete", description: "Prompt and facial reference cleared" });
   };
 
+  const handleLockToggle = () => {
+    setIsLocked(!isLocked);
+    toast({ 
+      title: isLocked ? "Unlocked" : "Locked", 
+      description: isLocked ? "All controls are now available" : "Image locked, limited controls available" 
+    });
+  };
+
   const handleFacialReferenceRemoved = () => {
     setFacialReferenceImage("");
     toast({ title: "Facial reference removed", description: "Reference image cleared" });
@@ -450,11 +461,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   <div className="flex flex-col items-center gap-2 w-20">
                     {/* Top arrow */}
                     <button
-                      className={cn(
-                        "w-8 h-8 flex items-center justify-center rounded-full transition-opacity",
-                        canScrollUp ? "opacity-100 hover:bg-white/10" : "opacity-30 pointer-events-none"
-                      )}
-                      onClick={() => canScrollUp && setOffset(o => Math.max(0, o - 1))}
+                       className={cn(
+                         "w-8 h-8 flex items-center justify-center rounded-full transition-opacity",
+                         canScrollUp && !isLocked ? "opacity-100 hover:bg-white/10" : "opacity-30 pointer-events-none"
+                       )}
+                       onClick={() => canScrollUp && !isLocked && setOffset(o => Math.max(0, o - 1))}
                       aria-label="Scroll thumbnails up"
                     >
                       <ChevronUp className="w-5 h-5 text-white" />
@@ -471,13 +482,15 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                         return (
                           <button
                             key={idx}
-                            className={cn(
-                              "w-20 h-20 rounded-lg overflow-hidden border transition-all relative",
-                              isActive ? "border-accent-primary ring-2 ring-accent-primary/40" : "border-white/10 hover:border-white/20"
-                            )}
-                            onClick={() => {
-                              if (!isPlaceholder && imageIndexInImages >= 0) setSelectedIndex(imageIndexInImages);
-                            }}
+                             className={cn(
+                               "w-20 h-20 rounded-lg overflow-hidden border transition-all relative",
+                               isActive ? "border-accent-primary ring-2 ring-accent-primary/40" : "border-white/10 hover:border-white/20",
+                               isLocked && "opacity-50 cursor-not-allowed"
+                             )}
+                             onClick={() => {
+                               if (!isPlaceholder && imageIndexInImages >= 0 && !isLocked) setSelectedIndex(imageIndexInImages);
+                             }}
+                             disabled={isLocked}
                             aria-label={`Thumbnail ${idx + 1}`}
                           >
                             {img ? (
@@ -498,11 +511,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
                     {/* Bottom arrow */}
                     <button
-                      className={cn(
-                        "w-8 h-8 flex items-center justify-center rounded-full transition-opacity",
-                        canScrollDown ? "opacity-100 hover:bg-white/10" : "opacity-30 pointer-events-none"
-                      )}
-                      onClick={() => canScrollDown && setOffset(o => o + 1)}
+                       className={cn(
+                         "w-8 h-8 flex items-center justify-center rounded-full transition-opacity",
+                         canScrollDown && !isLocked ? "opacity-100 hover:bg-white/10" : "opacity-30 pointer-events-none"
+                       )}
+                       onClick={() => canScrollDown && !isLocked && setOffset(o => o + 1)}
                       aria-label="Scroll thumbnails down"
                     >
                       <ChevronDown className="w-5 h-5 text-white" />
@@ -514,14 +527,23 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                     className="rounded-xl overflow-hidden border border-white/10 flex items-center justify-center relative"
                     style={{ width: "min(520px, 60vh)", height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
                   >
-                    {!loading && images[selectedIndex] ? (
-                      <img
-                        src={images[selectedIndex]}
-                        alt={`Selected artist image ${selectedIndex + 1}`}
-                        className="block w-full h-full object-cover"
-                        loading="eager"
-                      />
-                    ) : !loading && images.length === 0 ? (
+                     {!loading && images[selectedIndex] ? (
+                       <>
+                         <img
+                           src={images[selectedIndex]}
+                           alt={`Selected artist image ${selectedIndex + 1}`}
+                           className="block w-full h-full object-cover"
+                           loading="eager"
+                         />
+                         {/* Lock symbol overlay */}
+                         <button
+                           onClick={handleLockToggle}
+                           className="absolute bottom-3 right-3 w-10 h-10 bg-black/20 backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-black/40 hover:border-white/40"
+                         >
+                           <Lock className={cn("w-5 h-5 transition-colors", isLocked ? "text-red-400" : "text-white/60")} />
+                         </button>
+                       </>
+                     ) : !loading && images.length === 0 ? (
                       // Show video when no generated images are present
                       <>
                         <video
@@ -578,27 +600,28 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
                   <div className="flex-1 min-h-0 mb-1 space-y-1 overflow-auto pr-1">
                     <div>
-                       <AnimatedPromptInput
-                         value={prompt}
-                         onChange={setPrompt}
-                         placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
-                         disabled={loading}
-                         animatedText={sanitizedPrompt}
-                         isAnimating={isAnimating}
-                         onAnimationComplete={handleAnimationComplete}
-                         onPersonClick={handlePersonClick}
-                         onClothingClick={handleClothingClick}
-                         onResetClick={handlePromptReset}
-                         facialReferenceImage={facialReferenceImage}
-                         isAnalyzingFace={isAnalyzingFace}
-                         onFacialReferenceRemoved={handleFacialReferenceRemoved}
-                         className="h-36"
-                       />
+                        <AnimatedPromptInput
+                          value={prompt}
+                          onChange={setPrompt}
+                          placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
+                          disabled={loading || isLocked}
+                          animatedText={sanitizedPrompt}
+                          isAnimating={isAnimating}
+                          onAnimationComplete={handleAnimationComplete}
+                          onPersonClick={isLocked ? undefined : handlePersonClick}
+                          onClothingClick={isLocked ? undefined : handleClothingClick}
+                          onResetClick={isLocked ? undefined : handlePromptReset}
+                          facialReferenceImage={facialReferenceImage}
+                          isAnalyzingFace={isAnalyzingFace}
+                          onFacialReferenceRemoved={handleFacialReferenceRemoved}
+                          className="h-36"
+                        />
                     </div>
 
-                    {/* Background Color Section */}
-                    <div>
-                      <div className="text-xs text-white/60 mb-2">Background Color</div>
+                     {/* Background Color Section */}
+                     {!isLocked && (
+                       <div>
+                         <div className="text-xs text-white/60 mb-2">Background Color</div>
                       <div className="w-full rounded-lg bg-black/20 border border-white/10 p-3 pb-1.5">
                         <div className="flex flex-col gap-1.5">
                           {/* Color Picker - Full Width */}
@@ -658,11 +681,12 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
+                       </div>
+                     </div>
+                   )}
 
-                  {/* Settings container */}
+                   {/* Settings container */}
+                   {!isLocked && (
                   <div className="mt-1.5 mb-1.5">
                     <div className="text-xs text-white/60 mb-1.5">Settings</div>
                     <div className="w-full rounded-lg bg-black/20 border border-white/10 p-2.5">
@@ -728,7 +752,9 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                           </button>
                         </div>
                       </div>
-                    </div>
+                     </div>
+                   </div>
+                    )}
                   </div>
 
                   <div className="mt-auto">
