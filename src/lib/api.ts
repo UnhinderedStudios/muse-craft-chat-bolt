@@ -373,16 +373,7 @@ export const api = {
   },
 
   async testAlbumCover(songDetails?: SongDetails): Promise<{ 
-    cover1: string; 
-    cover2: string; 
-    debug?: {
-      inputSource: string;
-      inputContent: string;
-      chatPrompt: string;
-      imagenPrompt: string;
-      imagenParams: any;
-      rawResponse: any;
-    }
+    coverUrls: string[];
   }> {
     if (songDetails && (songDetails.title || songDetails.lyrics || songDetails.style)) {
       console.log("🧪 testAlbumCover - Using provided song details:", songDetails);
@@ -413,23 +404,15 @@ export const api = {
     };
 
     if (data.images && Array.isArray(data.images) && data.images.length > 0) {
-      const covers = {
-        cover1: data.images[0] || '',
-        cover2: data.images[1] || data.images[0] || '',
-        debug
+      return {
+        coverUrls: data.images
       };
-      console.log("Parsed covers:", covers);
-      return covers;
     }
 
-    // If no images returned, return empty strings
-    const emptyCovers = {
-      cover1: '',
-      cover2: '',
-      debug
+    // If no images returned, return empty array
+    return {
+      coverUrls: []
     };
-    console.log("No images returned:", emptyCovers);
-    return emptyCovers;
   },
 
   // Generate album covers from a custom prompt using Gemini/Imagen edge function

@@ -625,16 +625,7 @@ const Index = () => {
   const [generationProgress, setGenerationProgress] = useState<number>(0);
   const [lastProgressUpdate, setLastProgressUpdate] = useState<number>(Date.now());
   const [albumCovers, setAlbumCovers] = useState<{ 
-    cover1: string; 
-    cover2: string; 
-    debug?: {
-      inputSource: string;
-      inputContent: string;
-      chatPrompt: string;
-      imagenPrompt: string;
-      imagenParams: any;
-      rawResponse: any;
-    }
+    coverUrls: string[];
   } | null>(null);
   const [isGeneratingCovers, setIsGeneratingCovers] = useState(false);
   const [scrollTop, setScrollTop] = useState<number>(0);
