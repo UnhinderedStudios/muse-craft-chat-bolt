@@ -206,7 +206,7 @@ function buildPrompt(userInput: string, backgroundHex?: string, characterCount?:
   const baseInstructions = "Match reference image framing, lighting, camera angle. Keep background identical but totally replace the character in the reference image, no reference to it should exist in the final image unless instructed in .";
   const characterInstruction = ` ${characterCount || 1} character${(characterCount || 1) > 1 ? 's' : ''}. All characters must match the gender specified, if 1 gender is specified then all characters must be that gender unless properly defined.`;
   const objectRestrictions = " NO objects, props, instruments, tools. Empty hands. Clean background.";
-  const backgroundInstruction = backgroundHex ? ` Background and floor color: ${backgroundHex}.` : '';
+  const backgroundInstruction = backgroundHex ? ` Background color: Overall background colour should be (do not actually enter hex code text into the final result only the color of it): ${backgroundHex}.` : '';
   
   return `${userInput}. ${baseInstructions}${backgroundInstruction}${characterInstruction}${objectRestrictions}`;
 }
