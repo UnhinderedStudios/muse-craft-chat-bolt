@@ -143,7 +143,79 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
     return list.slice(offset, offset + VISIBLE_COUNT);
   }, [loading, images, offset]);
 
+  const handleModifyLockedImage = async () => {
+    if (!prompt.trim() || !isLocked || images.length === 0) {
+      return;
+    }
+
+    const clientReqId = `ui_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    console.log(`🔒 [${clientReqId}] Modifying locked image with: "${prompt.trim()}"`);
+    
+    try {
+      setLoading(true);
+      
+      const lockedImageUrl = images[selectedIndex];
+      
+      const response = await api.modifyLockedImage(lockedImageUrl, prompt.trim());
+      
+      console.log(`🖼️ [${clientReqId}] Modification response:`, {
+        imageCount: response.images?.length || 0
+      });
+
+      if (!response.images || response.images.length === 0) {
+        toast({ 
+          title: "No images returned", 
+          description: "The modification may have been filtered. Try a simpler request.", 
+          variant: "destructive" 
+        });
+        return;
+      }
+
+      // Add the new images to the existing collection
+      const updatedImages = [...response.images, ...images];
+      setImages(updatedImages);
+      
+      // Auto-select the first new image
+      setSelectedIndex(0);
+      
+      // Clear the prompt after successful modification
+      setPrompt('');
+      
+      // Update track's generated covers in session
+      if (track && currentSession) {
+        const updatedTracks = (currentSession.tracks || []).map(t =>
+          t.id === track.id ? { 
+            ...t, 
+            generatedCovers: updatedImages
+          } : t
+        );
+        updateSession(currentSession.id, { tracks: updatedTracks });
+      }
+      
+      toast({ 
+        title: "Modification Complete", 
+        description: `Added ${response.images.length} modified ${response.images.length === 1 ? 'image' : 'images'}` 
+      });
+      
+    } catch (error: any) {
+      console.error(`❌ [${clientReqId}] Modification error:`, error);
+      toast({ 
+        title: "Modification failed", 
+        description: error?.message || "Failed to modify the locked image", 
+        variant: "destructive" 
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGenerate = async () => {
+    // If locked and there's a prompt, modify the locked image instead
+    if (isLocked && prompt.trim()) {
+      await handleModifyLockedImage();
+      return;
+    }
+
     // Generate unique client request ID for debugging
     const clientReqId = `ui_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     
@@ -296,6 +368,10 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       } : t
     );
     updateSession(currentSession.id, { tracks: updatedTracks });
+    
+    // Unlock the image when applying
+    setIsLocked(false);
+    
     toast({ title: "Artist image applied", description: `Updated artist image for "${track.title || 'Song'}"` });
     onClose();
   };
@@ -488,9 +564,14 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                                isLocked && "opacity-50 cursor-not-allowed"
                              )}
                              onClick={() => {
-                               if (!isPlaceholder && imageIndexInImages >= 0 && !isLocked) setSelectedIndex(imageIndexInImages);
+                               if (!isPlaceholder && imageIndexInImages >= 0) {
+                                 setSelectedIndex(imageIndexInImages);
+                                 // Auto-unlock when switching to a different image
+                                 if (isLocked) {
+                                   setIsLocked(false);
+                                 }
+                               }
                              }}
-                             disabled={isLocked}
                             aria-label={`Thumbnail ${idx + 1}`}
                           >
                             {img ? (

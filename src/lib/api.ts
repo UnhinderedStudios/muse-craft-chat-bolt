@@ -595,4 +595,16 @@ export const api = {
       throw error;
     }
   },
+
+  async modifyLockedImage(imageUrl: string, modification: string): Promise<{ images: string[] }> {
+    const { data, error } = await supabase.functions.invoke('modify-locked-image', {
+      body: {
+        imageUrl,
+        modification
+      }
+    });
+    
+    if (error) throw new Error(error.message);
+    return data;
+  },
 };
