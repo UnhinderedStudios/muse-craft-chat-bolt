@@ -171,9 +171,15 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
         console.log(`🎨 [${clientReqId}] Adding background color: ${selectedColor}`);
       }
       
+      // Add character count if more than 1
+      if (artistCount[0] > 1) {
+        requestPayload.characterCount = artistCount[0];
+        console.log(`👥 [${clientReqId}] Adding character count: ${artistCount[0]}`);
+      }
+      
       console.log(`📤 [${clientReqId}] Sending request:`, requestPayload);
       
-      const result = await api.generateArtistImages(cleanPrompt, requestPayload.backgroundHex);
+      const result = await api.generateArtistImages(cleanPrompt, requestPayload.backgroundHex, requestPayload.characterCount);
       
       console.log(`🖼️ [${clientReqId}] Artist generation response:`, {
         imageCount: result.images?.length || 0,

@@ -354,7 +354,7 @@ export const api = {
   },
 
   // Generate artist images using Gemini 2.5 Flash with fixed reference image
-  async generateArtistImages(prompt: string, backgroundHex?: string): Promise<{ images: string[]; enhancedPrompt?: string; debug?: any }> {
+  async generateArtistImages(prompt: string, backgroundHex?: string, characterCount?: number): Promise<{ images: string[]; enhancedPrompt?: string; debug?: any }> {
     // Generate client-side request ID for tracking
     const clientRequestId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
@@ -386,6 +386,9 @@ export const api = {
       formData.append('image', referenceFile);
       if (backgroundHex) {
         formData.append('backgroundHex', backgroundHex);
+      }
+      if (characterCount && characterCount > 1) {
+        formData.append('characterCount', characterCount.toString());
       }
       
       const apiResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-artist-image`, {

@@ -25,17 +25,20 @@ function getAnalysisInstruction(finalPrompt: string, prefix: string, requestId: 
 }
 
 // Helper function to get generation prompt with object constraints
-function getGenerationPrompt(finalPrompt: string, hasObjectConstraints: boolean, requestId: string, backgroundHex?: string): string {
+function getGenerationPrompt(finalPrompt: string, hasObjectConstraints: boolean, requestId: string, backgroundHex?: string, characterCount?: number): string {
   const preservation = `\nPRESERVE COMPOSITION & BACKGROUND:\n- Keep camera angle, lighting setup, background elements, and overall structure IDENTICAL to the reference image\n- DO NOT change the environment, backdrop, or scene in any way`; 
   
   // Add background color instruction if provided
   const backgroundInstruction = backgroundHex ? `\n- BACKGROUND COLOR: Change background color to ${backgroundHex}` : '';
   
+  // Add character count instruction if more than 1
+  const characterInstruction = (characterCount && characterCount > 1) ? `\n- CHARACTER COUNT: Image contains ${characterCount} distinct characters` : '';
+  
   if (hasObjectConstraints) {
     console.log(`🚫 [${requestId}] Adding object removal + preservation instructions to generation prompt`);
-    return `GENERATE AN IMAGE: ${finalPrompt}${preservation}${backgroundInstruction}\n\nHARD RULES FOR GENERATION:\n- NO OBJECTS/PROPS: Absolutely no lamp posts, microphones, guitars, chairs, stands, instruments, tools, furniture, or any physical objects\n- EMPTY HANDS: Character's hands must be completely empty\n- CLEAN BACKGROUND: If reference contains props, erase them in-painting to seamlessly match the existing background\n- FOCUS: Only the character/person, their pose, expression, and clothing\n\nNEGATIVE PROMPT: different background, new environment, alternate scene, outdoors, landscape, room switch, lamp post, microphone, guitar, chair, stand, instrument, tool, furniture, object, prop, holding, carrying, gripping\n\nIMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
+    return `GENERATE AN IMAGE: ${finalPrompt}${preservation}${backgroundInstruction}${characterInstruction}\n\nHARD RULES FOR GENERATION:\n- NO OBJECTS/PROPS: Absolutely no lamp posts, microphones, guitars, chairs, stands, instruments, tools, furniture, or any physical objects\n- EMPTY HANDS: Character's hands must be completely empty\n- CLEAN BACKGROUND: If reference contains props, erase them in-painting to seamlessly match the existing background\n- FOCUS: Only the character/person, their pose, expression, and clothing\n\nNEGATIVE PROMPT: different background, new environment, alternate scene, outdoors, landscape, room switch, lamp post, microphone, guitar, chair, stand, instrument, tool, furniture, object, prop, holding, carrying, gripping\n\nIMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
   } else {
-    return `GENERATE AN IMAGE: ${finalPrompt}${preservation}${backgroundInstruction}\n\nNEGATIVE PROMPT: different background, new environment, alternate scene, outdoors, landscape, room switch\n\nIMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
+    return `GENERATE AN IMAGE: ${finalPrompt}${preservation}${backgroundInstruction}${characterInstruction}\n\nNEGATIVE PROMPT: different background, new environment, alternate scene, outdoors, landscape, room switch\n\nIMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
   }
 }
 
@@ -525,6 +528,7 @@ Deno.serve(async (req: Request) => {
     let prompt = "";
     let imageData = "";
     let backgroundHex = "";
+    let characterCount = 1;
     
     console.log(`📥 [${requestId}] Content-Type: ${contentType}`);
 
@@ -535,9 +539,11 @@ Deno.serve(async (req: Request) => {
         const formData = await withTimeout(req.formData(), 10000, "FormData parsing");
         prompt = (formData.get("prompt") as string) || "";
         backgroundHex = (formData.get("backgroundHex") as string) || "";
+        const characterCountValue = formData.get("characterCount") as string;
+        characterCount = characterCountValue ? parseInt(characterCountValue, 10) : 1;
         const imageFile = formData.get("image") as File;
         
-        console.log(`📝 [${requestId}] Form data - prompt: "${prompt}", backgroundHex: "${backgroundHex}", hasImage: ${!!imageFile}`);
+        console.log(`📝 [${requestId}] Form data - prompt: "${prompt}", backgroundHex: "${backgroundHex}", characterCount: ${characterCount}, hasImage: ${!!imageFile}`);
         
         if (imageFile) {
           console.log(`🖼️ [${requestId}] Image file - name: ${imageFile.name}, size: ${imageFile.size}, type: ${imageFile.type}`);
@@ -589,8 +595,9 @@ Deno.serve(async (req: Request) => {
         const body = await withTimeout(req.json(), 5000, "JSON parsing").catch(() => ({}));
         prompt = body?.prompt?.toString?.() || "";
         backgroundHex = body?.backgroundHex?.toString?.() || "";
+        characterCount = body?.characterCount ? parseInt(body.characterCount.toString(), 10) : 1;
         imageData = body?.imageData?.toString?.() || "";
-        console.log(`📝 [${requestId}] JSON body - prompt: "${prompt}", backgroundHex: "${backgroundHex}", hasImageData: ${!!imageData}`);
+        console.log(`📝 [${requestId}] JSON body - prompt: "${prompt}", backgroundHex: "${backgroundHex}", characterCount: ${characterCount}, hasImageData: ${!!imageData}`);
       } catch (jsonError: any) {
         console.error(`❌ [${requestId}] JSON parsing error:`, jsonError);
         return new Response(
@@ -628,9 +635,36 @@ Deno.serve(async (req: Request) => {
       console.log(`🔧 [${requestId}] Auto-prepending standard prefix to user input: "${CHARACTER}"`);
     }
     
+    // Handle multiple character descriptions when characterCount > 1
+    if (characterCount > 1) {
+      console.log(`👥 [${requestId}] Processing multiple characters (count: ${characterCount})`);
+      
+      // Check if user provided multiple descriptions separated by " and " or ", "
+      const characterDescriptions = CHARACTER.split(/\s+and\s+|,\s+/).map(desc => desc.trim()).filter(desc => desc.length > 0);
+      
+      if (characterDescriptions.length === 1 && characterCount > 1) {
+        // Single description provided, apply to all characters
+        const singleDesc = characterDescriptions[0];
+        const expandedDesc = Array(characterCount).fill(singleDesc).map((desc, i) => `character ${i + 1}: ${desc}`).join(', ');
+        CHARACTER = expandedDesc;
+        console.log(`🔄 [${requestId}] Single description applied to ${characterCount} characters: "${CHARACTER}"`);
+      } else if (characterDescriptions.length > 1) {
+        // Multiple descriptions provided, use them
+        const processedDescs = characterDescriptions.slice(0, characterCount).map((desc, i) => `character ${i + 1}: ${desc}`);
+        // If fewer descriptions than characters, repeat the last one
+        while (processedDescs.length < characterCount) {
+          const lastDesc = characterDescriptions[characterDescriptions.length - 1];
+          processedDescs.push(`character ${processedDescs.length + 1}: ${lastDesc}`);
+        }
+        CHARACTER = processedDescs.join(', ');
+        console.log(`👥 [${requestId}] Multiple descriptions processed: "${CHARACTER}"`);
+      }
+    }
+
     console.log(`🎯 [${requestId}] Immutable Prefix System Debug:`);
     console.log(`  🔒 [${requestId}] FULL_PREFIX: "${FULL_PREFIX}"`);
     console.log(`  🎭 [${requestId}] CHARACTER: "${CHARACTER}"`);
+    console.log(`  👥 [${requestId}] CHARACTER COUNT: ${characterCount}`);
     console.log(`  🖼️ [${requestId}] Has reference image: ${!!imageData}`);
     console.log(`  🛡️ [${requestId}] Prefix protection: ENABLED - prefix will never be modified`);
     console.log(`  🔄 [${requestId}] Request independent - no state persistence`);
@@ -773,7 +807,7 @@ Deno.serve(async (req: Request) => {
     }
     
     generationParts.push({
-      text: getGenerationPrompt(FINAL_GENERATION_PROMPT, hasObjectConstraints, requestId, backgroundHex)
+      text: getGenerationPrompt(FINAL_GENERATION_PROMPT, hasObjectConstraints, requestId, backgroundHex, characterCount)
     });
 
     console.log(`🎨 [${requestId}] Generating with Gemini...`);
@@ -864,7 +898,7 @@ Deno.serve(async (req: Request) => {
         // Update prompt for this attempt
         const retryPrompt = `${FULL_PREFIX} ${finalCharacter}`;
         generationParts[generationParts.length - 1] = {
-          text: getGenerationPrompt(retryPrompt, hasObjectConstraints, requestId, backgroundHex)
+          text: getGenerationPrompt(retryPrompt, hasObjectConstraints, requestId, backgroundHex, characterCount)
         };
         
         // Generate different seed for each retry attempt
