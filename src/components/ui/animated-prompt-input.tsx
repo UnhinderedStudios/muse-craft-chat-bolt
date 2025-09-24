@@ -160,55 +160,65 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
         </div>
 
         {/* Bottom: button row */}
-        <div className="px-3 py-2 flex justify-end gap-1">
-          {facialReferenceImage && (
-            <div className="w-6 h-6 rounded overflow-hidden border border-accent-primary/40 relative group">
-              <img 
-                src={facialReferenceImage} 
-                alt="Facial reference" 
-                className="w-full h-full object-cover"
-              />
-              {onFacialReferenceRemoved && (
-                <button
-                  onClick={onFacialReferenceRemoved}
-                  className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  type="button"
-                >
-                  <X size={8} className="text-white" />
-                </button>
-              )}
-            </div>
-          )}
-          {onPersonClick && (
-            <button
-              onClick={onPersonClick}
-              disabled={isAnalyzingFace}
-              className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              type="button"
-            >
-              <User size={12} className="text-white/60" />
-            </button>
-          )}
-          {onClothingClick && (
-            <button
-              onClick={onClothingClick}
-              disabled={isAnalyzingFace}
-              className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              type="button"
-            >
-              <Shirt size={12} className="text-white/60" />
-            </button>
-          )}
-          {onResetClick && (
-            <button
-              onClick={onResetClick}
-              disabled={isAnalyzingFace}
-              className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              type="button"
-            >
-              <RotateCcw size={12} className="text-white/60" />
-            </button>
-          )}
+        <div className="px-3 py-2 flex justify-between items-center">
+          {/* Left side: Files display */}
+          <div className="flex items-center gap-2">
+            {facialReferenceImage && (
+              <div className="flex items-center gap-2">
+                <span className="text-white/60 text-xs">Files:</span>
+                <div className="w-6 h-6 rounded overflow-hidden border border-accent-primary/40 relative group">
+                  <img 
+                    src={facialReferenceImage} 
+                    alt="Facial reference" 
+                    className="w-full h-full object-cover"
+                  />
+                  {onFacialReferenceRemoved && (
+                    <button
+                      onClick={onFacialReferenceRemoved}
+                      className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      type="button"
+                    >
+                      <X size={8} className="text-white" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right side: Action buttons */}
+          <div className="flex gap-1">
+            {onPersonClick && (
+              <button
+                onClick={onPersonClick}
+                disabled={isAnalyzingFace}
+                className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                type="button"
+              >
+                <User size={12} className="text-white/60" />
+              </button>
+            )}
+            {onClothingClick && (
+              <button
+                onClick={onClothingClick}
+                disabled={isAnalyzingFace}
+                className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                type="button"
+              >
+                <Shirt size={12} className="text-white/60" />
+              </button>
+            )}
+            {onResetClick && (
+              <button
+                onClick={onResetClick}
+                disabled={isAnalyzingFace}
+                className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                type="button"
+              >
+                <RotateCcw size={12} className="text-white/60" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
