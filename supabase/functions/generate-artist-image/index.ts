@@ -204,10 +204,10 @@ function generateRequestId(): string {
 // Simple direct prompt construction
 function buildPrompt(userInput: string, backgroundHex?: string, characterCount?: number): string {
   const baseInstructions = "Match reference image framing, lighting, camera angle. Keep background identical.";
-  const characterInstruction = ` ${characterCount || 1} character${(characterCount || 1) > 1 ? 's' : ''}.`;
-  const styleGuide = " Generate new original character, use reference only for style guide.";
+  const characterInstruction = ` ${characterCount || 1} character${(characterCount || 1) > 1 ? 's' : ''}. All characters must match the gender specified, if 1 gender is specified then all characters must be that gender unless properly defined.`;
+  const styleGuide = " Generate a whole new original character, use reference only for positioning and framing.";
   const objectRestrictions = " NO objects, props, instruments, tools. Empty hands. Clean background.";
-  const backgroundInstruction = backgroundHex ? ` Background color: ${backgroundHex}.` : '';
+  const backgroundInstruction = backgroundHex ? ` Background and floor color: ${backgroundHex}.` : '';
   
   return `${userInput}. ${baseInstructions}${backgroundInstruction}${characterInstruction}${styleGuide}${objectRestrictions}`;
 }
