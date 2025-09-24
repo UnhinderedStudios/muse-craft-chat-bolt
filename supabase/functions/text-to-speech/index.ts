@@ -62,7 +62,7 @@ serve(async (req) => {
 
     // Convert audio buffer to base64 safely
     const arrayBuffer = await response.arrayBuffer()
-    const base64Audio = base64Encode(new Uint8Array(arrayBuffer))
+    const base64Audio = base64Encode(arrayBuffer)
 
     console.log('Text-to-speech conversion successful')
 
@@ -74,8 +74,9 @@ serve(async (req) => {
     )
   } catch (error) {
     console.error('Error in text-to-speech function:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
