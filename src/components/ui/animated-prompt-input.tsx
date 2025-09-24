@@ -106,7 +106,7 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
       <div className="absolute bottom-12 left-3 right-16 h-px bg-white/10" />
       
       {/* Button container on the right side */}
-      <div className="absolute bottom-5 right-3 flex gap-1">
+      <div className="absolute bottom-4 right-3 flex gap-1">
         {onPersonClick && (
           <button
             onClick={onPersonClick}
