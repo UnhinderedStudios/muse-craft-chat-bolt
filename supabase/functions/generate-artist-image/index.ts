@@ -31,14 +31,17 @@ function getGenerationPrompt(finalPrompt: string, hasObjectConstraints: boolean,
   // Add background color instruction if provided
   const backgroundInstruction = backgroundHex ? `\n- BACKGROUND COLOR: Change background color to ${backgroundHex}` : '';
   
-  // Add character count instruction if more than 1
-  const characterInstruction = (characterCount && characterCount > 1) ? `\n- CHARACTER COUNT: Image contains ${characterCount} distinct characters` : '';
+  // Add character count instruction for any character count
+  const characterInstruction = characterCount ? `\n- CHARACTER COUNT: Image contains ${characterCount} distinct character${characterCount > 1 ? 's' : ''}` : '';
+  
+  // Add safety hint for single characters to avoid face-swap detection
+  const singleCharacterSafety = (characterCount === 1) ? `\n- SINGLE CHARACTER: Generate a completely new and different character that replaces the reference person` : '';
   
   if (hasObjectConstraints) {
     console.log(`🚫 [${requestId}] Adding object removal + preservation instructions to generation prompt`);
-    return `GENERATE AN IMAGE: ${finalPrompt}${preservation}${backgroundInstruction}${characterInstruction}\n\nHARD RULES FOR GENERATION:\n- NO OBJECTS/PROPS: Absolutely no lamp posts, microphones, guitars, chairs, stands, instruments, tools, furniture, or any physical objects\n- EMPTY HANDS: Character's hands must be completely empty\n- CLEAN BACKGROUND: If reference contains props, erase them in-painting to seamlessly match the existing background\n- FOCUS: Only the character/person, their pose, expression, and clothing\n\nNEGATIVE PROMPT: different background, new environment, alternate scene, outdoors, landscape, room switch, lamp post, microphone, guitar, chair, stand, instrument, tool, furniture, object, prop, holding, carrying, gripping\n\nIMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
+    return `GENERATE AN IMAGE: ${finalPrompt}${preservation}${backgroundInstruction}${characterInstruction}${singleCharacterSafety}\n\nHARD RULES FOR GENERATION:\n- NO OBJECTS/PROPS: Absolutely no lamp posts, microphones, guitars, chairs, stands, instruments, tools, furniture, or any physical objects\n- EMPTY HANDS: Character's hands must be completely empty\n- CLEAN BACKGROUND: If reference contains props, erase them in-painting to seamlessly match the existing background\n- FOCUS: Only the character/person, their pose, expression, and clothing\n\nNEGATIVE PROMPT: different background, new environment, alternate scene, outdoors, landscape, room switch, lamp post, microphone, guitar, chair, stand, instrument, tool, furniture, object, prop, holding, carrying, gripping\n\nIMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
   } else {
-    return `GENERATE AN IMAGE: ${finalPrompt}${preservation}${backgroundInstruction}${characterInstruction}\n\nNEGATIVE PROMPT: different background, new environment, alternate scene, outdoors, landscape, room switch\n\nIMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
+    return `GENERATE AN IMAGE: ${finalPrompt}${preservation}${backgroundInstruction}${characterInstruction}${singleCharacterSafety}\n\nNEGATIVE PROMPT: different background, new environment, alternate scene, outdoors, landscape, room switch\n\nIMPORTANT: You must generate and return an actual image, not text. Create a visual representation of the described scene.`;
   }
 }
 
@@ -806,10 +809,13 @@ Deno.serve(async (req: Request) => {
       });
     }
     
+    const generationInstruction = getGenerationPrompt(FINAL_GENERATION_PROMPT, hasObjectConstraints, requestId, backgroundHex, characterCount);
     generationParts.push({
-      text: getGenerationPrompt(FINAL_GENERATION_PROMPT, hasObjectConstraints, requestId, backgroundHex, characterCount)
+      text: generationInstruction
     });
 
+    console.log(`📋 [${requestId}] COMPLETE PROMPT TO GEMINI: "${generationInstruction.substring(0, 200)}..."`);
+    console.log(`🎭 [${requestId}] CHARACTER COUNT: ${characterCount}, BACKGROUND: ${backgroundHex || 'default'}`);
     console.log(`🎨 [${requestId}] Generating with Gemini...`);
     
     const generationRes = await withTimeout(
