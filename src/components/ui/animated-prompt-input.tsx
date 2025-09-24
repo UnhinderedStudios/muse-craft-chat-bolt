@@ -95,16 +95,15 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
         onBlur={handleBlur}
         placeholder={showAnimatedText ? "" : placeholder}
         disabled={disabled}
+        style={{ height: 'calc(100% - 3rem)' }}
         className={cn(
-          "w-full h-full resize-none rounded-lg bg-black/40 border border-white/10 text-white text-sm leading-6 placeholder:text-white/40 p-3 pb-24 pr-20 focus:outline-none focus:border-white/30 transition-colors duration-200 overflow-y-auto lyrics-scrollbar",
+          "w-full resize-none rounded-lg bg-black/40 border border-white/10 text-white text-sm leading-6 placeholder:text-white/40 p-3 pr-20 focus:outline-none focus:border-white/30 transition-colors duration-200 overflow-y-auto lyrics-scrollbar",
           disabled && "cursor-default",
           showAnimatedText && "opacity-80",
           className
         )}
       />
-      {/* Bottom overlay area to visually clip text below the divider */}
-      <div className="pointer-events-none absolute left-3 right-16 bottom-0 h-12 bg-black rounded-b-lg z-20" />
-      {/* Divider line at the top of the clipped area */}
+      {/* Divider line at the top of the bottom area */}
       <div className="absolute bottom-12 left-3 right-16 h-px bg-white/10 z-30" />
       
       {/* Button container on the right side */}
