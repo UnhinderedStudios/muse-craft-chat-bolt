@@ -33,6 +33,8 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
   const [isUserEditing, setIsUserEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const cursorPositionRef = useRef<number>(0);
+  const [overScrollbar, setOverScrollbar] = useState(false);
+  const SCROLLBAR_HOVER_WIDTH = 16;
 
   // Store cursor position before animation
   const storeCursorPosition = useCallback(() => {
@@ -85,6 +87,15 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
     setTimeout(() => setIsUserEditing(false), 100);
   };
 
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLTextAreaElement>) => {
+    const el = textareaRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const near = e.clientX >= rect.right - SCROLLBAR_HOVER_WIDTH;
+    if (near !== overScrollbar) setOverScrollbar(near);
+  }, [overScrollbar]);
+
+  const handleMouseLeave = () => setOverScrollbar(false);
   return (
     <div className={cn("relative w-full h-full rounded-lg bg-black/40 border border-white/10", className)}>
       <div className="flex flex-col h-full">
@@ -96,10 +107,13 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
             onChange={handleChange}
             onFocus={handleFocus}
             onBlur={handleBlur}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
             placeholder={showAnimatedText ? "" : placeholder}
             disabled={disabled}
             className={cn(
-              "w-full h-full resize-none bg-transparent text-white text-sm leading-6 placeholder:text-white/40 pr-20 focus:outline-none transition-colors duration-200 overflow-y-auto lyrics-scrollbar [&::-webkit-scrollbar]:cursor-default",
+              "w-full h-full resize-none bg-transparent text-white text-sm leading-6 placeholder:text-white/40 pr-20 focus:outline-none transition-colors duration-200 overflow-y-auto lyrics-scrollbar",
+              overScrollbar ? "cursor-default" : "cursor-text",
               disabled && "cursor-default",
               showAnimatedText && "opacity-80"
             )}

@@ -85,19 +85,23 @@
 /* Lyrics Scrollbar - Different color */
 .lyrics-scrollbar::-webkit-scrollbar {
   width: 8px;
+  cursor: default;
 }
 
 .lyrics-scrollbar::-webkit-scrollbar-track {
   background: transparent;
+  cursor: default;
 }
 
 .lyrics-scrollbar::-webkit-scrollbar-thumb {
   background: #282828;
   border-radius: 4px;
+  cursor: default;
 }
 
 .lyrics-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #383838;
+  cursor: default;
 }
 
 /* Chat Input Scrollbar - Positioned at far right edge */
