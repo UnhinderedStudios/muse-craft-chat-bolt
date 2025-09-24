@@ -177,8 +177,9 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
             id: t.id,
             url: t.url,
             title: t.title,
-            coverUrl: t.coverUrl,
-            generatedCovers: t.generatedCovers,
+            // Only persist coverUrl if it's not a data URL (base64)
+            coverUrl: t.coverUrl && !t.coverUrl.startsWith('data:') ? t.coverUrl : undefined,
+            albumCoverIds: t.albumCoverIds,
             createdAt: t.createdAt,
             // keep light metadata only
             params: level < 2 ? t.params : undefined,
@@ -188,6 +189,7 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
             audioId: t.audioId,
             // do not persist heavy word timings
             words: [],
+            // Remove generatedCovers entirely - don't persist base64 covers
           }));
 
           const safeActive = (s.activeGenerations ?? []).map((g: any) => ({
@@ -195,11 +197,18 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
             sunoJobId: g.sunoJobId,
             startTime: g.startTime,
             progress: g.progress,
-            covers: g.covers ?? null,
+            // Don't persist covers - they contain base64 data
+            // covers: g.covers ?? null,
             // drop details to keep small
           }));
 
           let safeChat = s.chatMessages ?? [];
+          // Strip base64 data from attachments to prevent quota issues
+          safeChat = safeChat.map(msg => ({
+            ...msg,
+            // Remove attachments entirely to avoid quota issues with base64 data
+            attachments: undefined
+          }));
           if (level >= 1) {
             safeChat = safeChat.slice(-50);
           }
