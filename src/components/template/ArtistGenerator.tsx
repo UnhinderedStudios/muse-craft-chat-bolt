@@ -101,6 +101,9 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   const [sanitizedPrompt, setSanitizedPrompt] = useState("");
   const [originalPrompt, setOriginalPrompt] = useState("");
   
+  // Store prompts for each generated image
+  const [imagePrompts, setImagePrompts] = useState<string[]>([]);
+  
   // Facial reference state
   const [facialReferenceImage, setFacialReferenceImage] = useState<string>("");
   const [isAnalyzingFace, setIsAnalyzingFace] = useState(false);
@@ -127,6 +130,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       
       console.log("🎨 Setting up initial artist images:", initial);
       setImages(initial);
+      setImagePrompts([]); // Reset prompts for existing images
       setSelectedIndex(0);
       setOffset(0);
       setPrompt("");
@@ -174,6 +178,10 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       // Add the new images to the existing collection
       const updatedImages = [...response.images, ...images];
       setImages(updatedImages);
+      
+      // Add prompts for the new modified images (same prompt for all modified images)
+      const newPrompts = Array(response.images.length).fill(prompt.trim());
+      setImagePrompts([...newPrompts, ...imagePrompts]);
       
       // Auto-select the first new image
       setSelectedIndex(0);
@@ -294,6 +302,10 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       // Add new images to the front (newest first)
       const updatedImages = [...result.images, ...images];
       setImages(updatedImages);
+      
+      // Add prompts for the new generated images
+      const newPrompts = Array(result.images.length).fill(cleanPrompt);
+      setImagePrompts([...newPrompts, ...imagePrompts]);
       
       // Update track's generated covers in session (reusing same field for artist images)
       if (track && currentSession) {
@@ -569,6 +581,10 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                                  // Auto-unlock when switching to a different image
                                  if (isLocked) {
                                    setIsLocked(false);
+                                 }
+                                 // Pre-fill prompt with the one used for this image
+                                 if (imagePrompts[imageIndexInImages]) {
+                                   setPrompt(imagePrompts[imageIndexInImages]);
                                  }
                                }
                              }}
