@@ -99,9 +99,20 @@ serve(async (req) => {
 
     const data = await response.json();
     console.log('Gemini response received');
+    
+    // Log the actual response structure for debugging
+    console.log('Response structure:', JSON.stringify({
+      candidates: data.candidates?.length || 0,
+      hasContent: !!data.candidates?.[0]?.content,
+      hasParts: !!data.candidates?.[0]?.content?.parts,
+      partsLength: data.candidates?.[0]?.content?.parts?.length || 0,
+      finishReason: data.candidates?.[0]?.finishReason,
+      error: data.error
+    }));
 
     if (!data.candidates?.[0]?.content?.parts) {
-      throw new Error('No valid response from Gemini');
+      console.error('Invalid Gemini response structure. Full response:', JSON.stringify(data, null, 2));
+      throw new Error('No valid response from Gemini - empty candidates or parts');
     }
 
     // Extract images from the response
