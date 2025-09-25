@@ -264,13 +264,19 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
         console.log(`👤 [${clientReqId}] Adding facial reference image`);
       }
       
+      // Add locked image if available and locked
+      if (isLocked && images.length > 0 && selectedIndex >= 0) {
+        requestPayload.lockedImage = images[selectedIndex];
+        console.log(`🔒 [${clientReqId}] Adding locked image for direct face swap`);
+      }
+      
       // Always add character count (including 1)
       requestPayload.characterCount = artistCount[0];
       console.log(`👥 [${clientReqId}] Adding character count: ${artistCount[0]}`);
       
       console.log(`📤 [${clientReqId}] Sending request:`, requestPayload);
       
-      const result = await api.generateArtistImages(cleanPrompt, requestPayload.backgroundHex, requestPayload.characterCount, isRealistic, requestPayload.facialReference);
+      const result = await api.generateArtistImages(cleanPrompt, requestPayload.backgroundHex, requestPayload.characterCount, isRealistic, requestPayload.facialReference, requestPayload.lockedImage);
       
       console.log(`🖼️ [${clientReqId}] Artist generation response:`, {
         imageCount: result.images?.length || 0,
