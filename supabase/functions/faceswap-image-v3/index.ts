@@ -131,13 +131,10 @@ Deno.serve(async (req: Request) => {
       requestId
     );
 
-    // Convert base64 to blob for MagicAPI
-    const baseImageBuffer = new Uint8Array(
-      atob(baseImageData)
-        .split('')
-        .map(char => char.charCodeAt(0))
-    );
-    const baseImageBlob = new Blob([baseImageBuffer], { type: 'image/jpeg' });
+    // Convert base64 to blob for MagicAPI using more efficient approach
+    const base64DataUrl = `data:image/png;base64,${baseImageData}`;
+    const baseImageResponse = await fetch(base64DataUrl);
+    const baseImageBlob = await baseImageResponse.blob();
     
     console.log(`✅ [${requestId}] Stage 1 completed: Base image generated (${baseImageBlob.size} bytes)`);
 
