@@ -18,6 +18,8 @@ interface AnimatedPromptInputProps {
   isAnalyzingFace?: boolean;
   onFacialReferenceAccepted?: (imageUrl: string) => void;
   onFacialReferenceRemoved?: () => void;
+  faceSwapMode?: boolean;
+  faceSwapMessage?: string;
 }
 
 export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
@@ -35,7 +37,9 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
   facialReferenceImage,
   isAnalyzingFace = false,
   onFacialReferenceAccepted,
-  onFacialReferenceRemoved
+  onFacialReferenceRemoved,
+  faceSwapMode = false,
+  faceSwapMessage = ""
 }) => {
   const [showAnimatedText, setShowAnimatedText] = useState(false);
   const [isUserEditing, setIsUserEditing] = useState(false);
@@ -105,7 +109,7 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
 
   const handleMouseLeave = () => setOverScrollbar(false);
   
-  const isDisabledByAnalysis = disabled || isAnalyzingFace;
+  const isDisabledByAnalysis = disabled || isAnalyzingFace || faceSwapMode;
   
   return (
     <div className={cn("relative w-full h-full rounded-lg bg-black/40 border border-white/10", className)}>
@@ -121,14 +125,15 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
               onBlur={handleBlur}
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
-              placeholder={showAnimatedText ? "" : placeholder}
+              placeholder={showAnimatedText ? "" : faceSwapMode ? faceSwapMessage : placeholder}
               disabled={isDisabledByAnalysis}
               className={cn(
                 "w-full h-full resize-none bg-transparent text-white text-sm leading-6 placeholder:text-white/40 pr-20 pb-2 focus:outline-none transition-colors duration-200 overflow-y-auto lyrics-scrollbar",
                 overScrollbar ? "cursor-default" : "cursor-text",
                 isDisabledByAnalysis && "cursor-default",
                 showAnimatedText && "opacity-80",
-                isAnalyzingFace && "opacity-20"
+                isAnalyzingFace && "opacity-20",
+                faceSwapMode && "opacity-50 bg-white/5"
               )}
             />
           </div>

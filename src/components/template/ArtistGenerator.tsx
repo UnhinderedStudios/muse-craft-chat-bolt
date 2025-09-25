@@ -715,6 +715,8 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                           facialReferenceImage={facialReferenceImage}
                           isAnalyzingFace={isAnalyzingFace}
                           onFacialReferenceRemoved={handleFacialReferenceRemoved}
+                          faceSwapMode={isLocked && !!facialReferenceImage}
+                          faceSwapMessage="Face swap mode is activated. Prompt field is disabled"
                           className="h-36"
                         />
                     </div>
