@@ -110,6 +110,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   
   // Clothing reference state
   const [clothingReferenceImage, setClothingReferenceImage] = useState<string>("");
+  const [primaryClothingType, setPrimaryClothingType] = useState<string>("");
   const [isAnalyzingClothing, setIsAnalyzingClothing] = useState(false);
   
   // Color wheel state
@@ -354,7 +355,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       
       console.log(`📤 [${clientReqId}] Sending request:`, requestPayload);
       
-      const result = await api.generateArtistImages(cleanPrompt, requestPayload.backgroundHex, requestPayload.characterCount, isRealistic, requestPayload.facialReference, undefined, requestPayload.clothingReference);
+      const result = await api.generateArtistImages(cleanPrompt, requestPayload.backgroundHex, requestPayload.characterCount, isRealistic, requestPayload.facialReference, undefined, requestPayload.clothingReference, primaryClothingType);
       
       console.log(`🖼️ [${clientReqId}] Artist generation response:`, {
         imageCount: result.images?.length || 0,

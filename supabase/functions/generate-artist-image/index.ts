@@ -254,6 +254,7 @@ Deno.serve(async (req: Request) => {
     let facialReferenceMimeType: string | undefined;
     let clothingReferenceData: string | undefined;
     let clothingReferenceMimeType: string | undefined;
+    let primaryClothingType: string | undefined;
 
     const contentType = req.headers.get('content-type') || '';
     console.log(`📥 [${requestId}] Content-Type: ${contentType}`);
@@ -270,6 +271,7 @@ Deno.serve(async (req: Request) => {
       const imageFile = formData.get('image') as File;
       const facialReferenceFile = formData.get('facialReference') as File;
       const clothingReferenceFile = formData.get('clothingReference') as File;
+      const primaryClothingType = formData.get('primaryClothingType') as string;
       
       if (imageFile) {
         console.log(`🖼️ [${requestId}] Image file - name: ${imageFile.name}, size: ${imageFile.size}, type: ${imageFile.type}`);
@@ -295,6 +297,10 @@ Deno.serve(async (req: Request) => {
         console.log(`✅ [${requestId}] Clothing reference converted to base64, length: ${clothingReferenceData.length}`);
       }
       
+      if (primaryClothingType) {
+        console.log(`🏷️ [${requestId}] Primary clothing type: ${primaryClothingType}`);
+      }
+      
       // Extract user prompt from full prompt (remove any existing prefix)
       if (promptField.includes('Generate a new character:')) {
         prompt = promptField.split('Generate a new character:')[1]?.trim() || promptField;
@@ -313,6 +319,7 @@ Deno.serve(async (req: Request) => {
       imageData = body.imageData;
       clothingReferenceData = body.clothingReferenceData;
       clothingReferenceMimeType = body.clothingReferenceMimeType;
+      primaryClothingType = body.primaryClothingType;
       
       console.log(`📝 [${requestId}] JSON data - prompt: "${prompt}", backgroundHex: "${backgroundHex}", characterCount: ${characterCount}, hasImage: ${!!imageData}, hasClothingRef: ${!!clothingReferenceData}`);
     }
@@ -438,7 +445,8 @@ Deno.serve(async (req: Request) => {
       // STAGE 2: Clothing swap with both images
       console.log(`👕 [${requestId}] STAGE 2: Starting clothing swap process`);
       
-      const stage2Prompt = `Image named "SPACEK" is the main image, the other image named "CLOTHESIMAGE" is a clothing or accessory item that need to be SWAPPED in accordance with the appropriate item that relates to it in the "SPACEK" image.`;
+      const clothingTypeText = primaryClothingType ? primaryClothingType.toUpperCase() : "clothing or accessory item";
+      const stage2Prompt = `Image named "SPACEK" is the main image, the other image named "CLOTHESIMAGE" is a ${clothingTypeText} that need to be SWAPPED in accordance with the appropriate item that relates to it in the "SPACEK" image.`;
       console.log(`🎯 [${requestId}] Stage 2 prompt: "${stage2Prompt}"`);
 
       // Build Stage 2 request body with both images
