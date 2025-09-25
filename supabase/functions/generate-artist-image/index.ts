@@ -252,6 +252,8 @@ Deno.serve(async (req: Request) => {
     let imageMimeType: string | undefined;
     let facialReferenceData: string | undefined;
     let facialReferenceMimeType: string | undefined;
+    let clothingReferenceData: string | undefined;
+    let clothingReferenceMimeType: string | undefined;
 
     const contentType = req.headers.get('content-type') || '';
     console.log(`📥 [${requestId}] Content-Type: ${contentType}`);
@@ -267,6 +269,7 @@ Deno.serve(async (req: Request) => {
       
       const imageFile = formData.get('image') as File;
       const facialReferenceFile = formData.get('facialReference') as File;
+      const clothingReferenceFile = formData.get('clothingReference') as File;
       
       if (imageFile) {
         console.log(`🖼️ [${requestId}] Image file - name: ${imageFile.name}, size: ${imageFile.size}, type: ${imageFile.type}`);
@@ -284,6 +287,14 @@ Deno.serve(async (req: Request) => {
         console.log(`✅ [${requestId}] Facial reference converted to base64, length: ${facialReferenceData.length}`);
       }
       
+      if (clothingReferenceFile) {
+        console.log(`👕 [${requestId}] Clothing reference file - name: ${clothingReferenceFile.name}, size: ${clothingReferenceFile.size}, type: ${clothingReferenceFile.type}`);
+        const clothingArrayBuffer = await clothingReferenceFile.arrayBuffer();
+        clothingReferenceData = encodeBase64(new Uint8Array(clothingArrayBuffer));
+        clothingReferenceMimeType = clothingReferenceFile.type || 'image/jpeg';
+        console.log(`✅ [${requestId}] Clothing reference converted to base64, length: ${clothingReferenceData.length}`);
+      }
+      
       // Extract user prompt from full prompt (remove any existing prefix)
       if (promptField.includes('Generate a new character:')) {
         prompt = promptField.split('Generate a new character:')[1]?.trim() || promptField;
@@ -291,7 +302,7 @@ Deno.serve(async (req: Request) => {
         prompt = promptField;
       }
       
-      console.log(`📝 [${requestId}] Form data - prompt: "${prompt}", backgroundHex: "${backgroundHex}", characterCount: ${characterCount}, hasImage: ${!!imageData}`);
+      console.log(`📝 [${requestId}] Form data - prompt: "${prompt}", backgroundHex: "${backgroundHex}", characterCount: ${characterCount}, hasImage: ${!!imageData}, hasClothingRef: ${!!clothingReferenceData}`);
     } else {
       // Handle JSON data
       console.log(`📤 [${requestId}] Processing JSON data`);
@@ -300,8 +311,10 @@ Deno.serve(async (req: Request) => {
       backgroundHex = body.backgroundHex;
       characterCount = body.characterCount || 1;
       imageData = body.imageData;
+      clothingReferenceData = body.clothingReferenceData;
+      clothingReferenceMimeType = body.clothingReferenceMimeType;
       
-      console.log(`📝 [${requestId}] JSON data - prompt: "${prompt}", backgroundHex: "${backgroundHex}", characterCount: ${characterCount}, hasImage: ${!!imageData}`);
+      console.log(`📝 [${requestId}] JSON data - prompt: "${prompt}", backgroundHex: "${backgroundHex}", characterCount: ${characterCount}, hasImage: ${!!imageData}, hasClothingRef: ${!!clothingReferenceData}`);
     }
 
     if (!prompt) {
@@ -315,6 +328,221 @@ Deno.serve(async (req: Request) => {
     console.log(`✅ [${requestId}] Initial request validation passed`);
     console.log(`📝 [${requestId}] User input: "${prompt}"`);
 
+    // Check if we need two-stage clothing swap process
+    if (clothingReferenceData) {
+      console.log(`👕 [${requestId}] CLOTHING SWAP PROCESS: Starting two-stage generation`);
+      
+      // STAGE 1: Generate base image using existing flow
+      console.log(`🎭 [${requestId}] STAGE 1: Generating base image with existing flow`);
+      const stage1Prompt = buildPrompt(prompt, backgroundHex, characterCount, !!facialReferenceData);
+      console.log(`🎯 [${requestId}] Stage 1 prompt: "${stage1Prompt}"`);
+
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${geminiKey}`;
+
+      // Build Stage 1 request body
+      const stage1RequestBody: any = {
+        contents: [{
+          role: "user",
+          parts: []
+        }],
+        generationConfig: {
+          temperature: 0.7
+        }
+      };
+
+      // Add reference image if provided
+      if (imageData) {
+        stage1RequestBody.contents[0].parts.push({
+          inline_data: {
+            mime_type: imageMimeType || "image/png",
+            data: imageData
+          }
+        });
+      }
+
+      // Add facial reference image if provided
+      if (facialReferenceData) {
+        stage1RequestBody.contents[0].parts.push({
+          inline_data: {
+            mime_type: facialReferenceMimeType || "image/jpeg",
+            data: facialReferenceData
+          }
+        });
+      }
+
+      // Add text prompt for Stage 1
+      stage1RequestBody.contents[0].parts.push({
+        text: stage1Prompt
+      });
+
+      // Execute Stage 1
+      const stage1Response = await callGeminiWithTransportRetries(
+        geminiUrl,
+        stage1RequestBody,
+        { 'Content-Type': 'application/json' },
+        requestId
+      );
+
+      const stage1Result = await readResponseSafely(stage1Response, requestId);
+
+      if (!stage1Result.success) {
+        console.error(`❌ [${requestId}] Stage 1 failed:`, stage1Result.error);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Stage 1 generation failed',
+            debug: stage1Result.error
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Extract Stage 1 image
+      const stage1Candidates = stage1Result.data?.candidates;
+      if (!stage1Candidates || stage1Candidates.length === 0) {
+        console.error(`❌ [${requestId}] No Stage 1 candidates`);
+        return new Response(
+          JSON.stringify({ error: 'No Stage 1 candidates generated' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const stage1Parts = stage1Candidates[0]?.content?.parts;
+      if (!stage1Parts || stage1Parts.length === 0) {
+        console.error(`❌ [${requestId}] No Stage 1 parts`);
+        return new Response(
+          JSON.stringify({ error: 'No Stage 1 content parts' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Extract Stage 1 image data
+      let stage1ImageData: string | undefined;
+      for (const part of stage1Parts) {
+        const inline = part.inline_data || part.inlineData;
+        if (inline && inline.data) {
+          stage1ImageData = inline.data as string;
+          break;
+        }
+      }
+
+      if (!stage1ImageData) {
+        console.error(`❌ [${requestId}] No Stage 1 image data found`);
+        return new Response(
+          JSON.stringify({ error: 'No Stage 1 image data' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`✅ [${requestId}] Stage 1 completed, extracted image data length: ${stage1ImageData.length}`);
+
+      // STAGE 2: Clothing swap with both images
+      console.log(`👕 [${requestId}] STAGE 2: Starting clothing swap process`);
+      
+      const stage2Prompt = `Image named "SPACEK" is the main image, the other image named "CLOTHESIMAGE" is a clothing item that need to be SWAPPED in accordance with the appropriate item that relates to it in the "SPACEK" image. ${prompt}`;
+      console.log(`🎯 [${requestId}] Stage 2 prompt: "${stage2Prompt}"`);
+
+      // Build Stage 2 request body with both images
+      const stage2RequestBody: any = {
+        contents: [{
+          role: "user",
+          parts: [
+            {
+              inline_data: {
+                mime_type: "image/png",
+                data: stage1ImageData
+              }
+            },
+            {
+              inline_data: {
+                mime_type: clothingReferenceMimeType || "image/jpeg",
+                data: clothingReferenceData
+              }
+            },
+            {
+              text: stage2Prompt
+            }
+          ]
+        }],
+        generationConfig: {
+          temperature: 0.7
+        }
+      };
+
+      // Execute Stage 2
+      const stage2Response = await callGeminiWithTransportRetries(
+        geminiUrl,
+        stage2RequestBody,
+        { 'Content-Type': 'application/json' },
+        requestId
+      );
+
+      const stage2Result = await readResponseSafely(stage2Response, requestId);
+
+      if (!stage2Result.success) {
+        console.error(`❌ [${requestId}] Stage 2 failed:`, stage2Result.error);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Stage 2 clothing swap failed',
+            debug: stage2Result.error
+          }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Extract Stage 2 images
+      const stage2Candidates = stage2Result.data?.candidates;
+      if (!stage2Candidates || stage2Candidates.length === 0) {
+        console.error(`❌ [${requestId}] No Stage 2 candidates`);
+        return new Response(
+          JSON.stringify({ error: 'No Stage 2 candidates generated' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const stage2Parts = stage2Candidates[0]?.content?.parts;
+      if (!stage2Parts || stage2Parts.length === 0) {
+        console.error(`❌ [${requestId}] No Stage 2 parts`);
+        return new Response(
+          JSON.stringify({ error: 'No Stage 2 content parts' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Extract final images from Stage 2
+      const finalImages: string[] = [];
+      for (const part of stage2Parts) {
+        const inline = part.inline_data || part.inlineData;
+        if (inline && inline.data) {
+          const mime = inline.mime_type || inline.mimeType || 'image/png';
+          const b64 = inline.data as string;
+          const dataUrl = `data:${mime};base64,${b64}`;
+          finalImages.push(dataUrl);
+        }
+      }
+
+      if (finalImages.length === 0) {
+        console.error(`❌ [${requestId}] No final images from Stage 2`);
+        return new Response(
+          JSON.stringify({ error: 'No final images from clothing swap' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`✅ [${requestId}] Two-stage clothing swap completed successfully! Generated ${finalImages.length} final images`);
+
+      return new Response(
+        JSON.stringify({ 
+          images: finalImages, 
+          enhancedPrompt: stage2Prompt,
+          clothingSwap: true 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // REGULAR FLOW: No clothing reference - continue with existing logic
+    console.log(`🎨 [${requestId}] REGULAR FLOW: No clothing reference, using standard generation`);
+    
     // Build the final prompt directly
     const finalPrompt = buildPrompt(prompt, backgroundHex, characterCount, !!facialReferenceData);
     console.log(`🎯 [${requestId}] Final prompt: "${finalPrompt}"`);
