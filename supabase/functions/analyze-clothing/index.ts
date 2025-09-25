@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -75,8 +76,8 @@ serve(async (req) => {
 
     // Convert image to base64 data URL
     const arrayBuffer = await imageFile.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-    const imageData = `data:${imageFile.type};base64,${base64}`;
+    const base64Data = encodeBase64(new Uint8Array(arrayBuffer));
+    const imageData = `data:${imageFile.type};base64,${base64Data}`;
 
     console.log(`🔍 [${requestId}] Sending clothing analysis to GPT-4 Vision`);
 
