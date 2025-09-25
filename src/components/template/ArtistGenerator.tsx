@@ -218,11 +218,8 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   };
 
   const handleGenerate = async () => {
-    // Priority 1: If locked and there's a facial reference, do direct face swap (ignore prompt)
-    if (isLocked && facialReferenceImage) {
-      // Continue with normal generation logic which will handle the locked image + facial reference
-    } else if (isLocked && prompt.trim()) {
-      // Priority 2: If locked and there's a prompt (but no facial reference), modify the locked image
+    // If locked and there's a prompt, modify the locked image instead
+    if (isLocked && prompt.trim()) {
       await handleModifyLockedImage();
       return;
     }
@@ -267,19 +264,13 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
         console.log(`👤 [${clientReqId}] Adding facial reference image`);
       }
       
-      // Add locked image if available and locked
-      if (isLocked && images.length > 0 && selectedIndex >= 0) {
-        requestPayload.lockedImage = images[selectedIndex];
-        console.log(`🔒 [${clientReqId}] Adding locked image for direct face swap`);
-      }
-      
       // Always add character count (including 1)
       requestPayload.characterCount = artistCount[0];
       console.log(`👥 [${clientReqId}] Adding character count: ${artistCount[0]}`);
       
       console.log(`📤 [${clientReqId}] Sending request:`, requestPayload);
       
-      const result = await api.generateArtistImages(cleanPrompt, requestPayload.backgroundHex, requestPayload.characterCount, isRealistic, requestPayload.facialReference, requestPayload.lockedImage);
+      const result = await api.generateArtistImages(cleanPrompt, requestPayload.backgroundHex, requestPayload.characterCount, isRealistic, requestPayload.facialReference);
       
       console.log(`🖼️ [${clientReqId}] Artist generation response:`, {
         imageCount: result.images?.length || 0,

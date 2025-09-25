@@ -500,67 +500,11 @@ export const api = {
   },
 
   // Generate artist images using MagicAPI Face Swap v3 when facial reference is provided, otherwise use Gemini
-  async generateArtistImages(prompt: string, backgroundHex?: string, characterCount?: number, isRealistic?: boolean, facialReference?: string, lockedImage?: string): Promise<{ images: string[]; enhancedPrompt?: string; debug?: any }> {
+  async generateArtistImages(prompt: string, backgroundHex?: string, characterCount?: number, isRealistic?: boolean, facialReference?: string): Promise<{ images: string[]; enhancedPrompt?: string; debug?: any }> {
     // Generate client-side request ID for tracking
     const clientRequestId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    // If locked image and facial reference are provided, use direct face swap
-    if (lockedImage && facialReference) {
-      console.log(`🔄 [${clientRequestId}] Using direct face swap for locked image`);
-      
-      try {
-        // Convert locked image data URL to file
-        const lockedResponse = await fetch(lockedImage);
-        const lockedBlob = await lockedResponse.blob();
-        const lockedFile = new File([lockedBlob], 'locked-image.jpg', { type: 'image/jpeg' });
-        
-        // Convert facial reference data URL to file
-        const facialResponse = await fetch(facialReference);
-        const facialBlob = await facialResponse.blob();
-        const facialFile = new File([facialBlob], 'facial-reference.jpg', { type: 'image/jpeg' });
-        
-        console.log(`📤 [${clientRequestId}] Sending FormData to direct face swap API:`, {
-          lockedImageType: lockedFile.type,
-          lockedImageSize: lockedFile.size,
-          facialRefType: facialFile.type,
-          facialRefSize: facialFile.size
-        });
-        
-        // Use FormData for direct face swap
-        const formData = new FormData();
-        formData.append('lockedImage', lockedFile);
-        formData.append('facialReference', facialFile);
-        
-        const apiResponse = await fetch(`${SUPABASE_URL}/functions/v1/direct-faceswap`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
-            'apikey': SUPABASE_PUBLISHABLE_KEY,
-          },
-          body: formData
-        });
-        
-        if (!apiResponse.ok) {
-          const errorData = await apiResponse.json().catch(() => ({}));
-          console.error(`❌ [${clientRequestId}] Direct face swap failed:`, apiResponse.status, errorData);
-          throw new Error(errorData.error || `Failed to perform direct face swap (${apiResponse.status})`);
-        }
-        
-        const data = await apiResponse.json();
-        console.log(`✅ [${clientRequestId}] Direct face swap successful:`, data);
-        
-        return {
-          images: data.images || [],
-          enhancedPrompt: data.enhancedPrompt,
-          debug: data.debug
-        };
-      } catch (error) {
-        console.error(`❌ [${clientRequestId}] Error in direct face swap:`, error);
-        throw error;
-      }
-    }
-    
-    // If facial reference is provided (but no locked image), use MagicAPI Face Swap v3
+    // If facial reference is provided, use MagicAPI Face Swap v3
     if (facialReference) {
       console.log(`🔄 [${clientRequestId}] Using MagicAPI Face Swap v3 for face swap`);
       

@@ -23,6 +23,3 @@ verify_jwt = false
 
 [functions.modify-locked-image]
 verify_jwt = false
-
-[functions.direct-faceswap]
-verify_jwt = false
