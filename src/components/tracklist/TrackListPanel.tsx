@@ -1171,7 +1171,7 @@ export default function TrackListPanel({
                       audioRefs.current[actualIndex] = el;
                       // CRITICAL: Ensure no auto-play when element is created
                       el.autoplay = false;
-                      console.log(`[AUDIO DEBUG] Created audio element at index ${actualIndex}, autoplay disabled`);
+                      // Audio element created
                     }
                   }}
                   onTimeUpdate={(e) => {

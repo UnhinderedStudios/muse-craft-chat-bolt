@@ -100,44 +100,31 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
   // Emergency localStorage cleanup function
   const emergencyCleanup = useCallback(() => {
     try {
-      console.log("[SessionManager] Emergency cleanup: localStorage quota exceeded");
-      // Remove all session data and reinitialize
       localStorage.removeItem(STORAGE_KEY);
       initialize();
-      console.log("[SessionManager] Emergency cleanup completed");
     } catch (error) {
       console.error("[SessionManager] Emergency cleanup failed:", error);
-      // If even cleanup fails, just initialize in memory
       initialize();
     }
   }, [initialize]);
 
-  // Load from localStorage and clear all tracks except mock ones
+  // Load from localStorage
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      console.log("[SessionManager] Raw localStorage data:", raw);
       if (raw) {
         const data = JSON.parse(raw);
-        console.log("[SessionManager] Parsed localStorage data:", data);
         if (data?.sessions?.length) {
-          // Preserve existing tracks and add mock tracks only if Global session is empty
-              const mockTracks = getMockTracks();
+          const mockTracks = getMockTracks();
           const preservedSessions = data.sessions.map((session: SessionData) => {
             if (session.id === GLOBAL_SESSION_ID) {
-              // Always ensure mock tracks are present alongside real tracks
               const existingTracks = session.tracks || [];
-              console.log("[SessionManager] Existing tracks from storage:", existingTracks);
-              
-              // Combine existing tracks with any missing mock tracks
               const allTracks = [...existingTracks];
               mockTracks.forEach(mockTrack => {
                 if (!allTracks.find(t => t.id === mockTrack.id)) {
                   allTracks.push(mockTrack);
                 }
               });
-              
-              console.log("[SessionManager] Final tracks after adding mocks:", allTracks);
               return {
                 ...session,
                 tracks: allTracks,
@@ -147,13 +134,11 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
             return { ...session, activeGenerations: [] };
           });
           setSessions(preservedSessions);
-          console.log("[SessionManager] Loaded sessions:", preservedSessions);
           return;
         }
       }
     } catch (e) {
-      console.error("[SessionManager] Failed to load from storage", e);
-      // Check if it's a quota error
+      console.error("[SessionManager] Storage load failed", e);
       if (e instanceof Error && e.name === 'QuotaExceededError') {
         emergencyCleanup();
       } else {
@@ -165,9 +150,11 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
     }
   }, [initialize, emergencyCleanup]);
 
-  // Persist to localStorage with pruning and quota guards
+  // Persist to localStorage with pruning and quota guards (debounced)
   useEffect(() => {
     if (!sessions.length) return;
+    
+    const timeoutId = setTimeout(() => {
 
     // Create a pruned, storage-safe snapshot to avoid exceeding localStorage quota
     const buildSnapshot = (level: 0 | 1 | 2) => {
@@ -242,21 +229,23 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
           (err && String(err).includes("QuotaExceededError"));
         if (isQuota && level < 2) {
           level = (level + 1) as 0 | 1 | 2;
-          console.log(`[SessionManager] Quota exceeded, trying level ${level} pruning`);
+          // Quota exceeded, trying higher level pruning
           continue;
         }
         console.error("[SessionManager] Failed to persist sessions", err);
         // If all pruning levels fail, try emergency cleanup
         if (isQuota) {
-          console.log("[SessionManager] All pruning levels failed, attempting emergency cleanup");
           emergencyCleanup();
         }
         break;
       }
     }
+    }, 500); // Debounce localStorage writes
+    
+    return () => clearTimeout(timeoutId);
   }, [sessions, currentSessionId, emergencyCleanup]);
 
-  // Auto-prune stale or replaced active generations (safety net)
+  // Auto-prune stale or replaced active generations (reduced frequency)
   useEffect(() => {
     const MAX_AGE_MS = 20 * 60 * 1000; // 20 minutes
     const prune = () => {
@@ -267,7 +256,6 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
             const tooOld = Date.now() - (g.startTime || 0) > MAX_AGE_MS;
             const jobTracks = (session.tracks || []).filter((t) => t.jobId === g.id).length;
             if (tooOld || jobTracks >= 2) {
-              console.debug('[SessionManager] prune activeGeneration', { sessionId: session.id, jobId: g.id, tooOld, jobTracks });
               changed = true;
               return false;
             }
@@ -281,7 +269,7 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
       });
     };
     prune();
-    const id = window.setInterval(prune, 15000);
+    const id = window.setInterval(prune, 60000); // Reduced from 15s to 60s
     return () => window.clearInterval(id);
   }, []);
 
