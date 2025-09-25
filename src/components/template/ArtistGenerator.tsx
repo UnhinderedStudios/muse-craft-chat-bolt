@@ -108,6 +108,10 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   const [facialReferenceImage, setFacialReferenceImage] = useState<string>("");
   const [isAnalyzingFace, setIsAnalyzingFace] = useState(false);
   
+  // Clothing reference state
+  const [clothingReferenceImage, setClothingReferenceImage] = useState<string>("");
+  const [isAnalyzingClothing, setIsAnalyzingClothing] = useState(false);
+  
   // Color wheel state
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [isColorApplied, setIsColorApplied] = useState(false);
@@ -338,13 +342,19 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
         console.log(`👤 [${clientReqId}] Adding facial reference image`);
       }
       
+      // Add clothing reference if available
+      if (clothingReferenceImage) {
+        requestPayload.clothingReference = clothingReferenceImage;
+        console.log(`🎽 [${clientReqId}] Adding clothing reference image`);
+      }
+      
       // Always add character count (including 1)
       requestPayload.characterCount = artistCount[0];
       console.log(`👥 [${clientReqId}] Adding character count: ${artistCount[0]}`);
       
       console.log(`📤 [${clientReqId}] Sending request:`, requestPayload);
       
-      const result = await api.generateArtistImages(cleanPrompt, requestPayload.backgroundHex, requestPayload.characterCount, isRealistic, requestPayload.facialReference);
+      const result = await api.generateArtistImages(cleanPrompt, requestPayload.backgroundHex, requestPayload.characterCount, isRealistic, requestPayload.facialReference, undefined, requestPayload.clothingReference);
       
       console.log(`🖼️ [${clientReqId}] Artist generation response:`, {
         imageCount: result.images?.length || 0,
@@ -569,15 +579,68 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   };
 
   const handleClothingClick = () => {
-    const clothing = ["wearing casual streetwear", "in elegant formal attire", "wearing leather jacket", "in vintage clothing", "wearing colorful outfit"];
-    const randomClothing = clothing[Math.floor(Math.random() * clothing.length)];
-    setPrompt(prev => prev ? `${prev}, ${randomClothing}` : randomClothing);
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/jpeg,image/png,image/webp';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        handleClothingReferenceUpload(file);
+      }
+    };
+    input.click();
+  };
+
+  const handleClothingReferenceUpload = async (file: File) => {
+    console.log('🎽 Starting clothing analysis for:', file.name);
+    setIsAnalyzingClothing(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch(`https://afsyxzxwxszujnsmukff.supabase.co/functions/v1/analyze-clothing`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log('🎽 Clothing analysis result:', result);
+
+      if (result.accepted) {
+        setClothingReferenceImage(result.imageData);
+        toast({ 
+          title: "Clothing reference accepted", 
+          description: `${result.analysis.primaryClothingType} detected and ready for generation` 
+        });
+      } else {
+        toast({ 
+          title: "Image rejected", 
+          description: result.rejectionReason || "Please try a different clothing image",
+          variant: "destructive" 
+        });
+      }
+    } catch (error) {
+      console.error('❌ Clothing analysis error:', error);
+      toast({ 
+        title: "Analysis failed", 
+        description: "Could not analyze the clothing image. Please try again.",
+        variant: "destructive" 
+      });
+    } finally {
+      setIsAnalyzingClothing(false);
+    }
   };
 
   const handlePromptReset = () => {
     setPrompt("");
     setFacialReferenceImage("");
-    toast({ title: "Reset complete", description: "Prompt and facial reference cleared" });
+    setClothingReferenceImage("");
+    toast({ title: "Reset complete", description: "Prompt and references cleared" });
   };
 
   const handleLockToggle = () => {
@@ -591,6 +654,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   const handleFacialReferenceRemoved = () => {
     setFacialReferenceImage("");
     toast({ title: "Facial reference removed", description: "Reference image cleared" });
+  };
+
+  const handleClothingReferenceRemoved = () => {
+    setClothingReferenceImage("");
+    toast({ title: "Clothing reference removed", description: "Reference image cleared" });
   };
 
   return (
@@ -785,24 +853,27 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
                   <div className="flex-1 min-h-0 mb-1 space-y-1 overflow-auto pr-1">
                      <div>
-                        <AnimatedPromptInput
-                          value={prompt}
-                          onChange={setPrompt}
-                          placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
-                          disabled={loading}
-                          animatedText={sanitizedPrompt}
-                          isAnimating={isAnimating}
-                          onAnimationComplete={handleAnimationComplete}
-                          onPersonClick={handlePersonClick}
-                          onClothingClick={handleClothingClick}
-                          onResetClick={handlePromptReset}
-                          facialReferenceImage={facialReferenceImage}
-                          isAnalyzingFace={isAnalyzingFace}
-                          onFacialReferenceRemoved={handleFacialReferenceRemoved}
-                          faceSwapMode={isLocked && !!facialReferenceImage}
-                          faceSwapMessage="Face swap mode is activated. Prompt field is disabled"
-                          className="h-36"
-                        />
+                         <AnimatedPromptInput
+                           value={prompt}
+                           onChange={setPrompt}
+                           placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
+                           disabled={loading}
+                           animatedText={sanitizedPrompt}
+                           isAnimating={isAnimating}
+                           onAnimationComplete={handleAnimationComplete}
+                           onPersonClick={handlePersonClick}
+                           onClothingClick={handleClothingClick}
+                           onResetClick={handlePromptReset}
+                           facialReferenceImage={facialReferenceImage}
+                           isAnalyzingFace={isAnalyzingFace}
+                           onFacialReferenceRemoved={handleFacialReferenceRemoved}
+                           clothingReferenceImage={clothingReferenceImage}
+                           isAnalyzingClothing={isAnalyzingClothing}
+                           onClothingReferenceRemoved={handleClothingReferenceRemoved}
+                           faceSwapMode={isLocked && !!facialReferenceImage}
+                           faceSwapMessage="Face swap mode is activated. Prompt field is disabled"
+                           className="h-36"
+                         />
                     </div>
 
                      {/* Background Color Section */}

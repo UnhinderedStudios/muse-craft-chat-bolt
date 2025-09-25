@@ -18,6 +18,9 @@ interface AnimatedPromptInputProps {
   isAnalyzingFace?: boolean;
   onFacialReferenceAccepted?: (imageUrl: string) => void;
   onFacialReferenceRemoved?: () => void;
+  clothingReferenceImage?: string;
+  isAnalyzingClothing?: boolean;
+  onClothingReferenceRemoved?: () => void;
   faceSwapMode?: boolean;
   faceSwapMessage?: string;
 }
@@ -38,6 +41,9 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
   isAnalyzingFace = false,
   onFacialReferenceAccepted,
   onFacialReferenceRemoved,
+  clothingReferenceImage,
+  isAnalyzingClothing = false,
+  onClothingReferenceRemoved,
   faceSwapMode = false,
   faceSwapMessage = ""
 }) => {
@@ -109,14 +115,14 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
 
   const handleMouseLeave = () => setOverScrollbar(false);
   
-  const isDisabledByAnalysis = disabled || isAnalyzingFace || faceSwapMode;
+  const isDisabledByAnalysis = disabled || isAnalyzingFace || isAnalyzingClothing || faceSwapMode;
   
   return (
     <div className={cn("relative w-full h-full rounded-lg bg-black/40 border border-white/10", className)}>
       <div className="flex flex-col h-full">
         {/* Top: scrollable input area */}
         <div className="flex-1 min-h-0 p-3 relative">
-          <div className={cn("relative", isAnalyzingFace && "blur-3xl")}> 
+          <div className={cn("relative", (isAnalyzingFace || isAnalyzingClothing) && "blur-3xl")}> 
             <textarea
               ref={textareaRef}
               value={showAnimatedText ? animatedText : value}
@@ -132,12 +138,12 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
                 overScrollbar ? "cursor-default" : "cursor-text",
                 isDisabledByAnalysis && "cursor-default",
                 showAnimatedText && "opacity-80",
-                isAnalyzingFace && "opacity-20",
+                (isAnalyzingFace || isAnalyzingClothing) && "opacity-20",
                 faceSwapMode && "opacity-50 bg-white/5"
               )}
             />
           </div>
-          {isAnalyzingFace && (
+          {(isAnalyzingFace || isAnalyzingClothing) && (
             <>
               {/* Scanning beam animation */}
               <div className="absolute inset-0 overflow-hidden rounded-lg pointer-events-none">
@@ -152,7 +158,9 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" 
                        style={{ filter: "drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))" }} />
-                  <span className="text-white/80 text-sm font-medium">Analyzing face...</span>
+                  <span className="text-white/80 text-sm font-medium">
+                    {isAnalyzingFace ? "Analyzing face..." : "Analyzing clothing..."}
+                  </span>
                 </div>
               </div>
             </>
@@ -168,25 +176,49 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
         <div className="px-3 py-2 flex justify-between items-center">
           {/* Left side: Files display */}
           <div className="flex items-center gap-2">
-            {facialReferenceImage && (
+            {(facialReferenceImage || clothingReferenceImage) && (
               <div className="flex items-center gap-2">
                 <span className="text-white/60 text-xs">Files:</span>
-                <div className="w-6 h-6 rounded overflow-hidden relative group">
-                  <img 
-                    src={facialReferenceImage} 
-                    alt="Facial reference" 
-                    className="w-full h-full object-cover"
-                  />
-                  {onFacialReferenceRemoved && (
-                    <button
-                      onClick={onFacialReferenceRemoved}
-                      className="absolute inset-0 bg-red-500/80 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      type="button"
-                    >
-                      <X size={10} className="text-white" />
-                    </button>
-                  )}
-                </div>
+                
+                {/* Facial Reference */}
+                {facialReferenceImage && (
+                  <div className="w-6 h-6 rounded overflow-hidden relative group">
+                    <img 
+                      src={facialReferenceImage} 
+                      alt="Facial reference" 
+                      className="w-full h-full object-cover"
+                    />
+                    {onFacialReferenceRemoved && (
+                      <button
+                        onClick={onFacialReferenceRemoved}
+                        className="absolute inset-0 bg-red-500/80 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        type="button"
+                      >
+                        <X size={10} className="text-white" />
+                      </button>
+                    )}
+                  </div>
+                )}
+                
+                {/* Clothing Reference */}
+                {clothingReferenceImage && (
+                  <div className="w-6 h-6 rounded overflow-hidden relative group">
+                    <img 
+                      src={clothingReferenceImage} 
+                      alt="Clothing reference" 
+                      className="w-full h-full object-cover"
+                    />
+                    {onClothingReferenceRemoved && (
+                      <button
+                        onClick={onClothingReferenceRemoved}
+                        className="absolute inset-0 bg-red-500/80 rounded flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        type="button"
+                      >
+                        <X size={10} className="text-white" />
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -206,8 +238,8 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
             {onClothingClick && (
               <button
                 onClick={onClothingClick}
-                disabled={isAnalyzingFace}
-                className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isAnalyzingFace || isAnalyzingClothing || !!clothingReferenceImage}
+                className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white/10"
                 type="button"
               >
                 <Shirt size={12} className="text-white/60" />
@@ -216,7 +248,7 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
             {onResetClick && (
               <button
                 onClick={onResetClick}
-                disabled={isAnalyzingFace}
+                disabled={isAnalyzingFace || isAnalyzingClothing}
                 className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 type="button"
               >

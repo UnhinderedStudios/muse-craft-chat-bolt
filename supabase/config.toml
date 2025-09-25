@@ -18,6 +18,9 @@ verify_jwt = false
 [functions.analyze-face]
 verify_jwt = false
 
+[functions.analyze-clothing]
+verify_jwt = false
+
 [functions.faceswap-image-v3]
 verify_jwt = false
 

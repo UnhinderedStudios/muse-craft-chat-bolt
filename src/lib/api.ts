@@ -506,7 +506,8 @@ export const api = {
     characterCount?: number,
     isRealistic?: boolean,
     facialReference?: string,
-    lockedImage?: string
+    lockedImage?: string,
+    clothingReference?: string
   ): Promise<{ images: string[]; enhancedPrompt?: string; debug?: any }> {
     // Generate client-side request ID for tracking
     const clientRequestId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -660,6 +661,16 @@ export const api = {
       }
       // Always send characterCount, default to 1 if not specified
       formData.append('characterCount', (characterCount || 1).toString());
+      
+      // Add clothing reference if provided
+      if (clothingReference) {
+        // Convert clothing reference data URL to file
+        const clothingResp = await fetch(clothingReference);
+        const clothingBlob = await clothingResp.blob();
+        const clothingFile = new File([clothingBlob], 'clothing-reference.jpg', { type: 'image/jpeg' });
+        formData.append('clothingReference', clothingFile);
+        console.log(`🎽 [${clientRequestId}] Adding clothing reference to FormData`);
+      }
       
       const apiResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-artist-image`, {
         method: 'POST',
