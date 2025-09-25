@@ -149,24 +149,21 @@ RESPOND ONLY WITH THE JSON OBJECT, NO OTHER TEXT.`;
     }
 
     const openaiData = await openaiResponse.json();
-    console.log(`📋 [${requestId}] GPT-4 Vision raw response:`, openaiData.choices[0]?.message?.content);
+    const analysisText = openaiData.choices[0]?.message?.content;
+    console.log(`🔍 [${requestId}] Raw analysis result: ${analysisText}`);
 
-    // Parse the JSON response from GPT-4 Vision
+    // Parse the JSON response (handle potential markdown formatting)
     let analysis;
     try {
-      const content = openaiData.choices[0]?.message?.content;
-      if (!content) {
-        throw new Error('No content in OpenAI response');
-      }
-      analysis = JSON.parse(content);
+      // Extract JSON from the response (handle potential markdown formatting)
+      const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
+      const jsonString = jsonMatch ? jsonMatch[0] : analysisText;
+      analysis = JSON.parse(jsonString);
     } catch (parseError) {
-      console.error(`❌ [${requestId}] Failed to parse GPT-4 Vision response:`, parseError);
+      console.error(`❌ [${requestId}] Failed to parse analysis result: ${parseError}`);
       return new Response(
-        JSON.stringify({ error: 'Failed to parse clothing analysis response' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        JSON.stringify({ error: 'Failed to parse analysis result', details: analysisText }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
