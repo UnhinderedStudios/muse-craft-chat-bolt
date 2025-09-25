@@ -160,7 +160,7 @@ Deno.serve(async (req: Request) => {
     magicApiFormData.set('target_image', targetFile);
     
     // Call MagicAPI Face Swap v3 with correct API endpoint
-    const magicApiResponse = await fetch('https://api.market/api/v1/magicapi/faceswap-capix', {
+    const magicApiResponse = await fetch('https://prod.api.market/api/v1/magicapi/faceswap-capix', {
       method: 'POST',
       headers: {
         'X-API-Key': magicApiKey,
