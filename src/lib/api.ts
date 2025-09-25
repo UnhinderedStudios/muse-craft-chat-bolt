@@ -443,15 +443,9 @@ export const api = {
       if (!base64Image) continue;
 
       try {
-        // Convert base64 to blob
-        const base64Data = base64Image.replace(/^data:image\/[a-z]+;base64,/, '');
-        const byteCharacters = atob(base64Data);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let j = 0; j < byteCharacters.length; j++) {
-          byteNumbers[j] = byteCharacters.charCodeAt(j);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: 'image/jpeg' });
+        // Convert base64 to blob using fetch (more efficient for large images)
+        const response = await fetch(base64Image);
+        const blob = await response.blob();
 
         // Generate unique filename
         const filename = `cover-${Date.now()}-${i + 1}.jpg`;
