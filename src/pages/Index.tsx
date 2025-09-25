@@ -302,8 +302,10 @@ const Index = () => {
   // Use session-aware chat
   const { messages, sendMessage } = useSessionChat();
   
-  // Reset UI state when switching sessions (optimized)
+  // Reset UI state when switching sessions
   useEffect(() => {
+    console.log('[Session Switch] Resetting UI state for session:', currentSessionId);
+    
     // Reset track selection
     setCurrentTrackIndex(tracks.length > 0 ? 0 : -1);
     setPlayingTrackIndex(-1);
@@ -331,6 +333,7 @@ const Index = () => {
     karaokePinnedRef.current = false;
     pinnedAudioIdRef.current = null;
     pinnedUrlRef.current = null;
+    console.log('[Karaoke Pin] Reset on session switch');
     
     // Pause all audio elements
     audioRefs.current.forEach(audio => {
@@ -367,6 +370,34 @@ const Index = () => {
     }
   };
   
+  // Helper function to determine if we should auto-select a new track
+  const shouldAutoSelectTrack = () => {
+    console.log('[Auto-select] Checking conditions:', {
+      isPlaying,
+      currentTrackIndex,
+      currentTrack: tracks[currentTrackIndex],
+      hasRealTracks: tracks.some(t => !t.id.startsWith('placeholder-'))
+    });
+    
+    // Don't auto-select if user is actively playing something
+    if (isPlaying) {
+      console.log('[Auto-select] Blocked: User is playing');
+      return false;
+    }
+    
+    // Don't auto-select if user has a real track selected (not placeholder)
+    if (currentTrackIndex >= 0 && tracks[currentTrackIndex] && !tracks[currentTrackIndex].id.startsWith('placeholder-')) {
+      console.log('[Auto-select] Blocked: User has real track selected');
+      return false;
+    }
+    
+    // Only auto-select if we're in a truly fresh state (no real tracks or only placeholders selected)
+    const hasOnlyPlaceholders = tracks.every(t => t.id.startsWith('placeholder-'));
+    const shouldSelect = hasOnlyPlaceholders || currentTrackIndex < 0;
+    
+    console.log('[Auto-select] Decision:', shouldSelect ? 'ALLOW' : 'BLOCK');
+    return shouldSelect;
+  };
 
   // constants that already exist visually in your layout
   const RESERVED = 144;     // header + grid gaps + card paddings (your existing comment)
@@ -406,7 +437,7 @@ const Index = () => {
     isReadingText: boolean;
   };
 
-  // Build chat feed with synthetic status row when busy (memoized for performance)
+  // Build chat feed with synthetic status row when busy
   const chatFeed = useMemo(() => {
     if (!isChatBusy) return messages;
     const statusRow: StatusRow = {
@@ -512,21 +543,6 @@ const Index = () => {
   const [playingTrackIndex, setPlayingTrackIndex] = useState<number>(-1);
   const resolvedPlayingIndex = useMemo(() => tracks.findIndex(t => t.id === playingTrackId), [tracks, playingTrackId]);
   
-  // Helper function to determine if we should auto-select a new track (optimized)
-  const shouldAutoSelectTrack = useCallback(() => {
-    // Don't auto-select if user is actively playing something
-    if (isPlaying) return false;
-    
-    // Don't auto-select if user has a real track selected (not placeholder)
-    if (currentTrackIndex >= 0 && tracks[currentTrackIndex] && !tracks[currentTrackIndex].id.startsWith('placeholder-')) {
-      return false;
-    }
-    
-    // Only auto-select if we're in a truly fresh state (no real tracks or only placeholders selected)
-    const hasOnlyPlaceholders = tracks.every(t => t.id.startsWith('placeholder-'));
-    return hasOnlyPlaceholders || currentTrackIndex < 0;
-  }, [isPlaying, currentTrackIndex, tracks]);
-  
   // Keep playingTrackIndex synchronized with the actual list order
   useEffect(() => {
     setPlayingTrackIndex(resolvedPlayingIndex);
@@ -537,7 +553,7 @@ const Index = () => {
     if (!isPlaying) return;
     const resolved = tracks.findIndex(t => t.id === playingTrackId);
     if (resolved >= 0 && currentTrackIndex !== resolved) {
-      // Restoring selection to playing track
+      console.log('[Sync] Restoring selection to playing track', { from: currentTrackIndex, to: resolved });
       setCurrentTrackIndex(resolved);
     }
   }, [tracks.length, isPlaying, playingTrackId]);
@@ -730,12 +746,12 @@ const Index = () => {
       t.id === trackId ? { ...t, words, hasTimestamps: true } : t
     );
     updateSession(currentSession.id, { tracks: updatedTracks });
-    // Track words updated in session
+    console.log('[Karaoke] Updated track words in session:', trackId);
   }, [currentSession, updateSession]);
 
   function handleAudioPlay(index: number) {
     if (!tracks.length) return;
-    // Attempting to play track
+    console.log(`[AudioPlay] Attempting to play track ${index}, current index: ${currentTrackIndex}, isPlaying: ${isPlaying}`);
     
     // Allow playing tracks during generation - users should be able to listen while songs generate
     
@@ -748,11 +764,11 @@ const Index = () => {
       
       // Mark track as played when audio starts playing
       if (currentSession && !playingTrack.hasBeenPlayed) {
-        const updatedTracks = tracks.map((track, trackIndex) =>
+        const updatedTracks = tracks.map((track, trackIndex) => 
           trackIndex === index ? { ...track, hasBeenPlayed: true } : track
         );
         updateSession(currentSession.id, { tracks: updatedTracks });
-        // Track marked as played
+        console.log('[Pink dot] Marked track as played on audio play:', index);
       }
       
       // Use wavRegistry for accurate audioId/musicIndex mapping
