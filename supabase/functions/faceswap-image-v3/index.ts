@@ -141,19 +141,18 @@ Deno.serve(async (req: Request) => {
     
     console.log(`✅ [${requestId}] Stage 1 completed: Base image generated (${baseImageBlob.size} bytes)`);
 
-    // Stage 2: Face swap with MagicAPI
+    // Stage 2: Face swap with MagicAPI using direct endpoint
     console.log(`🔄 [${requestId}] Stage 2: Applying face swap with MagicAPI...`);
 
-    // Prepare FormData with apiPath for async prediction
+    // Prepare FormData for direct MagicAPI call
     const magicApiFormData = new FormData();
-    magicApiFormData.append('apiPath', '/magicapi/faceswap-capix');
-    magicApiFormData.append('source_image', facialReference);
-    magicApiFormData.append('target_image', new File([baseImageBlob], 'target.jpg', { type: 'image/jpeg' }));
+    magicApiFormData.append('source_img', facialReference);
+    magicApiFormData.append('target_img', new File([baseImageBlob], 'target.jpg', { type: 'image/jpeg' }));
 
-    console.log(`🌐 [${requestId}] Starting async prediction with API.Market...`);
+    console.log(`🌐 [${requestId}] Making direct call to MagicAPI...`);
     
-    // Call API.Market to start the async prediction
-    const predictionResponse = await fetch('https://prod.api.market/api/v1/predictions', {
+    // Call MagicAPI directly
+    const magicApiResponse = await fetch('https://prod.api.market/magicapi/faceswap-image-v3', {
       method: 'POST',
       headers: {
         'X-API-Key': magicApiKey,
@@ -161,97 +160,21 @@ Deno.serve(async (req: Request) => {
       body: magicApiFormData
     });
 
-    if (!predictionResponse.ok) {
-      const responseHeaders = Object.fromEntries(predictionResponse.headers.entries());
-      const responseText = await predictionResponse.text();
+    if (!magicApiResponse.ok) {
+      const responseHeaders = Object.fromEntries(magicApiResponse.headers.entries());
+      const responseText = await magicApiResponse.text();
       
-      console.error(`❌ [${requestId}] Prediction start error:`, { 
-        status: predictionResponse.status, 
-        statusText: predictionResponse.statusText,
+      console.error(`❌ [${requestId}] MagicAPI direct call error:`, { 
+        status: magicApiResponse.status, 
+        statusText: magicApiResponse.statusText,
         headers: responseHeaders,
         body: responseText
       });
       
-      throw new Error(`Failed to start prediction: ${predictionResponse.status} ${predictionResponse.statusText}`);
+      throw new Error(`Failed to call MagicAPI: ${magicApiResponse.status} ${magicApiResponse.statusText}`);
     }
 
-    const predictionData = await predictionResponse.json();
-    const predictionId = predictionData.id;
-    
-    if (!predictionId) {
-      console.error(`❌ [${requestId}] No prediction ID in response:`, predictionData);
-      throw new Error('No prediction ID returned from API.Market');
-    }
-
-    console.log(`📋 [${requestId}] Prediction created with ID: ${predictionId}`);
-    console.log(`🔄 [${requestId}] Starting polling for prediction status...`);
-
-    // Poll for prediction completion
-    const maxAttempts = 30; // 5 minutes max
-    const pollInterval = 5000; // 5 seconds
-    let attempts = 0;
-    let resultBlob: Blob | null = null;
-
-    while (attempts < maxAttempts) {
-      attempts++;
-      
-      console.log(`🔍 [${requestId}] Checking prediction status for ID: ${predictionId}... (attempt ${attempts}/${maxAttempts})`);
-      
-      const statusResponse = await fetch(`https://prod.api.market/api/v1/predictions/${predictionId}`, {
-        headers: {
-          'X-API-Key': magicApiKey,
-        }
-      });
-
-      if (!statusResponse.ok) {
-        console.error(`❌ [${requestId}] Status check failed:`, statusResponse.status, statusResponse.statusText);
-        throw new Error(`Failed to check prediction status: ${statusResponse.status}`);
-      }
-
-      const statusData = await statusResponse.json();
-      console.log(`📊 [${requestId}] Prediction status: ${statusData.status}`);
-
-      if (statusData.status === 'succeeded') {
-        // Get the final result
-        if (statusData.output) {
-          // If output is a URL, fetch the image
-          if (typeof statusData.output === 'string' && statusData.output.startsWith('http')) {
-            const imageResponse = await fetch(statusData.output);
-            if (!imageResponse.ok) {
-              throw new Error(`Failed to fetch result image: ${imageResponse.status}`);
-            }
-            resultBlob = await imageResponse.blob();
-          } else if (statusData.output instanceof Blob) {
-            resultBlob = statusData.output;
-          } else {
-            throw new Error('Unknown output format from prediction');
-          }
-        } else {
-          throw new Error('No output in completed prediction');
-        }
-        
-        console.log(`✅ [${requestId}] Prediction completed successfully`);
-        break;
-      } else if (statusData.status === 'failed') {
-        console.error(`❌ [${requestId}] Prediction failed:`, statusData.error || 'Unknown error');
-        throw new Error(`Prediction failed: ${statusData.error || 'Unknown error'}`);
-      } else if (statusData.status === 'canceled') {
-        throw new Error('Prediction was canceled');
-      }
-
-      // Wait before next poll (IN_QUEUE, IN_PROGRESS, etc.)
-      if (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, pollInterval));
-      }
-    }
-
-    if (attempts >= maxAttempts) {
-      throw new Error('Prediction timed out after 5 minutes');
-    }
-
-    if (!resultBlob) {
-      throw new Error('No result blob obtained from prediction');
-    }
+    const resultBlob = await magicApiResponse.blob();
     
     console.log(`✅ [${requestId}] MagicAPI response received:`, {
       type: resultBlob.type,
