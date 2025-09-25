@@ -218,8 +218,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   };
 
   const handleGenerate = async () => {
-    // If locked and there's a prompt, modify the locked image instead
-    if (isLocked && prompt.trim()) {
+    // Priority 1: If locked and there's a facial reference, do direct face swap (ignore prompt)
+    if (isLocked && facialReferenceImage) {
+      // Continue with normal generation logic which will handle the locked image + facial reference
+    } else if (isLocked && prompt.trim()) {
+      // Priority 2: If locked and there's a prompt (but no facial reference), modify the locked image
       await handleModifyLockedImage();
       return;
     }
