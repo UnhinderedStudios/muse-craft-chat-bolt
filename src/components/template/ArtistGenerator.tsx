@@ -119,6 +119,9 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   // Lock state
   const [isLocked, setIsLocked] = useState(false);
 
+  // Face mode detection for regular (non-locked) mode with facial reference
+  const isFaceModeActive = !isLocked && !!facialReferenceImage;
+
   const VISIBLE_COUNT = 5;
 
   useEffect(() => {
@@ -532,10 +535,20 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
       if (result.accepted) {
         setFacialReferenceImage(result.imageData);
-        toast({ 
-          title: "Facial reference accepted", 
-          description: "Face detected and ready for generation" 
-        });
+        
+        // Auto-switch to realistic mode when face is uploaded in non-locked mode
+        if (!isLocked && !isRealistic) {
+          setIsRealistic(true);
+          toast({ 
+            title: "Face accepted & switched to Realistic", 
+            description: "Realistic mode activated for better face swapping" 
+          });
+        } else {
+          toast({ 
+            title: "Facial reference accepted", 
+            description: "Face detected and ready for generation" 
+          });
+        }
       } else {
         toast({ 
           title: "Image rejected", 
@@ -890,14 +903,16 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                         <div className="w-px h-4 bg-white/30"></div>
                         
                         {/* Realistic/Animated Toggle - Custom Design */}
-                        <div className="flex-shrink-0">
-                          <button
-                            onClick={() => setIsRealistic(!isRealistic)}
-                            className={cn(
-                              "relative w-32 h-7 rounded-full transition-all duration-300 overflow-hidden",
-                              "bg-white/10 hover:bg-white/15"
-                            )}
-                          >
+                         <div className="flex-shrink-0">
+                           <button
+                             onClick={() => !isFaceModeActive && setIsRealistic(!isRealistic)}
+                             disabled={isFaceModeActive}
+                             className={cn(
+                               "relative w-32 h-7 rounded-full transition-all duration-300 overflow-hidden",
+                               "bg-white/10 hover:bg-white/15",
+                               isFaceModeActive && "opacity-50 cursor-not-allowed hover:bg-white/10"
+                             )}
+                           >
                             {/* Sliding background */}
                             <div
                               className={cn(
