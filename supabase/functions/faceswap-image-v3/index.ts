@@ -155,24 +155,45 @@ Deno.serve(async (req: Request) => {
 
     console.log(`🌐 [${requestId}] Sending request to MagicAPI Face Swap v3...`);
     
-    // Call MagicAPI Face Swap v3 with correct API.Market endpoint
-    const magicApiResponse = await fetch('https://api.market/store/magicapi/faceswap-capix', {
+    // Convert baseImageBlob to File with proper filename
+    const targetFile = new File([baseImageBlob], 'target.jpg', { type: 'image/jpeg' });
+    magicApiFormData.set('target_image', targetFile);
+    
+    // Call MagicAPI Face Swap v3 with correct API endpoint
+    const magicApiResponse = await fetch('https://api.market/api/v1/magicapi/faceswap-capix', {
       method: 'POST',
       headers: {
+        'X-API-Key': magicApiKey,
         'X-RapidAPI-Key': magicApiKey,
-        'X-RapidAPI-Host': 'api.market'
+        'Accept': 'image/*,application/json'
       },
       body: magicApiFormData
     });
 
     if (!magicApiResponse.ok) {
-      const errorText = await magicApiResponse.text();
-      console.error(`❌ [${requestId}] MagicAPI error:`, {
-        status: magicApiResponse.status,
+      const responseHeaders = Object.fromEntries(magicApiResponse.headers.entries());
+      const responseText = await magicApiResponse.text();
+      const bodySnippet = responseText.substring(0, 500);
+      
+      console.error(`❌ [${requestId}] MagicAPI error:`, { 
+        status: magicApiResponse.status, 
         statusText: magicApiResponse.statusText,
-        error: errorText
+        headers: responseHeaders,
+        bodySnippet: bodySnippet
       });
-      throw new Error(`MagicAPI request failed: ${magicApiResponse.status} ${magicApiResponse.statusText}`);
+      
+      // Try to parse JSON error if response is JSON
+      let errorMessage = `MagicAPI request failed: ${magicApiResponse.status} ${magicApiResponse.statusText}`;
+      try {
+        const errorJson = JSON.parse(responseText);
+        if (errorJson.message || errorJson.error) {
+          errorMessage += ` - ${errorJson.message || errorJson.error}`;
+        }
+      } catch {
+        // Not JSON, use status text
+      }
+      
+      throw new Error(errorMessage);
     }
 
     // Get the response - MagicAPI returns the processed image directly
