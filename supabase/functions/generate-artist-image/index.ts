@@ -438,7 +438,7 @@ Deno.serve(async (req: Request) => {
       // STAGE 2: Clothing swap with both images
       console.log(`👕 [${requestId}] STAGE 2: Starting clothing swap process`);
       
-      const stage2Prompt = `Image named "SPACEK" is the main image, the other image named "CLOTHESIMAGE" is a clothing item that need to be SWAPPED in accordance with the appropriate item that relates to it in the "SPACEK" image. ${prompt}`;
+      const stage2Prompt = `Image named "SPACEK" is the main image, the other image named "CLOTHESIMAGE" is a clothing or accessory item that need to be SWAPPED in accordance with the appropriate item that relates to it in the "SPACEK" image.`;
       console.log(`🎯 [${requestId}] Stage 2 prompt: "${stage2Prompt}"`);
 
       // Build Stage 2 request body with both images
