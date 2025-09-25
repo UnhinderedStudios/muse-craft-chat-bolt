@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.analyze-face]
 verify_jwt = false
+
+[functions.faceswap-image-v3]
+verify_jwt = false
+
+[functions.modify-locked-image]
+verify_jwt = false

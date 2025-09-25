@@ -505,15 +505,77 @@ export const api = {
     return { coverIds, coverUrls };
   },
 
-  // Generate artist images using Gemini 2.5 Flash with fixed reference image
+  // Generate artist images using MagicAPI Face Swap v3 when facial reference is provided, otherwise use Gemini
   async generateArtistImages(prompt: string, backgroundHex?: string, characterCount?: number, isRealistic?: boolean, facialReference?: string): Promise<{ images: string[]; enhancedPrompt?: string; debug?: any }> {
     // Generate client-side request ID for tracking
     const clientRequestId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    // Add facial reference instruction if provided
-    const facialReferencePrefix = facialReference 
-      ? "Character's face must match the image titled (Facial Reference), this is the only thing that this image must be used for and nothing else. " 
-      : "";
+    // If facial reference is provided, use MagicAPI Face Swap v3
+    if (facialReference) {
+      console.log(`🔄 [${clientRequestId}] Using MagicAPI Face Swap v3 for face swap`);
+      
+      try {
+        // Load the fixed reference image
+        const response = await fetch('/reference-frame.png');
+        if (!response.ok) {
+          throw new Error('Failed to load reference image');
+        }
+        const blob = await response.blob();
+        const referenceFile = new File([blob], 'reference-frame.png', { type: blob.type });
+        
+        // Convert facial reference data URL to file
+        const facialResponse = await fetch(facialReference);
+        const facialBlob = await facialResponse.blob();
+        const facialFile = new File([facialBlob], 'facial-reference.jpg', { type: 'image/jpeg' });
+        
+        console.log(`📤 [${clientRequestId}] Sending FormData to face swap API:`, {
+          targetImageType: referenceFile.type,
+          targetImageSize: referenceFile.size,
+          sourceImageType: facialFile.type,
+          sourceImageSize: facialFile.size
+        });
+        
+        // Use FormData for face swap
+        const formData = new FormData();
+        formData.append('prompt', prompt);
+        formData.append('image', referenceFile); // target image
+        formData.append('facialReference', facialFile); // source image for face
+        if (backgroundHex) {
+          formData.append('backgroundHex', backgroundHex);
+        }
+        formData.append('characterCount', (characterCount || 1).toString());
+        
+        const apiResponse = await fetch(`${SUPABASE_URL}/functions/v1/faceswap-image-v3`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+            'apikey': SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: formData
+        });
+        
+        if (!apiResponse.ok) {
+          const errorData = await apiResponse.json().catch(() => ({}));
+          console.error(`❌ [${clientRequestId}] Face swap failed:`, apiResponse.status, errorData);
+          throw new Error(errorData.error || `Failed to perform face swap (${apiResponse.status})`);
+        }
+        
+        const data = await apiResponse.json();
+        console.log(`✅ [${clientRequestId}] Face swap successful:`, data);
+        
+        return {
+          images: data.images || [],
+          enhancedPrompt: data.enhancedPrompt,
+          debug: data.debug
+        };
+      } catch (error) {
+        console.error(`❌ [${clientRequestId}] Error in face swap:`, error);
+        throw error;
+      }
+    }
+    
+    // Fallback to original Gemini generation when no facial reference
+    console.log(`🎨 [${clientRequestId}] Using Gemini for regular artist generation (no facial reference)`);
     
     // Add automatic prompt prefix for artist generation (safer language)
     const promptPrefix = "Match the overall framing, camera angle, and lighting style of the reference image. Generate a new, original character from scratch that is completely different from the alien creature in the reference image. The character should have a dynamic pose and it should be clear that the character is a music artist. No objects such as guitars, mics, chairs or anything else at all can be present in the image. Generate a new character: ";
@@ -521,9 +583,9 @@ export const api = {
     // Add style prefix based on toggle state
     const stylePrefix = isRealistic ? "Realistic: " : "Realistic 3D anime stylized: ";
     
-    const fullPrompt = facialReferencePrefix + promptPrefix + stylePrefix + prompt;
+    const fullPrompt = promptPrefix + stylePrefix + prompt;
     
-    console.log(`🎨 [${clientRequestId}] Calling artist generator with enhanced prompt:`, fullPrompt);
+    console.log(`🎨 [${clientRequestId}] Calling Gemini with enhanced prompt:`, fullPrompt);
     console.log(`🔄 [${clientRequestId}] Using fixed reference image from /reference-frame.png`);
     
     try {
@@ -550,15 +612,6 @@ export const api = {
       }
       // Always send characterCount, default to 1 if not specified
       formData.append('characterCount', (characterCount || 1).toString());
-      
-      // Add facial reference if provided
-      if (facialReference) {
-        // Convert data URL to blob for facial reference
-        const facialResponse = await fetch(facialReference);
-        const facialBlob = await facialResponse.blob();
-        const facialFile = new File([facialBlob], 'facial-reference.jpg', { type: 'image/jpeg' });
-        formData.append('facialReference', facialFile);
-      }
       
       const apiResponse = await fetch(`${SUPABASE_URL}/functions/v1/generate-artist-image`, {
         method: 'POST',
