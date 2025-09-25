@@ -1,5 +1,10 @@
 import { corsHeaders } from '../_shared/cors.ts';
 import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') || 'https://afsyxzxwxszujnsmukff.supabase.co';
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
 console.log('Starting faceswap-image-v3 function');
 
@@ -11,6 +16,18 @@ function buildPrompt(userInput: string, backgroundHex?: string, characterCount?:
   const backgroundInstruction = backgroundHex ? ` Background color: Overall background colour should be (do not actually enter hex code text into the final result only the color of it): ${backgroundHex}.` : '';
   
   return `${userInput}. ${baseInstructions}${backgroundInstruction}${characterInstruction}${objectRestrictions}`;
+}
+
+// Helper to upload blobs to Supabase storage and return a public URL
+async function uploadToArtistImages(path: string, data: ArrayBuffer | Blob, contentType: string) {
+  const payload = data instanceof Blob ? await data.arrayBuffer() : data;
+  const { error } = await supabase.storage.from('artist-images').upload(path, payload, {
+    contentType,
+    upsert: true,
+  });
+  if (error) throw error;
+  const pub = supabase.storage.from('artist-images').getPublicUrl(path);
+  return pub.data.publicUrl;
 }
 
 // Generate image using Gemini Flash 2.5
@@ -141,23 +158,25 @@ Deno.serve(async (req: Request) => {
     // Stage 2: Face swap with MagicAPI using correct endpoint structure
     console.log(`🔄 [${requestId}] Stage 2: Applying face swap with MagicAPI...`);
 
-    // Convert images to base64 URLs for the API
-    const facialReferenceBuffer = new Uint8Array(await facialReference.arrayBuffer());
-    const facialReferenceBase64 = encodeBase64(facialReferenceBuffer);
-    const facialReferenceDataUrl = `data:${facialReference.type || 'image/jpeg'};base64,${facialReferenceBase64}`;
+    // Upload images to public storage and send URLs to MagicAPI (per docs)
+    const folder = `faceswap/${requestId}`;
+    const swapExt = (facialReference.type || 'image/jpeg').split('/')[1] || 'jpg';
+    const targetExt = (baseImageBlob.type || 'image/png').split('/')[1] || 'png';
+    const swapPath = `${folder}/swap.${swapExt}`;
+    const targetPath = `${folder}/target.${targetExt}`;
 
-    const baseImageDataUrl = `data:image/png;base64,${baseImageData}`;
+    const swapUrl = await uploadToArtistImages(swapPath, facialReference, facialReference.type || 'image/jpeg');
+    const targetUrl = await uploadToArtistImages(targetPath, baseImageBlob, baseImageBlob.type || 'image/png');
 
-    // Prepare JSON payload for MagicAPI
     const apiPayload = {
       input: {
-        swap_image: facialReferenceDataUrl,    // Face to swap from
-        target_image: baseImageDataUrl,        // Target image to swap to
-        enhance_image: true
+        swap_image: swapUrl,
+        target_image: targetUrl,
+        enhance_image: true,
       }
-    };
+    } as const;
 
-    console.log(`🌐 [${requestId}] Making request to MagicAPI /run endpoint...`);
+    console.log(`🌐 [${requestId}] Making request to MagicAPI /run endpoint...`, { swapUrl, targetUrl });
     
     // Call MagicAPI /run endpoint to start async processing
     const magicApiResponse = await fetch('https://prod.api.market/api/v1/magicapi/faceswap-image-v3/run', {
