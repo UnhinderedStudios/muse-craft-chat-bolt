@@ -55,7 +55,7 @@ serve(async (req) => {
       base64Image = btoa(binary);
       mimeType = imageResponse.headers.get('content-type') || "image/jpeg";
     }
-    const prompt = `Keep composition identical only modify the following thing: ${modification}`;
+    const prompt = `Keep composition identical and preserve character, only modify the following thing: ${modification}`;
 
     const requestBody = {
       contents: [{
