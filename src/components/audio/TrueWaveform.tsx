@@ -74,6 +74,11 @@ export const TrueWaveform: React.FC<TrueWaveformProps> = ({
       if (!src) return;
 
       try {
+        // Skip CORS fetch for known non-CORS hosts
+        if (src.includes('soundjay.com')) {
+          return; // Use fallback template
+        }
+        
         // Fetch & decode
         const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
         const res = await fetch(src, { mode: "cors", cache: "force-cache" });

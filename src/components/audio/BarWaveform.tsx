@@ -67,7 +67,12 @@ export default function BarWaveform({
       if (!audio || !srcKey) return;
 
       try {
-        // Fetch and decode (requires audio tag to have crossOrigin="anonymous")
+        // Skip CORS fetch for known non-CORS hosts
+        if (srcKey.includes('soundjay.com')) {
+          return; // Leave peaks null for placeholder
+        }
+        
+        // Fetch and decode
         const res = await fetch(srcKey, { mode: "cors", credentials: "omit" });
         const buf = await res.arrayBuffer();
         const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();

@@ -558,7 +558,9 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
         const ageOk = Date.now() - (g.startTime || 0) <= MAX_AGE_MS;
         // Only count tracks that belong to THIS specific job
         const jobTracks = aggregatedTracks.filter((t) => t.jobId === g.id).length;
-        console.log(`[ActiveGen Filter] Job ${g.id}: age=${ageOk}, tracks=${jobTracks}/2`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[ActiveGen Filter] Job ${g.id}: age=${ageOk}, tracks=${jobTracks}/2`);
+        }
         return ageOk && jobTracks < 2;
       });
 
@@ -572,7 +574,9 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
       const ageOk = Date.now() - (g.startTime || 0) <= MAX_AGE_MS;
       // Only count tracks that belong to THIS specific job
       const jobTracks = (current.tracks || []).filter((t) => t.jobId === g.id).length;
-      console.log(`[ActiveGen Filter] Job ${g.id}: age=${ageOk}, tracks=${jobTracks}/2`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[ActiveGen Filter] Job ${g.id}: age=${ageOk}, tracks=${jobTracks}/2`);
+      }
       return ageOk && jobTracks < 2;
     });
 

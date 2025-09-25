@@ -1161,17 +1161,16 @@ export default function TrackListPanel({
               {/* Hidden audio element per track */}
                <audio
                  src={t.url}
-                 preload="auto"
+                 preload="metadata"
                  autoPlay={false}
                  muted={false}
                  className="hidden"
-                 crossOrigin="anonymous"
                   ref={(el) => { 
                     if (el) {
                       audioRefs.current[actualIndex] = el;
                       // CRITICAL: Ensure no auto-play when element is created
                       el.autoplay = false;
-                      console.log(`[AUDIO DEBUG] Created audio element at index ${actualIndex}, autoplay disabled`);
+                      // Audio element created silently
                     }
                   }}
                   onTimeUpdate={(e) => {

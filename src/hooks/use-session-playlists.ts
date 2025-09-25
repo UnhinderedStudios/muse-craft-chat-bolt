@@ -373,11 +373,13 @@ export function useSessionPlaylists() {
     savePlaylists(updatedPlaylists);
   }, [playlists, savePlaylists]);
 
-  // Debug helper - logs current sessionStorage state
+  // Debug helper - logs current sessionStorage state (development only)
   const debugSessionStorage = useCallback(() => {
-    const stored = sessionStorage.getItem(STORAGE_KEY);
-    console.log('🔍 Current sessionStorage state:', stored ? JSON.parse(stored) : 'null');
-    console.log('🔍 Current playlists state:', playlists);
+    if (process.env.NODE_ENV === 'development') {
+      const stored = sessionStorage.getItem(STORAGE_KEY);
+      console.log('🔍 Current sessionStorage state:', stored ? JSON.parse(stored) : 'null');
+      console.log('🔍 Current playlists state:', playlists);
+    }
   }, [playlists]);
 
   return {
