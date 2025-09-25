@@ -155,12 +155,12 @@ Deno.serve(async (req: Request) => {
 
     console.log(`🌐 [${requestId}] Sending request to MagicAPI Face Swap v3...`);
     
-    // Call MagicAPI Face Swap v3 with correct headers
-    const magicApiResponse = await fetch('https://api.market/store/magicapi/faceswap-image-v3', {
+    // Call MagicAPI Face Swap v3 with correct headers and endpoint
+    const magicApiResponse = await fetch('https://magicapi.dev/api/v1/capix/faceswap/', {
       method: 'POST',
       headers: {
         'X-RapidAPI-Key': magicApiKey,
-        'X-RapidAPI-Host': 'api.market'
+        'X-RapidAPI-Host': 'magicapi.dev'
       },
       body: magicApiFormData
     });
