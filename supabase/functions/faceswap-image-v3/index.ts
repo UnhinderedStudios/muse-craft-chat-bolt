@@ -31,7 +31,7 @@ async function uploadToArtistImages(path: string, data: ArrayBuffer | Blob, cont
 }
 
 // Generate image using Gemini Flash 2.5
-async function generateBaseImageWithGemini(prompt: string, backgroundHex?: string, characterCount?: number, requestId?: string): Promise<string> {
+async function generateBaseImageWithGemini(prompt: string, backgroundHex?: string, characterCount?: number, stagingImageBase64?: string, stagingImageMimeType?: string, requestId?: string): Promise<string> {
   const geminiKey = Deno.env.get('GEMINI_API_KEY');
   if (!geminiKey) {
     throw new Error('GEMINI_API_KEY not found in environment');
@@ -40,12 +40,29 @@ async function generateBaseImageWithGemini(prompt: string, backgroundHex?: strin
   const fullPrompt = buildPrompt(prompt, backgroundHex, characterCount);
   console.log(`🎨 [${requestId}] Generating base image with Gemini: "${fullPrompt}"`);
 
+  // Build parts array - include staging image if provided
+  const parts: any[] = [];
+  
+  if (stagingImageBase64 && stagingImageMimeType) {
+    parts.push({
+      inline_data: {
+        mime_type: stagingImageMimeType,
+        data: stagingImageBase64
+      }
+    });
+    console.log(`📸 [${requestId}] Including staging reference image in Gemini request`);
+  }
+  
+  parts.push({
+    text: fullPrompt
+  });
+
+  console.log(`🔍 [${requestId}] Gemini request parts count: ${parts.length} (staging image: ${!!stagingImageBase64})`);
+
   const requestBody = {
     contents: [{
       role: "user",
-      parts: [{
-        text: fullPrompt
-      }]
+      parts
     }],
     generationConfig: {
       temperature: 0.7,
@@ -120,13 +137,16 @@ Deno.serve(async (req: Request) => {
     const prompt = formData.get('prompt') as string;
     const backgroundHex = formData.get('backgroundHex') as string;
     const characterCount = formData.get('characterCount') as string;
-    const facialReference = formData.get('facialReference') as File; // This is the source image (face to swap)
+    const stagingImage = formData.get('image') as File; // Staging reference image for Gemini
+    const facialReference = formData.get('facialReference') as File; // Face image for MagicAPI swap
     const requestId = `faceswap_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     console.log(`📋 [${requestId}] Request parameters:`, {
       prompt,
       backgroundHex,
       characterCount,
+      hasStagingImage: !!stagingImage,
+      stagingImageType: stagingImage?.type,
       hasFacialReference: !!facialReference,
       facialReferenceType: facialReference?.type
     });
@@ -135,16 +155,31 @@ Deno.serve(async (req: Request) => {
       throw new Error('No prompt provided for image generation');
     }
 
+    if (!stagingImage) {
+      throw new Error('No staging reference image provided');
+    }
+
     if (!facialReference) {
       throw new Error('No facial reference provided for face swap');
     }
 
-    // Stage 1: Generate base image with Gemini
+    // Stage 1: Generate base image with Gemini using staging reference
     console.log(`🎨 [${requestId}] Stage 1: Generating base image with Gemini...`);
+    
+    // Convert staging image to base64 for Gemini
+    const stagingImageBuffer = new Uint8Array(await stagingImage.arrayBuffer());
+    const stagingImageBase64 = encodeBase64(stagingImageBuffer);
+    const stagingImageMimeType = stagingImage.type || 'image/jpeg';
+    
+    console.log(`📸 [${requestId}] Staging image prepared: ${stagingImageMimeType}, ${stagingImageBase64.length} chars base64`);
+    console.log(`🚫 [${requestId}] IMPORTANT: Facial reference is NOT being sent to Gemini - only staging image`);
+    
     const baseImageData = await generateBaseImageWithGemini(
       prompt, 
       backgroundHex, 
       parseInt(characterCount) || 1,
+      stagingImageBase64,
+      stagingImageMimeType,
       requestId
     );
 
