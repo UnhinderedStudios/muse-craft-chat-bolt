@@ -579,9 +579,15 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   };
 
   const handleClothingClick = () => {
+    // Prevent multiple uploads - guard clause for clothing reference
+    if (clothingReferenceImage) {
+      return;
+    }
+    
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/jpeg,image/png,image/webp';
+    input.multiple = false; // Explicitly prevent multiple file selection
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
@@ -592,6 +598,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   };
 
   const handleClothingReferenceUpload = async (file: File) => {
+    // Double protection - prevent upload if clothing reference already exists
+    if (clothingReferenceImage) {
+      return;
+    }
+    
     console.log('🎽 Starting clothing analysis for:', file.name);
     setIsAnalyzingClothing(true);
 

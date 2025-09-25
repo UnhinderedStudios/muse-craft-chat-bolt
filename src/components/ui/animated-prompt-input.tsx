@@ -239,8 +239,13 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
               <button
                 onClick={onClothingClick}
                 disabled={isAnalyzingFace || isAnalyzingClothing || !!clothingReferenceImage}
-                className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white/10"
+                className={cn(
+                  "w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200",
+                  "disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white/10",
+                  !!clothingReferenceImage && "opacity-30 cursor-not-allowed"
+                )}
                 type="button"
+                title={clothingReferenceImage ? "Remove current clothing reference to upload new one" : "Upload clothing reference"}
               >
                 <Shirt size={12} className="text-white/60" />
               </button>
