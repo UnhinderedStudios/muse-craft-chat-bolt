@@ -144,60 +144,114 @@ Deno.serve(async (req: Request) => {
     // Stage 2: Face swap with MagicAPI
     console.log(`🔄 [${requestId}] Stage 2: Applying face swap with MagicAPI...`);
 
-    // Prepare FormData for MagicAPI Face Swap v3
+    // Prepare FormData with apiPath for async prediction
     const magicApiFormData = new FormData();
-    
-    // source_image: The face to extract (facial reference image)
+    magicApiFormData.append('apiPath', '/magicapi/faceswap-capix');
     magicApiFormData.append('source_image', facialReference);
-    
-    // target_image: The generated base image from Gemini
-    magicApiFormData.append('target_image', baseImageBlob);
+    magicApiFormData.append('target_image', new File([baseImageBlob], 'target.jpg', { type: 'image/jpeg' }));
 
-    console.log(`🌐 [${requestId}] Sending request to MagicAPI Face Swap v3...`);
+    console.log(`🌐 [${requestId}] Starting async prediction with API.Market...`);
     
-    // Convert baseImageBlob to File with proper filename
-    const targetFile = new File([baseImageBlob], 'target.jpg', { type: 'image/jpeg' });
-    magicApiFormData.set('target_image', targetFile);
-    
-    // Call MagicAPI Face Swap v3 with correct API endpoint
-    const magicApiResponse = await fetch('https://prod.api.market/api/v1/magicapi/faceswap-capix', {
+    // Call API.Market to start the async prediction
+    const predictionResponse = await fetch('https://prod.api.market/api/v1/predictions', {
       method: 'POST',
       headers: {
         'X-API-Key': magicApiKey,
-        'X-RapidAPI-Key': magicApiKey,
-        'Accept': 'image/*,application/json'
       },
       body: magicApiFormData
     });
 
-    if (!magicApiResponse.ok) {
-      const responseHeaders = Object.fromEntries(magicApiResponse.headers.entries());
-      const responseText = await magicApiResponse.text();
-      const bodySnippet = responseText.substring(0, 500);
+    if (!predictionResponse.ok) {
+      const responseHeaders = Object.fromEntries(predictionResponse.headers.entries());
+      const responseText = await predictionResponse.text();
       
-      console.error(`❌ [${requestId}] MagicAPI error:`, { 
-        status: magicApiResponse.status, 
-        statusText: magicApiResponse.statusText,
+      console.error(`❌ [${requestId}] Prediction start error:`, { 
+        status: predictionResponse.status, 
+        statusText: predictionResponse.statusText,
         headers: responseHeaders,
-        bodySnippet: bodySnippet
+        body: responseText
       });
       
-      // Try to parse JSON error if response is JSON
-      let errorMessage = `MagicAPI request failed: ${magicApiResponse.status} ${magicApiResponse.statusText}`;
-      try {
-        const errorJson = JSON.parse(responseText);
-        if (errorJson.message || errorJson.error) {
-          errorMessage += ` - ${errorJson.message || errorJson.error}`;
-        }
-      } catch {
-        // Not JSON, use status text
-      }
-      
-      throw new Error(errorMessage);
+      throw new Error(`Failed to start prediction: ${predictionResponse.status} ${predictionResponse.statusText}`);
     }
 
-    // Get the response - MagicAPI returns the processed image directly
-    const resultBlob = await magicApiResponse.blob();
+    const predictionData = await predictionResponse.json();
+    const predictionId = predictionData.id;
+    
+    if (!predictionId) {
+      console.error(`❌ [${requestId}] No prediction ID in response:`, predictionData);
+      throw new Error('No prediction ID returned from API.Market');
+    }
+
+    console.log(`📋 [${requestId}] Prediction created with ID: ${predictionId}`);
+    console.log(`🔄 [${requestId}] Starting polling for prediction status...`);
+
+    // Poll for prediction completion
+    const maxAttempts = 30; // 5 minutes max
+    const pollInterval = 5000; // 5 seconds
+    let attempts = 0;
+    let resultBlob: Blob | null = null;
+
+    while (attempts < maxAttempts) {
+      attempts++;
+      
+      console.log(`🔍 [${requestId}] Checking prediction status for ID: ${predictionId}... (attempt ${attempts}/${maxAttempts})`);
+      
+      const statusResponse = await fetch(`https://prod.api.market/api/v1/predictions/${predictionId}`, {
+        headers: {
+          'X-API-Key': magicApiKey,
+        }
+      });
+
+      if (!statusResponse.ok) {
+        console.error(`❌ [${requestId}] Status check failed:`, statusResponse.status, statusResponse.statusText);
+        throw new Error(`Failed to check prediction status: ${statusResponse.status}`);
+      }
+
+      const statusData = await statusResponse.json();
+      console.log(`📊 [${requestId}] Prediction status: ${statusData.status}`);
+
+      if (statusData.status === 'succeeded') {
+        // Get the final result
+        if (statusData.output) {
+          // If output is a URL, fetch the image
+          if (typeof statusData.output === 'string' && statusData.output.startsWith('http')) {
+            const imageResponse = await fetch(statusData.output);
+            if (!imageResponse.ok) {
+              throw new Error(`Failed to fetch result image: ${imageResponse.status}`);
+            }
+            resultBlob = await imageResponse.blob();
+          } else if (statusData.output instanceof Blob) {
+            resultBlob = statusData.output;
+          } else {
+            throw new Error('Unknown output format from prediction');
+          }
+        } else {
+          throw new Error('No output in completed prediction');
+        }
+        
+        console.log(`✅ [${requestId}] Prediction completed successfully`);
+        break;
+      } else if (statusData.status === 'failed') {
+        console.error(`❌ [${requestId}] Prediction failed:`, statusData.error || 'Unknown error');
+        throw new Error(`Prediction failed: ${statusData.error || 'Unknown error'}`);
+      } else if (statusData.status === 'canceled') {
+        throw new Error('Prediction was canceled');
+      }
+
+      // Wait before next poll (IN_QUEUE, IN_PROGRESS, etc.)
+      if (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, pollInterval));
+      }
+    }
+
+    if (attempts >= maxAttempts) {
+      throw new Error('Prediction timed out after 5 minutes');
+    }
+
+    if (!resultBlob) {
+      throw new Error('No result blob obtained from prediction');
+    }
     
     console.log(`✅ [${requestId}] MagicAPI response received:`, {
       type: resultBlob.type,
