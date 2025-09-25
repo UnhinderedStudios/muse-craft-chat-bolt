@@ -499,14 +499,64 @@ export const api = {
     return { coverIds, coverUrls };
   },
 
-  // Generate artist images using MagicAPI Face Swap v3 when facial reference is provided, otherwise use Gemini
-  async generateArtistImages(prompt: string, backgroundHex?: string, characterCount?: number, isRealistic?: boolean, facialReference?: string): Promise<{ images: string[]; enhancedPrompt?: string; debug?: any }> {
+  // Generate artist images with optional Face Swap on a locked image
+  async generateArtistImages(
+    prompt: string,
+    backgroundHex?: string,
+    characterCount?: number,
+    isRealistic?: boolean,
+    facialReference?: string,
+    lockedImage?: string
+  ): Promise<{ images: string[]; enhancedPrompt?: string; debug?: any }> {
     // Generate client-side request ID for tracking
     const clientRequestId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    // If facial reference is provided, use MagicAPI Face Swap v3
+
+    // PRIORITY: Direct face swap on locked image (no Gemini generation)
+    if (facialReference && lockedImage) {
+      console.log(`🔒👤 [${clientRequestId}] Direct face swap on locked image`);
+      try {
+        // Convert locked image URL/data to File
+        const targetResp = await fetch(lockedImage);
+        if (!targetResp.ok) throw new Error('Failed to load locked image');
+        const targetBlob = await targetResp.blob();
+        const targetFile = new File([targetBlob], 'locked-target.jpg', { type: targetBlob.type || 'image/jpeg' });
+
+        // Convert facial reference data URL to file
+        const facialResp = await fetch(facialReference);
+        const facialBlob = await facialResp.blob();
+        const facialFile = new File([facialBlob], 'facial-reference.jpg', { type: 'image/jpeg' });
+
+        const formData = new FormData();
+        formData.append('targetImage', targetFile);
+        formData.append('facialReference', facialFile);
+
+        const apiResponse = await fetch(`${SUPABASE_URL}/functions/v1/direct-faceswap`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
+            'apikey': SUPABASE_PUBLISHABLE_KEY,
+          },
+          body: formData
+        });
+
+        if (!apiResponse.ok) {
+          const errorData = await apiResponse.json().catch(() => ({}));
+          console.error(`❌ [${clientRequestId}] Direct face swap failed:`, apiResponse.status, errorData);
+          throw new Error(errorData.error || `Direct face swap failed (${apiResponse.status})`);
+        }
+
+        const data = await apiResponse.json();
+        console.log(`✅ [${clientRequestId}] Direct face swap successful`, data);
+        return { images: data.images || [], enhancedPrompt: data.enhancedPrompt, debug: data.debug };
+      } catch (error) {
+        console.error(`❌ [${clientRequestId}] Error in direct face swap:`, error);
+        throw error;
+      }
+    }
+
+    // If facial reference is provided (but no locked image), use two-stage Face Swap v3
     if (facialReference) {
-      console.log(`🔄 [${clientRequestId}] Using MagicAPI Face Swap v3 for face swap`);
+      console.log(`🔄 [${clientRequestId}] Using MagicAPI Face Swap v3 (two-stage)`);
       
       try {
         // Load the fixed reference image
@@ -531,8 +581,12 @@ export const api = {
         
         // Use FormData for face swap
         const formData = new FormData();
-        formData.append('prompt', prompt);
-        formData.append('image', referenceFile); // target image
+        // Default safety prompt if none provided (API requires a prompt)
+        const safePrompt = (prompt && prompt.trim().length > 0)
+          ? prompt
+          : 'Generate a clean artist portrait matching the composition. Swap the face to the uploaded person only. No props.';
+        formData.append('prompt', safePrompt);
+        formData.append('image', referenceFile); // staging image
         formData.append('facialReference', facialFile); // source image for face
         if (backgroundHex) {
           formData.append('backgroundHex', backgroundHex);

@@ -218,6 +218,77 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   };
 
   const handleGenerate = async () => {
+    // PRIORITY: Face swap mode (locked image + facial reference) → swap directly, ignore prompt
+    if (isLocked && facialReferenceImage && images.length > 0) {
+      const clientReqId = `ui_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+      console.log(`🔒👤 [${clientReqId}] Face swap mode active - swapping on locked image`);
+
+      try {
+        setLoading(true);
+        setOriginalPrompt(prompt);
+        setSanitizedPrompt("Face swap in progress");
+        setIsAnimating(true);
+
+        const targetImageUrl = images[selectedIndex];
+        if (!targetImageUrl) {
+          toast({ title: "No target image", description: "Select an image to face swap.", variant: "destructive" });
+          return;
+        }
+
+        // Use a safe default prompt if user input is disabled/empty (server may require it in two-stage flows)
+        const safePrompt = prompt?.trim() || "Clean artist portrait. Swap the face to the uploaded person only. No props.";
+
+        const result = await api.generateArtistImages(
+          safePrompt,
+          isColorApplied && selectedColor ? selectedColor : undefined,
+          artistCount[0],
+          isRealistic,
+          facialReferenceImage,
+          targetImageUrl
+        );
+
+        console.log(`🖼️ [${clientReqId}] Face swap response:`, {
+          imageCount: result.images?.length || 0,
+          hasEnhancedPrompt: !!result.enhancedPrompt,
+          debug: result.debug
+        });
+
+        if (!result.images || result.images.length === 0) {
+          setIsAnimating(false);
+          setSanitizedPrompt("");
+          toast({ title: "No images returned", description: "Face swap did not return an image.", variant: "destructive" });
+          return;
+        }
+
+        setIsAnimating(false);
+        setSanitizedPrompt("");
+
+        const updatedImages = [...result.images, ...images];
+        setImages(updatedImages);
+
+        const newPrompts = Array(result.images.length).fill("[Face swap]");
+        setImagePrompts([...newPrompts, ...imagePrompts]);
+
+        if (track && currentSession) {
+          const updatedTracks = (currentSession.tracks || []).map(t =>
+            t.id === track.id ? { ...t, generatedCovers: updatedImages } : t
+          );
+          updateSession(currentSession.id, { tracks: updatedTracks });
+        }
+
+        setSelectedIndex(0);
+        toast({ title: "Face swapped", description: `${result.images.length} image${result.images.length > 1 ? 's' : ''} added` });
+      } catch (e: any) {
+        console.error('❌ Face swap error:', e);
+        setIsAnimating(false);
+        setSanitizedPrompt("");
+        toast({ title: "Face swap failed", description: e?.message || "Please try again.", variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     // If locked and there's a prompt, modify the locked image instead
     if (isLocked && prompt.trim()) {
       await handleModifyLockedImage();
