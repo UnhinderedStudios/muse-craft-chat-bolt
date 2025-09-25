@@ -142,12 +142,11 @@ Deno.serve(async (req: Request) => {
     console.log(`🔄 [${requestId}] Stage 2: Applying face swap with MagicAPI...`);
 
     // Convert images to base64 URLs for the API
-    const facialReferenceArrayBuffer = await facialReference.arrayBuffer();
-    const facialReferenceBase64 = btoa(String.fromCharCode(...new Uint8Array(facialReferenceArrayBuffer)));
-    const facialReferenceDataUrl = `data:${facialReference.type};base64,${facialReferenceBase64}`;
+    const facialReferenceBuffer = new Uint8Array(await facialReference.arrayBuffer());
+    const facialReferenceBase64 = encodeBase64(facialReferenceBuffer);
+    const facialReferenceDataUrl = `data:${facialReference.type || 'image/jpeg'};base64,${facialReferenceBase64}`;
 
-    const baseImageBase64 = baseImageData; // Already base64
-    const baseImageDataUrl = `data:image/jpeg;base64,${baseImageBase64}`;
+    const baseImageDataUrl = `data:image/png;base64,${baseImageData}`;
 
     // Prepare JSON payload for MagicAPI
     const apiPayload = {
@@ -265,7 +264,7 @@ Deno.serve(async (req: Request) => {
     // Convert blob to base64 for consistent response format
     const arrayBuffer = await resultBlob.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
-    const base64String = btoa(String.fromCharCode(...uint8Array));
+    const base64String = encodeBase64(uint8Array);
     const base64Image = `data:${resultBlob.type || 'image/jpeg'};base64,${base64String}`;
 
     const response = {
