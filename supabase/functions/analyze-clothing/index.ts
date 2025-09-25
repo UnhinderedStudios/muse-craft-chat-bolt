@@ -93,7 +93,7 @@ serve(async (req) => {
 }
 
 Validation criteria:
-1. hasClothing: Must contain at least one clothing item (shirts, pants, dresses, jackets, etc.)
+1. hasClothing: Must contain at least one clothing item (shirts, pants, dresses, jackets, shoes, hats, clothing accessories, watches, wearable jewelry, bags, belts and all other items that are generally considered a wearable clothing item)
 2. clothingCount: Count of prominent clothing items (1 is ideal, 2+ may be acceptable if one is clearly primary)
 3. isClothingClear: The clothing item must be clear, well-lit, and in focus (not blurry or obscured)
 4. primaryClothingType: Name the main clothing item (e.g., "t-shirt", "dress", "jacket")
@@ -103,7 +103,6 @@ Reject if:
 - No clothing items visible
 - Image is too blurry/unclear to see clothing details
 - Multiple unrelated clothing items without a clear primary focus
-- Image shows accessories only (jewelry, bags, shoes without clothing)
 - Image shows people wearing clothes but clothes aren't the focus
 
 RESPOND ONLY WITH THE JSON OBJECT, NO OTHER TEXT.`;
