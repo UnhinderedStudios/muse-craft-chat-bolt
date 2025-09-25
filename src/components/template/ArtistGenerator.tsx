@@ -571,10 +571,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                           <button
                             key={idx}
                              className={cn(
-                               "w-20 h-20 rounded-lg overflow-hidden border transition-all relative",
-                               isActive ? "border-accent-primary ring-2 ring-accent-primary/40" : "border-white/10 hover:border-white/20",
-                               isLocked && "opacity-50 cursor-not-allowed"
-                             )}
+                                "w-20 h-20 rounded-lg overflow-hidden border transition-all relative",
+                                isActive && isLocked ? "border-red-400 ring-2 ring-red-400/40" :
+                                isActive ? "border-accent-primary ring-2 ring-accent-primary/40" : "border-white/10 hover:border-white/20",
+                                isLocked && "opacity-50 cursor-not-allowed"
+                              )}
                              onClick={() => {
                                if (!isPlaceholder && imageIndexInImages >= 0) {
                                  setSelectedIndex(imageIndexInImages);
