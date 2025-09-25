@@ -4,11 +4,8 @@ import { corsHeaders } from "../_shared/cors.ts";
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
 
-// Generate unique request ID for logging
-const generateRequestId = () => `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
 serve(async (req) => {
-  const requestId = generateRequestId();
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   console.log(`🔍 [${requestId}] Starting clothing analysis request`);
 
   // Handle CORS preflight requests
@@ -51,7 +48,7 @@ serve(async (req) => {
     });
 
     // Validate file size (max 20MB)
-    const maxSize = 20 * 1024 * 1024; // 20MB
+    const maxSize = 20 * 1024 * 1024;
     if (imageFile.size > maxSize) {
       console.error(`❌ [${requestId}] File too large: ${imageFile.size} bytes`);
       return new Response(
