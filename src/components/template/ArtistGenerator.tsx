@@ -621,7 +621,10 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
                   {/* Large Preview (right) */}
                   <div
-                    className="rounded-xl overflow-hidden border border-white/10 flex items-center justify-center relative"
+                    className={cn(
+                      "rounded-xl overflow-hidden border flex items-center justify-center relative transition-colors duration-200",
+                      isLocked ? "border-red-400" : "border-white/10"
+                    )}
                     style={{ width: "min(520px, 60vh)", height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
                   >
                      {!loading && images[selectedIndex] ? (
