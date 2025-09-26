@@ -121,7 +121,7 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
     <div className={cn("relative w-full h-full rounded-lg bg-black/40 border border-white/10", className)}>
       <div className="flex flex-col h-full">
         {/* Top: scrollable input area */}
-        <div className="flex-1 min-h-0 p-3 relative">
+        <div className="flex-1 min-h-0 px-3 pt-3 pb-0 relative">
           <div className={cn("relative", (isAnalyzingFace || isAnalyzingClothing) && "blur-3xl")}> 
             <textarea
               ref={textareaRef}
@@ -134,7 +134,7 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
               placeholder={showAnimatedText ? "" : faceSwapMode ? faceSwapMessage : placeholder}
               disabled={isDisabledByAnalysis}
               className={cn(
-                "w-full h-full resize-none bg-transparent text-white text-sm leading-6 placeholder:text-white/40 pr-20 pb-2 focus:outline-none transition-colors duration-200 overflow-y-auto lyrics-scrollbar",
+                "w-full h-full resize-none bg-transparent text-white text-sm leading-6 placeholder:text-white/40 pr-20 focus:outline-none transition-colors duration-200 overflow-y-auto lyrics-scrollbar",
                 overScrollbar ? "cursor-default" : "cursor-text",
                 isDisabledByAnalysis && "cursor-default",
                 showAnimatedText && "opacity-80",
