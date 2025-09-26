@@ -161,23 +161,27 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
               )}
               {/* Main overlay */}
               <div className="absolute inset-0 flex items-center justify-center bg-black/80 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "border-2 border-white/30 border-t-white rounded-full animate-spin",
-                    isGenerating ? "w-10 h-10" : "w-8 h-8"
-                  )} 
-                       style={{ filter: "drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))" }} />
-                  <div className="flex flex-col items-start">
-                    <span className="text-white/80 text-sm font-medium">
-                      {isAnalyzingFace ? "Analyzing face..." : isAnalyzingClothing ? "Analyzing clothing..." : "Generating..."}
-                    </span>
-                    {isGenerating && (
-                      <span className="text-white/60 text-xs font-mono">
+                {isGenerating ? (
+                  /* Generation with timer in center of loader */
+                  <div className="relative flex items-center justify-center">
+                    <div className="w-12 h-12 border-2 border-white/30 border-t-white rounded-full animate-spin"
+                         style={{ filter: "drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))" }} />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-white/90 text-xs font-mono font-medium">
                         {String(Math.floor(generationTimer)).padStart(2, '0')}.{String(Math.floor((generationTimer % 1) * 10))}
                       </span>
-                    )}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  /* Face/Clothing analysis */
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin"
+                         style={{ filter: "drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))" }} />
+                    <span className="text-white/80 text-sm font-medium">
+                      {isAnalyzingFace ? "Analyzing face..." : "Analyzing clothing..."}
+                    </span>
+                  </div>
+                )}
               </div>
             </>
           )}
