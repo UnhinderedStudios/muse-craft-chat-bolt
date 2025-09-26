@@ -1087,7 +1087,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                 </aside>
 
                 {/* Footer: spans full width across all columns */}
-                <div className="w-full rounded-lg border border-white/10 px-4 py-2 lg:col-span-3 lg:row-start-3" style={{ backgroundColor: '#33343630' }}>
+                <div className="w-full rounded-lg border border-white/10 px-4 py-4 lg:col-span-3 lg:row-start-3" style={{ backgroundColor: '#33343630' }}>
                   <div className="text-xs text-white/60">Artist Image Generation</div>
                 </div>
               </div>
