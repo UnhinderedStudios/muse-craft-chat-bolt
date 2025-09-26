@@ -1015,7 +1015,10 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
                      {/* Background Color Section */}
                      <div>
-                       <div className="text-xs text-white/60 mb-2">Background Color</div>
+                       <div className={cn(
+                         "text-xs text-white/60 mb-2",
+                         isLocked && lockedModeTarget === 'input' && "opacity-30"
+                       )}>Background Color</div>
                         <div 
                           className={cn(
                             "w-full rounded-lg bg-black/20 border p-3 pb-1.5 transition-colors",
