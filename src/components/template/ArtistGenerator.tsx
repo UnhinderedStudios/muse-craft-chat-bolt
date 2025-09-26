@@ -123,6 +123,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   
   // Lock state
   const [isLocked, setIsLocked] = useState(false);
+  const [lockedModeTarget, setLockedModeTarget] = useState<'input' | 'background'>('input');
 
   // Face mode detection for regular (non-locked) mode with facial reference
   const isFaceModeActive = !isLocked && !!facialReferenceImage;
@@ -982,20 +983,26 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                          />
                     </div>
 
-                     {/* Background Color Section */}
-                     <div className={cn(
-                       "transition-opacity",
-                       isLocked && "opacity-30 pointer-events-none"
-                     )}>
-                       <div className="text-xs text-white/60 mb-2">Background Color</div>
-                      <div className="w-full rounded-lg bg-black/20 border border-white/10 p-3 pb-1.5">
+                      {/* Background Color Section */}
+                      <div className={cn(
+                        "transition-all duration-200",
+                        isLocked && lockedModeTarget === 'input' && "opacity-30 cursor-pointer hover:opacity-50",
+                        isLocked && lockedModeTarget === 'background' && "opacity-100"
+                      )}
+                      onClick={() => isLocked && lockedModeTarget === 'input' && setLockedModeTarget('background')}>
+                        <div className="text-xs text-white/60 mb-2">Background Color</div>
+                       <div className={cn(
+                         "w-full rounded-lg bg-black/20 border p-3 pb-1.5 transition-all duration-200",
+                         isLocked && lockedModeTarget === 'background' ? "border-red-400" : "border-white/10",
+                         isLocked && lockedModeTarget === 'input' && "hover:border-white/40"
+                       )}>
                         <div className="flex flex-col gap-1.5">
                           {/* Color Picker - Full Width */}
                           <div className="color-picker-compact w-full">
-                            <HexColorPicker
-                              color={selectedColor || "#ffffff"}
-                              onChange={setSelectedColor}
-                              style={{ width: '100%', height: '118px' }}
+                             <HexColorPicker
+                               color={selectedColor || "#ffffff"}
+                               onChange={setSelectedColor}
+                               style={{ width: '100%' }}
                             />
                           </div>
                           
