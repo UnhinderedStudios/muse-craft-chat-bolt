@@ -999,11 +999,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                              onClothingReferenceRemoved={handleClothingReferenceRemoved}
                              faceSwapMode={isLocked && !!facialReferenceImage}
                              faceSwapMessage="Face swap mode is activated. Prompt field is disabled"
-                             className={cn(
-                               "h-36",
-                               isLocked && lockedModeTarget === 'input' && "border-red-400",
-                               isLocked && lockedModeTarget === 'background' && "hover:border-white/40"
-                             )}
+                              className={cn(
+                                "h-36",
+                                isLocked && lockedModeTarget === 'input' && "border-white/20",
+                                isLocked && lockedModeTarget === 'background' && "hover:border-white/40"
+                              )}
                            />
                          </div>
                     </div>
@@ -1011,12 +1011,12 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                      {/* Background Color Section */}
                      <div>
                        <div className="text-xs text-white/60 mb-2">Background Color</div>
-                      <div 
-                        className={cn(
-                          "w-full rounded-lg bg-black/20 border p-3 pb-1.5 transition-colors",
-                          isLocked && lockedModeTarget === 'background' ? "border-red-400" : "border-white/10",
-                          isLocked && lockedModeTarget === 'input' && "cursor-pointer hover:border-white/40"
-                        )}
+                        <div 
+                          className={cn(
+                            "w-full rounded-lg bg-black/20 border p-3 pb-1.5 transition-colors",
+                            isLocked && lockedModeTarget === 'background' ? "border-white/20" : "border-white/10",
+                            isLocked && lockedModeTarget === 'input' && "cursor-pointer hover:border-white/40"
+                          )}
                         onClick={() => {
                           if (isLocked && lockedModeTarget === 'input') {
                             setLockedModeTarget('background');
