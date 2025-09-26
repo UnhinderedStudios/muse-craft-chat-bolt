@@ -1076,11 +1076,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                               onClothingReferenceRemoved={handleClothingReferenceRemoved}
                               faceSwapMode={isLocked && !!facialReferenceImage}
                               faceSwapMessage="Face swap mode is activated. Prompt field is disabled"
-                              isGenerating={loading}
-                              generationTimer={generationTimer}
-                              showGenerationClear={loading 66 isLocked 66 lockedModeTarget === 'background'}
-                             className={cn(
-                               "h-36",
+                               isGenerating={loading}
+                               generationTimer={generationTimer}
+                               showGenerationClear={loading && isLocked && lockedModeTarget === 'background'}
+                              className={cn(
+                                "h-36",
                                isLocked && lockedModeTarget === 'input' && "border-white/20",
                                isLocked && lockedModeTarget === 'background' && "hover:border-white/40"
                              )}
