@@ -1089,34 +1089,40 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
                      {/* Background Color Section */}
                      <div>
-                       <div className={cn(
-                         "text-xs text-white/60 mb-2 transition-opacity duration-200 ease-out",
-                         isLocked && lockedModeTarget === 'input' && "opacity-30"
-                       )}>Background Color</div>
-                        <div 
-                          className={cn(
-                            "w-full rounded-lg bg-black/20 border p-3 pb-1.5 transition-colors",
-                            isLocked && lockedModeTarget === 'background' ? "border-white/20" : "border-white/10",
-                            isLocked && lockedModeTarget === 'input' && "cursor-pointer hover:border-white/40"
-                          )}
-                        onClick={() => {
-                          if (isLocked && lockedModeTarget === 'input') {
-                            setLockedModeTarget('background');
-                          }
-                        }}
-                      >
-                         <div className={cn(
-                           "relative transition-all duration-200 ease-out",
-                           isLocked && lockedModeTarget === 'input' && "pointer-events-none opacity-30"
-                         )}>
+                        <div className={cn(
+                          "text-xs text-white/60 mb-2 transition-opacity duration-200 ease-out",
+                          (isLocked && lockedModeTarget === 'input') || loading ? "opacity-30" : ""
+                        )}>Background Color</div>
+                         <div 
+                           className={cn(
+                             "w-full rounded-lg bg-black/20 border p-3 pb-1.5 transition-colors",
+                             isLocked && lockedModeTarget === 'background' ? "border-white/20" : "border-white/10",
+                             (isLocked && lockedModeTarget === 'input') || loading ? "cursor-pointer hover:border-white/40" : "",
+                             loading ? "opacity-50 pointer-events-none" : ""
+                           )}
+                         onClick={() => {
+                           if (!loading && isLocked && lockedModeTarget === 'input') {
+                             setLockedModeTarget('background');
+                           }
+                         }}
+                       >
+                          <div className={cn(
+                            "relative transition-all duration-200 ease-out",
+                            (isLocked && lockedModeTarget === 'input') || loading ? "pointer-events-none opacity-30" : ""
+                          )}>
                         <div className="flex flex-col gap-1.5">
                           {/* Color Picker - Full Width */}
                           <div className="color-picker-compact w-full">
-                            <HexColorPicker
-                              color={selectedColor || "#ffffff"}
-                              onChange={setSelectedColor}
-                              style={{ width: '100%', height: '118px' }}
-                            />
+                             <HexColorPicker
+                               color={selectedColor || "#ffffff"}
+                               onChange={loading ? () => {} : setSelectedColor}
+                               style={{ 
+                                 width: '100%', 
+                                 height: '118px',
+                                 pointerEvents: loading ? 'none' : 'auto',
+                                 opacity: loading ? 0.5 : 1
+                               }}
+                             />
                           </div>
                           
                            {/* Color Controls - Below picker */}
@@ -1131,30 +1137,33 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                               )}
                             </div>
                             <div className="flex items-center gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleColorRandomize}
-                                className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0"
-                              >
-                                <Dices className="w-3 h-3" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleColorPicker}
-                                className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0"
-                              >
-                                <Pipette className="w-3 h-3" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleColorReset}
-                                className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0"
-                              >
-                                <RotateCcw className="w-3 h-3" />
-                              </Button>
+                               <Button
+                                 variant="outline"
+                                 size="sm"
+                                 onClick={handleColorRandomize}
+                                 disabled={loading}
+                                 className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0 disabled:opacity-30 disabled:cursor-not-allowed"
+                               >
+                                 <Dices className="w-3 h-3" />
+                               </Button>
+                               <Button
+                                 variant="outline"
+                                 size="sm"
+                                 onClick={handleColorPicker}
+                                 disabled={loading}
+                                 className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0 disabled:opacity-30 disabled:cursor-not-allowed"
+                               >
+                                 <Pipette className="w-3 h-3" />
+                               </Button>
+                               <Button
+                                 variant="outline"
+                                 size="sm"
+                                 onClick={handleColorReset}
+                                 disabled={loading}
+                                 className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0 disabled:opacity-30 disabled:cursor-not-allowed"
+                               >
+                                 <RotateCcw className="w-3 h-3" />
+                               </Button>
                             </div>
                           </div>
                          </div>
@@ -1163,10 +1172,10 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                      </div>
 
                    {/* Settings container */}
-                  <div className={cn(
-                    "mt-1.5 mb-1.5 transition-opacity",
-                    isLocked && "opacity-30 pointer-events-none"
-                  )}>
+                   <div className={cn(
+                     "mt-1.5 mb-1.5 transition-opacity",
+                     (isLocked || loading) && "opacity-30 pointer-events-none"
+                   )}>
                     <div className="text-xs text-white/60 mb-1.5">Settings</div>
                     <div className="w-full rounded-lg bg-black/20 border border-white/10 p-2.5">
                       <div className="flex items-center gap-3">
