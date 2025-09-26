@@ -23,6 +23,8 @@ interface AnimatedPromptInputProps {
   onClothingReferenceRemoved?: () => void;
   faceSwapMode?: boolean;
   faceSwapMessage?: string;
+  isGenerating?: boolean;
+  generationTimer?: number;
 }
 
 export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
@@ -45,7 +47,9 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
   isAnalyzingClothing = false,
   onClothingReferenceRemoved,
   faceSwapMode = false,
-  faceSwapMessage = ""
+  faceSwapMessage = "",
+  isGenerating = false,
+  generationTimer = 0
 }) => {
   const [showAnimatedText, setShowAnimatedText] = useState(false);
   const [isUserEditing, setIsUserEditing] = useState(false);
@@ -115,14 +119,14 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
 
   const handleMouseLeave = () => setOverScrollbar(false);
   
-  const isDisabledByAnalysis = disabled || isAnalyzingFace || isAnalyzingClothing || faceSwapMode;
+  const isDisabledByAnalysis = disabled || isAnalyzingFace || isAnalyzingClothing || faceSwapMode || isGenerating;
   
   return (
     <div className={cn("relative w-full h-full rounded-lg bg-black/40 border border-white/10", className)}>
       <div className="flex flex-col h-full">
         {/* Top: scrollable input area */}
         <div className="flex-1 min-h-0 px-3 pt-3 pb-2 relative">
-          <div className={cn("relative h-full", (isAnalyzingFace || isAnalyzingClothing) && "blur-3xl")}> 
+          <div className={cn("relative h-full", (isAnalyzingFace || isAnalyzingClothing || isGenerating) && "blur-3xl")}> 
             <textarea
               ref={textareaRef}
               value={showAnimatedText ? animatedText : value}
@@ -138,29 +142,41 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
                 overScrollbar ? "cursor-default" : "cursor-text",
                 isDisabledByAnalysis && "cursor-default",
                 showAnimatedText && "opacity-80",
-                (isAnalyzingFace || isAnalyzingClothing) && "opacity-20",
+                (isAnalyzingFace || isAnalyzingClothing || isGenerating) && "opacity-20",
                 faceSwapMode && "opacity-50 bg-white/5"
               )}
             />
           </div>
-          {(isAnalyzingFace || isAnalyzingClothing) && (
+          {(isAnalyzingFace || isAnalyzingClothing || isGenerating) && (
             <>
-              {/* Scanning beam animation */}
-              <div className="absolute inset-0 overflow-hidden rounded-lg pointer-events-none">
-                <div className="absolute top-0 left-0 w-16 h-full animate-scan" 
-                     style={{
-                       background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
-                       boxShadow: '0 0 20px rgba(255,255,255,0.3)'
-                     }} />
-              </div>
+              {/* Scanning beam animation - only for analysis, not generation */}
+              {(isAnalyzingFace || isAnalyzingClothing) && (
+                <div className="absolute inset-0 overflow-hidden rounded-lg pointer-events-none">
+                  <div className="absolute top-0 left-0 w-16 h-full animate-scan" 
+                       style={{
+                         background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+                         boxShadow: '0 0 20px rgba(255,255,255,0.3)'
+                       }} />
+                </div>
+              )}
               {/* Main overlay */}
               <div className="absolute inset-0 flex items-center justify-center bg-black/80 rounded-lg">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" 
+                  <div className={cn(
+                    "border-2 border-white/30 border-t-white rounded-full animate-spin",
+                    isGenerating ? "w-10 h-10" : "w-8 h-8"
+                  )} 
                        style={{ filter: "drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))" }} />
-                  <span className="text-white/80 text-sm font-medium">
-                    {isAnalyzingFace ? "Analyzing face..." : "Analyzing clothing..."}
-                  </span>
+                  <div className="flex flex-col items-start">
+                    <span className="text-white/80 text-sm font-medium">
+                      {isAnalyzingFace ? "Analyzing face..." : isAnalyzingClothing ? "Analyzing clothing..." : "Generating..."}
+                    </span>
+                    {isGenerating && (
+                      <span className="text-white/60 text-xs font-mono">
+                        {String(Math.floor(generationTimer)).padStart(2, '0')}.{String(Math.floor((generationTimer % 1) * 10))}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </>
@@ -262,7 +278,7 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
                   onFacialReferenceRemoved?.();
                   onClothingReferenceRemoved?.();
                 }}
-                disabled={isAnalyzingFace || isAnalyzingClothing}
+                disabled={isAnalyzingFace || isAnalyzingClothing || isGenerating}
                 className={cn(
                   "w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200",
                   "disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white/10"
