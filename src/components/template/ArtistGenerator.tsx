@@ -115,7 +115,6 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   
   // Color wheel state
   const [selectedColor, setSelectedColor] = useState<string>("");
-  const [isColorApplied, setIsColorApplied] = useState(false);
   
   // Settings state
   const [artistCount, setArtistCount] = useState([1]);
@@ -331,7 +330,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
         const result = await api.generateArtistImages(
           safePrompt,
-          isColorApplied && selectedColor ? selectedColor : undefined,
+          selectedColor || undefined,
           artistCount[0],
           isRealistic,
           facialReferenceImage,
@@ -456,8 +455,8 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       // Prepare request payload
       const requestPayload: any = { prompt: cleanPrompt };
       
-      // Add background color if applied
-      if (isColorApplied && selectedColor) {
+      // Add background color if selected
+      if (selectedColor) {
         requestPayload.backgroundHex = selectedColor;
         console.log(`🎨 [${clientReqId}] Adding background color: ${selectedColor}`);
       }
@@ -613,14 +612,8 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
     toast({ title: "Downloaded", description: "Artist image saved to your device" });
   };
 
-  const handleColorApply = () => {
-    setIsColorApplied(true);
-    toast({ title: "Color applied", description: `Background color set to ${selectedColor}` });
-  };
-
   const handleColorReset = () => {
     setSelectedColor("");
-    setIsColorApplied(false);
     toast({ title: "Color reset", description: "Background color reset to default" });
   };
 
@@ -1117,15 +1110,6 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                                 className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0"
                               >
                                 <RotateCcw className="w-3 h-3" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleColorApply}
-                                disabled={!selectedColor}
-                                className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0"
-                              >
-                                <Check className="w-3 h-3" />
                               </Button>
                             </div>
                           </div>
