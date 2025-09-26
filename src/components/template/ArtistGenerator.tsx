@@ -123,9 +123,17 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   
   // Lock state
   const [isLocked, setIsLocked] = useState(false);
+  const [lockedModeTarget, setLockedModeTarget] = useState<'input' | 'background'>('input');
 
   // Face mode detection for regular (non-locked) mode with facial reference
   const isFaceModeActive = !isLocked && !!facialReferenceImage;
+
+  // Reset to input target when lock mode is activated
+  useEffect(() => {
+    if (isLocked) {
+      setLockedModeTarget('input');
+    }
+  }, [isLocked]);
 
   const VISIBLE_COUNT = 5;
 
@@ -959,36 +967,63 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
                   <div className="flex-1 min-h-0 mb-1 space-y-1 overflow-auto pr-1">
                      <div>
-                         <AnimatedPromptInput
-                           value={prompt}
-                           onChange={setPrompt}
-                           placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
-                           disabled={loading}
-                           animatedText={sanitizedPrompt}
-                           isAnimating={isAnimating}
-                           onAnimationComplete={handleAnimationComplete}
-                           onPersonClick={handlePersonClick}
-                           onClothingClick={handleClothingClick}
-                           onResetClick={handlePromptReset}
-                           facialReferenceImage={facialReferenceImage}
-                           isAnalyzingFace={isAnalyzingFace}
-                           onFacialReferenceRemoved={handleFacialReferenceRemoved}
-                           clothingReferenceImage={clothingReferenceImage}
-                           isAnalyzingClothing={isAnalyzingClothing}
-                           onClothingReferenceRemoved={handleClothingReferenceRemoved}
-                           faceSwapMode={isLocked && !!facialReferenceImage}
-                           faceSwapMessage="Face swap mode is activated. Prompt field is disabled"
-                           className="h-36"
-                         />
+                         <div 
+                           className={cn(
+                             isLocked && lockedModeTarget === 'background' && "cursor-pointer hover:border-white/40 rounded-lg border border-transparent"
+                           )}
+                           onClick={() => {
+                             if (isLocked && lockedModeTarget === 'background') {
+                               setLockedModeTarget('input');
+                             }
+                           }}
+                         >
+                           <AnimatedPromptInput
+                             value={prompt}
+                             onChange={setPrompt}
+                             placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
+                             disabled={loading || (isLocked && lockedModeTarget === 'background')}
+                             animatedText={sanitizedPrompt}
+                             isAnimating={isAnimating}
+                             onAnimationComplete={handleAnimationComplete}
+                             onPersonClick={handlePersonClick}
+                             onClothingClick={handleClothingClick}
+                             onResetClick={handlePromptReset}
+                             facialReferenceImage={facialReferenceImage}
+                             isAnalyzingFace={isAnalyzingFace}
+                             onFacialReferenceRemoved={handleFacialReferenceRemoved}
+                             clothingReferenceImage={clothingReferenceImage}
+                             isAnalyzingClothing={isAnalyzingClothing}
+                             onClothingReferenceRemoved={handleClothingReferenceRemoved}
+                             faceSwapMode={isLocked && !!facialReferenceImage}
+                             faceSwapMessage="Face swap mode is activated. Prompt field is disabled"
+                             className={cn(
+                               "h-36",
+                               isLocked && lockedModeTarget === 'input' && "border-red-400",
+                               isLocked && lockedModeTarget === 'background' && "hover:border-white/40"
+                             )}
+                           />
+                         </div>
                     </div>
 
                      {/* Background Color Section */}
-                     <div className={cn(
-                       "transition-opacity",
-                       isLocked && "opacity-30 pointer-events-none"
-                     )}>
+                     <div>
                        <div className="text-xs text-white/60 mb-2">Background Color</div>
-                      <div className="w-full rounded-lg bg-black/20 border border-white/10 p-3 pb-1.5">
+                      <div 
+                        className={cn(
+                          "w-full rounded-lg bg-black/20 border p-3 pb-1.5 transition-colors",
+                          isLocked && lockedModeTarget === 'background' ? "border-red-400" : "border-white/10",
+                          isLocked && lockedModeTarget === 'input' && "cursor-pointer hover:border-white/40"
+                        )}
+                        onClick={() => {
+                          if (isLocked && lockedModeTarget === 'input') {
+                            setLockedModeTarget('background');
+                          }
+                        }}
+                      >
+                        <div className={cn(
+                          "relative",
+                          isLocked && lockedModeTarget === 'input' && "pointer-events-none opacity-50"
+                        )}>
                         <div className="flex flex-col gap-1.5">
                           {/* Color Picker - Full Width */}
                           <div className="color-picker-compact w-full">
@@ -1046,8 +1081,9 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                               </Button>
                             </div>
                           </div>
-                        </div>
-                        </div>
+                         </div>
+                         </div>
+                      </div>
                      </div>
 
                    {/* Settings container */}
