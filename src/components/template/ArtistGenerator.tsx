@@ -972,6 +972,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                      <div>
                          <div 
                            className={cn(
+                             "relative",
                              isLocked && lockedModeTarget === 'background' && "cursor-pointer hover:border-white/40 rounded-lg border border-transparent opacity-30"
                            )}
                            onClick={() => {
@@ -980,6 +981,10 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                              }
                            }}
                          >
+                           {/* Overlay to make entire area clickable when background is active */}
+                           {isLocked && lockedModeTarget === 'background' && (
+                             <div className="absolute inset-0 z-10 cursor-pointer" />
+                           )}
                            <AnimatedPromptInput
                              value={prompt}
                              onChange={setPrompt}
@@ -999,11 +1004,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                              onClothingReferenceRemoved={handleClothingReferenceRemoved}
                              faceSwapMode={isLocked && !!facialReferenceImage}
                              faceSwapMessage="Face swap mode is activated. Prompt field is disabled"
-                              className={cn(
-                                "h-36",
-                                isLocked && lockedModeTarget === 'input' && "border-white/20",
-                                isLocked && lockedModeTarget === 'background' && "hover:border-white/40"
-                              )}
+                             className={cn(
+                               "h-36",
+                               isLocked && lockedModeTarget === 'input' && "border-white/20",
+                               isLocked && lockedModeTarget === 'background' && "hover:border-white/40"
+                             )}
                            />
                          </div>
                     </div>
