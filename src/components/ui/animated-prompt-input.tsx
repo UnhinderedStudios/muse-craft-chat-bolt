@@ -121,7 +121,7 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
     <div className={cn("relative w-full h-full rounded-lg bg-black/40 border border-white/10", className)}>
       <div className="flex flex-col h-full">
         {/* Top: scrollable input area */}
-        <div className="flex-1 min-h-0 px-3 pt-3 pb-0 relative">
+        <div className="flex-1 min-h-0 px-3 pt-3 pb-2 relative">
           <div className={cn("relative h-full", (isAnalyzingFace || isAnalyzingClothing) && "blur-3xl")}> 
             <textarea
               ref={textareaRef}
