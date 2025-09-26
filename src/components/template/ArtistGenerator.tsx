@@ -962,7 +962,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                 >
 
                   <header className={cn(
-                    "mb-2",
+                    "mb-2 transition-opacity duration-200 ease-out",
                     isLocked && lockedModeTarget === 'background' && "opacity-30"
                   )}>
                     <h3 className="text-xs text-white/60">Artist Generator</h3>
@@ -972,7 +972,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                      <div>
                          <div 
                            className={cn(
-                             "relative",
+                             "relative transition-all duration-200 ease-out",
                              isLocked && lockedModeTarget === 'background' && "cursor-pointer hover:border-white/40 rounded-lg border border-transparent opacity-30"
                            )}
                            onClick={() => {
@@ -1016,7 +1016,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                      {/* Background Color Section */}
                      <div>
                        <div className={cn(
-                         "text-xs text-white/60 mb-2",
+                         "text-xs text-white/60 mb-2 transition-opacity duration-200 ease-out",
                          isLocked && lockedModeTarget === 'input' && "opacity-30"
                        )}>Background Color</div>
                         <div 
@@ -1032,7 +1032,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                         }}
                       >
                          <div className={cn(
-                           "relative",
+                           "relative transition-all duration-200 ease-out",
                            isLocked && lockedModeTarget === 'input' && "pointer-events-none opacity-30"
                          )}>
                         <div className="flex flex-col gap-1.5">
