@@ -396,7 +396,14 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
         
         const result = await api.modifyLockedImage(images[selectedIndex], colorPrompt);
         
-        setImages(result.images);
+        // Add new images to the front (newest first), preserving existing thumbnails
+        const updatedImages = [...result.images, ...images];
+        setImages(updatedImages);
+        
+        // Add prompts for the new generated images  
+        const newPrompts = Array(result.images.length).fill(`Background: ${selectedColor}`);
+        setImagePrompts([...newPrompts, ...imagePrompts]);
+        
         setSelectedIndex(0);
         setIsAnimating(false);
         toast({ title: "Background updated", description: "Background color has been changed successfully!" });
