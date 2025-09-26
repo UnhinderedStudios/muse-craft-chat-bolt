@@ -624,11 +624,25 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       console.log('🎽 Clothing analysis result:', result);
 
       if (result.accepted) {
-        setClothingReferenceImage(result.imageData);
-        toast({ 
-          title: "Clothing reference accepted", 
-          description: `${result.analysis.primaryClothingType} detected and ready for generation` 
-        });
+        // Convert image to 1024x1024 square format after GPT approval
+        try {
+          const { convertToSquare, fileToDataUrl } = await import('@/lib/imageConverter');
+          const convertedFile = await convertToSquare(file);
+          const convertedDataUrl = await fileToDataUrl(convertedFile);
+          setClothingReferenceImage(convertedDataUrl);
+          toast({ 
+            title: "Clothing reference accepted", 
+            description: `${result.analysis.primaryClothingType} detected, converted to square format, and ready for generation` 
+          });
+        } catch (conversionError) {
+          console.error('Error converting image:', conversionError);
+          // Fallback to original image if conversion fails
+          setClothingReferenceImage(result.imageData);
+          toast({ 
+            title: "Clothing reference accepted", 
+            description: `${result.analysis.primaryClothingType} detected and ready for generation` 
+          });
+        }
       } else {
         toast({ 
           title: "Image rejected", 
