@@ -1049,11 +1049,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                              isLocked && lockedModeTarget === 'background' && !loading && "opacity-30",
                              loading && isLocked && lockedModeTarget === 'background' && "border-white/20"
                            )}
-                           onClick={() => {
-                             if (isLocked && lockedModeTarget === 'background') {
-                               setLockedModeTarget('input');
-                             }
-                           }}
+                            onClick={() => {
+                              if (isLocked && lockedModeTarget === 'background' && !loading) {
+                                setLockedModeTarget('input');
+                              }
+                            }}
                          >
                            {/* Overlay to make entire area clickable when background is active */}
                            {isLocked && lockedModeTarget === 'background' && !loading && (
