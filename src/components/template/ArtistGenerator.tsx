@@ -1059,11 +1059,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                              onClothingReferenceRemoved={handleClothingReferenceRemoved}
                              faceSwapMode={isLocked && !!facialReferenceImage}
                              faceSwapMessage="Face swap mode is activated. Prompt field is disabled"
-                             className={cn(
-                               "h-36",
-                               isLocked && lockedModeTarget === 'input' && "border-white/20",
-                               isLocked && lockedModeTarget === 'background' && "hover:border-white/40"
-                             )}
+                              className={cn(
+                                "h-48",
+                                isLocked && lockedModeTarget === 'input' && "border-white/20",
+                                isLocked && lockedModeTarget === 'background' && "hover:border-white/40"
+                              )}
                            />
                          </div>
                     </div>
