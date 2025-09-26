@@ -257,7 +257,11 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
             )}
             {onResetClick && (
               <button
-                onClick={onResetClick}
+                onClick={() => {
+                  onResetClick();
+                  onFacialReferenceRemoved?.();
+                  onClothingReferenceRemoved?.();
+                }}
                 disabled={isAnalyzingFace || isAnalyzingClothing}
                 className={cn(
                   "w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200",
