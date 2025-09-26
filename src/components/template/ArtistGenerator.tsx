@@ -380,8 +380,38 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       return;
     }
 
+    // If locked and background color mode, only send color change instruction
+    if (isLocked && lockedModeTarget === 'background') {
+      if (!selectedColor) {
+        toast({ title: "Select a color", description: "Please choose a background color to apply.", variant: "destructive" });
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setIsAnimating(true);
+        
+        const colorPrompt = `Change background color to: ${selectedColor}`;
+        console.log(`🎨 Background color modification with prompt: "${colorPrompt}"`);
+        
+        const result = await api.modifyLockedImage(images[selectedIndex], colorPrompt);
+        
+        setImages(result.images);
+        setSelectedIndex(0);
+        setIsAnimating(false);
+        toast({ title: "Background updated", description: "Background color has been changed successfully!" });
+      } catch (e: any) {
+        console.error('❌ Background color modification error:', e);
+        setIsAnimating(false);
+        toast({ title: "Background update failed", description: e?.message || "Please try again.", variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     // If locked and there's a prompt, modify the locked image instead
-    if (isLocked && prompt.trim()) {
+    if (isLocked && prompt.trim() && lockedModeTarget !== 'background') {
       // Check if clothing reference is available for locked mode
       if (clothingReferenceImage) {
         await handleModifyLockedImageWithClothing();
