@@ -245,7 +245,6 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       setLoading(true);
       setOriginalPrompt(prompt);
       setSanitizedPrompt("Applying clothing style to locked image");
-      setIsAnimating(true);
 
       const targetImageUrl = images[selectedIndex];
       
@@ -317,7 +316,6 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
         setLoading(true);
         setOriginalPrompt(prompt);
         setSanitizedPrompt("Face swap in progress");
-        setIsAnimating(true);
 
         const targetImageUrl = images[selectedIndex];
         if (!targetImageUrl) {
@@ -388,7 +386,6 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
       try {
         setLoading(true);
-        setIsAnimating(true);
         
         const colorPrompt = `Do not include any text. Respect the lighting conditions and change the colour of the whole backdrop to: ${selectedColor}`;
         console.log(`🎨 Background color modification with prompt: "${colorPrompt}"`);
@@ -442,11 +439,6 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
     try {
       setLoading(true);
       setOriginalPrompt(prompt);
-      
-      // Start visual animation immediately - will persist until first image arrives
-      const mockSanitized = "Professional music artist portrait, clean visual styling, performer aesthetic";
-      setSanitizedPrompt(mockSanitized);
-      setIsAnimating(true);
       
       console.log(`🎨 [${clientReqId}] Animation started, processing artist generation...`);
       
@@ -1048,14 +1040,14 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                            {isLocked && lockedModeTarget === 'background' && (
                              <div className="absolute inset-0 z-10 cursor-pointer" />
                            )}
-                           <AnimatedPromptInput
-                             value={prompt}
-                             onChange={setPrompt}
-                             placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
-                             disabled={loading || (isLocked && lockedModeTarget === 'background')}
-                             animatedText={sanitizedPrompt}
-                             isAnimating={isAnimating}
-                             onAnimationComplete={handleAnimationComplete}
+                            <AnimatedPromptInput
+                              value={prompt}
+                              onChange={setPrompt}
+                              placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
+                              disabled={loading || (isLocked && lockedModeTarget === 'background')}
+                              animatedText=""
+                              isAnimating={false}
+                              onAnimationComplete={() => {}}
                              onPersonClick={handlePersonClick}
                              onClothingClick={handleClothingClick}
                              onResetClick={handlePromptReset}
