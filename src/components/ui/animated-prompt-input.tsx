@@ -228,9 +228,14 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
             {onPersonClick && (
               <button
                 onClick={onPersonClick}
-                disabled={isAnalyzingFace || !!facialReferenceImage}
-                className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white/10"
+                disabled={isAnalyzingFace || !!facialReferenceImage || !!clothingReferenceImage}
+                className={cn(
+                  "w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200",
+                  "disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white/10",
+                  (!!facialReferenceImage || !!clothingReferenceImage) && "opacity-30 cursor-not-allowed"
+                )}
                 type="button"
+                title={facialReferenceImage ? "Face reference already uploaded" : clothingReferenceImage ? "Only one file allowed at a time" : "Upload face reference"}
               >
                 <User size={12} className="text-white/60" />
               </button>
@@ -254,7 +259,10 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
               <button
                 onClick={onResetClick}
                 disabled={isAnalyzingFace || isAnalyzingClothing}
-                className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className={cn(
+                  "w-6 h-6 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors duration-200",
+                  "disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white/10"
+                )}
                 type="button"
               >
                 <RotateCcw size={12} className="text-white/60" />
