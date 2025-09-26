@@ -18,13 +18,33 @@ serve(async (req) => {
       throw new Error('GEMINI_API_KEY not found');
     }
 
-    const { imageUrl, modification } = await req.json();
+    const contentType = req.headers.get('content-type') || '';
+    let imageUrl, modification, clothingReference, primaryClothingType;
+
+    if (contentType.includes('multipart/form-data')) {
+      // Handle FormData for clothing mode
+      const formData = await req.formData();
+      imageUrl = formData.get('imageUrl') as string;
+      modification = formData.get('modification') as string;
+      clothingReference = formData.get('clothingReference') as File;
+      primaryClothingType = formData.get('primaryClothingType') as string;
+    } else {
+      // Handle JSON for regular mode
+      const body = await req.json();
+      imageUrl = body.imageUrl;
+      modification = body.modification;
+    }
     
     if (!imageUrl || !modification) {
       throw new Error('Missing imageUrl or modification in request');
     }
 
-    console.log('Modifying locked image with:', { imageUrl, modification });
+    console.log('Modifying locked image with:', { 
+      imageUrl: imageUrl.substring(0, 50) + '...', 
+      modification, 
+      hasClothingReference: !!clothingReference,
+      primaryClothingType 
+    });
 
     // Prepare image as base64 and mime type (supports data URLs)
     let mimeType = "image/jpeg";
@@ -55,20 +75,52 @@ serve(async (req) => {
       base64Image = btoa(binary);
       mimeType = imageResponse.headers.get('content-type') || "image/jpeg";
     }
-    const prompt = `Keep composition identical and preserve character, identity, looks and face only modify the following thing: ${modification}`;
+    // Prepare the parts array starting with the locked image
+    const requestParts: any[] = [
+      {
+        inline_data: {
+          mime_type: mimeType,
+          data: base64Image
+        }
+      }
+    ];
+
+    // Add clothing reference if provided
+    if (clothingReference) {
+      console.log('Processing clothing reference:', clothingReference.name, clothingReference.type);
+      
+      const clothingBuffer = await clothingReference.arrayBuffer();
+      const clothingUint8Array = new Uint8Array(clothingBuffer);
+      let clothingBinary = '';
+      const chunkSize = 8192;
+      for (let i = 0; i < clothingUint8Array.length; i += chunkSize) {
+        const chunk = clothingUint8Array.subarray(i, i + chunkSize);
+        clothingBinary += String.fromCharCode.apply(null, Array.from(chunk));
+      }
+      const clothingBase64 = btoa(clothingBinary);
+      
+      requestParts.push({
+        inline_data: {
+          mime_type: clothingReference.type || "image/jpeg",
+          data: clothingBase64
+        }
+      });
+    }
+
+    // Set prompt based on whether clothing is provided
+    let prompt;
+    if (clothingReference) {
+      prompt = `Do this: ${modification}`;
+    } else {
+      prompt = `Keep composition identical and preserve character, identity, looks and face only modify the following thing: ${modification}`;
+    }
+
+    requestParts.push({ text: prompt });
 
     const requestBody = {
       contents: [{
         role: "user",
-        parts: [
-          {
-            inline_data: {
-              mime_type: mimeType,
-              data: base64Image
-            }
-          },
-          { text: prompt }
-        ]
+        parts: requestParts
       }],
       generationConfig: {
         temperature: 0.7,
@@ -117,11 +169,11 @@ serve(async (req) => {
 
     // Extract images from the response
     const images: string[] = [];
-    const parts = data.candidates?.[0]?.content?.parts ?? [];
-    for (const part of parts) {
-      const inline = part.inlineData || part.inline_data;
+    const responseParts = data.candidates?.[0]?.content?.parts ?? [];
+    for (const part of responseParts) {
+      const inline = part.inline_data || part.inlineData;
       if (inline?.data) {
-        const mime = inline.mimeType || inline.mime_type || 'image/png';
+        const mime = inline.mime_type || inline.mimeType || 'image/png';
         const dataUrl = `data:${mime};base64,${inline.data}`;
         images.push(dataUrl);
       }

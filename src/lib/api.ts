@@ -715,15 +715,51 @@ export const api = {
     }
   },
 
-  async modifyLockedImage(imageUrl: string, modification: string): Promise<{ images: string[] }> {
-    const { data, error } = await supabase.functions.invoke('modify-locked-image', {
-      body: {
-        imageUrl,
-        modification
-      }
-    });
+  async modifyLockedImage(
+    imageUrl: string, 
+    modification: string, 
+    clothingReference?: string,
+    primaryClothingType?: string
+  ): Promise<{ images: string[] }> {
     
-    if (error) throw new Error(error.message);
-    return data;
+    if (clothingReference) {
+      // Use FormData for clothing mode
+      const formData = new FormData();
+      formData.append('imageUrl', imageUrl);
+      formData.append('modification', modification);
+      
+      // Convert data URL to File for clothing reference
+      const response = await fetch(clothingReference);
+      const blob = await response.blob();
+      const file = new File([blob], 'clothing-reference.jpg', { type: blob.type });
+      formData.append('clothingReference', file);
+      
+      if (primaryClothingType) {
+        formData.append('primaryClothingType', primaryClothingType);
+      }
+
+      const apiResponse = await fetch(`https://afsyxzxwxszujnsmukff.supabase.co/functions/v1/modify-locked-image`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!apiResponse.ok) {
+        const errorData = await apiResponse.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `Failed to modify locked image with clothing (${apiResponse.status})`);
+      }
+
+      return await apiResponse.json();
+    } else {
+      // Use JSON for regular mode
+      const { data, error } = await supabase.functions.invoke('modify-locked-image', {
+        body: {
+          imageUrl,
+          modification
+        }
+      });
+      
+      if (error) throw new Error(error.message);
+      return data;
+    }
   },
 };

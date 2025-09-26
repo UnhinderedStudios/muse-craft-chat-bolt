@@ -225,6 +225,81 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
     }
   };
 
+  const handleModifyLockedImageWithClothing = async () => {
+    if (!images[selectedIndex] || !prompt.trim() || !clothingReferenceImage) {
+      toast({ title: "Missing requirements", description: "Need locked image, prompt, and clothing reference", variant: "destructive" });
+      return;
+    }
+
+    const clientReqId = `ui_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    console.log(`🔒🎽 [${clientReqId}] Modifying locked image with clothing reference`);
+
+    try {
+      setLoading(true);
+      setOriginalPrompt(prompt);
+      setSanitizedPrompt("Applying clothing style to locked image");
+      setIsAnimating(true);
+
+      const targetImageUrl = images[selectedIndex];
+      
+      const response = await api.modifyLockedImage(
+        targetImageUrl,
+        prompt.trim(),
+        clothingReferenceImage,
+        primaryClothingType
+      );
+
+      console.log(`🖼️ [${clientReqId}] Clothing modification response:`, {
+        imageCount: response.images?.length || 0
+      });
+
+      if (!response.images || response.images.length === 0) {
+        setIsAnimating(false);
+        setSanitizedPrompt("");
+        toast({ title: "No images returned", description: "Clothing modification did not return an image.", variant: "destructive" });
+        return;
+      }
+
+      setIsAnimating(false);
+      setSanitizedPrompt("");
+
+      const updatedImages = [...response.images, ...images];
+      setImages(updatedImages);
+
+      const newPrompts = Array(response.images.length).fill(`[Clothing: ${prompt.trim()}]`);
+      setImagePrompts([...newPrompts, ...imagePrompts]);
+
+      // Update track's generated covers in session
+      if (track && currentSession) {
+        const updatedTracks = (currentSession.tracks || []).map(t =>
+          t.id === track.id ? { 
+            ...t, 
+            generatedCovers: updatedImages
+          } : t
+        );
+        updateSession(currentSession.id, { tracks: updatedTracks });
+      }
+      
+      setSelectedIndex(0);
+      toast({ 
+        title: "Clothing Applied", 
+        description: `${response.images.length} modified image${response.images.length === 1 ? '' : 's'} created` 
+      });
+      
+    } catch (error: any) {
+      console.error(`❌ [${clientReqId}] Clothing modification error:`, error);
+      setIsAnimating(false);
+      setSanitizedPrompt("");
+      toast({ 
+        title: "Clothing modification failed", 
+        description: error?.message || "Failed to apply clothing to locked image", 
+        variant: "destructive" 
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGenerate = async () => {
     // PRIORITY: Face swap mode (locked image + facial reference) → swap directly, ignore prompt
     if (isLocked && facialReferenceImage && images.length > 0) {
@@ -299,7 +374,12 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
     // If locked and there's a prompt, modify the locked image instead
     if (isLocked && prompt.trim()) {
-      await handleModifyLockedImage();
+      // Check if clothing reference is available for locked mode
+      if (clothingReferenceImage) {
+        await handleModifyLockedImageWithClothing();
+      } else {
+        await handleModifyLockedImage();
+      }
       return;
     }
 
