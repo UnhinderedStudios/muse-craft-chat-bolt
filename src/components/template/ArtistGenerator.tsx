@@ -612,9 +612,42 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
     toast({ title: "Downloaded", description: "Artist image saved to your device" });
   };
 
-  const handleColorReset = () => {
-    setSelectedColor("");
-    toast({ title: "Color reset", description: "Background color reset to default" });
+  const handleColorReset = async () => {
+    if (isLocked && lockedModeTarget === 'background') {
+      // In locked background mode, apply default color and generate
+      setSelectedColor("#161d21");
+      setLoading(true);
+      
+      try {
+        const result = await api.modifyLockedImage(
+          images[selectedIndex], 
+          `Change the background color to ${getColorName("#161d21")}`,
+          clothingReferenceImage || undefined
+        );
+        
+        if (result.images && result.images.length > 0) {
+          setImages(result.images);
+          setSelectedIndex(0);
+          toast({ 
+            title: "Background updated", 
+            description: "Applied default background color" 
+          });
+        }
+      } catch (error) {
+        console.error('Error applying default background color:', error);
+        toast({ 
+          title: "Error", 
+          description: "Failed to apply default background color", 
+          variant: "destructive" 
+        });
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // Normal mode: just clear the color
+      setSelectedColor("");
+      toast({ title: "Color reset", description: "Background color reset to default" });
+    }
   };
 
   const handleColorRandomize = () => {
