@@ -391,7 +391,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
         setLoading(true);
         setIsAnimating(true);
         
-        const colorPrompt = `Change background color to: ${selectedColor}`;
+        const colorPrompt = `Do not include any text. Respect the lighting conditions and change the colour of the whole backdrop to: ${selectedColor}`;
         console.log(`🎨 Background color modification with prompt: "${colorPrompt}"`);
         
         const result = await api.modifyLockedImage(images[selectedIndex], colorPrompt);
