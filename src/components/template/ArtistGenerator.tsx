@@ -699,7 +699,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
           </button>
 
           {/* Content */}
-          <div className="flex-1 min-h-0 px-6 pb-6 flex flex-col items-center justify-center">
+          <div className="flex-1 min-h-0 px-6 pb-6 flex flex-col items-center justify-start pt-8">
             <div className="w-full max-w-7xl space-y-4">
               <div className="grid grid-cols-1 lg:grid-cols-[max-content_420px_210px] gap-4 items-start">
                 {/* Header: spans full width across all columns */}
@@ -1085,6 +1085,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                     </div>
                   </div>
                 </aside>
+
+                {/* Footer: spans full width across all columns */}
+                <div className="w-full rounded-lg border border-white/10 px-4 py-2 lg:col-span-3 lg:row-start-3" style={{ backgroundColor: '#33343630' }}>
+                  <div className="text-xs text-white/60">Artist Image Generation</div>
+                </div>
               </div>
             </div>
           </div>
