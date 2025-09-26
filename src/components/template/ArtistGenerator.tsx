@@ -1061,7 +1061,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                                value={prompt}
                                onChange={setPrompt}
                                placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
-                               disabled={loading || (isLocked && lockedModeTarget === 'background')}
+                               disabled={(isLocked && lockedModeTarget === 'background') && !loading}
                                animatedText=""
                                isAnimating={false}
                                onAnimationComplete={() => {}}
@@ -1078,6 +1078,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                               faceSwapMessage="Face swap mode is activated. Prompt field is disabled"
                               isGenerating={loading}
                               generationTimer={generationTimer}
+                              showGenerationClear={loading 66 isLocked 66 lockedModeTarget === 'background'}
                              className={cn(
                                "h-36",
                                isLocked && lockedModeTarget === 'input' && "border-white/20",

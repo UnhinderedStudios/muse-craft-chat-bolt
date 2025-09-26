@@ -25,6 +25,7 @@ interface AnimatedPromptInputProps {
   faceSwapMessage?: string;
   isGenerating?: boolean;
   generationTimer?: number;
+  showGenerationClear?: boolean; // When true, keep input visually active during generation
 }
 
 export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
@@ -49,7 +50,8 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
   faceSwapMode = false,
   faceSwapMessage = "",
   isGenerating = false,
-  generationTimer = 0
+  generationTimer = 0,
+  showGenerationClear = false
 }) => {
   const [showAnimatedText, setShowAnimatedText] = useState(false);
   const [isUserEditing, setIsUserEditing] = useState(false);
@@ -119,14 +121,14 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
 
   const handleMouseLeave = () => setOverScrollbar(false);
   
-  const isDisabledByAnalysis = disabled || isAnalyzingFace || isAnalyzingClothing || faceSwapMode || isGenerating;
+  const isDisabledByAnalysis = disabled || isAnalyzingFace || isAnalyzingClothing || faceSwapMode || (isGenerating && !showGenerationClear);
   
   return (
     <div className={cn("relative w-full h-full rounded-lg bg-black/40 border border-white/10", className)}>
       <div className="flex flex-col h-full">
         {/* Top: scrollable input area */}
         <div className="flex-1 min-h-0 px-3 pt-3 pb-2 relative">
-          <div className={cn("relative h-full", (isAnalyzingFace || isAnalyzingClothing || isGenerating) && "blur-3xl")}> 
+          <div className={cn("relative h-full", (isAnalyzingFace || isAnalyzingClothing || (isGenerating && !showGenerationClear)) && "blur-3xl")}> 
             <textarea
               ref={textareaRef}
               value={showAnimatedText ? animatedText : value}
@@ -142,7 +144,7 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
                 overScrollbar ? "cursor-default" : "cursor-text",
                 isDisabledByAnalysis && "cursor-default",
                 showAnimatedText && "opacity-80",
-                (isAnalyzingFace || isAnalyzingClothing || (isGenerating && !faceSwapMode)) && "opacity-20",
+                (isAnalyzingFace || isAnalyzingClothing || (isGenerating && !showGenerationClear)) && "opacity-20",
                 faceSwapMode && "opacity-50 bg-white/5"
               )}
             />
