@@ -699,7 +699,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
           </button>
 
           {/* Content */}
-          <div className="flex-1 min-h-0 px-6 pb-6 flex flex-col items-center justify-start pt-8">
+          <div className="flex-1 min-h-0 px-6 pb-6 flex flex-col items-center justify-center">
             <div className="w-full max-w-7xl space-y-4">
               <div className="grid grid-cols-1 lg:grid-cols-[max-content_420px_210px] gap-4 items-start">
                 {/* Header: spans full width across all columns */}
