@@ -1091,14 +1091,14 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                      <div>
                         <div className={cn(
                           "text-xs text-white/60 mb-2 transition-opacity duration-200 ease-out",
-                          (isLocked && lockedModeTarget === 'input') || loading ? "opacity-30" : ""
+                          (isLocked && lockedModeTarget === 'input') || (loading && !(isLocked && lockedModeTarget === 'background')) ? "opacity-30" : ""
                         )}>Background Color</div>
                          <div 
                            className={cn(
                              "w-full rounded-lg bg-black/20 border p-3 pb-1.5 transition-colors",
                              isLocked && lockedModeTarget === 'background' ? "border-white/20" : "border-white/10",
-                             (isLocked && lockedModeTarget === 'input') || loading ? "cursor-pointer hover:border-white/40" : "",
-                             loading ? "opacity-50 pointer-events-none" : ""
+                              (isLocked && lockedModeTarget === 'input') || (loading && !(isLocked && lockedModeTarget === 'background')) ? "cursor-pointer hover:border-white/40" : "",
+                              (loading && isLocked && lockedModeTarget === 'background') || (!isLocked && loading) ? "opacity-50 pointer-events-none" : ""
                            )}
                          onClick={() => {
                            if (!loading && isLocked && lockedModeTarget === 'input') {
@@ -1108,19 +1108,19 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                        >
                           <div className={cn(
                             "relative transition-all duration-200 ease-out",
-                            (isLocked && lockedModeTarget === 'input') || loading ? "pointer-events-none opacity-30" : ""
+                            (isLocked && lockedModeTarget === 'input') || (loading && !(isLocked && lockedModeTarget === 'background')) ? "pointer-events-none opacity-30" : ""
                           )}>
                         <div className="flex flex-col gap-1.5">
                           {/* Color Picker - Full Width */}
                           <div className="color-picker-compact w-full">
                              <HexColorPicker
                                color={selectedColor || "#ffffff"}
-                               onChange={loading ? () => {} : setSelectedColor}
+                               onChange={(loading && isLocked && lockedModeTarget === 'background') || (!isLocked && loading) ? () => {} : setSelectedColor}
                                style={{ 
                                  width: '100%', 
                                  height: '118px',
-                                 pointerEvents: loading ? 'none' : 'auto',
-                                 opacity: loading ? 0.5 : 1
+                                  pointerEvents: (loading && isLocked && lockedModeTarget === 'background') || (!isLocked && loading) ? 'none' : 'auto',
+                                  opacity: (loading && isLocked && lockedModeTarget === 'background') || (!isLocked && loading) ? 0.5 : 1
                                }}
                              />
                           </div>
@@ -1141,7 +1141,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                                  variant="outline"
                                  size="sm"
                                  onClick={handleColorRandomize}
-                                 disabled={loading}
+                                  disabled={(loading && isLocked && lockedModeTarget === 'background') || (!isLocked && loading)}
                                  className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0 disabled:opacity-30 disabled:cursor-not-allowed"
                                >
                                  <Dices className="w-3 h-3" />
@@ -1150,7 +1150,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                                  variant="outline"
                                  size="sm"
                                  onClick={handleColorPicker}
-                                 disabled={loading}
+                                  disabled={(loading && isLocked && lockedModeTarget === 'background') || (!isLocked && loading)}
                                  className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0 disabled:opacity-30 disabled:cursor-not-allowed"
                                >
                                  <Pipette className="w-3 h-3" />
@@ -1159,7 +1159,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                                  variant="outline"
                                  size="sm"
                                  onClick={handleColorReset}
-                                 disabled={loading}
+                                  disabled={(loading && isLocked && lockedModeTarget === 'background') || (!isLocked && loading)}
                                  className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0 disabled:opacity-30 disabled:cursor-not-allowed"
                                >
                                  <RotateCcw className="w-3 h-3" />

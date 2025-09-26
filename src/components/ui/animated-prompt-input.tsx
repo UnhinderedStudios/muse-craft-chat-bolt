@@ -142,7 +142,7 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
                 overScrollbar ? "cursor-default" : "cursor-text",
                 isDisabledByAnalysis && "cursor-default",
                 showAnimatedText && "opacity-80",
-                (isAnalyzingFace || isAnalyzingClothing || isGenerating) && "opacity-20",
+                (isAnalyzingFace || isAnalyzingClothing || (isGenerating && !faceSwapMode)) && "opacity-20",
                 faceSwapMode && "opacity-50 bg-white/5"
               )}
             />
