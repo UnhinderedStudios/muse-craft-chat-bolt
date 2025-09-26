@@ -1045,7 +1045,9 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                          <div 
                            className={cn(
                              "relative transition-all duration-200 ease-out rounded-lg border border-transparent",
-                             isLocked && lockedModeTarget === 'background' && "cursor-pointer hover:border-white/40 opacity-30"
+                             isLocked && lockedModeTarget === 'background' && "cursor-pointer hover:border-white/40",
+                             isLocked && lockedModeTarget === 'background' && !loading && "opacity-30",
+                             loading && isLocked && lockedModeTarget === 'background' && "border-white/20"
                            )}
                            onClick={() => {
                              if (isLocked && lockedModeTarget === 'background') {
@@ -1054,7 +1056,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                            }}
                          >
                            {/* Overlay to make entire area clickable when background is active */}
-                           {isLocked && lockedModeTarget === 'background' && (
+                           {isLocked && lockedModeTarget === 'background' && !loading && (
                              <div className="absolute inset-0 z-10 cursor-pointer" />
                            )}
                              <AnimatedPromptInput
@@ -1092,7 +1094,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                      <div>
                         <div className={cn(
                           "text-xs text-white/60 mb-2 transition-opacity duration-200 ease-out",
-                          (isLocked && lockedModeTarget === 'input') || (loading && !(isLocked && lockedModeTarget === 'background')) ? "opacity-30" : ""
+                          (isLocked && lockedModeTarget === 'input') || (loading && isLocked && lockedModeTarget === 'background') ? "opacity-30" : ""
                         )}>Background Color</div>
                          <div 
                            className={cn(
