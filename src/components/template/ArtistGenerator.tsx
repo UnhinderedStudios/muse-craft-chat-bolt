@@ -972,7 +972,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                      <div>
                          <div 
                            className={cn(
-                             isLocked && lockedModeTarget === 'background' && "cursor-pointer hover:border-white/40 rounded-lg border border-transparent opacity-30 pointer-events-none"
+                             isLocked && lockedModeTarget === 'background' && "cursor-pointer hover:border-white/40 rounded-lg border border-transparent opacity-30"
                            )}
                            onClick={() => {
                              if (isLocked && lockedModeTarget === 'background') {
