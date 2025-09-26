@@ -11,7 +11,7 @@ import { TrackItem } from "@/types";
 import { ChevronUp, ChevronDown, X, User, Wand2, Repeat, ArrowRight, Download, Palette, RotateCcw, Check, Dices, Pipette, Lock } from "lucide-react";
 import artistPlaceholderVideo from "@/assets/artist-placeholder.mp4";
 import { useSessionManager } from "@/hooks/use-session-manager";
-import { AnimatedPromptInput } from "@/components/ui/animated-prompt-input";
+
 import { HexColorPicker } from "react-colorful";
 
 // Function to convert hex color to human-readable name
@@ -1044,35 +1044,102 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                              }
                            }}
                          >
-                           {/* Overlay to make entire area clickable when background is active */}
-                           {isLocked && lockedModeTarget === 'background' && (
-                             <div className="absolute inset-0 z-10 cursor-pointer" />
-                           )}
-                           <AnimatedPromptInput
-                             value={prompt}
-                             onChange={setPrompt}
-                             placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
-                             disabled={loading || (isLocked && lockedModeTarget === 'background')}
-                             animatedText={sanitizedPrompt}
-                             isAnimating={isAnimating}
-                             onAnimationComplete={handleAnimationComplete}
-                             onPersonClick={handlePersonClick}
-                             onClothingClick={handleClothingClick}
-                             onResetClick={handlePromptReset}
-                             facialReferenceImage={facialReferenceImage}
-                             isAnalyzingFace={isAnalyzingFace}
-                             onFacialReferenceRemoved={handleFacialReferenceRemoved}
-                             clothingReferenceImage={clothingReferenceImage}
-                             isAnalyzingClothing={isAnalyzingClothing}
-                             onClothingReferenceRemoved={handleClothingReferenceRemoved}
-                             faceSwapMode={isLocked && !!facialReferenceImage}
-                             faceSwapMessage="Face swap mode is activated. Prompt field is disabled"
-                             className={cn(
-                               "h-36",
-                               isLocked && lockedModeTarget === 'input' && "border-white/20",
-                               isLocked && lockedModeTarget === 'background' && "hover:border-white/40"
-                             )}
-                           />
+                            {/* Overlay to make entire area clickable when background is active */}
+                            {isLocked && lockedModeTarget === 'background' && (
+                              <div className="absolute inset-0 z-10 cursor-pointer" />
+                            )}
+                            
+                            {/* Prompt Input */}
+                            <div className="h-36 flex flex-col">
+                              <textarea 
+                                value={prompt}
+                                onChange={(e) => setPrompt(e.target.value)}
+                                placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
+                                disabled={loading || (isLocked && lockedModeTarget === 'background')}
+                                className={cn(
+                                  "flex-1 w-full bg-black/60 border border-white/20 rounded-md p-3 text-white text-sm resize-none focus:outline-none focus:border-white/40 disabled:opacity-50",
+                                  isLocked && lockedModeTarget === 'input' && "border-white/20",
+                                  isLocked && lockedModeTarget === 'background' && "hover:border-white/40"
+                                )}
+                              />
+                              
+                              {/* Divider */}
+                              <div className="w-full h-px bg-white/10 my-2" />
+                              
+                              {/* Reference Images */}
+                              {(facialReferenceImage || clothingReferenceImage) && (
+                                <div className="flex gap-2 mb-2">
+                                  {facialReferenceImage && (
+                                    <div className="relative">
+                                      <img 
+                                        src={facialReferenceImage} 
+                                        alt="Face reference" 
+                                        className="w-8 h-8 rounded object-cover"
+                                      />
+                                      <button
+                                        onClick={() => setFacialReferenceImage("")}
+                                        className="absolute -top-1 -right-1 bg-red-500 rounded-full w-4 h-4 flex items-center justify-center text-white text-xs"
+                                      >
+                                        ×
+                                      </button>
+                                    </div>
+                                  )}
+                                  {clothingReferenceImage && (
+                                    <div className="relative">
+                                      <img 
+                                        src={clothingReferenceImage} 
+                                        alt="Clothing reference" 
+                                        className="w-8 h-8 rounded object-cover"
+                                      />
+                                      <button
+                                        onClick={() => setClothingReferenceImage("")}
+                                        className="absolute -top-1 -right-1 bg-red-500 rounded-full w-4 h-4 flex items-center justify-center text-white text-xs"
+                                      >
+                                        ×
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              
+                              {/* Action Buttons */}
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  onClick={() => document.getElementById('facial-reference-upload')?.click()}
+                                  disabled={isAnalyzingFace || loading}
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex items-center gap-1 h-7 px-2 text-xs"
+                                >
+                                  <User size={12} />
+                                  Person
+                                </Button>
+                                <Button
+                                  onClick={() => document.getElementById('clothing-reference-upload')?.click()}
+                                  disabled={isAnalyzingClothing || loading}
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex items-center gap-1 h-7 px-2 text-xs"
+                                >
+                                  <Palette size={12} />
+                                  Clothing
+                                </Button>
+                                <Button
+                                  onClick={() => {
+                                    setPrompt("");
+                                    setFacialReferenceImage("");
+                                    setClothingReferenceImage("");
+                                  }}
+                                  disabled={loading}
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex items-center gap-1 h-7 px-2 text-xs"
+                                >
+                                  <RotateCcw size={12} />
+                                  Reset
+                                </Button>
+                              </div>
+                            </div>
                          </div>
                     </div>
 
