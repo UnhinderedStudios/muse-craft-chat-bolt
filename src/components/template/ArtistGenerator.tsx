@@ -961,7 +961,10 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   style={{ height: "min(520px, 60vh)", backgroundColor: '#33343630' }}
                 >
 
-                  <header className="mb-2">
+                  <header className={cn(
+                    "mb-2",
+                    isLocked && lockedModeTarget === 'background' && "opacity-30"
+                  )}>
                     <h3 className="text-xs text-white/60">Artist Generator</h3>
                   </header>
 
@@ -969,7 +972,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                      <div>
                          <div 
                            className={cn(
-                             isLocked && lockedModeTarget === 'background' && "cursor-pointer hover:border-white/40 rounded-lg border border-transparent"
+                             isLocked && lockedModeTarget === 'background' && "cursor-pointer hover:border-white/40 rounded-lg border border-transparent opacity-30 pointer-events-none"
                            )}
                            onClick={() => {
                              if (isLocked && lockedModeTarget === 'background') {
@@ -1020,10 +1023,10 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                           }
                         }}
                       >
-                        <div className={cn(
-                          "relative",
-                          isLocked && lockedModeTarget === 'input' && "pointer-events-none opacity-50"
-                        )}>
+                         <div className={cn(
+                           "relative",
+                           isLocked && lockedModeTarget === 'input' && "pointer-events-none opacity-30"
+                         )}>
                         <div className="flex flex-col gap-1.5">
                           {/* Color Picker - Full Width */}
                           <div className="color-picker-compact w-full">
