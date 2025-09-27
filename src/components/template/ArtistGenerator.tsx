@@ -1059,28 +1059,28 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                            {isLocked && lockedModeTarget === 'background' && !loading && (
                              <div className="absolute inset-0 z-10 cursor-pointer" />
                            )}
-                             <AnimatedPromptInput
-                               value={prompt}
-                               onChange={setPrompt}
-                               placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
-                               disabled={(isLocked && lockedModeTarget === 'background') && !loading}
-                               animatedText=""
-                               isAnimating={false}
-                               onAnimationComplete={() => {}}
-                              onPersonClick={handlePersonClick}
-                              onClothingClick={handleClothingClick}
-                              onResetClick={handlePromptReset}
-                              facialReferenceImage={facialReferenceImage}
-                              isAnalyzingFace={isAnalyzingFace}
-                              onFacialReferenceRemoved={handleFacialReferenceRemoved}
-                              clothingReferenceImage={clothingReferenceImage}
-                              isAnalyzingClothing={isAnalyzingClothing}
-                              onClothingReferenceRemoved={handleClothingReferenceRemoved}
-                              faceSwapMode={isLocked && !!facialReferenceImage}
-                              faceSwapMessage="Face swap mode is activated. Prompt field is disabled"
-                               isGenerating={loading}
+                              <AnimatedPromptInput
+                                value={prompt}
+                                onChange={setPrompt}
+                                placeholder="e.g., Professional musician portrait with studio lighting, moody and artistic, cinematic quality"
+                                disabled={(isLocked && lockedModeTarget === 'background') && !loading}
+                                animatedText=""
+                                isAnimating={false}
+                                onAnimationComplete={() => {}}
+                                isGenerating={loading && isLocked && lockedModeTarget === 'background'}
+                                showGenerationClear={false}
+                               onPersonClick={handlePersonClick}
+                               onClothingClick={handleClothingClick}
+                               onResetClick={handlePromptReset}
+                               facialReferenceImage={facialReferenceImage}
+                               isAnalyzingFace={isAnalyzingFace}
+                               onFacialReferenceRemoved={handleFacialReferenceRemoved}
+                               clothingReferenceImage={clothingReferenceImage}
+                               isAnalyzingClothing={isAnalyzingClothing}
+                               onClothingReferenceRemoved={handleClothingReferenceRemoved}
+                               faceSwapMode={isLocked && !!facialReferenceImage}
+                               faceSwapMessage="Face swap mode is activated. Prompt field is disabled"
                                generationTimer={generationTimer}
-                               showGenerationClear={loading && isLocked && lockedModeTarget === 'background'}
                               className={cn(
                                 "h-36",
                                isLocked && lockedModeTarget === 'input' && "border-white/20",
