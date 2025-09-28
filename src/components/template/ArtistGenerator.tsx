@@ -1068,7 +1068,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                                 isAnimating={false}
                                 onAnimationComplete={() => {}}
                                 isGenerating={loading && isLocked && lockedModeTarget === 'background'}
-                                showGenerationClear={false}
+                                showGenerationClear={true}
                                onPersonClick={handlePersonClick}
                                onClothingClick={handleClothingClick}
                                onResetClick={handlePromptReset}
