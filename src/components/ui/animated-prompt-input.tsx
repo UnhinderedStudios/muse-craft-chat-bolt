@@ -122,6 +122,7 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
   const handleMouseLeave = () => setOverScrollbar(false);
   
   const isDisabledByAnalysis = disabled || isAnalyzingFace || isAnalyzingClothing || faceSwapMode || (isGenerating && !showGenerationClear);
+  const overlayActive = isAnalyzingFace || isAnalyzingClothing || isGenerating;
   
   return (
     <div className={cn("relative w-full h-full rounded-lg bg-black/40 border border-white/10", className)}>
@@ -137,15 +138,18 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
               onBlur={handleBlur}
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
-              placeholder={showAnimatedText ? "" : faceSwapMode ? faceSwapMessage : placeholder}
+              placeholder={showAnimatedText || overlayActive ? "" : faceSwapMode ? faceSwapMessage : placeholder}
               disabled={isDisabledByAnalysis}
+              tabIndex={overlayActive ? -1 : 0}
+              readOnly={overlayActive || isDisabledByAnalysis}
               className={cn(
                 "w-full h-full resize-none bg-transparent text-white text-sm leading-6 placeholder:text-white/40 pr-20 focus:outline-none transition-colors duration-200 overflow-y-auto lyrics-scrollbar",
                 overScrollbar ? "cursor-default" : "cursor-text",
                 isDisabledByAnalysis && "cursor-default",
                 showAnimatedText && "opacity-80",
                 (isAnalyzingFace || isAnalyzingClothing || (isGenerating && !showGenerationClear)) && "opacity-20",
-                faceSwapMode && "opacity-50 bg-white/5"
+                faceSwapMode && "opacity-50 bg-white/5",
+                overlayActive && "pointer-events-none select-none caret-transparent"
               )}
             />
           </div>
@@ -162,7 +166,7 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
                 </div>
               )}
               {/* Main overlay */}
-              <div className="absolute inset-0 flex items-center justify-center bg-black/80 rounded-lg">
+              <div className="absolute inset-0 flex items-center justify-center bg-black/80 rounded-lg pointer-events-auto select-none">
                 {isGenerating ? (
                   /* Generation with timer in center of loader */
                   <div className="relative flex items-center justify-center">
