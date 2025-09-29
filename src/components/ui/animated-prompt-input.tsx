@@ -129,7 +129,7 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
       <div className="flex flex-col h-full">
         {/* Top: scrollable input area */}
         <div className="flex-1 min-h-0 px-3 pt-3 pb-2 relative">
-          <div className={cn("relative h-full", (isAnalyzingFace || isAnalyzingClothing || (isGenerating && !showGenerationClear)) && "blur-3xl")}> 
+          <div className={cn("relative h-full", (isAnalyzingFace || isAnalyzingClothing) && "blur-3xl", isGenerating && "opacity-0")}> 
             <textarea
               ref={textareaRef}
               value={showAnimatedText ? animatedText : value}
@@ -147,8 +147,9 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
                 overScrollbar ? "cursor-default" : "cursor-text",
                 isDisabledByAnalysis && "cursor-default",
                 showAnimatedText && "opacity-80",
-                (isAnalyzingFace || isAnalyzingClothing || (isGenerating && !showGenerationClear)) && "opacity-20",
+                (isAnalyzingFace || isAnalyzingClothing || isGenerating) && "opacity-20",
                 faceSwapMode && "opacity-50 bg-white/5",
+                isGenerating && "text-transparent",
                 overlayActive && "pointer-events-none select-none caret-transparent placeholder:text-transparent focus:ring-0 focus:border-transparent"
               )}
             />
