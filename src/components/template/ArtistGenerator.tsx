@@ -1054,7 +1054,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                               "relative transition-all duration-200 ease-out rounded-lg border border-transparent",
                               isLocked && lockedModeTarget === 'background' && !loading && "cursor-pointer hover:border-white/40",
                               isLocked && lockedModeTarget === 'background' && !loading && "opacity-30",
-                              loading && isLocked && lockedModeTarget === 'background' && "border-white/20 pointer-events-none"
+                              loading && isLocked && lockedModeTarget === 'background' && "border-white/20"
                             )}
                             onClick={() => {
                               if (isLocked && lockedModeTarget === 'background' && !loading) {
