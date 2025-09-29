@@ -1050,12 +1050,12 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   <div className="flex-1 min-h-0 mb-1 space-y-1 overflow-auto pr-1">
                      <div>
                          <div 
-                            className={cn(
-                              "relative transition-all duration-200 ease-out rounded-lg border border-transparent",
-                              isLocked && lockedModeTarget === 'background' && !loading && "cursor-pointer hover:border-white/40",
-                              isLocked && lockedModeTarget === 'background' && !loading && "opacity-30",
-                              loading && isLocked && lockedModeTarget === 'background' && "border-white/20"
-                            )}
+                             className={cn(
+                               "relative transition-all duration-200 ease-out rounded-lg border border-transparent",
+                               isLocked && lockedModeTarget === 'background' && !loading && "cursor-pointer hover:border-white/40",
+                               isLocked && lockedModeTarget === 'background' && !loading && "opacity-30",
+                               loading && isLocked && lockedModeTarget === 'background' && "border-white/20 pointer-events-none"
+                             )}
                             onClick={() => {
                               if (isLocked && lockedModeTarget === 'background' && !loading) {
                                 setLockedModeTarget('input');
@@ -1088,11 +1088,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                                isGenerating={loading}
                                generationTimer={generationTimer}
                                showGenerationClear={loading && isLocked && lockedModeTarget === 'background'}
-                              className={cn(
-                                "h-36",
-                               isLocked && lockedModeTarget === 'input' && "border-white/20",
-                               isLocked && lockedModeTarget === 'background' && "hover:border-white/40"
-                             )}
+                               className={cn(
+                                 "h-36",
+                                isLocked && lockedModeTarget === 'input' && "border-white/20",
+                                isLocked && lockedModeTarget === 'background' && !loading && "hover:border-white/40"
+                              )}
                            />
                          </div>
                     </div>

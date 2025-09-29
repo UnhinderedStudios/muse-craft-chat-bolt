@@ -149,7 +149,7 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
                 showAnimatedText && "opacity-80",
                 (isAnalyzingFace || isAnalyzingClothing || (isGenerating && !showGenerationClear)) && "opacity-20",
                 faceSwapMode && "opacity-50 bg-white/5",
-                overlayActive && "pointer-events-none select-none caret-transparent"
+                overlayActive && "pointer-events-none select-none caret-transparent placeholder:text-transparent focus:ring-0 focus:border-transparent"
               )}
             />
           </div>
