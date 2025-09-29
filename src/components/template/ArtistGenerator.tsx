@@ -127,6 +127,9 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
   // Face mode detection for regular (non-locked) mode with facial reference
   const isFaceModeActive = !isLocked && !!facialReferenceImage;
+  
+  // Background controls disable flag
+  const disableBackgroundControls = isLocked && loading;
 
   // Reset to input target when lock mode is activated
   useEffect(() => {
@@ -622,6 +625,8 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   };
 
   const handleColorReset = async () => {
+    if (isLocked && loading) return;
+    
     if (isLocked && lockedModeTarget === 'background') {
       // In locked background mode, apply default color and generate
       setSelectedColor("#161d21");
@@ -660,6 +665,8 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   };
 
   const handleColorRandomize = () => {
+    if (isLocked && loading) return;
+    
     const randomColor = `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`;
     setSelectedColor(randomColor);
     toast({ title: "Color randomized", description: `Random color: ${randomColor}` });
@@ -1093,44 +1100,52 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                      {/* Background Color Section */}
                      <div>
                         <div className={cn(
-                          "text-xs text-white/60 mb-2 transition-opacity duration-200 ease-out",
-                          (isLocked && lockedModeTarget === 'input') || (loading && isLocked && lockedModeTarget === 'background') ? "opacity-30" : ""
+                          "text-xs text-white/60 mb-2 transition-opacity duration-200 ease-out select-none",
+                          (isLocked && lockedModeTarget === 'input') || (loading && isLocked && lockedModeTarget === 'background') ? "opacity-30" : "",
+                          disableBackgroundControls && "select-none"
                         )}>Background Color</div>
                          <div 
                            className={cn(
                              "w-full rounded-lg bg-black/20 border p-3 pb-1.5 transition-colors",
                              isLocked && lockedModeTarget === 'background' ? "border-white/20" : "border-white/10",
                               (isLocked && lockedModeTarget === 'input') || (loading && !(isLocked && lockedModeTarget === 'background')) ? "cursor-pointer hover:border-white/40" : "",
-                              (loading && isLocked && lockedModeTarget === 'background') || (!isLocked && loading) ? "opacity-50 pointer-events-none" : ""
+                              disableBackgroundControls && "opacity-50 pointer-events-none select-none"
                            )}
                          onClick={() => {
-                           if (!loading && isLocked && lockedModeTarget === 'input') {
+                           if (!disableBackgroundControls && !loading && isLocked && lockedModeTarget === 'input') {
                              setLockedModeTarget('background');
                            }
                          }}
                        >
                           <div className={cn(
                             "relative transition-all duration-200 ease-out",
-                            (isLocked && lockedModeTarget === 'input') || (loading && !(isLocked && lockedModeTarget === 'background')) ? "pointer-events-none opacity-30" : ""
+                            (isLocked && lockedModeTarget === 'input') || (loading && !(isLocked && lockedModeTarget === 'background')) ? "pointer-events-none opacity-30" : "",
+                            disableBackgroundControls && "pointer-events-none select-none"
                           )}>
                         <div className="flex flex-col gap-1.5">
                           {/* Color Picker - Full Width */}
-                          <div className="color-picker-compact w-full">
+                          <div className={cn(
+                            "color-picker-compact w-full",
+                            disableBackgroundControls && "pointer-events-none select-none"
+                          )}>
                              <HexColorPicker
                                color={selectedColor || "#ffffff"}
-                               onChange={(loading && isLocked && lockedModeTarget === 'background') || (!isLocked && loading) ? () => {} : setSelectedColor}
+                               onChange={disableBackgroundControls ? () => {} : setSelectedColor}
                                style={{ 
                                  width: '100%', 
                                  height: '118px',
-                                  pointerEvents: (loading && isLocked && lockedModeTarget === 'background') || (!isLocked && loading) ? 'none' : 'auto',
-                                  opacity: (loading && isLocked && lockedModeTarget === 'background') || (!isLocked && loading) ? 0.5 : 1
+                                 pointerEvents: disableBackgroundControls ? 'none' : 'auto',
+                                 opacity: disableBackgroundControls ? 0.5 : 1
                                }}
                              />
                           </div>
                           
                            {/* Color Controls - Below picker */}
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-xs text-white/80 select-all font-mono">
+                            <div className={cn(
+                              "flex items-center gap-2 text-xs text-white/80 select-all font-mono",
+                              disableBackgroundControls && "select-none"
+                            )}>
                               <span>{selectedColor || "#ffffff"}</span>
                               {selectedColor && (
                                 <>
@@ -1144,7 +1159,9 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                                  variant="outline"
                                  size="sm"
                                  onClick={handleColorRandomize}
-                                  disabled={(loading && isLocked && lockedModeTarget === 'background') || (!isLocked && loading)}
+                                 disabled={disableBackgroundControls}
+                                 aria-disabled={disableBackgroundControls}
+                                 tabIndex={disableBackgroundControls ? -1 : 0}
                                  className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0 disabled:opacity-30 disabled:cursor-not-allowed"
                                >
                                  <Dices className="w-3 h-3" />
@@ -1153,7 +1170,9 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                                  variant="outline"
                                  size="sm"
                                  onClick={handleColorPicker}
-                                  disabled={(loading && isLocked && lockedModeTarget === 'background') || (!isLocked && loading)}
+                                 disabled={disableBackgroundControls}
+                                 aria-disabled={disableBackgroundControls}
+                                 tabIndex={disableBackgroundControls ? -1 : 0}
                                  className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0 disabled:opacity-30 disabled:cursor-not-allowed"
                                >
                                  <Pipette className="w-3 h-3" />
@@ -1162,7 +1181,9 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                                  variant="outline"
                                  size="sm"
                                  onClick={handleColorReset}
-                                  disabled={(loading && isLocked && lockedModeTarget === 'background') || (!isLocked && loading)}
+                                 disabled={disableBackgroundControls}
+                                 aria-disabled={disableBackgroundControls}
+                                 tabIndex={disableBackgroundControls ? -1 : 0}
                                  className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0 disabled:opacity-30 disabled:cursor-not-allowed"
                                >
                                  <RotateCcw className="w-3 h-3" />
