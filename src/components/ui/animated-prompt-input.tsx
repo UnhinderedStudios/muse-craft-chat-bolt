@@ -158,7 +158,7 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
             <>
               {/* Scanning beam animation - only for analysis, not generation */}
               {(isAnalyzingFace || isAnalyzingClothing) && (
-                <div className="absolute inset-0 overflow-hidden rounded-lg pointer-events-none">
+                <div className="absolute inset-px overflow-hidden rounded-lg pointer-events-none">
                   <div className="absolute top-0 left-0 w-16 h-full animate-scan" 
                        style={{
                          background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
@@ -167,7 +167,7 @@ export const AnimatedPromptInput: React.FC<AnimatedPromptInputProps> = ({
                 </div>
               )}
               {/* Main overlay */}
-              <div className="absolute inset-0 flex items-center justify-center bg-black/80 rounded-lg pointer-events-auto select-none">
+              <div className="absolute inset-px flex items-center justify-center bg-black/80 rounded-lg pointer-events-auto select-none">
                 {isGenerating ? (
                   /* Generation with timer in center of loader */
                   <div className="relative flex items-center justify-center">
