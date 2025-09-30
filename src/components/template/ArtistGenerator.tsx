@@ -130,6 +130,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   
   // Background controls disable flag
   const disableBackgroundControls = isLocked && loading;
+  const bgDisabled = loading;
 
   // Reset to input target when lock mode is activated
   useEffect(() => {
@@ -1099,53 +1100,48 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
                      {/* Background Color Section */}
                      <div>
-                        <div className={cn(
-                          "text-xs text-white/60 mb-2 transition-opacity duration-200 ease-out select-none",
-                          (isLocked && lockedModeTarget === 'input') || (loading && isLocked && lockedModeTarget === 'background') ? "opacity-30" : "",
-                          disableBackgroundControls && "select-none"
-                        )}>Background Color</div>
-                         <div 
-                           className={cn(
-                             "w-full rounded-lg bg-black/20 border p-3 pb-1.5 transition-colors",
-                             isLocked && lockedModeTarget === 'background' ? "border-white/20" : "border-white/10",
-                              (isLocked && lockedModeTarget === 'input') && !loading ? "cursor-pointer hover:border-white/40" : "",
-                              disableBackgroundControls && "opacity-50 pointer-events-none select-none"
-                           )}
-                         onClick={() => {
-                            if (!disableBackgroundControls && !loading && isLocked && lockedModeTarget === 'input') {
-                             setLockedModeTarget('background');
-                           }
-                         }}
+                         <div className={cn(
+                           "text-xs text-white/60 mb-2 transition-opacity duration-200 ease-out select-none",
+                           bgDisabled && "opacity-30"
+                         )}>Background Color</div>
+                          <div 
+                            className={cn(
+                              "w-full rounded-lg bg-black/20 border p-3 pb-1.5 transition-colors",
+                              isLocked && lockedModeTarget === 'background' ? "border-white/20" : "border-white/10",
+                              (isLocked && lockedModeTarget === 'input') && !bgDisabled ? "cursor-pointer hover:border-white/40" : "",
+                              bgDisabled && "opacity-50 pointer-events-none select-none"
+                            )}
+                          onClick={() => {
+                             if (!bgDisabled && isLocked && lockedModeTarget === 'input') {
+                              setLockedModeTarget('background');
+                            }
+                          }}
                        >
-                          <div className={cn(
-                            "relative transition-all duration-200 ease-out",
-                            (isLocked && lockedModeTarget === 'input') || loading ? "pointer-events-none opacity-30" : "",
-                            disableBackgroundControls && "pointer-events-none select-none"
-                          )}>
+                           <div className={cn(
+                             "relative transition-all duration-200 ease-out",
+                             ((isLocked && lockedModeTarget === 'input') || bgDisabled) && "pointer-events-none opacity-30"
+                           )}>
                         <div className="flex flex-col gap-1.5">
                           {/* Color Picker - Full Width */}
-                          <div className={cn(
-                            "color-picker-compact w-full",
-                            disableBackgroundControls && "pointer-events-none select-none"
-                          )}>
-                             <HexColorPicker
-                               color={selectedColor || "#ffffff"}
-                               onChange={disableBackgroundControls ? () => {} : setSelectedColor}
-                               style={{ 
-                                 width: '100%', 
-                                 height: '118px',
-                                 pointerEvents: disableBackgroundControls ? 'none' : 'auto',
-                                 opacity: disableBackgroundControls ? 0.5 : 1
-                               }}
-                             />
+                           <div className="color-picker-compact w-full">
+                              <HexColorPicker
+                                color={selectedColor || "#ffffff"}
+                                onChange={bgDisabled ? () => {} : setSelectedColor}
+                                style={{ 
+                                  width: '100%', 
+                                  height: '118px',
+                                  pointerEvents: bgDisabled ? 'none' : 'auto',
+                                  opacity: bgDisabled ? 0.5 : 1
+                                }}
+                              />
                           </div>
                           
                            {/* Color Controls - Below picker */}
                           <div className="flex items-center justify-between">
-                            <div className={cn(
-                              "flex items-center gap-2 text-xs text-white/80 select-all font-mono",
-                              disableBackgroundControls && "select-none"
-                            )}>
+                             <div className={cn(
+                               "flex items-center gap-2 text-xs text-white/80 select-all font-mono",
+                               bgDisabled && "select-none"
+                             )}>
                               <span>{selectedColor || "#ffffff"}</span>
                               {selectedColor && (
                                 <>
@@ -1155,37 +1151,37 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                               )}
                             </div>
                             <div className="flex items-center gap-2">
-                               <Button
-                                 variant="outline"
-                                 size="sm"
-                                 onClick={handleColorRandomize}
-                                 disabled={disableBackgroundControls}
-                                 aria-disabled={disableBackgroundControls}
-                                 tabIndex={disableBackgroundControls ? -1 : 0}
-                                 className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0 disabled:opacity-30 disabled:cursor-not-allowed"
-                               >
-                                 <Dices className="w-3 h-3" />
-                               </Button>
-                               <Button
-                                 variant="outline"
-                                 size="sm"
-                                 onClick={handleColorPicker}
-                                 disabled={disableBackgroundControls}
-                                 aria-disabled={disableBackgroundControls}
-                                 tabIndex={disableBackgroundControls ? -1 : 0}
-                                 className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0 disabled:opacity-30 disabled:cursor-not-allowed"
-                               >
-                                 <Pipette className="w-3 h-3" />
-                               </Button>
-                               <Button
-                                 variant="outline"
-                                 size="sm"
-                                 onClick={handleColorReset}
-                                 disabled={disableBackgroundControls}
-                                 aria-disabled={disableBackgroundControls}
-                                 tabIndex={disableBackgroundControls ? -1 : 0}
-                                 className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0 disabled:opacity-30 disabled:cursor-not-allowed"
-                               >
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={handleColorRandomize}
+                                  disabled={bgDisabled}
+                                  aria-disabled={bgDisabled}
+                                  tabIndex={bgDisabled ? -1 : 0}
+                                  className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0 disabled:opacity-30 disabled:cursor-not-allowed"
+                                >
+                                  <Dices className="w-3 h-3" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={handleColorPicker}
+                                  disabled={bgDisabled}
+                                  aria-disabled={bgDisabled}
+                                  tabIndex={bgDisabled ? -1 : 0}
+                                  className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0 disabled:opacity-30 disabled:cursor-not-allowed"
+                                >
+                                  <Pipette className="w-3 h-3" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={handleColorReset}
+                                  disabled={bgDisabled}
+                                  aria-disabled={bgDisabled}
+                                  tabIndex={bgDisabled ? -1 : 0}
+                                  className="bg-white/10 border-0 text-white hover:bg-white/20 hover:text-white w-6 h-6 p-0 disabled:opacity-30 disabled:cursor-not-allowed"
+                                >
                                  <RotateCcw className="w-3 h-3" />
                                </Button>
                             </div>
