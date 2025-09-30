@@ -1107,9 +1107,9 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                              className={cn(
                               "w-full rounded-lg bg-black/20 border p-3 pb-1.5 transition-all duration-200 ease-out",
                               isLocked && lockedModeTarget === 'background' ? "border-white/20" : "border-white/10",
-                              (isLocked && lockedModeTarget === 'input') && !bgDisabled ? "cursor-pointer opacity-30" : "",
+                              (isLocked && lockedModeTarget === 'input') && !bgDisabled ? "cursor-pointer opacity-30 hover:border-white/40" : "",
                               bgDisabled && "opacity-50 pointer-events-none select-none"
-                            )}
+                             )}
                           onClick={() => {
                              if (!bgDisabled && isLocked && lockedModeTarget === 'input') {
                               setLockedModeTarget('background');
