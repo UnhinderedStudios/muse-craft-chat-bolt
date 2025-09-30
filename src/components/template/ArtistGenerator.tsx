@@ -1050,13 +1050,12 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
                   <div className="flex-1 min-h-0 mb-1 space-y-1 overflow-auto pr-1">
                      <div>
-                         <div 
-                             className={cn(
-                               "relative transition-all duration-200 ease-out rounded-lg border border-transparent",
-                               isLocked && lockedModeTarget === 'background' && !loading && "cursor-pointer hover:border-white/40",
-                               isLocked && lockedModeTarget === 'background' && !loading && "opacity-30",
-                               loading && isLocked && lockedModeTarget === 'background' && "border-white/20 pointer-events-none"
-                             )}
+                          <div 
+                              className={cn(
+                                "relative transition-all duration-200 ease-out rounded-lg border border-transparent",
+                                isLocked && lockedModeTarget === 'background' && !loading && "cursor-pointer hover:border-white/40",
+                                isLocked && lockedModeTarget === 'background' && !loading && "opacity-30"
+                              )}
                             onClick={() => {
                               if (isLocked && lockedModeTarget === 'background' && !loading) {
                                 setLockedModeTarget('input');
