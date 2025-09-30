@@ -1091,7 +1091,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                                className={cn(
                                  "h-36",
                                 ((isLocked && lockedModeTarget === 'input') || (!isLocked && loading) || (isLocked && lockedModeTarget === 'background' && loading)) && "border-white/20",
-                                isLocked && lockedModeTarget === 'background' && !loading && "hover:border-white/40"
+                                isLocked && lockedModeTarget === 'background' && !loading && "hover:border-white/30"
                               )}
                            />
                          </div>
