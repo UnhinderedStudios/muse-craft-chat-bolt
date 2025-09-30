@@ -1108,18 +1108,18 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                            className={cn(
                              "w-full rounded-lg bg-black/20 border p-3 pb-1.5 transition-colors",
                              isLocked && lockedModeTarget === 'background' ? "border-white/20" : "border-white/10",
-                              (isLocked && lockedModeTarget === 'input') || (loading && !(isLocked && lockedModeTarget === 'background')) ? "cursor-pointer hover:border-white/40" : "",
+                              (isLocked && lockedModeTarget === 'input') && !loading ? "cursor-pointer hover:border-white/40" : "",
                               disableBackgroundControls && "opacity-50 pointer-events-none select-none"
                            )}
                          onClick={() => {
-                           if (!disableBackgroundControls && !loading && isLocked && lockedModeTarget === 'input') {
+                            if (!disableBackgroundControls && !loading && isLocked && lockedModeTarget === 'input') {
                              setLockedModeTarget('background');
                            }
                          }}
                        >
                           <div className={cn(
                             "relative transition-all duration-200 ease-out",
-                            (isLocked && lockedModeTarget === 'input') || (loading && !(isLocked && lockedModeTarget === 'background')) ? "pointer-events-none opacity-30" : "",
+                            (isLocked && lockedModeTarget === 'input') || loading ? "pointer-events-none opacity-30" : "",
                             disableBackgroundControls && "pointer-events-none select-none"
                           )}>
                         <div className="flex flex-col gap-1.5">
