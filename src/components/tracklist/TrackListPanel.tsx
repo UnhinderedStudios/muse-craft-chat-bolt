@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Play, Pause, RotateCw, X, Heart, Download, Plus, Trash2, Search, Edit3, MoreVertical, Music, Check, FileMusic, FileAudio, FileText, ImageIcon, Package } from "lucide-react";
+import { Play, Pause, RotateCw, X, Heart, Download, Plus, Trash2, Search, CreditCard as Edit3, MoveVertical as MoreVertical, Music, Check, FileMusic, FileAudio, FileText, Image as ImageIcon, Package } from "lucide-react";
 import { TrackItem } from "@/types";
 import { Input } from "@/components/ui/input";
 import { useScrollDelegationHook } from "@/utils/scrollDelegation";
@@ -1138,9 +1138,9 @@ export default function TrackListPanel({
                                               }
                                               
                                               return isInPlaylist ? (
-                                                <Check className="w-4 h-4 text-green-400 animate-scale-in" />
+                                                <Check className="w-4 h-4 text-green-400" />
                                               ) : (
-                                                <Plus className="w-4 h-4 animate-scale-in" />
+                                                <Plus className="w-4 h-4" />
                                               );
                                             })()}
                                           </div>
