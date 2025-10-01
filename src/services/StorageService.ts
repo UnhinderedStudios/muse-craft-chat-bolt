@@ -1,4 +1,5 @@
 import { logger } from "@/lib/logger";
+import { toast } from "sonner";
 
 export class StorageService {
   private static instance: StorageService;
@@ -28,8 +29,18 @@ export class StorageService {
       if (error instanceof Error && error.name === 'QuotaExceededError') {
         logger.error(`[Storage] Quota exceeded for key: ${key}`);
         this.handleQuotaExceeded(key);
+
+        toast.error("Storage full", {
+          description: "Your browser storage is full. Older data was removed to make space.",
+          duration: 4000,
+        });
       } else {
         logger.error(`[Storage] Failed to save ${key}:`, error);
+
+        toast.error("Cannot save data", {
+          description: "There was an error saving your data. Please try again.",
+          duration: 3000,
+        });
       }
       return false;
     }

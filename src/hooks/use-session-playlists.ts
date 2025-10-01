@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { TrackItem } from "@/types";
+import { toast } from "sonner";
 
 // Lightweight track snapshot for storage
 export interface TrackSnapshot {
@@ -61,7 +62,7 @@ const safeStorageSet = (key: string, data: any): boolean => {
     return true;
   } catch (error) {
     console.error('Storage quota exceeded, attempting cleanup:', error);
-    
+
     // Try to free up space by removing old entries
     try {
       const stored = sessionStorage.getItem(key);
@@ -74,6 +75,12 @@ const safeStorageSet = (key: string, data: any): boolean => {
             songs: playlist.songs?.slice(0, 50) || []
           }));
           sessionStorage.setItem(key, JSON.stringify(trimmedData));
+
+          toast.warning("Playlist storage trimmed", {
+            description: "Some older playlists were removed due to storage limits.",
+            duration: 4000,
+          });
+
           return true;
         }
       }
@@ -86,6 +93,12 @@ const safeStorageSet = (key: string, data: any): boolean => {
         return true;
       } catch (fallbackError) {
         console.error('All storage methods failed:', fallbackError);
+
+        toast.error("Cannot save playlist", {
+          description: "Browser storage is full. Try clearing old data or downloading important tracks.",
+          duration: 5000,
+        });
+
         return false;
       }
     }

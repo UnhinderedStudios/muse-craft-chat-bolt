@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useEffect, useMemo, useState } from "react";
 import { ChatMessage, TrackItem } from "@/types";
+import { toast } from "sonner";
 
 export interface SessionData {
   id: string;
@@ -105,10 +106,20 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
       localStorage.removeItem(STORAGE_KEY);
       initialize();
       console.log("[SessionManager] Emergency cleanup completed");
+
+      toast.error("Storage full - old data cleared", {
+        description: "Your browser storage was full. Older session data has been removed to free up space.",
+        duration: 5000,
+      });
     } catch (error) {
       console.error("[SessionManager] Emergency cleanup failed:", error);
       // If even cleanup fails, just initialize in memory
       initialize();
+
+      toast.error("Storage error", {
+        description: "Unable to save data. Your browser's storage may be full or restricted.",
+        duration: 5000,
+      });
     }
   }, [initialize]);
 
@@ -250,6 +261,12 @@ export function SessionManagerProvider({ children }: { children: React.ReactNode
         if (isQuota) {
           console.log("[SessionManager] All pruning levels failed, attempting emergency cleanup");
           emergencyCleanup();
+        } else {
+          // Non-quota error
+          toast.error("Failed to save session", {
+            description: "There was an error saving your session data. Some changes may not persist.",
+            duration: 4000,
+          });
         }
         break;
       }
