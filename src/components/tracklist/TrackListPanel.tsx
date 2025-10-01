@@ -21,8 +21,6 @@ import {
 } from "@/components/ui/pagination";
 import { TrackLoadingShell } from "./TrackLoadingShell";
 import QuickAlbumCoverGenerator from "@/components/template/QuickAlbumCoverGenerator";
-import { usePanelResize } from "@/hooks/use-panel-resize";
-import { ResizeHandle } from "@/components/layout/ResizeHandle";
 
 type Props = {
   tracks: TrackItem[];
@@ -61,16 +59,6 @@ export default function TrackListPanel({
   onPlaylistClick
 }: Props) {
   const { toast } = useToast();
-
-  // Use panel resize hook
-  const {
-    dimensions,
-    isResizing,
-    handleResizeStart,
-    canResizeWidth,
-    canResizeHeight
-  } = usePanelResize("tracklist");
-
   const [audioCurrentTimes, setAudioCurrentTimes] = useState<number[]>([]);
   const [showQuickAlbumGenerator, setShowQuickAlbumGenerator] = useState(false);
   const [selectedTrackForRegen, setSelectedTrackForRegen] = useState<TrackItem | null>(null);
@@ -468,29 +456,7 @@ export default function TrackListPanel({
   }, [currentIndex]);
 
   return (
-    <aside
-      className="min-h-0 bg-[#151515] rounded-2xl flex flex-col relative"
-      style={{
-        width: dimensions.width ? `${dimensions.width}px` : undefined,
-        height: dimensions.height ? `${dimensions.height}px` : undefined,
-      }}
-    >
-      {/* Resize Handles */}
-      {canResizeWidth && (
-        <ResizeHandle
-          direction="left"
-          onMouseDown={(e) => handleResizeStart(e, "width")}
-          isResizing={isResizing}
-        />
-      )}
-      {canResizeHeight && (
-        <ResizeHandle
-          direction="top"
-          onMouseDown={(e) => handleResizeStart(e, "height")}
-          isResizing={isResizing}
-        />
-      )}
-
+    <aside className="h-full min-h-0 bg-[#151515] rounded-2xl flex flex-col">
       {/* Search Bar */}
       <div className="relative pl-4 pr-6 pt-4 mb-2 shrink-0">
         <div className="relative">
