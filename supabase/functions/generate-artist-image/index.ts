@@ -202,16 +202,15 @@ function generateRequestId(): string {
 }
 
 // Simple direct prompt construction
-function buildPrompt(userInput: string, backgroundHex?: string, characterCount?: number, hasFacialReference?: boolean): string {
+function buildPrompt(userInput: string, characterCount?: number, hasFacialReference?: boolean): string {
   const facialReferencePrefix = hasFacialReference 
     ? "Character's face must match the image titled (Facial Reference), this is the only thing that this image must be used for and nothing else. " 
     : "";
   const baseInstructions = "Match reference image framing, lighting, camera angle. Keep background identical but totally replace the character in the reference image, no reference to it should exist in the final image unless instructed in .";
   const characterInstruction = ` ${characterCount || 1} character${(characterCount || 1) > 1 ? 's' : ''}. All characters must match the gender specified, if 1 gender is specified then all characters must be that gender unless properly defined.`;
   const objectRestrictions = " NO objects, props, instruments, tools. Empty hands. Clean background.";
-  const backgroundInstruction = backgroundHex ? ` Background color: Overall background colour should be (do not actually enter hex code text into the final result only the color of it): ${backgroundHex}.` : '';
   
-  return `${facialReferencePrefix}${userInput}. ${baseInstructions}${backgroundInstruction}${characterInstruction}${objectRestrictions}`;
+  return `${facialReferencePrefix}${userInput}. ${baseInstructions}${characterInstruction}${objectRestrictions}`;
 }
 
 // CORS headers
@@ -246,7 +245,6 @@ Deno.serve(async (req: Request) => {
 
     // Parse request data
     let prompt: string;
-    let backgroundHex: string | undefined;
     let characterCount: number;
     let imageData: string | undefined;
     let imageMimeType: string | undefined;
@@ -265,7 +263,6 @@ Deno.serve(async (req: Request) => {
       const formData = await req.formData();
       
       const promptField = formData.get('prompt') as string;
-      backgroundHex = (formData.get('backgroundHex') as string) || undefined;
       characterCount = parseInt(formData.get('characterCount') as string) || 1;
       
       const imageFile = formData.get('image') as File;
@@ -308,20 +305,19 @@ Deno.serve(async (req: Request) => {
         prompt = promptField;
       }
       
-      console.log(`📝 [${requestId}] Form data - prompt: "${prompt}", backgroundHex: "${backgroundHex}", characterCount: ${characterCount}, hasImage: ${!!imageData}, hasClothingRef: ${!!clothingReferenceData}`);
+      console.log(`📝 [${requestId}] Form data - prompt: "${prompt}", characterCount: ${characterCount}, hasImage: ${!!imageData}, hasClothingRef: ${!!clothingReferenceData}`);
     } else {
       // Handle JSON data
       console.log(`📤 [${requestId}] Processing JSON data`);
       const body = await req.json();
       prompt = body.prompt;
-      backgroundHex = body.backgroundHex;
       characterCount = body.characterCount || 1;
       imageData = body.imageData;
       clothingReferenceData = body.clothingReferenceData;
       clothingReferenceMimeType = body.clothingReferenceMimeType;
       primaryClothingType = body.primaryClothingType;
       
-      console.log(`📝 [${requestId}] JSON data - prompt: "${prompt}", backgroundHex: "${backgroundHex}", characterCount: ${characterCount}, hasImage: ${!!imageData}, hasClothingRef: ${!!clothingReferenceData}`);
+      console.log(`📝 [${requestId}] JSON data - prompt: "${prompt}", characterCount: ${characterCount}, hasImage: ${!!imageData}, hasClothingRef: ${!!clothingReferenceData}`);
     }
 
     if (!prompt) {
@@ -341,7 +337,7 @@ Deno.serve(async (req: Request) => {
       
       // STAGE 1: Generate base image using existing flow
       console.log(`🎭 [${requestId}] STAGE 1: Generating base image with existing flow`);
-      const stage1Prompt = buildPrompt(prompt, backgroundHex, characterCount, !!facialReferenceData);
+      const stage1Prompt = buildPrompt(prompt, characterCount, !!facialReferenceData);
       console.log(`🎯 [${requestId}] Stage 1 prompt: "${stage1Prompt}"`);
 
       const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${geminiKey}`;
@@ -552,12 +548,12 @@ Deno.serve(async (req: Request) => {
     console.log(`🎨 [${requestId}] REGULAR FLOW: No clothing reference, using standard generation`);
     
     // Build the final prompt directly
-    const finalPrompt = buildPrompt(prompt, backgroundHex, characterCount, !!facialReferenceData);
+    const finalPrompt = buildPrompt(prompt, characterCount, !!facialReferenceData);
     console.log(`🎯 [${requestId}] Final prompt: "${finalPrompt}"`);
 
     // Generate with Gemini
     console.log(`🎨 [${requestId}] Generating with Gemini...`);
-    console.log(`🎭 [${requestId}] CHARACTER COUNT: ${characterCount}, BACKGROUND: ${backgroundHex || 'default'}`);
+    console.log(`🎭 [${requestId}] CHARACTER COUNT: ${characterCount}`);
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${geminiKey}`;
 
