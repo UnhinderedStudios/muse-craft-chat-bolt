@@ -217,15 +217,15 @@ export function TemplatePanel({
     <div className={cn("h-full bg-[#151515] rounded-2xl flex flex-col", className)}>
       {/* Header with Toggle */}
       <div className="shrink-0 p-4 pb-3">
-        <div className="flex items-center justify-center mb-4">
-          <div className="inline-flex items-center bg-black/30 rounded-lg p-1 backdrop-blur-sm border border-white/5">
+        <div className="flex items-center justify-center mb-3">
+          <div className="inline-flex items-center bg-black/30 rounded-md p-0.5 backdrop-blur-sm border border-white/5">
             <button
               onClick={() => {
                 setViewMode("playlists");
                 clearSearch();
               }}
               className={cn(
-                "px-6 py-1.5 text-sm font-medium rounded-md transition-all duration-200",
+                "px-5 py-1 text-xs font-medium rounded-md transition-all duration-200",
                 viewMode === "playlists"
                   ? "bg-white/10 text-white shadow-sm"
                   : "text-white/60 hover:text-white/80"
@@ -239,7 +239,7 @@ export function TemplatePanel({
                 clearSearch();
               }}
               className={cn(
-                "px-6 py-1.5 text-sm font-medium rounded-md transition-all duration-200",
+                "px-5 py-1 text-xs font-medium rounded-md transition-all duration-200",
                 viewMode === "artists"
                   ? "bg-white/10 text-white shadow-sm"
                   : "text-white/60 hover:text-white/80"
