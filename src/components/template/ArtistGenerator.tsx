@@ -197,38 +197,36 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   };
 
   // Watch for artist changes and update generation state accordingly
-  useEffect(() => {
-    if (!isOpen) return;
+useEffect(() => {
+  if (!isOpen) return;
 
-    // Save current state to the PREVIOUS artist before switching
-    const prevId = prevArtistIdRef.current;
-    if (prevId) {
-      saveCurrentStateToArtist(prevId);
+  // Save current state to the PREVIOUS artist before switching
+  const prevId = prevArtistIdRef.current;
+  if (prevId) {
+    saveCurrentStateToArtist(prevId);
+  }
+
+  // Immediately clear UI for the new selection to avoid showing stale images
+  resetGenerationState();
+
+  // For the newly selected artist: load saved state if any
+  if (selectedArtist) {
+    const hasSaved = Boolean(
+      (selectedArtist.generatedImages && selectedArtist.generatedImages.length > 0) ||
+      (selectedArtist.imagePrompts && selectedArtist.imagePrompts.length > 0) ||
+      selectedArtist.facialReference ||
+      selectedArtist.clothingReference ||
+      selectedArtist.selectedColor ||
+      selectedArtist.generationSettings
+    );
+    if (hasSaved) {
+      loadArtistGenerationState();
     }
+  }
 
-    // For the newly selected artist: load saved state if any, otherwise start fresh
-    if (selectedArtist) {
-      const hasSaved = Boolean(
-        (selectedArtist.generatedImages && selectedArtist.generatedImages.length > 0) ||
-        (selectedArtist.imagePrompts && selectedArtist.imagePrompts.length > 0) ||
-        selectedArtist.facialReference ||
-        selectedArtist.clothingReference ||
-        selectedArtist.selectedColor ||
-        selectedArtist.generationSettings
-      );
-      if (hasSaved) {
-        loadArtistGenerationState();
-      } else {
-        resetGenerationState();
-      }
-    } else {
-      // No artist selected
-      resetGenerationState();
-    }
-
-    // Update previous id ref to current
-    prevArtistIdRef.current = selectedArtistId ?? null;
-  }, [selectedArtistId, isOpen]);
+  // Update previous id ref to current
+  prevArtistIdRef.current = selectedArtistId ?? null;
+}, [selectedArtistId, isOpen]);
 
   // Face mode detection for regular (non-locked) mode with facial reference
   const isFaceModeActive = !isLocked && !!facialReferenceImage;

@@ -25,6 +25,8 @@ export interface ArtistData {
 
 const STORAGE_KEY = "artist_management_data";
 const STORAGE_EVENT = "artist_update_event";
+const SELECTED_KEY = "artist_selected_id";
+const SELECTED_EVENT = "artist_selected_event";
 
 // Safe storage setter with fallback
 const safeStorageSet = (key: string, value: any) => {
@@ -45,17 +47,28 @@ export const useArtistManagement = () => {
   const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
 
   // Load artists from storage on mount
-  useEffect(() => {
-    try {
-      const stored = sessionStorage.getItem(STORAGE_KEY) || localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setArtists(Array.isArray(parsed) ? parsed : []);
-      }
-    } catch (e) {
-      console.error("Failed to load artists", e);
+useEffect(() => {
+  try {
+    const stored = sessionStorage.getItem(STORAGE_KEY) || localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      setArtists(Array.isArray(parsed) ? parsed : []);
     }
-  }, []);
+
+    // Load selected artist id
+    const selectedRaw = sessionStorage.getItem(SELECTED_KEY) || localStorage.getItem(SELECTED_KEY);
+    if (selectedRaw) {
+      try {
+        const parsedSelected = JSON.parse(selectedRaw);
+        setSelectedArtistId(parsedSelected ?? null);
+      } catch (err) {
+        console.warn("Failed to parse selected artist id", err);
+      }
+    }
+  } catch (e) {
+    console.error("Failed to load artists", e);
+  }
+}, []);
 
   // Save to storage whenever artists change
   useEffect(() => {
@@ -67,33 +80,52 @@ export const useArtistManagement = () => {
   }, [artists]);
 
   // Listen for storage events (cross-tab sync)
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
-        try {
+useEffect(() => {
+  const handleStorageChange = (e: StorageEvent) => {
+    if (e.key === STORAGE_KEY && e.newValue) {
+      try {
+        const parsed = JSON.parse(e.newValue);
+        setArtists(Array.isArray(parsed) ? parsed : []);
+      } catch (error) {
+        console.error("Failed to parse storage event", error);
+      }
+    }
+    if (e.key === SELECTED_KEY) {
+      try {
+        if (e.newValue) {
           const parsed = JSON.parse(e.newValue);
-          setArtists(Array.isArray(parsed) ? parsed : []);
-        } catch (error) {
-          console.error("Failed to parse storage event", error);
+          setSelectedArtistId(parsed ?? null);
+        } else {
+          setSelectedArtistId(null);
         }
+      } catch (error) {
+        console.error("Failed to parse selected id from storage event", error);
       }
-    };
+    }
+  };
 
-    const handleCustomEvent = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      if (customEvent.detail && Array.isArray(customEvent.detail)) {
-        setArtists(customEvent.detail);
-      }
-    };
+  const handleArtistsCustomEvent = (e: Event) => {
+    const customEvent = e as CustomEvent;
+    if (customEvent.detail && Array.isArray(customEvent.detail)) {
+      setArtists(customEvent.detail);
+    }
+  };
 
-    window.addEventListener("storage", handleStorageChange);
-    window.addEventListener(STORAGE_EVENT, handleCustomEvent);
+  const handleSelectedEvent = (e: Event) => {
+    const customEvent = e as CustomEvent<string | null>;
+    setSelectedArtistId(customEvent.detail ?? null);
+  };
 
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener(STORAGE_EVENT, handleCustomEvent);
-    };
-  }, []);
+  window.addEventListener("storage", handleStorageChange);
+  window.addEventListener(STORAGE_EVENT, handleArtistsCustomEvent);
+  window.addEventListener(SELECTED_EVENT, handleSelectedEvent);
+
+  return () => {
+    window.removeEventListener("storage", handleStorageChange);
+    window.removeEventListener(STORAGE_EVENT, handleArtistsCustomEvent);
+    window.removeEventListener(SELECTED_EVENT, handleSelectedEvent);
+  };
+}, []);
 
   const createArtist = (name: string, imageUrl?: string) => {
     const newArtist: ArtistData = {
@@ -110,8 +142,8 @@ export const useArtistManagement = () => {
       activeGenerations: [],
     };
     setArtists((prev) => [newArtist, ...prev]);
-    // Auto-select the newly created artist
-    setSelectedArtistId(newArtist.id);
+// Auto-select the newly created artist
+selectArtist(newArtist.id);
     return newArtist;
   };
 
@@ -145,9 +177,15 @@ export const useArtistManagement = () => {
     );
   };
 
-  const selectArtist = (artistId: string | null) => {
-    setSelectedArtistId(artistId);
-  };
+const selectArtist = (artistId: string | null) => {
+  setSelectedArtistId(artistId);
+  try {
+    safeStorageSet(SELECTED_KEY, artistId);
+  } catch (e) {
+    console.warn("Failed to persist selected artist id", e);
+  }
+  window.dispatchEvent(new CustomEvent(SELECTED_EVENT, { detail: artistId }));
+};
 
   const selectedArtist = selectedArtistId 
     ? artists.find(a => a.id === selectedArtistId) 
