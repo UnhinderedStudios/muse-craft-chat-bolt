@@ -25,8 +25,6 @@ interface PlaylistItemProps {
 
 export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, onPlaylistClick, isArtist = false }: PlaylistItemProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [isDropReady, setIsDropReady] = useState(false);
-  const [showDropSuccess, setShowDropSuccess] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(playlist.name);
   const { dragState, setActiveDropZone, endDrag, setDuplicateStatus } = useDrag();
@@ -62,7 +60,6 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
   // Handle drag over detection
   useEffect(() => {
     if (!dragState.isDragging) {
-      setIsDropReady(false);
       return;
     }
 
@@ -70,9 +67,8 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
     if (!element) return;
 
     const handleMouseEnter = () => {
-      setIsDropReady(true);
       setActiveDropZone(playlist.id);
-      
+
       // Check for duplicate track
       if (dragState.draggedTrack && isTrackInPlaylist(playlist.id, dragState.draggedTrack.id)) {
         setDuplicateStatus(true, "Duplicate Error");
@@ -80,7 +76,6 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
     };
 
     const handleMouseLeave = () => {
-      setIsDropReady(false);
       setActiveDropZone(null);
       setDuplicateStatus(false, null);
     };
@@ -106,10 +101,8 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
       const overThis = !!pointEl && (pointEl.id === `playlist-${playlist.id}` || !!pointEl.closest(`#playlist-${playlist.id}`));
 
       if (overThis && onTrackAdd && !dragState.isDuplicateDetected) {
-        setShowDropSuccess(true);
         addTrackToPlaylist(playlist.id, dragState.draggedTrack);
         onTrackAdd(playlist.id, dragState.draggedTrack);
-        setTimeout(() => setShowDropSuccess(false), 2000);
       }
     };
 
@@ -133,9 +126,7 @@ export function PlaylistItem({ playlist, onMenuAction, onTrackAdd, onTitleEdit, 
     <div 
       id={`playlist-${playlist.id}`}
       className={cn(
-        "group bg-[#1e1e1e] rounded-xl p-3 cursor-pointer hover:bg-[#252525] transition-all duration-200",
-        isDropReady && "playlist-drop-ready",
-        showDropSuccess && "playlist-drop-success"
+        "group bg-[#1e1e1e] rounded-xl p-3 cursor-pointer hover:bg-[#252525] transition-all duration-200"
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

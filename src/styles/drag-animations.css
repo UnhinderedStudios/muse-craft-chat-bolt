@@ -11,87 +11,8 @@
   }
 }
 
-@keyframes drop-confirm {
-  0% {
-    background-color: hsl(300, 100%, 50%) !important;
-    border-color: hsl(300, 100%, 40%) !important;
-    transform: scale(1) !important;
-    box-shadow: 0 0 30px hsl(300, 100%, 50%) !important;
-  }
-  25% {
-    background-color: hsl(320, 100%, 60%) !important;
-    border-color: hsl(320, 100%, 40%) !important;
-    transform: scale(1.05) !important;
-    box-shadow: 0 0 40px hsl(320, 100%, 60%) !important;
-  }
-  50% {
-    background-color: hsl(340, 100%, 70%) !important;
-    border-color: hsl(340, 100%, 50%) !important;
-    transform: scale(1.02) !important;
-    box-shadow: 0 0 35px hsl(340, 100%, 70%) !important;
-  }
-  75% {
-    background-color: hsl(280, 100%, 65%) !important;
-    border-color: hsl(280, 100%, 45%) !important;
-    transform: scale(1.03) !important;
-    box-shadow: 0 0 25px hsl(280, 100%, 65%) !important;
-  }
-  100% {
-    background-color: hsl(var(--background)) !important;
-    border-color: hsl(var(--border)) !important;
-    transform: scale(1) !important;
-    box-shadow: none !important;
-  }
-}
-
-@keyframes drop-ready-pulse {
-  0%, 100% {
-    transform: scale(1);
-    border-color: hsl(var(--accent-primary) / 0.5);
-    box-shadow: 0 0 10px hsl(var(--accent-primary) / 0.3);
-  }
-  50% {
-    transform: scale(1.05);
-    border-color: hsl(var(--accent-primary));
-    box-shadow: 0 0 20px hsl(var(--accent-primary) / 0.5);
-  }
-}
-
 .track-detaching {
   animation: detach-float 0.3s ease-out forwards;
-}
-
-.playlist-drop-ready {
-  border: 2px solid hsl(var(--accent-primary));
-  animation: drop-ready-pulse 1.5s ease-in-out infinite;
-  background-color: hsl(var(--accent-primary) / 0.1);
-}
-
-.playlist-drop-success {
-  animation: drop-confirm 2s ease-out !important;
-  border: 2px solid transparent !important;
-  position: relative !important;
-}
-
-.playlist-drop-success::after {
-  content: "TRACK ADDED!" !important;
-  position: absolute !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  background: hsl(300, 100%, 50%) !important;
-  color: white !important;
-  padding: 4px 8px !important;
-  border-radius: 4px !important;
-  font-size: 10px !important;
-  font-weight: bold !important;
-  z-index: 1000 !important;
-  animation: fade-in-out 2s ease-out !important;
-}
-
-@keyframes fade-in-out {
-  0%, 100% { opacity: 0 !important; }
-  20%, 80% { opacity: 1 !important; }
 }
 
 .drag-clone-rotate {
