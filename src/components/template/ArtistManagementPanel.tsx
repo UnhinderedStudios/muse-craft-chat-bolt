@@ -28,11 +28,19 @@ export function ArtistManagementPanel({ className, onArtistClick }: ArtistManage
   const searchInputRef = useRef<HTMLInputElement>(null);
   const {
     artists,
+    selectedArtistId,
     createArtist,
     renameArtist,
     deleteArtist,
     toggleArtistFavourite,
+    selectArtist,
   } = useArtistManagement();
+
+  // Handle artist click to select
+  const handleArtistClick = (artist: ArtistData) => {
+    selectArtist(artist.id);
+    onArtistClick?.(artist);
+  };
 
   // Filter artists based on search query
   const filteredArtists = searchQuery.trim() === "" 
@@ -168,7 +176,8 @@ export function ArtistManagementPanel({ className, onArtistClick }: ArtistManage
                 artist={artist}
                 onMenuAction={handleArtistAction}
                 onTitleEdit={handleArtistTitleEdit}
-                onArtistClick={onArtistClick}
+                onArtistClick={handleArtistClick}
+                isSelected={artist.id === selectedArtistId}
               />
             ))}
 

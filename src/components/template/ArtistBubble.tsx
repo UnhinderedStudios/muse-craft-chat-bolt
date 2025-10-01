@@ -16,9 +16,10 @@ interface ArtistBubbleProps {
   onMenuAction: (artistId: string, action: string) => void;
   onTitleEdit?: (artistId: string, newTitle: string) => void;
   onArtistClick?: (artist: ArtistData) => void;
+  isSelected?: boolean;
 }
 
-export function ArtistBubble({ artist, onMenuAction, onTitleEdit, onArtistClick }: ArtistBubbleProps) {
+export function ArtistBubble({ artist, onMenuAction, onTitleEdit, onArtistClick, isSelected = false }: ArtistBubbleProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(artist.name);
@@ -62,7 +63,10 @@ export function ArtistBubble({ artist, onMenuAction, onTitleEdit, onArtistClick 
   return (
     <div 
       className={cn(
-        "group bg-[#1e1e1e] rounded-xl p-3 cursor-pointer hover:bg-[#252525] transition-all duration-200"
+        "group rounded-xl p-3 cursor-pointer transition-all duration-200",
+        isSelected 
+          ? "bg-[#2a2a2a] border border-accent-primary/50" 
+          : "bg-[#1e1e1e] hover:bg-[#252525] border border-transparent"
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

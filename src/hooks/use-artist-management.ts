@@ -7,6 +7,9 @@ export interface ArtistData {
   songCount: number;
   createdAt: number;
   isFavorited?: boolean;
+  tracks: any[]; // TrackItem[] - isolated tracks per artist
+  chatMessages: any[]; // ChatMessage[] - isolated chat per artist
+  activeGenerations: any[]; // Active generation jobs for this artist
 }
 
 const STORAGE_KEY = "artist_management_data";
@@ -28,6 +31,7 @@ const safeStorageSet = (key: string, value: any) => {
 
 export const useArtistManagement = () => {
   const [artists, setArtists] = useState<ArtistData[]>([]);
+  const [selectedArtistId, setSelectedArtistId] = useState<string | null>(null);
 
   // Load artists from storage on mount
   useEffect(() => {
@@ -88,8 +92,15 @@ export const useArtistManagement = () => {
       songCount: 0,
       createdAt: Date.now(),
       isFavorited: false,
+      tracks: [],
+      chatMessages: [
+        { role: "assistant", content: "Hey! I can help write and generate a song. What vibe are you going for?" },
+      ],
+      activeGenerations: [],
     };
     setArtists((prev) => [newArtist, ...prev]);
+    // Auto-select the newly created artist
+    setSelectedArtistId(newArtist.id);
     return newArtist;
   };
 
@@ -123,12 +134,43 @@ export const useArtistManagement = () => {
     );
   };
 
+  const selectArtist = (artistId: string | null) => {
+    setSelectedArtistId(artistId);
+  };
+
+  const selectedArtist = selectedArtistId 
+    ? artists.find(a => a.id === selectedArtistId) 
+    : null;
+
+  const addTrackToArtist = (artistId: string, track: any) => {
+    setArtists((prev) =>
+      prev.map((artist) =>
+        artist.id === artistId 
+          ? { ...artist, tracks: [...artist.tracks, track], songCount: artist.songCount + 1 }
+          : artist
+      )
+    );
+  };
+
+  const updateArtistChat = (artistId: string, messages: any[]) => {
+    setArtists((prev) =>
+      prev.map((artist) =>
+        artist.id === artistId ? { ...artist, chatMessages: messages } : artist
+      )
+    );
+  };
+
   return {
     artists,
+    selectedArtistId,
+    selectedArtist,
     createArtist,
     renameArtist,
     deleteArtist,
     toggleArtistFavourite,
     updateArtistImage,
+    selectArtist,
+    addTrackToArtist,
+    updateArtistChat,
   };
 };
