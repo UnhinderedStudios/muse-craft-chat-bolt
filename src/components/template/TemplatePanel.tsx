@@ -183,6 +183,10 @@ export function TemplatePanel({
 
   // Handle playlist click to show overlay
   const handlePlaylistClick = (playlist: Playlist) => {
+    // If clicking an artist, select it in the artist management system
+    if (viewMode === "artists") {
+      selectArtist(playlist.id);
+    }
     if (onPlaylistClick) {
       onPlaylistClick(playlist);
     }
