@@ -17,6 +17,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { usePanelResize } from "@/hooks/use-panel-resize";
+import { ResizeHandle } from "@/components/layout/ResizeHandle";
 
 export interface Song {
   id: string;
@@ -41,11 +43,11 @@ interface TemplatePanelProps {
   onAlbumCoverClick?: (track: TrackItem) => void;
 }
 
-export function TemplatePanel({ 
-  className, 
-  onPlaylistClick, 
-  selectedPlaylist, 
-  showPlaylistOverlay, 
+export function TemplatePanel({
+  className,
+  onPlaylistClick,
+  selectedPlaylist,
+  showPlaylistOverlay,
   onClosePlaylistOverlay,
   onPlayTrack,
   currentlyPlayingTrackId,
@@ -56,6 +58,15 @@ export function TemplatePanel({
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [showCreatePrompt, setShowCreatePrompt] = useState(false);
+
+  // Use panel resize hook
+  const {
+    dimensions,
+    isResizing,
+    handleResizeStart,
+    canResizeWidth,
+    canResizeHeight
+  } = usePanelResize("template");
   
   // Use session-based playlists
   const {
@@ -214,7 +225,36 @@ export function TemplatePanel({
   const displayData = sortedData.slice(startIndex, endIndex);
 
   return (
-    <div className={cn("h-full bg-[#151515] rounded-2xl flex flex-col", className)}>
+    <div
+      className={cn("bg-[#151515] rounded-2xl flex flex-col relative", className)}
+      style={{
+        width: dimensions.width ? `${dimensions.width}px` : undefined,
+        height: dimensions.height ? `${dimensions.height}px` : undefined,
+      }}
+    >
+      {/* Resize Handles */}
+      {canResizeWidth && (
+        <ResizeHandle
+          direction="left"
+          onMouseDown={(e) => handleResizeStart(e, "width")}
+          isResizing={isResizing}
+        />
+      )}
+      {canResizeHeight && (
+        <ResizeHandle
+          direction="bottom"
+          onMouseDown={(e) => handleResizeStart(e, "height")}
+          isResizing={isResizing}
+        />
+      )}
+      {canResizeWidth && canResizeHeight && (
+        <ResizeHandle
+          direction="corner"
+          onMouseDown={(e) => handleResizeStart(e, "width")}
+          isResizing={isResizing}
+        />
+      )}
+
       {/* Header with Toggle */}
       <div className="shrink-0 p-4 pb-3">
         <div className="flex items-center mb-3">

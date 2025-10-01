@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { useScrollDelegationHook } from "@/utils/scrollDelegation";
 import { PlaceholderOrb } from "@/components/ui/PlaceholderOrb";
 import EllipsisMarquee from "@/components/ui/EllipsisMarquee";
+import { usePanelResize } from "@/hooks/use-panel-resize";
+import { ResizeHandle } from "@/components/layout/ResizeHandle";
 
 interface KaraokeRightPanelProps {
   versions: Array<{
@@ -51,6 +53,15 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   onRetryTimestamps,
   onRefreshLyrics,
 }) => {
+  // Use panel resize hook
+  const {
+    dimensions,
+    isResizing,
+    handleResizeStart,
+    canResizeWidth,
+    canResizeHeight
+  } = usePanelResize("karaoke");
+
   const currentVersion = versions.length > 0 && currentAudioIndex >= 0 && currentAudioIndex < versions.length ? versions[currentAudioIndex] : null;
   // Safety check: only show content if we have both versions and valid audio refs indicating active tracks
   const hasValidTracks = audioRefs.current && audioRefs.current.length > 0 && audioRefs.current.some(ref => ref !== null);
@@ -91,7 +102,30 @@ export const KaraokeRightPanel: React.FC<KaraokeRightPanelProps> = ({
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div ref={panelRef} className="h-full min-h-0 bg-[#151515] rounded-2xl flex flex-col overflow-hidden">
+    <div
+      ref={panelRef}
+      className="min-h-0 bg-[#151515] rounded-2xl flex flex-col overflow-hidden relative"
+      style={{
+        width: dimensions.width ? `${dimensions.width}px` : undefined,
+        height: dimensions.height ? `${dimensions.height}px` : undefined,
+      }}
+    >
+      {/* Resize Handles */}
+      {canResizeWidth && (
+        <ResizeHandle
+          direction="left"
+          onMouseDown={(e) => handleResizeStart(e, "width")}
+          isResizing={isResizing}
+        />
+      )}
+      {canResizeHeight && (
+        <ResizeHandle
+          direction="bottom"
+          onMouseDown={(e) => handleResizeStart(e, "height")}
+          isResizing={isResizing}
+        />
+      )}
+
       {/* Album Art Section - Made 10% taller (115px -> 127px) */}
       <div className="relative h-[127px] rounded-t-2xl overflow-hidden flex-shrink-0" style={{ backgroundColor: '#1e1e1e' }}>
         {currentAlbumCover ? (

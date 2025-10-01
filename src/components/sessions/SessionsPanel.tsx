@@ -17,6 +17,8 @@ import {
 import { SessionConfirmationDialog } from "./SessionConfirmationDialog";
 import { NewSessionConfirmationDialog } from "./NewSessionConfirmationDialog";
 import { useSessionManager } from "@/hooks/use-session-manager";
+import { usePanelResize } from "@/hooks/use-panel-resize";
+import { ResizeHandle } from "@/components/layout/ResizeHandle";
 
 interface SessionsPanelProps {
   className?: string;
@@ -26,7 +28,16 @@ interface SessionsPanelProps {
 export function SessionsPanel({ className, onSessionSwitch }: SessionsPanelProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchMode, setIsSearchMode] = useState(false);
-  
+
+  // Use panel resize hook
+  const {
+    dimensions,
+    isResizing,
+    handleResizeStart,
+    canResizeWidth,
+    canResizeHeight
+  } = usePanelResize("sessions");
+
   // Use session manager instead of mock data
   const {
     sessions,
@@ -183,7 +194,36 @@ export function SessionsPanel({ className, onSessionSwitch }: SessionsPanelProps
   };
 
   return (
-    <div className={cn("h-full bg-[#151515] rounded-2xl flex flex-col", className)}>
+    <div
+      className={cn("bg-[#151515] rounded-2xl flex flex-col relative", className)}
+      style={{
+        width: dimensions.width ? `${dimensions.width}px` : undefined,
+        height: dimensions.height ? `${dimensions.height}px` : undefined,
+      }}
+    >
+      {/* Resize Handles */}
+      {canResizeWidth && (
+        <ResizeHandle
+          direction="right"
+          onMouseDown={(e) => handleResizeStart(e, "width")}
+          isResizing={isResizing}
+        />
+      )}
+      {canResizeHeight && (
+        <ResizeHandle
+          direction="bottom"
+          onMouseDown={(e) => handleResizeStart(e, "height")}
+          isResizing={isResizing}
+        />
+      )}
+      {canResizeWidth && canResizeHeight && (
+        <ResizeHandle
+          direction="corner"
+          onMouseDown={(e) => handleResizeStart(e, "width")}
+          isResizing={isResizing}
+        />
+      )}
+
       {/* Header with New Session Button */}
       <div className="shrink-0 px-2 pt-3 pb-2">
         <div className="flex items-center justify-center mb-3">
