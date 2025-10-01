@@ -129,6 +129,9 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   const [isLocked, setIsLocked] = useState(false);
   const [lockedModeTarget, setLockedModeTarget] = useState<'input' | 'background'>('input');
 
+  // Track previous artist to save state before switching
+  const prevArtistIdRef = useRef<string | null>(null);
+
   // Reset all generation state for a fresh start
   const resetGenerationState = () => {
     console.log("🔄 Resetting generation state for new artist");
@@ -148,12 +151,13 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
     setVideoLoading(true);
   };
 
-  // Save current generation state to the selected artist
-  const saveCurrentStateToArtist = () => {
-    if (!selectedArtistId) return;
+  // Save current generation state to the selected artist (or provided target)
+  const saveCurrentStateToArtist = (targetArtistId?: string) => {
+    const id = targetArtistId ?? selectedArtistId;
+    if (!id) return;
     
-    console.log("💾 Saving generation state to artist:", selectedArtistId);
-    updateArtistGenerationState(selectedArtistId, {
+    console.log("💾 Saving generation state to artist:", id);
+    updateArtistGenerationState(id, {
       generatedImages: images,
       imagePrompts,
       facialReference: facialReferenceImage,
@@ -196,13 +200,34 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   useEffect(() => {
     if (!isOpen) return;
 
-    // Save current state before switching
-    if (selectedArtistId) {
-      saveCurrentStateToArtist();
+    // Save current state to the PREVIOUS artist before switching
+    const prevId = prevArtistIdRef.current;
+    if (prevId) {
+      saveCurrentStateToArtist(prevId);
     }
 
-    // Load new artist's state or reset
-    loadArtistGenerationState();
+    // For the newly selected artist: load saved state if any, otherwise start fresh
+    if (selectedArtist) {
+      const hasSaved = Boolean(
+        (selectedArtist.generatedImages && selectedArtist.generatedImages.length > 0) ||
+        (selectedArtist.imagePrompts && selectedArtist.imagePrompts.length > 0) ||
+        selectedArtist.facialReference ||
+        selectedArtist.clothingReference ||
+        selectedArtist.selectedColor ||
+        selectedArtist.generationSettings
+      );
+      if (hasSaved) {
+        loadArtistGenerationState();
+      } else {
+        resetGenerationState();
+      }
+    } else {
+      // No artist selected
+      resetGenerationState();
+    }
+
+    // Update previous id ref to current
+    prevArtistIdRef.current = selectedArtistId ?? null;
   }, [selectedArtistId, isOpen]);
 
   // Face mode detection for regular (non-locked) mode with facial reference
