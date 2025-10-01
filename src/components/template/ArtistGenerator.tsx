@@ -15,6 +15,13 @@ import { useSessionManager } from "@/hooks/use-session-manager";
 import { AnimatedPromptInput } from "@/components/ui/animated-prompt-input";
 import { HexColorPicker } from "react-colorful";
 
+// Helper function to check if color should trigger modification
+const shouldApplyColorModification = (color: string | undefined): boolean => {
+  if (!color || color === "") return false;
+  if (color === "#161d21") return false; // Default/reset color
+  return true;
+};
+
 // Function to convert hex color to human-readable name
 const getColorName = (hex: string): string => {
   if (!hex || !hex.startsWith('#')) return '';
@@ -479,10 +486,9 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       // Prepare request payload
       const requestPayload: any = { prompt: cleanPrompt };
       
-      // Add background color if selected
-      if (selectedColor) {
-        requestPayload.backgroundHex = selectedColor;
-        console.log(`🎨 [${clientReqId}] Adding background color: ${selectedColor}`);
+      // Note: Background color will be applied post-generation if selected
+      if (selectedColor && shouldApplyColorModification(selectedColor)) {
+        console.log(`🎨 [${clientReqId}] Color selected (${selectedColor}), will apply post-generation`);
       }
       
       // Add facial reference if available
@@ -503,7 +509,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       
       console.log(`📤 [${clientReqId}] Sending request:`, requestPayload);
       
-      const result = await api.generateArtistImages(cleanPrompt, requestPayload.backgroundHex, requestPayload.characterCount, isRealistic, requestPayload.facialReference, undefined, requestPayload.clothingReference, primaryClothingType);
+      const result = await api.generateArtistImages(cleanPrompt, undefined, requestPayload.characterCount, isRealistic, requestPayload.facialReference, undefined, requestPayload.clothingReference, primaryClothingType);
       
       console.log(`🖼️ [${clientReqId}] Artist generation response:`, {
         imageCount: result.images?.length || 0,
@@ -532,8 +538,34 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       setIsAnimating(false);
       setSanitizedPrompt("");
       
+      // Post-process with color modification if color is selected
+      let finalImages = result.images;
+      if (shouldApplyColorModification(selectedColor)) {
+        console.log(`🎨 [${clientReqId}] Applying color modification post-generation...`);
+        try {
+          const firstImage = result.images[0];
+          const colorReferenceDataUrl = await createSolidColorImage(selectedColor);
+          
+          const colorModResult = await api.modifyLockedImage(
+            firstImage,
+            `Change ONLY the background to match the reference color exactly. Keep all other elements (face, clothes, accessories, lighting on subject) completely unchanged.`,
+            undefined,
+            undefined,
+            colorReferenceDataUrl
+          );
+          
+          if (colorModResult.images && colorModResult.images.length > 0) {
+            console.log(`✅ [${clientReqId}] Color modification successful`);
+            finalImages = [colorModResult.images[0], ...result.images.slice(1)];
+          }
+        } catch (colorError) {
+          console.error(`❌ [${clientReqId}] Color modification failed:`, colorError);
+          // Continue with original images if color modification fails
+        }
+      }
+      
       // Add new images to the front (newest first)
-      const updatedImages = [...result.images, ...images];
+      const updatedImages = [...finalImages, ...images];
       setImages(updatedImages);
       
       // Add prompts for the new generated images
