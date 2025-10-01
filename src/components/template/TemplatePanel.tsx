@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { Filter, Search, X, MoreVertical, Plus } from "lucide-react";
+import { Filter, Search, X, MoveVertical as MoreVertical, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PlaylistItem } from "./PlaylistItem";
 import { CreatePlaylistPrompt } from "./CreatePlaylistPrompt";
@@ -192,12 +192,9 @@ export function TemplatePanel({
     }
   };
 
-  // Handle track added to playlist - show toast only (PlaylistItem handles the actual add)
+  // Handle track added to playlist - silent operation
   const handleTrackAdd = (playlistId: string, track: TrackItem) => {
-    const playlist = playlists.find(p => p.id === playlistId);
-    if (playlist) {
-      toast.success(`Added "${track.title || "Song"}" to "${playlist.name}"`);
-    }
+    // Removed toast notification - silent operation
   };
 
   // Get sorted playlists (Favourited always first unless searching)
