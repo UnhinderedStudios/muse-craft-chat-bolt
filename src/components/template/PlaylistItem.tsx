@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { MoreVertical, Music, User, Edit3 } from "lucide-react";
+import { MoveVertical as MoreVertical, Music, User, CreditCard as Edit3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Playlist } from "./TemplatePanel";
 import EllipsisMarquee from "@/components/ui/EllipsisMarquee";
