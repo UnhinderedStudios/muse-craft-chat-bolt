@@ -1,10 +1,10 @@
-import React from "react";
+import React, { memo } from "react";
 import { cn } from "@/lib/utils";
 import { ChatBubbleProps } from "@/types";
 import { parseSongRequest } from "@/lib/parseSongRequest";
 import { ChatSongPreview } from "./ChatSongPreview";
 
-export const ChatBubble: React.FC<ChatBubbleProps> = ({ role, content }) => {
+export const ChatBubble = memo<ChatBubbleProps>(({ role, content }) => {
   const isUser = role === "user";
   
   // For assistant messages, check if content contains a song request
@@ -48,4 +48,4 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ role, content }) => {
       </div>
     </div>
   );
-};
+});

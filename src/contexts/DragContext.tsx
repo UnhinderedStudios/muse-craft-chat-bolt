@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { DragState, DragContextType } from '@/types/drag';
 import { TrackItem } from '@/types';
+import { logger } from '@/lib/logger';
 
 const initialDragState: DragState = {
   isDragging: false,
@@ -46,7 +47,7 @@ export const DragProvider: React.FC<DragProviderProps> = ({ children }) => {
         timeElapsed > dragThreshold.current.time;
 
       if (shouldStartDragging) {
-        console.log('✅ Drag threshold met, starting visual drag');
+        logger.debug('[Drag] Threshold met, starting visual drag');
       }
 
       return {
@@ -58,7 +59,7 @@ export const DragProvider: React.FC<DragProviderProps> = ({ children }) => {
   }, []);
 
   const endDrag = useCallback(() => {
-    console.log('🏁 Ending drag operation');
+    logger.debug('[Drag] Ending drag operation');
     setDragState(prev => {
       // Idempotent cleanup - only clean up if we're actually dragging
       if (prev.isDragging || prev.draggedTrack) {
@@ -74,7 +75,7 @@ export const DragProvider: React.FC<DragProviderProps> = ({ children }) => {
   const startDrag = useCallback((track: TrackItem, event: React.MouseEvent) => {
     const { clientX, clientY } = event;
     dragStartTime.current = Date.now();
-    console.log('🚀 Starting drag for track:', track.title);
+    logger.debug('[Drag] Starting drag for track:', track.title);
     
     setDragState(prev => ({
       ...prev,
