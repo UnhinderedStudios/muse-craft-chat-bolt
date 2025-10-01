@@ -429,7 +429,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
         setImages(updatedImages);
         
         // Add prompts for the new generated images  
-        const newPrompts = Array(result.images.length).fill(`Background: ${selectedColor}`);
+        const newPrompts = Array(result.images.length).fill("[Background color changed]");
         setImagePrompts([...newPrompts, ...imagePrompts]);
         
         setSelectedIndex(0);
