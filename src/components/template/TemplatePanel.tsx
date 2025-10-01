@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Filter, Search, X, MoveVertical as MoreVertical, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -219,21 +218,35 @@ export function TemplatePanel({
       {/* Header with Toggle */}
       <div className="shrink-0 p-4 pb-3">
         <div className="flex items-center justify-center mb-4">
-          <div className="flex items-center gap-3">
-            <span className={cn("text-sm", viewMode === "playlists" ? "text-white" : "text-white/60")}>
-              Playlists
-            </span>
-            <Switch
-              checked={viewMode === "artists"}
-              onCheckedChange={(checked) => {
-                setViewMode(checked ? "artists" : "playlists");
-                clearSearch(); // Clear search when switching modes
+          <div className="inline-flex items-center bg-black/30 rounded-lg p-1 backdrop-blur-sm border border-white/5">
+            <button
+              onClick={() => {
+                setViewMode("playlists");
+                clearSearch();
               }}
-              className="data-[state=checked]:bg-accent-primary"
-            />
-            <span className={cn("text-sm", viewMode === "artists" ? "text-white" : "text-white/60")}>
+              className={cn(
+                "px-6 py-1.5 text-sm font-medium rounded-md transition-all duration-200",
+                viewMode === "playlists"
+                  ? "bg-white/10 text-white shadow-sm"
+                  : "text-white/60 hover:text-white/80"
+              )}
+            >
+              Playlists
+            </button>
+            <button
+              onClick={() => {
+                setViewMode("artists");
+                clearSearch();
+              }}
+              className={cn(
+                "px-6 py-1.5 text-sm font-medium rounded-md transition-all duration-200",
+                viewMode === "artists"
+                  ? "bg-white/10 text-white shadow-sm"
+                  : "text-white/60 hover:text-white/80"
+              )}
+            >
               Artists
-            </span>
+            </button>
           </div>
         </div>
 
