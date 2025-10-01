@@ -960,13 +960,22 @@ useEffect(() => {
     toast({ title: "Clothing reference removed", description: "Reference image cleared" });
   };
 
+  // Handle dialog close with state persistence
+  const handleDialogClose = () => {
+    // Save current generation state to the artist before closing
+    if (selectedArtistId) {
+      saveCurrentStateToArtist(selectedArtistId);
+    }
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleDialogClose(); }}>
       <DialogContent 
         className="max-w-none w-full h-full bg-black/10 backdrop-blur border-0 p-0 flex flex-col"
         onInteractOutside={(e) => e.preventDefault()}
         onPointerDownOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={onClose}
+        onEscapeKeyDown={handleDialogClose}
         onOpenAutoFocus={(e) => e.preventDefault()}
         onFocusOutside={(e) => e.preventDefault()}
         onClick={(e) => e.stopPropagation()}
@@ -979,7 +988,7 @@ useEffect(() => {
         <div className="relative w-full h-full flex flex-col">
           {/* Close Button */}
           <button
-            onClick={onClose}
+            onClick={handleDialogClose}
             className="absolute top-4 right-4 z-50 text-white/60 hover:text-white transition-colors"
           >
             <X className="w-6 h-6" />
