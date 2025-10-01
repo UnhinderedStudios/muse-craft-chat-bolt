@@ -27,33 +27,12 @@ const getColorName = (hex: string): string => {
   // Calculate luminance for brightness detection
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   
-  // Very dark colors
-  if (luminance < 0.1) return 'very dark';
-  
-  // Very light colors  
-  if (luminance > 0.9) return 'very light';
-  
-  // Grayscale detection
-  const grayTolerance = 15;
-  if (Math.abs(r - g) < grayTolerance && Math.abs(g - b) < grayTolerance && Math.abs(r - b) < grayTolerance) {
-    if (luminance > 0.7) return 'light gray';
-    if (luminance > 0.4) return 'gray';
-    return 'dark gray';
-  }
-  
-  // Find dominant color channel
+  // Calculate saturation and hue
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
   const saturation = max === 0 ? 0 : (max - min) / max;
   
-  // Low saturation colors
-  if (saturation < 0.2) {
-    if (luminance > 0.6) return 'light gray';
-    if (luminance > 0.3) return 'gray';
-    return 'dark gray';
-  }
-  
-  // Determine hue-based color names
+  // Determine hue
   let hue = 0;
   if (max !== min) {
     if (max === r) hue = ((g - b) / (max - min) + 6) % 6;
@@ -62,24 +41,93 @@ const getColorName = (hex: string): string => {
     hue *= 60;
   }
   
-  // Color name based on hue ranges
-  const brightness = luminance > 0.6 ? 'light ' : luminance < 0.3 ? 'dark ' : '';
-  const intensity = saturation > 0.7 ? 'bright ' : saturation < 0.4 ? 'muted ' : '';
+  // Handle pure black
+  if (r === 0 && g === 0 && b === 0) {
+    return `pure black (RGB: 0, 0, 0)`;
+  }
   
-  if (hue >= 345 || hue < 15) return `${intensity}${brightness}red`;
-  if (hue >= 15 && hue < 45) return `${intensity}${brightness}orange`;
-  if (hue >= 45 && hue < 75) return `${intensity}${brightness}yellow`;
-  if (hue >= 75 && hue < 105) return `${intensity}${brightness}lime green`;
-  if (hue >= 105 && hue < 135) return `${intensity}${brightness}green`;
-  if (hue >= 135 && hue < 165) return `${intensity}${brightness}teal`;
-  if (hue >= 165 && hue < 195) return `${intensity}${brightness}cyan`;
-  if (hue >= 195 && hue < 225) return `${intensity}${brightness}blue`;
-  if (hue >= 225 && hue < 255) return `${intensity}${brightness}indigo`;
-  if (hue >= 255 && hue < 285) return `${intensity}${brightness}purple`;
-  if (hue >= 285 && hue < 315) return `${intensity}${brightness}magenta`;
-  if (hue >= 315 && hue < 345) return `${intensity}${brightness}pink`;
+  // Handle pure white
+  if (r === 255 && g === 255 && b === 255) {
+    return `pure white (RGB: 255, 255, 255)`;
+  }
   
-  return 'color';
+  // Handle grayscale
+  const grayTolerance = 15;
+  if (Math.abs(r - g) < grayTolerance && Math.abs(g - b) < grayTolerance && Math.abs(r - b) < grayTolerance) {
+    if (luminance > 0.9) return `off-white (RGB: ${r}, ${g}, ${b})`;
+    if (luminance > 0.7) return `light gray (RGB: ${r}, ${g}, ${b})`;
+    if (luminance > 0.5) return `medium gray (RGB: ${r}, ${g}, ${b})`;
+    if (luminance > 0.3) return `dark gray (RGB: ${r}, ${g}, ${b})`;
+    if (luminance > 0.1) return `charcoal gray (RGB: ${r}, ${g}, ${b})`;
+    return `almost black (RGB: ${r}, ${g}, ${b})`;
+  }
+  
+  // Low saturation colors
+  if (saturation < 0.2) {
+    if (luminance > 0.7) return `very pale gray with subtle color (RGB: ${r}, ${g}, ${b})`;
+    if (luminance > 0.4) return `desaturated gray (RGB: ${r}, ${g}, ${b})`;
+    return `dark desaturated gray (RGB: ${r}, ${g}, ${b})`;
+  }
+  
+  // Determine intensity and tone descriptors
+  const vibrancy = saturation > 0.8 ? 'vibrant ' : saturation > 0.6 ? 'rich ' : saturation > 0.4 ? 'muted ' : 'soft ';
+  const brightness = luminance > 0.8 ? 'very light ' : luminance > 0.6 ? 'light ' : luminance > 0.4 ? '' : luminance > 0.2 ? 'dark ' : 'very dark ';
+  
+  // Warm/cool tone for better description
+  const warmCool = (hue >= 30 && hue < 150) ? '' : (hue >= 150 && hue < 270) ? 'cool ' : 'warm ';
+  
+  // Specific color names based on hue ranges with more precision
+  let colorName = '';
+  
+  if (hue >= 345 || hue < 10) {
+    colorName = saturation > 0.7 && luminance > 0.5 ? 'crimson red' : 'red';
+  } else if (hue >= 10 && hue < 20) {
+    colorName = 'scarlet red';
+  } else if (hue >= 20 && hue < 35) {
+    colorName = luminance > 0.6 ? 'coral' : 'red-orange';
+  } else if (hue >= 35 && hue < 50) {
+    colorName = saturation > 0.7 ? 'tangerine orange' : 'orange';
+  } else if (hue >= 50 && hue < 60) {
+    colorName = 'amber';
+  } else if (hue >= 60 && hue < 70) {
+    colorName = luminance > 0.6 ? 'golden yellow' : 'yellow-orange';
+  } else if (hue >= 70 && hue < 80) {
+    colorName = 'yellow';
+  } else if (hue >= 80 && hue < 100) {
+    colorName = 'lime yellow';
+  } else if (hue >= 100 && hue < 120) {
+    colorName = 'lime green';
+  } else if (hue >= 120 && hue < 140) {
+    colorName = saturation > 0.6 && luminance < 0.5 ? 'emerald green' : 'green';
+  } else if (hue >= 140 && hue < 155) {
+    colorName = 'forest green';
+  } else if (hue >= 155 && hue < 170) {
+    colorName = luminance > 0.5 ? 'mint green' : 'teal green';
+  } else if (hue >= 170 && hue < 185) {
+    colorName = 'teal';
+  } else if (hue >= 185 && hue < 200) {
+    colorName = luminance > 0.6 ? 'turquoise' : 'cyan';
+  } else if (hue >= 200 && hue < 215) {
+    colorName = 'sky blue';
+  } else if (hue >= 215 && hue < 235) {
+    colorName = saturation > 0.7 && luminance < 0.5 ? 'navy blue' : 'blue';
+  } else if (hue >= 235 && hue < 250) {
+    colorName = 'royal blue';
+  } else if (hue >= 250 && hue < 265) {
+    colorName = 'indigo';
+  } else if (hue >= 265 && hue < 280) {
+    colorName = luminance > 0.6 ? 'lavender' : 'purple';
+  } else if (hue >= 280 && hue < 295) {
+    colorName = saturation > 0.7 ? 'violet' : 'purple';
+  } else if (hue >= 295 && hue < 310) {
+    colorName = 'magenta';
+  } else if (hue >= 310 && hue < 325) {
+    colorName = luminance > 0.6 ? 'hot pink' : 'magenta-pink';
+  } else if (hue >= 325 && hue < 345) {
+    colorName = luminance > 0.7 ? 'rose pink' : 'pink';
+  }
+  
+  return `${vibrancy}${warmCool}${brightness}${colorName} (RGB: ${r}, ${g}, ${b})`;
 };
 
 interface ArtistGeneratorProps {
@@ -411,8 +459,8 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
         
         // Use text-based color description instead of visual reference
         const colorName = getColorName(selectedColor);
-        const colorPrompt = `Change ONLY the background color to ${colorName}. DO NOT change the person's lighting, clothes, skin tone, or apply any color filter to the subject. Keep the person exactly as they are and only modify the background wall/surface color.`;
-        console.log(`🎨 Background color modification with text description: ${colorName}`);
+        const colorPrompt = `Change ONLY the background color to ${colorName} with hex code ${selectedColor}. DO NOT change the person's lighting, clothes, skin tone, or apply any color filter to the subject. Keep the person exactly as they are and only modify the background wall/surface color.`;
+        console.log(`🎨 Background color modification with text description: ${colorName} (${selectedColor})`);
         
         const result = await api.modifyLockedImage(
           images[selectedIndex], 
