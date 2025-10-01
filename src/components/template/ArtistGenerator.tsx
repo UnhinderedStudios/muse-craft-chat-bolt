@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { TrackItem } from "@/types";
+import { ArtistManagementPanel } from './ArtistManagementPanel';
 import { ChevronUp, ChevronDown, X, User, Wand2, Repeat, ArrowRight, Download, Palette, RotateCcw, Check, Dices, Pipette, Lock } from "lucide-react";
 import { convertToSquare, createSolidColorImage } from "@/lib/imageConverter";
 import artistPlaceholderVideo from "@/assets/artist-placeholder.mp4";
@@ -1318,17 +1319,11 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
                   </div>
                 </aside>
 
-                {/* New Right Panel */}
-                <aside className="w-full lg:w-52 rounded-lg border border-white/10 overflow-hidden lg:col-start-3 lg:row-start-2" style={{ 
-                  backgroundColor: '#33343630',
+                {/* Artist Management Panel */}
+                <aside className="w-full lg:w-52 overflow-hidden lg:col-start-3 lg:row-start-2" style={{ 
                   height: 'min(520px, 60vh)'
                 }}>
-                  <div className="h-full flex flex-col p-4">
-                    <div className="text-sm text-white/80 mb-4">Additional Controls</div>
-                    <div className="flex-1 flex items-center justify-center text-white/40 text-sm">
-                      Panel content coming soon...
-                    </div>
-                  </div>
+                  <ArtistManagementPanel />
                 </aside>
 
                 {/* Footer: spans full width across all columns */}
