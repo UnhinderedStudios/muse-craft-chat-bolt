@@ -409,19 +409,17 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       try {
         setLoading(true);
         
-        // Create solid color reference image
-        const colorReferenceImage = await createSolidColorImage(selectedColor);
-        
-        // New prompt for color-based modification with natural guidance
-        const colorPrompt = "Subtly adjust the background color to be inspired by the reference color while maintaining natural lighting, shadows, and depth. Keep the character, face, clothes, and all other elements exactly the same. The background should feel natural, not artificial.";
-        console.log(`🎨 Background color modification with color reference image`);
+        // Use text-based color description instead of visual reference
+        const colorName = getColorName(selectedColor);
+        const colorPrompt = `Change ONLY the background color to ${colorName}. DO NOT change the person's lighting, clothes, skin tone, or apply any color filter to the subject. Keep the person exactly as they are and only modify the background wall/surface color.`;
+        console.log(`🎨 Background color modification with text description: ${colorName}`);
         
         const result = await api.modifyLockedImage(
           images[selectedIndex], 
           colorPrompt,
           undefined, // no clothing reference
           undefined, // no primary clothing type
-          colorReferenceImage // pass the color reference
+          undefined // no visual color reference - text only
         );
         
         // Add new images to the front (newest first), preserving existing thumbnails
