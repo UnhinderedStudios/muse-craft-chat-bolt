@@ -101,7 +101,8 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [videoLoading, setVideoLoading] = useState(true);
+  const [videoLoading, setVideoLoading] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [sanitizedPrompt, setSanitizedPrompt] = useState("");
   const [originalPrompt, setOriginalPrompt] = useState("");
   
@@ -148,7 +149,6 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
     setIsRealistic(true);
     setIsLocked(false);
     setLockedModeTarget('input');
-    setVideoLoading(true);
   };
 
   // Save current generation state to the selected artist (or provided target)
@@ -193,7 +193,6 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
     setOffset(0);
     setIsLocked(false);
     setLockedModeTarget('input');
-    setVideoLoading(true);
   };
 
   // Watch for artist changes and update generation state accordingly
@@ -1100,13 +1099,16 @@ useEffect(() => {
                       // Show video when no generated images are present
                       <>
                         <video
+                          ref={videoRef}
                           src={artistPlaceholderVideo}
                           autoPlay
                           loop
                           muted
                           playsInline
                           className="block w-full h-full object-cover"
+                          onLoadStart={() => setVideoLoading(true)}
                           onLoadedData={() => setVideoLoading(false)}
+                          onCanPlay={() => setVideoLoading(false)}
                           onError={() => setVideoLoading(false)}
                         />
                         {/* Scanning animation while video loads */}
