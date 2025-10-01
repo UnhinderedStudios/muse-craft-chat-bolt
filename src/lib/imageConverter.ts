@@ -128,8 +128,7 @@ export const fileToDataUrl = (file: File): Promise<string> => {
 };
 
 /**
- * Creates a 1024x1024 color reference image with subtle gradient variation
- * This helps Gemini interpret the color more naturally instead of applying it too literally
+ * Creates a 1024x1024 solid color image from a hex color
  */
 export const createSolidColorImage = (hexColor: string): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -146,24 +145,8 @@ export const createSolidColorImage = (hexColor: string): Promise<string> => {
       canvas.width = 1024;
       canvas.height = 1024;
 
-      // Create a subtle radial gradient to give more natural color guidance
-      // This prevents Gemini from applying the color too literally/aggressively
-      const gradient = ctx.createRadialGradient(512, 512, 0, 512, 512, 512);
-      
-      // Parse hex color to create lighter and darker variations
-      const r = parseInt(hexColor.slice(1, 3), 16);
-      const g = parseInt(hexColor.slice(3, 5), 16);
-      const b = parseInt(hexColor.slice(5, 7), 16);
-      
-      // Create subtle variations (±10% brightness)
-      const lighter = `rgb(${Math.min(255, r * 1.1)}, ${Math.min(255, g * 1.1)}, ${Math.min(255, b * 1.1)})`;
-      const darker = `rgb(${Math.max(0, r * 0.9)}, ${Math.max(0, g * 0.9)}, ${Math.max(0, b * 0.9)})`;
-      
-      gradient.addColorStop(0, lighter);
-      gradient.addColorStop(0.5, hexColor);
-      gradient.addColorStop(1, darker);
-      
-      ctx.fillStyle = gradient;
+      // Fill with the solid color
+      ctx.fillStyle = hexColor;
       ctx.fillRect(0, 0, 1024, 1024);
 
       // Convert canvas to data URL
