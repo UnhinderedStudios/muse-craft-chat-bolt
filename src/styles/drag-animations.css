@@ -1,20 +1,5 @@
 /* Drag and Drop Animations */
 
-@keyframes detach-float {
-  0% {
-    transform: translateY(0) scale(1);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  }
-  100% {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  }
-}
-
-.track-detaching {
-  animation: detach-float 0.3s ease-out forwards;
-}
-
 .drag-clone-rotate {
   transform: rotate(-2deg) scale(0.95);
   transition: transform 0.1s ease-out;

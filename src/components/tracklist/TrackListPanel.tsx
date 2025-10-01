@@ -534,11 +534,8 @@ export default function TrackListPanel({
             >
               {!active ? (
                 /* Regular track row */
-                <div 
-                  className={cn(
-                    "flex items-center gap-3 relative",
-                    dragStartTrack?.track.id === t.id && "track-detaching"
-                  )}
+                <div
+                  className="flex items-center gap-3 relative"
                   onMouseDown={(e) => {
                     // Only start drag detection for non-selected tracks
                     if (!active) {
