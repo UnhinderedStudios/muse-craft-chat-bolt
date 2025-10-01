@@ -719,23 +719,34 @@ export const api = {
     imageUrl: string, 
     modification: string, 
     clothingReference?: string,
-    primaryClothingType?: string
+    primaryClothingType?: string,
+    colorReference?: string
   ): Promise<{ images: string[] }> {
     
-    if (clothingReference) {
-      // Use FormData for clothing mode
+    if (clothingReference || colorReference) {
+      // Use FormData for clothing/color mode
       const formData = new FormData();
       formData.append('imageUrl', imageUrl);
       formData.append('modification', modification);
       
-      // Convert data URL to File for clothing reference
-      const response = await fetch(clothingReference);
-      const blob = await response.blob();
-      const file = new File([blob], 'clothing-reference.jpg', { type: blob.type });
-      formData.append('clothingReference', file);
-      
-      if (primaryClothingType) {
-        formData.append('primaryClothingType', primaryClothingType);
+      if (clothingReference) {
+        // Convert data URL to File for clothing reference
+        const response = await fetch(clothingReference);
+        const blob = await response.blob();
+        const file = new File([blob], 'clothing-reference.jpg', { type: blob.type });
+        formData.append('clothingReference', file);
+        
+        if (primaryClothingType) {
+          formData.append('primaryClothingType', primaryClothingType);
+        }
+      }
+
+      if (colorReference) {
+        // Convert data URL to File for color reference
+        const response = await fetch(colorReference);
+        const blob = await response.blob();
+        const file = new File([blob], 'color-reference.png', { type: blob.type });
+        formData.append('colorReference', file);
       }
 
       const apiResponse = await fetch(`https://afsyxzxwxszujnsmukff.supabase.co/functions/v1/modify-locked-image`, {
@@ -745,7 +756,7 @@ export const api = {
 
       if (!apiResponse.ok) {
         const errorData = await apiResponse.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(errorData.error || `Failed to modify locked image with clothing (${apiResponse.status})`);
+        throw new Error(errorData.error || `Failed to modify locked image (${apiResponse.status})`);
       }
 
       return await apiResponse.json();

@@ -19,15 +19,16 @@ serve(async (req) => {
     }
 
     const contentType = req.headers.get('content-type') || '';
-    let imageUrl, modification, clothingReference, primaryClothingType;
+    let imageUrl, modification, clothingReference, primaryClothingType, colorReference;
 
     if (contentType.includes('multipart/form-data')) {
-      // Handle FormData for clothing mode
+      // Handle FormData for clothing/color mode
       const formData = await req.formData();
       imageUrl = formData.get('imageUrl') as string;
       modification = formData.get('modification') as string;
       clothingReference = formData.get('clothingReference') as File;
       primaryClothingType = formData.get('primaryClothingType') as string;
+      colorReference = formData.get('colorReference') as File;
     } else {
       // Handle JSON for regular mode
       const body = await req.json();
@@ -43,7 +44,8 @@ serve(async (req) => {
       imageUrl: imageUrl.substring(0, 50) + '...', 
       modification, 
       hasClothingReference: !!clothingReference,
-      primaryClothingType 
+      primaryClothingType,
+      hasColorReference: !!colorReference
     });
 
     // Prepare image as base64 and mime type (supports data URLs)
@@ -107,10 +109,35 @@ serve(async (req) => {
       });
     }
 
-    // Set prompt based on whether clothing is provided
+    // Add color reference if provided
+    if (colorReference) {
+      console.log('Processing color reference:', colorReference.name, colorReference.type);
+      
+      const colorBuffer = await colorReference.arrayBuffer();
+      const colorUint8Array = new Uint8Array(colorBuffer);
+      let colorBinary = '';
+      const chunkSize = 8192;
+      for (let i = 0; i < colorUint8Array.length; i += chunkSize) {
+        const chunk = colorUint8Array.subarray(i, i + chunkSize);
+        colorBinary += String.fromCharCode.apply(null, Array.from(chunk));
+      }
+      const colorBase64 = btoa(colorBinary);
+      
+      requestParts.push({
+        inline_data: {
+          mime_type: colorReference.type || "image/png",
+          data: colorBase64
+        }
+      });
+    }
+
+    // Set prompt based on what's provided
     let prompt;
     if (clothingReference) {
       prompt = `Do this: ${modification}`;
+    } else if (colorReference) {
+      // Use the exact prompt for color mode (modification already contains the full prompt)
+      prompt = modification;
     } else {
       prompt = `Keep composition identical and preserve character, identity, looks and face only modify the following thing: ${modification}`;
     }

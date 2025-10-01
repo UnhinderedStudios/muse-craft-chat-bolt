@@ -126,3 +126,34 @@ export const fileToDataUrl = (file: File): Promise<string> => {
     reader.readAsDataURL(file);
   });
 };
+
+/**
+ * Creates a 1024x1024 solid color image from a hex color
+ */
+export const createSolidColorImage = (hexColor: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        reject(new Error('Could not get canvas context'));
+        return;
+      }
+
+      // Set canvas size to 1024x1024
+      canvas.width = 1024;
+      canvas.height = 1024;
+
+      // Fill with the solid color
+      ctx.fillStyle = hexColor;
+      ctx.fillRect(0, 0, 1024, 1024);
+
+      // Convert canvas to data URL
+      const dataUrl = canvas.toDataURL('image/png');
+      resolve(dataUrl);
+    } catch (error) {
+      reject(error);
+    }
+  });
+};

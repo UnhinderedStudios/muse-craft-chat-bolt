@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { TrackItem } from "@/types";
 import { ChevronUp, ChevronDown, X, User, Wand2, Repeat, ArrowRight, Download, Palette, RotateCcw, Check, Dices, Pipette, Lock } from "lucide-react";
+import { convertToSquare, createSolidColorImage } from "@/lib/imageConverter";
 import artistPlaceholderVideo from "@/assets/artist-placeholder.mp4";
 import { useSessionManager } from "@/hooks/use-session-manager";
 import { AnimatedPromptInput } from "@/components/ui/animated-prompt-input";
@@ -408,10 +409,20 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       try {
         setLoading(true);
         
-        const colorPrompt = `Do not include any text. Respect the lighting conditions and change the colour of the whole backdrop to: ${selectedColor}`;
-        console.log(`🎨 Background color modification with prompt: "${colorPrompt}"`);
+        // Create solid color reference image
+        const colorReferenceImage = await createSolidColorImage(selectedColor);
         
-        const result = await api.modifyLockedImage(images[selectedIndex], colorPrompt);
+        // New prompt for color-based modification
+        const colorPrompt = "Keep composition in terms of lighting structure and room identical and preserve character, identity, looks and face only modify the following thing. Respect the lighting conditions and change the color of the whole backdrop to the attached color.";
+        console.log(`🎨 Background color modification with color reference image`);
+        
+        const result = await api.modifyLockedImage(
+          images[selectedIndex], 
+          colorPrompt,
+          undefined, // no clothing reference
+          undefined, // no primary clothing type
+          colorReferenceImage // pass the color reference
+        );
         
         // Add new images to the front (newest first), preserving existing thumbnails
         const updatedImages = [...result.images, ...images];
