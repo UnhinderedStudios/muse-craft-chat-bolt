@@ -15,6 +15,7 @@ import artistPlaceholderVideo from "@/assets/artist-placeholder.mp4";
 import { useSessionManager } from "@/hooks/use-session-manager";
 import { AnimatedPromptInput } from "@/components/ui/animated-prompt-input";
 import { HexColorPicker } from "react-colorful";
+import { useArtistManagement } from "@/hooks/use-artist-management";
 
 // Function to convert hex color to human-readable name
 const getColorName = (hex: string): string => {
@@ -92,6 +93,7 @@ interface ArtistGeneratorProps {
 export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClose, track }) => {
   const { toast } = useToast();
   const { currentSession, updateSession } = useSessionManager();
+  const { selectedArtistId, selectedArtist, updateArtistGenerationState } = useArtistManagement();
 
   const [images, setImages] = useState<string[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -127,6 +129,82 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
   const [isLocked, setIsLocked] = useState(false);
   const [lockedModeTarget, setLockedModeTarget] = useState<'input' | 'background'>('input');
 
+  // Reset all generation state for a fresh start
+  const resetGenerationState = () => {
+    console.log("🔄 Resetting generation state for new artist");
+    setImages([]);
+    setSelectedIndex(0);
+    setOffset(0);
+    setPrompt("");
+    setImagePrompts([]);
+    setFacialReferenceImage("");
+    setClothingReferenceImage("");
+    setPrimaryClothingType("");
+    setSelectedColor("");
+    setArtistCount([1]);
+    setIsRealistic(true);
+    setIsLocked(false);
+    setLockedModeTarget('input');
+    setVideoLoading(true);
+  };
+
+  // Save current generation state to the selected artist
+  const saveCurrentStateToArtist = () => {
+    if (!selectedArtistId) return;
+    
+    console.log("💾 Saving generation state to artist:", selectedArtistId);
+    updateArtistGenerationState(selectedArtistId, {
+      generatedImages: images,
+      imagePrompts,
+      facialReference: facialReferenceImage,
+      clothingReference: clothingReferenceImage,
+      primaryClothingType,
+      selectedColor,
+      generationSettings: {
+        artistCount,
+        isRealistic,
+      },
+    });
+  };
+
+  // Load generation state from the selected artist
+  const loadArtistGenerationState = () => {
+    if (!selectedArtist) {
+      resetGenerationState();
+      return;
+    }
+
+    console.log("📥 Loading generation state for artist:", selectedArtist.name);
+    
+    // Load saved state or use defaults
+    setImages(selectedArtist.generatedImages || []);
+    setImagePrompts(selectedArtist.imagePrompts || []);
+    setFacialReferenceImage(selectedArtist.facialReference || "");
+    setClothingReferenceImage(selectedArtist.clothingReference || "");
+    setPrimaryClothingType(selectedArtist.primaryClothingType || "");
+    setSelectedColor(selectedArtist.selectedColor || "");
+    setArtistCount(selectedArtist.generationSettings?.artistCount || [1]);
+    setIsRealistic(selectedArtist.generationSettings?.isRealistic ?? true);
+    setSelectedIndex(0);
+    setOffset(0);
+    setIsLocked(false);
+    setLockedModeTarget('input');
+    setVideoLoading(true);
+  };
+
+  // Watch for artist changes and update generation state accordingly
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Save current state before switching
+    if (selectedArtistId) {
+      saveCurrentStateToArtist();
+    }
+
+    // Load new artist's state or reset
+    loadArtistGenerationState();
+  }, [selectedArtistId, isOpen]);
+
   // Face mode detection for regular (non-locked) mode with facial reference
   const isFaceModeActive = !isLocked && !!facialReferenceImage;
   
@@ -143,22 +221,7 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
 
   const VISIBLE_COUNT = 5;
 
-  useEffect(() => {
-    console.log("🎯 ArtistGenerator opened:", { isOpen, track: track?.title, trackId: track?.id });
-    if (isOpen && track) {
-      // Load only previously generated artist images for this track (newest first)
-      const existingCovers = track.albumCoverIds || [];
-      const initial: string[] = [...existingCovers];
-      
-      console.log("🎨 Setting up initial artist images:", initial);
-      setImages(initial);
-      setImagePrompts([]); // Reset prompts for existing images
-      setSelectedIndex(0);
-      setOffset(0);
-      setPrompt("");
-      setVideoLoading(true);
-    }
-  }, [isOpen, track]);
+  // Initial setup when dialog opens - removed in favor of artist-based state management
 
   // Timer effect for generation countdown
   useEffect(() => {
@@ -540,6 +603,14 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
       // Add prompts for the new generated images
       const newPrompts = Array(result.images.length).fill(cleanPrompt);
       setImagePrompts([...newPrompts, ...imagePrompts]);
+      
+      // Save to selected artist
+      if (selectedArtistId) {
+        updateArtistGenerationState(selectedArtistId, {
+          generatedImages: updatedImages,
+          imagePrompts: [...newPrompts, ...imagePrompts],
+        });
+      }
       
       // Update track's generated covers in session (reusing same field for artist images)
       if (track && currentSession) {

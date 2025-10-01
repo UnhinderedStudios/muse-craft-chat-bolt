@@ -10,6 +10,17 @@ export interface ArtistData {
   tracks: any[]; // TrackItem[] - isolated tracks per artist
   chatMessages: any[]; // ChatMessage[] - isolated chat per artist
   activeGenerations: any[]; // Active generation jobs for this artist
+  // Generation state for ArtistGenerator
+  generatedImages?: string[];
+  imagePrompts?: string[];
+  facialReference?: string;
+  clothingReference?: string;
+  primaryClothingType?: string;
+  selectedColor?: string;
+  generationSettings?: {
+    artistCount: number[];
+    isRealistic: boolean;
+  };
 }
 
 const STORAGE_KEY = "artist_management_data";
@@ -160,6 +171,14 @@ export const useArtistManagement = () => {
     );
   };
 
+  const updateArtistGenerationState = (artistId: string, generationState: Partial<Pick<ArtistData, 'generatedImages' | 'imagePrompts' | 'facialReference' | 'clothingReference' | 'primaryClothingType' | 'selectedColor' | 'generationSettings'>>) => {
+    setArtists((prev) =>
+      prev.map((artist) =>
+        artist.id === artistId ? { ...artist, ...generationState } : artist
+      )
+    );
+  };
+
   return {
     artists,
     selectedArtistId,
@@ -172,5 +191,6 @@ export const useArtistManagement = () => {
     selectArtist,
     addTrackToArtist,
     updateArtistChat,
+    updateArtistGenerationState,
   };
 };
