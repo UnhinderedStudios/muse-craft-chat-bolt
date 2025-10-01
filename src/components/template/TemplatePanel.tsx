@@ -9,6 +9,7 @@ import { PlaylistOverlay } from "./PlaylistOverlay";
 import { TrackItem } from "@/types";
 import { toast } from "sonner";
 import { useSessionPlaylists, SessionPlaylist } from "@/hooks/use-session-playlists";
+import { useArtistManagement } from "@/hooks/use-artist-management";
 import {
   Pagination,
   PaginationContent,
@@ -41,12 +42,6 @@ interface TemplatePanelProps {
   onAlbumCoverClick?: (track: TrackItem) => void;
 }
 
-const mockArtists = [
-  { id: "artist1", name: "Synthwave Master", songCount: 5, createdAt: Date.now() - 86400000, songs: [] },
-  { id: "artist2", name: "Jazz Ensemble", songCount: 9, createdAt: Date.now() - 172800000, songs: [] },
-  { id: "artist3", name: "Rock Legend", songCount: 12, createdAt: Date.now() - 259200000, songs: [] },
-];
-
 export function TemplatePanel({ 
   className, 
   onPlaylistClick, 
@@ -62,7 +57,6 @@ export function TemplatePanel({
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [showCreatePrompt, setShowCreatePrompt] = useState(false);
-  const [artists, setArtists] = useState<Playlist[]>(mockArtists);
   
   // Use session-based playlists
   const {
@@ -76,6 +70,26 @@ export function TemplatePanel({
     deletePlaylist,
     togglePlaylistFavourite
   } = useSessionPlaylists();
+
+  // Use artist management
+  const {
+    artists: artistsData,
+    createArtist,
+    renameArtist,
+    deleteArtist,
+    toggleArtistFavourite,
+    selectArtist
+  } = useArtistManagement();
+
+  // Transform artists to match Playlist interface
+  const artists: Playlist[] = artistsData.map(artist => ({
+    id: artist.id,
+    name: artist.name,
+    songCount: artist.songCount,
+    songs: artist.tracks || [],
+    createdAt: artist.createdAt,
+    isFavorited: artist.isFavorited || false
+  }));
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -131,28 +145,39 @@ export function TemplatePanel({
     clearSearch();
   };
 
-  // Handle playlist menu actions
+  // Handle playlist/artist menu actions
   const handlePlaylistAction = (playlistId: string, action: string) => {
-    switch (action) {
-      case "favorite":
-        togglePlaylistFavourite(playlistId);
-        break;
-      case "delete":
-        deletePlaylist(playlistId);
-        break;
-      default:
-        console.log(`Action ${action} on playlist ${playlistId}`);
+    if (viewMode === "artists") {
+      switch (action) {
+        case "favorite":
+          toggleArtistFavourite(playlistId);
+          break;
+        case "delete":
+          deleteArtist(playlistId);
+          break;
+        default:
+          console.log(`Action ${action} on artist ${playlistId}`);
+      }
+    } else {
+      switch (action) {
+        case "favorite":
+          togglePlaylistFavourite(playlistId);
+          break;
+        case "delete":
+          deletePlaylist(playlistId);
+          break;
+        default:
+          console.log(`Action ${action} on playlist ${playlistId}`);
+      }
     }
   };
 
-  // Handle playlist title editing
+  // Handle playlist/artist title editing
   const handlePlaylistTitleEdit = (playlistId: string, newTitle: string) => {
     if (viewMode === "playlists") {
       renamePlaylist(playlistId, newTitle);
     } else {
-      setArtists(prev => prev.map(a => 
-        a.id === playlistId ? { ...a, name: newTitle } : a
-      ));
+      renameArtist(playlistId, newTitle);
     }
   };
 
@@ -279,18 +304,23 @@ export function TemplatePanel({
                     `No ${viewMode} yet`
                   }
                 </div>
-                {!isSearchMode && viewMode === "playlists" && (
+                {!isSearchMode && (
                   <button
                     onClick={() => {
-                      setSearchQuery("New Playlist");
-                      setIsSearchMode(true);
-                      setShowCreatePrompt(true);
-                      setTimeout(() => searchInputRef.current?.focus(), 100);
+                      if (viewMode === "playlists") {
+                        setSearchQuery("New Playlist");
+                        setIsSearchMode(true);
+                        setShowCreatePrompt(true);
+                        setTimeout(() => searchInputRef.current?.focus(), 100);
+                      } else {
+                        createArtist("New Artist");
+                        toast.success("Artist created");
+                      }
                     }}
                     className="text-sm text-accent-primary hover:text-accent-primary/80 transition-colors flex items-center gap-1"
                   >
                     <Plus className="w-4 h-4" />
-                    Create your first playlist
+                    Create your first {viewMode === "playlists" ? "playlist" : "artist"}
                   </button>
                 )}
               </div>
