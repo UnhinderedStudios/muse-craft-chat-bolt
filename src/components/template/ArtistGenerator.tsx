@@ -412,8 +412,8 @@ export const ArtistGenerator: React.FC<ArtistGeneratorProps> = ({ isOpen, onClos
         // Create solid color reference image
         const colorReferenceImage = await createSolidColorImage(selectedColor);
         
-        // New prompt for color-based modification
-        const colorPrompt = "Keep composition in terms of lighting structure and room identical and preserve character, identity, looks and face only modify the following thing. Respect the lighting conditions and change the color of the whole backdrop to the attached color.";
+        // New prompt for color-based modification with natural guidance
+        const colorPrompt = "Subtly adjust the background color to be inspired by the reference color while maintaining natural lighting, shadows, and depth. Keep the character, face, clothes, and all other elements exactly the same. The background should feel natural, not artificial.";
         console.log(`🎨 Background color modification with color reference image`);
         
         const result = await api.modifyLockedImage(
