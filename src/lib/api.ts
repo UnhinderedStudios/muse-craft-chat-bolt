@@ -156,70 +156,72 @@ export const api = {
     return data;
   },
 
-  async generateAlbumCovers(songDetails: SongDetails): Promise<{ 
+  async generateAlbumCovers(songDetails: SongDetails): Promise<{
     coverIds: string[];
     coverUrls: string[];
   }> {
-    // Determine the source for the prompt in priority order: title > lyrics > style
-    let source = "fallback";
-    let content = "A cinematic, realistic musical album cover without humans or text";
-    let chatInstruction = "";
+    try {
+      // Determine the source for the prompt in priority order: title > lyrics > style
+      let source = "fallback";
+      let content = "A cinematic, realistic musical album cover without humans or text";
+      let chatInstruction = "";
 
-    if (songDetails.title?.trim()) {
-      source = "title";
-      content = songDetails.title.trim();
-      chatInstruction = `Create a simple 1 sentence prompt for an image generation tool for a musical album cover based on this song title. Keep it cinematic and realistic, do not show humans or text in it. Do not use any parameter instructions such as AR16:9.\n\nSong Title: ${content}`;
-    } else if (songDetails.lyrics?.trim()) {
-      source = "lyrics";
-      content = songDetails.lyrics.trim();
-      chatInstruction = `Summarize the song lyrics into a simple 1 sentence prompt for an image generation tool for a musical album cover. Keep it cinematic and realistic, do not show humans or text in it. Do not use any parameter instructions such as AR16:9.\n\nSong Lyrics: ${content}`;
-    } else if (songDetails.style?.trim()) {
-      source = "style";
-      content = songDetails.style.trim();
-      chatInstruction = `Create a simple 1 sentence prompt for an image generation tool for a musical album cover based on this music style. Keep it cinematic and realistic, do not show humans or text in it. Do not use any parameter instructions such as AR16:9.\n\nMusic Style: ${content}`;
-    }
-
-    console.log(`🎨 generateAlbumCovers - Using ${source}:`, content);
-    
-    // Get the album cover prompt from ChatGPT
-    const promptResponse = await this.chat([
-      {
-        role: "user",
-        content: chatInstruction
+      if (songDetails.title?.trim()) {
+        source = "title";
+        content = songDetails.title.trim();
+        chatInstruction = `Create a simple 1 sentence prompt for an image generation tool for a musical album cover based on this song title. Keep it cinematic and realistic, do not show humans or text in it. Do not use any parameter instructions such as AR16:9.\n\nSong Title: ${content}`;
+      } else if (songDetails.lyrics?.trim()) {
+        source = "lyrics";
+        content = songDetails.lyrics.trim();
+        chatInstruction = `Summarize the song lyrics into a simple 1 sentence prompt for an image generation tool for a musical album cover. Keep it cinematic and realistic, do not show humans or text in it. Do not use any parameter instructions such as AR16:9.\n\nSong Lyrics: ${content}`;
+      } else if (songDetails.style?.trim()) {
+        source = "style";
+        content = songDetails.style.trim();
+        chatInstruction = `Create a simple 1 sentence prompt for an image generation tool for a musical album cover based on this music style. Keep it cinematic and realistic, do not show humans or text in it. Do not use any parameter instructions such as AR16:9.\n\nMusic Style: ${content}`;
       }
-    ]);
 
-    const albumPrompt = promptResponse.content;
-    console.log("🤖 ChatGPT generated prompt:", albumPrompt);
+      console.log(`🎨 generateAlbumCovers - Using ${source}:`, content);
 
-    const requestParams = { prompt: albumPrompt, aspectRatio: "1:1", n: 2 };
-    console.log("📡 Sending to Imagen:", requestParams);
+      // Get the album cover prompt from ChatGPT
+      const promptResponse = await this.chat([
+        {
+          role: "user",
+          content: chatInstruction
+        }
+      ]);
 
-    // Generate album covers with new response format
-    const { data, error } = await supabase.functions.invoke('generate-album-cover', {
-      body: requestParams
-    });
+      const albumPrompt = promptResponse.content;
+      console.log("🤖 ChatGPT generated prompt:", albumPrompt);
 
-    if (error) {
-      console.error("🖼️ Album cover generation error:", error);
-      throw new Error(error.message);
-    }
-    
-    console.log("🖼️ Imagen response:", data);
+      const requestParams = { prompt: albumPrompt, aspectRatio: "1:1", n: 2 };
+      console.log("📡 Sending to Imagen:", requestParams);
 
-    const debug = {
-      inputSource: source,
-      inputContent: content,
-      chatPrompt: chatInstruction,
-      imagenPrompt: albumPrompt,
-      imagenParams: requestParams,
-      rawResponse: data
-    };
+      // Generate album covers with new response format
+      const { data, error } = await supabase.functions.invoke('generate-album-cover', {
+        body: requestParams
+      });
 
-    // Handle response format with base64 images array
-    if (!data?.images || !Array.isArray(data.images) || data.images.length === 0) {
-      console.log("No images returned from edge function");
-      return { coverIds: [], coverUrls: [] };
+      if (error) {
+        console.error("🖼️ Album cover generation error:", error);
+        throw new Error(error.message || "Failed to generate album covers");
+      }
+
+      console.log("🖼️ Imagen response:", data);
+
+      // Check for error in response data
+      if (data?.error) {
+        console.error("❌ Error in response data:", data.error);
+        throw new Error(data.error);
+      }
+
+      // Handle response format with base64 images array
+      if (!data?.images || !Array.isArray(data.images) || data.images.length === 0) {
+        console.warn("⚠️ No images returned from edge function");
+        return { coverIds: [], coverUrls: [] };
+      }
+    } catch (genError: any) {
+      console.error("❌ Album cover generation failed:", genError);
+      throw new Error(genError.message || "Failed to generate album covers");
     }
 
     // Upload images to Supabase storage and create database records
@@ -418,20 +420,32 @@ export const api = {
   // Generate album covers from a custom prompt using Gemini/Imagen edge function
   async generateAlbumCoversByPrompt(prompt: string, trackId?: string, n: number = 4): Promise<{ coverIds: string[]; coverUrls: string[] }> {
     console.log("🎨 Calling edge function with prompt:", prompt);
-    
-    const { data, error } = await supabase.functions.invoke('generate-album-cover', {
-      body: { prompt, aspectRatio: "1:1", n }
-    });
-    
-    if (error) {
-      console.error("❌ Edge function error:", error);
-      throw new Error(error.message || "Failed to generate album covers");
-    }
-    
-    console.log("✅ Edge function response:", data);
-    
-    if (!data?.images || !Array.isArray(data.images) || data.images.length === 0) {
-      return { coverIds: [], coverUrls: [] };
+
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-album-cover', {
+        body: { prompt, aspectRatio: "1:1", n }
+      });
+
+      if (error) {
+        console.error("❌ Edge function error:", error);
+        throw new Error(error.message || "Failed to generate album covers");
+      }
+
+      console.log("✅ Edge function response:", data);
+
+      // Check for error in response data
+      if (data?.error) {
+        console.error("❌ Error in response data:", data.error);
+        throw new Error(data.error);
+      }
+
+      if (!data?.images || !Array.isArray(data.images) || data.images.length === 0) {
+        console.warn("⚠️ No images returned from edge function");
+        return { coverIds: [], coverUrls: [] };
+      }
+    } catch (invokeError: any) {
+      console.error("❌ Failed to invoke edge function:", invokeError);
+      throw new Error(invokeError.message || "Failed to connect to image generation service");
     }
 
     // Upload images to Supabase storage and create database records

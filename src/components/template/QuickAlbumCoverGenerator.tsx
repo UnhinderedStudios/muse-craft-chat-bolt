@@ -69,29 +69,35 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
     }
     if (!track) return;
 
+    setLoading(true);
+
     try {
-      setLoading(true);
       console.log("🎨 Starting generation with prompt:", prompt.trim());
-      
+
       const result = await api.generateAlbumCoversByPrompt(prompt.trim(), track.id, 1);
       console.log("🖼️ Generation response:", result);
-      
+
       if (!result.coverIds || result.coverIds.length === 0) {
         console.error("❌ No covers generated");
-        toast({ title: "No covers generated", description: "Try a different prompt.", variant: "destructive" });
+        toast({ title: "No covers generated", description: "The prompt may have been filtered. Try a different description.", variant: "destructive" });
         return;
       }
-      
+
       console.log("✅ Generated", result.coverIds.length, "covers, reloading...");
-      
+
       // Reload covers from database to get the latest
       await loadCovers();
-      
-      setSelectedIndex(0); // Select the newest generated image
+
+      setSelectedIndex(0);
       toast({ title: "Generated", description: `${result.coverIds.length} cover${result.coverIds.length > 1 ? 's' : ''} added` });
     } catch (e: any) {
       console.error("[Covers] Generate error", e);
-      toast({ title: "Generation failed", description: e?.message || "Please try again.", variant: "destructive" });
+      const errorMessage = e?.message || "Please try again.";
+      toast({
+        title: "Generation failed",
+        description: errorMessage.includes("timeout") ? "Request timed out. Try a simpler prompt." : errorMessage,
+        variant: "destructive"
+      });
     } finally {
       console.log("🔄 Setting loading to false");
       setLoading(false);
@@ -100,19 +106,20 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
 
   const handleRetry = async () => {
     if (!track) return;
+
+    setLoading(true);
+
     try {
-      setLoading(true);
-      
       // Generate the same prompt that would be sent to ChatGPT for this track
       let chatInstruction = "";
-      
+
       if (track.title?.trim()) {
         chatInstruction = `Create a simple 1 sentence prompt for an image generation tool for a musical album cover based on this song title. Keep it cinematic and realistic, do not show humans or text in it. Do not use any parameter instructions such as AR16:9.\n\nSong Title: ${track.title.trim()}`;
       } else if (Array.isArray(track.params) && track.params.length > 0) {
         const style = track.params.join(", ");
         chatInstruction = `Create a simple 1 sentence prompt for an image generation tool for a musical album cover based on this music style. Keep it cinematic and realistic, do not show humans or text in it. Do not use any parameter instructions such as AR16:9.\n\nMusic Style: ${style}`;
       }
-      
+
       // Get the album cover prompt from ChatGPT to show in input field
       if (chatInstruction) {
         const promptResponse = await api.chat([{
@@ -121,26 +128,31 @@ export const QuickAlbumCoverGenerator: React.FC<QuickAlbumCoverGeneratorProps> =
         }]);
         setPrompt(promptResponse.content);
       }
-      
+
       const details = {
         title: track.title || undefined,
         style: Array.isArray(track.params) ? track.params.join(", ") : undefined,
       };
       const result = await api.generateAlbumCovers(details);
-      
+
       if (!result.coverIds || result.coverIds.length === 0) {
-        toast({ title: "No covers returned", description: "Try again in a moment.", variant: "destructive" });
+        toast({ title: "No covers returned", description: "The prompt may have been filtered. Try again in a moment.", variant: "destructive" });
         return;
       }
-      
+
       // Reload covers from database to get the latest
       await loadCovers();
-      
-      setSelectedIndex(0); // Select the newest generated image
+
+      setSelectedIndex(0);
       toast({ title: "Regenerated", description: `${result.coverIds.length} new cover${result.coverIds.length > 1 ? 's' : ''} added` });
     } catch (e: any) {
       console.error("[Covers] Retry error", e);
-      toast({ title: "Retry failed", description: e?.message || "Please try again.", variant: "destructive" });
+      const errorMessage = e?.message || "Please try again.";
+      toast({
+        title: "Retry failed",
+        description: errorMessage.includes("timeout") ? "Request timed out. Try again with a simpler prompt." : errorMessage,
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
