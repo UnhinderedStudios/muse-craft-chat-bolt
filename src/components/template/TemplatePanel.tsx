@@ -218,17 +218,17 @@ export function TemplatePanel({
       {/* Header with Toggle */}
       <div className="shrink-0 p-4 pb-3">
         <div className="flex items-center mb-3">
-          <div className="flex w-full items-center bg-black/30 rounded-md p-0.5 backdrop-blur-sm border border-white/5">
+          <div className="flex w-full items-center gap-1">
             <button
               onClick={() => {
                 setViewMode("playlists");
                 clearSearch();
               }}
               className={cn(
-                "flex-1 py-1 text-xs font-medium rounded-sm transition-all duration-200",
+                "flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200",
                 viewMode === "playlists"
-                  ? "bg-white/10 text-white shadow-sm"
-                  : "text-white/60 hover:text-white/80"
+                  ? "bg-accent-primary text-white"
+                  : "text-white/60 hover:text-white hover:bg-white/5"
               )}
             >
               Playlists
@@ -239,10 +239,10 @@ export function TemplatePanel({
                 clearSearch();
               }}
               className={cn(
-                "flex-1 py-1 text-xs font-medium rounded-sm transition-all duration-200",
+                "flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-200",
                 viewMode === "artists"
-                  ? "bg-white/10 text-white shadow-sm"
-                  : "text-white/60 hover:text-white/80"
+                  ? "bg-accent-primary text-white"
+                  : "text-white/60 hover:text-white hover:bg-white/5"
               )}
             >
               Artists
