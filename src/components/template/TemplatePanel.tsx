@@ -264,7 +264,7 @@ export function TemplatePanel({
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             placeholder={`Search ${viewMode}...`}
-            className="w-full bg-[#1e1e1e] border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:bg-[#252525] transition-colors pr-20"
+            className="w-full bg-[#1e1e1e] border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none focus-visible:bg-[#252525] transition-colors pr-20"
           />
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
             <button className="text-white/40 hover:text-white/60 transition-colors">

@@ -464,7 +464,7 @@ export default function TrackListPanel({
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Search tracks, genres, keywords..."
-            className="w-full bg-[#1e1e1e] border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:bg-[#252525] transition-colors pr-10"
+            className="w-full bg-[#1e1e1e] border-0 text-white placeholder:text-white/40 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none focus-visible:bg-[#252525] transition-colors pr-10"
           />
           <button
             onClick={isSearchMode ? clearSearch : undefined}
