@@ -29,6 +29,7 @@ export function ArtistManagementPanel({ className, onArtistClick }: ArtistManage
   const {
     artists,
     selectedArtistId,
+    loading,
     createArtist,
     renameArtist,
     deleteArtist,
@@ -71,35 +72,47 @@ export function ArtistManagementPanel({ className, onArtistClick }: ArtistManage
   };
 
   // Handle artist menu actions
-  const handleArtistAction = (artistId: string, action: string) => {
-    switch (action) {
-      case "favorite":
-        toggleArtistFavourite(artistId);
-        toast.success("Artist favorited");
-        break;
-      case "delete":
-        deleteArtist(artistId);
-        toast.success("Artist deleted");
-        break;
-      case "rename":
-        // Handled by onTitleEdit
-        break;
-      default:
-        console.log(`Action ${action} on artist ${artistId}`);
+  const handleArtistAction = async (artistId: string, action: string) => {
+    try {
+      switch (action) {
+        case "favorite":
+          await toggleArtistFavourite(artistId);
+          toast.success("Artist favorited");
+          break;
+        case "delete":
+          await deleteArtist(artistId);
+          toast.success("Artist deleted");
+          break;
+        case "rename":
+          // Handled by onTitleEdit
+          break;
+        default:
+          console.log(`Action ${action} on artist ${artistId}`);
+      }
+    } catch (error) {
+      toast.error("Action failed. Please try again.");
     }
   };
 
   // Handle artist title editing
-  const handleArtistTitleEdit = (artistId: string, newTitle: string) => {
-    renameArtist(artistId, newTitle);
-    toast.success("Artist renamed");
+  const handleArtistTitleEdit = async (artistId: string, newTitle: string) => {
+    try {
+      await renameArtist(artistId, newTitle);
+      toast.success("Artist renamed");
+    } catch (error) {
+      toast.error("Failed to rename artist");
+    }
   };
 
   // Handle new artist creation
-  const handleCreateArtist = () => {
-    const newArtistName = `Artist ${artists.length + 1}`;
-    createArtist(newArtistName);
-    toast.success(`Created "${newArtistName}"`);
+  const handleCreateArtist = async () => {
+    try {
+      const newArtistName = `Artist ${artists.length + 1}`;
+      await createArtist(newArtistName);
+      toast.success(`Created "${newArtistName}"`);
+    } catch (error) {
+      toast.error("Failed to create artist");
+    }
   };
 
   // Get sorted artists (Favourited first)
@@ -169,8 +182,15 @@ export function ArtistManagementPanel({ className, onArtistClick }: ArtistManage
       <div className="flex-1 min-h-0 overflow-hidden">
         <div className="h-full overflow-y-auto overflow-x-hidden lyrics-scrollbar">
           <div className="min-h-full flex flex-col justify-start gap-2 px-4 pb-4">
+            {/* Loading State */}
+            {loading && (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-white/60">Loading artists...</div>
+              </div>
+            )}
+
             {/* Artist Bubbles */}
-            {displayArtists.map((artist) => (
+            {!loading && displayArtists.map((artist) => (
               <ArtistBubble
                 key={artist.id}
                 artist={artist}
@@ -182,7 +202,7 @@ export function ArtistManagementPanel({ className, onArtistClick }: ArtistManage
             ))}
 
             {/* Empty State */}
-            {sortedArtists.length === 0 && (
+            {!loading && sortedArtists.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="text-white/60 mb-2">
                   {isSearchMode ? 'No artists found' : 'No artists yet'}
