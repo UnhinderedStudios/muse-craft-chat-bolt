@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { TrackItem, AlbumCover } from "@/types";
-import { ChevronUp, ChevronDown, X, ImageIcon, Wand2, Repeat, ArrowRight, Download } from "lucide-react";
+import { ChevronUp, ChevronDown, X, Image as ImageIcon, Wand as Wand2, Repeat, ArrowRight, Download } from "lucide-react";
 import { useSessionManager } from "@/hooks/use-session-manager";
 import { useAlbumCovers } from "@/hooks/use-album-covers";
 

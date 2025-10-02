@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { runImageGenerationDiagnostics, formatDiagnosticResults, DiagnosticResult } from '@/lib/diagnostics';
-import { CheckCircle2, XCircle, AlertTriangle, Play, Loader2 } from 'lucide-react';
+import { CircleCheck as CheckCircle2, Circle as XCircle, TriangleAlert as AlertTriangle, Play, Loader as Loader2 } from 'lucide-react';
 
 export const DiagnosticsPanel: React.FC = () => {
   const [results, setResults] = useState<DiagnosticResult[]>([]);
