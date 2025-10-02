@@ -50,6 +50,89 @@ export type Database = {
         }
         Relationships: []
       }
+      artist_generation_state: {
+        Row: {
+          artist_count: number
+          artist_id: string
+          clothing_reference: string | null
+          created_at: string
+          facial_reference: string | null
+          generated_images: Json
+          id: string
+          image_prompts: Json
+          is_realistic: boolean
+          primary_clothing_type: string | null
+          selected_color: string | null
+          updated_at: string
+        }
+        Insert: {
+          artist_count?: number
+          artist_id: string
+          clothing_reference?: string | null
+          created_at?: string
+          facial_reference?: string | null
+          generated_images?: Json
+          id?: string
+          image_prompts?: Json
+          is_realistic?: boolean
+          primary_clothing_type?: string | null
+          selected_color?: string | null
+          updated_at?: string
+        }
+        Update: {
+          artist_count?: number
+          artist_id?: string
+          clothing_reference?: string | null
+          created_at?: string
+          facial_reference?: string | null
+          generated_images?: Json
+          id?: string
+          image_prompts?: Json
+          is_realistic?: boolean
+          primary_clothing_type?: string | null
+          selected_color?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artist_generation_state_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: true
+            referencedRelation: "artists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      artists: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          is_favorited: boolean
+          name: string
+          song_count: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_favorited?: boolean
+          name: string
+          song_count?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_favorited?: boolean
+          name?: string
+          song_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       karaoke_lyrics: {
         Row: {
           audio_id: string | null
